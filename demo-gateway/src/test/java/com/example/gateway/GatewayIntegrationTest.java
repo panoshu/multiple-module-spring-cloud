@@ -31,7 +31,28 @@ class GatewayIntegrationTest {
   }
 
   @Test
-  @DisplayName("集成测试：验证普通路径应放行 (返回非 403/404 状态)")
+  @DisplayName("集成测试：验证 /server/* 路径应被拦截并返回 401")
+  void testBlockPathServer() {
+    webClient.get().uri("/server/secret")
+      .exchange()
+      .expectStatus().isUnauthorized() // 401
+      .expectBody().isEmpty();
+  }
+
+  @Test
+  @DisplayName("集成测试：验证 /server/xxx/xxx 路径应放行")
+  void testAllowPathServer() {
+    webClient.get().uri("/server/xxx/xxx")
+      .exchange()
+      .expectStatus().isNotFound()
+      .expectBody()
+      .jsonPath("$.status").isEqualTo(404)
+      .jsonPath("$.path").isEqualTo("/server/xxx/xxx");
+
+  }
+
+  @Test
+  @DisplayName("集成测试：验证普通路径应放行")
   void testAllowNormalPath() {
     // 请求一个未配置拦截的路径，例如 /user/1
     // 由于没有真实的后端服务，网关可能会返回 503 Service Unavailable 或者 404 (No Route)

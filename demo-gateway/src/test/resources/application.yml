@@ -1,0 +1,105 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway.server.webflux:
+      discovery:
+        locator:
+          lower-case-service-id: true
+
+      # 全局 CORS 配置
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            # 允许的前端来源 —— 精准白名单
+            allowed-origins:
+              - "https://com.example"
+            # 支持通配模式 localhost 任意端口
+            allowed-origin-patterns:
+              - "http://localhost:*"
+            # 允许的 HTTP 方法
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            # 允许的请求头
+            allowed-headers:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Tenant-Id"
+              - "X-Requested-With"
+            # 前端可读取的响应头
+            exposed-headers:
+              - "X-Trace-Id"
+              - "X-Request-Id"
+            # 是否允许 Cookie / JWT
+            allow-credentials: true
+            # 预检缓存时间
+            max-age: 3600
+
+      # 路由配置
+      routes:
+        # ------------------ 示例 1：带 http method 校验的路由 ------------------
+        - id: user-service-get
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+            - Method=GET            # 只允许 GET
+          filters:
+            - RemoveRequestHeader=Cookie
+            - AddResponseHeader=X-From-Gateway, true
+
+        # ------------------ 示例 2：允许 POST（如创建用户） ------------------
+        - id: user-service-post
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+            - Method=POST           # 只允许 POST
+          filters:
+            - StripPrefix=1
+
+        # ------------------ 示例 3：正则匹配、host 匹配 ------------------
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order/**
+            - Method=GET,POST
+            - Host=api.example.com  # 访问 host 限制
+
+        # ------------------ 示例 4：全局重试、熔断示例 ------------------
+#        - id: product-service
+#          uri: lb://product-service
+#          predicates:
+#            - Path=/product/**
+#          filters:
+#            - name: Retry
+#              args:
+#                retries: 3
+#                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE
+#            - name: CircuitBreaker
+#              args:
+#                name: productCircuit
+#                fallbackUri: forward:/fallback/product
+
+# ------------------ 日志配置 ------------------
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: INFO
+
+
+gateway:
+  exclude-routes:
+    default-status: 403
+    rules:
+      - path: /aaa/**
+        methods: [GET, POST]
+        status: 404
+      - path: /internal/**
+      - path: /server/*
+        status: 401
