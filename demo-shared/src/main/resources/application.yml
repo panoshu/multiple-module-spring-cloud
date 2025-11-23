@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: order-service
+
+  # 开启 JDK 21 虚拟线程 (核心性能优化点)
+  threads:
+    virtual:
+      enabled: true
+
+  # 数据库配置 (ID 生成器复用这个连接池)
+  datasource:
+    url: jdbc:mysql://localhost:3306/order_db?useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20 # 虚拟线程下，连接池不需要设得特别大，但也不能太小

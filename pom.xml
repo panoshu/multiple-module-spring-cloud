@@ -12,6 +12,7 @@
   <description>Parent project for Spring Cloud microservices</description>
   <modules>
     <module>demo-gateway</module>
+    <module>demo-shared</module>
   </modules>
 
   <properties>
