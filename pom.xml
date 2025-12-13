@@ -20,10 +20,8 @@
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <spring-boot.version>3.5.8</spring-boot.version>
-    <spring-cloud.version>2025.0.0</spring-cloud.version>
-    <spring-cloud-gateway-server.version>4.3.2</spring-cloud-gateway-server.version>
-    <spring-cloud-gateway-server-webflux.version>4.3.2</spring-cloud-gateway-server-webflux.version>
+    <spring-boot.version>4.0.0</spring-boot.version>
+    <spring-cloud.version>2025.1.0</spring-cloud.version>
 
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
   </properties>
@@ -48,16 +46,6 @@
         <scope>import</scope>
       </dependency>
 
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-gateway-server</artifactId>
-        <version>${spring-cloud-gateway-server.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-gateway-server-webflux</artifactId>
-        <version>${spring-cloud-gateway-server-webflux.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
