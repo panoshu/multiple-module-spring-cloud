@@ -1,0 +1,35 @@
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+  port: 8080
+
+spring:
+  application:
+    name: gateway-server
+  threads:
+    virtual:
+      enabled: true # JDK 21 虚拟线程开启
+
+retrofit:
+  # 全局默认
+  global-connect-timeout-ms: 2000
+  global-read-timeout-ms: 5000
+  # 针对支付宝的特殊配置 (无需改代码)
+  timeout:
+    com.example.outbound.server.infrastructure..alipay.AliPayRetrofitApi:
+      read-timeout-ms: 8000
+    com.example.outbound.server.infrastructure.sf.SfRetrofitClient:
+      read-timeout-ms: 3000
+    # 圆通接口可能比较慢，单独给它设置长一点的超时
+    com.example.outbound.server.infrastructure.yto.YtoRetrofitClient:
+      read-timeout-ms: 5000
+
+external:
+  alipay:
+    url: "https://openapi.alipay.com/pay"
+  sf-express:
+    url: "https://bsp-oa.sf-express.com"
+  yto-express:
+    url: "https://openapi.yto.com"

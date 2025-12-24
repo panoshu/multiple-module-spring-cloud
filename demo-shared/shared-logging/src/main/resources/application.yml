@@ -1,0 +1,91 @@
+logbook:
+  obfuscate:
+    global:
+      enable: true
+      replacement: "***"
+      enable-wildcard-paths: true
+
+    fields:
+      password:
+        aliases:
+          - $.password
+          - $.user.credentials.password
+          - $.data.personalInfo.authentication.passwd
+          - $.users[*].credentials.password
+          - $..password
+          - header.authorization
+          - header.auth-token
+          - query.password
+          - query.pwd
+        strategy: PARTIAL_HIDE
+        replacement: "******"
+        params:
+          show-prefix: 3
+          show-suffix: 4
+
+      phone:
+        aliases:
+          - $.phone
+          - $.mobile
+          - $.contact.phoneNumber
+          - $.users[*].contact.phone
+          - $..phone
+          - $..mobile
+          - header.x-phone
+          - query.phone
+          - query.mobile
+        strategy: KEEP_FIRST_LAST
+        params:
+          show-prefix: 3
+          show-suffix: 4
+
+      email:
+        aliases:
+          - $.email
+          - $.user.email
+          - $.contact.email
+          - $..email
+          - header.x-email
+          - query.email
+        strategy: PARTIAL_HIDE
+        params:
+          show-prefix: 3
+          show-suffix: 3
+
+      creditCard:
+        aliases:
+          - $.creditCard
+          - $.cardNumber
+          - $.payment.card
+          - $..creditCard
+          - $..cardNumber
+        strategy: PATTERN_REGEX
+        params:
+          pattern: "\\b\\d{4}[ -]?\\d{4}[ -]?\\d{4}[ -]?\\d{4}\\b"
+          replacement: "****-****-****-****"
+
+      token:
+        aliases:
+          - $.token
+          - $.accessToken
+          - $.refreshToken
+          - $..token
+          - header.x-api-key
+          - header.x-auth-token
+          - header.authorization
+        strategy: HASH_MD5
+
+    strategies:
+      PARTIAL_HIDE:
+        params:
+          show-prefix: 3
+          show-suffix: 3
+      KEEP_FIRST_LAST:
+        params:
+          show-prefix: 1
+          show-suffix: 1
+      PATTERN_REGEX:
+        params:
+          replacement: "***"
+      FULL: {}
+      HASH_MD5: {}
