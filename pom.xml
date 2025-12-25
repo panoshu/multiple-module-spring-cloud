@@ -34,7 +34,7 @@
     <!-- Other 3rd Dependency Versions-->
     <mapstruct.version>1.6.3</mapstruct.version>
     <retrofit-spring-boot-starter.version>3.2.0</retrofit-spring-boot-starter.version>
-    <logbook.version>3.12.3</logbook.version>
+    <logbook.version>4.0.0-RC.1</logbook.version>
   </properties>
 
   <dependencyManagement>

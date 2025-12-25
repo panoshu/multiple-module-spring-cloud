@@ -19,6 +19,12 @@
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-logging</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>apiguardian-api</artifactId>
+          <groupId>org.apiguardian</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
