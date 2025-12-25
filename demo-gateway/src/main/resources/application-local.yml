@@ -1,0 +1,30 @@
+# sofa registry settings
+spring:
+  cloud:
+    gateway.server.webflux:
+      routes:
+        - id: outbound
+          uri: lb://cjannuity-channel-outbound
+          predicates:
+            - Path=/api/outbound/**
+          filters:
+            - StripPrefix=2
+
+# 排除规则配置
+gateway:
+  exclude-routes:
+    # 全局默认状态码（可选，默认 403）
+    default-status: 404
+    rules:
+      - path: /eecseweb/eweb-common.AnnuityReplyRecognize.do
+      - path: /eecseweb/eweb-common.CheckSms.do
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework: WARN
+    org.springframework.cloud: WARN
+    org.springframework.cloud.gateway: WARN
+    org.springframework.web: WARN
+    reactor.netty.http.server.AccessLog: INFO

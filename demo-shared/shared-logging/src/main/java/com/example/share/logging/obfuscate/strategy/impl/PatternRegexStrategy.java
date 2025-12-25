@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
  * @since 2025/12/23 17:26
  */
 @Slf4j
-@Component
 public class PatternRegexStrategy implements ObfuscationStrategy {
 
   @Override

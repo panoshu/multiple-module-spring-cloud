@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
 public class JsonBodyObfuscationFilter extends BaseObfuscationFilter implements BodyFilter {
 
   private final Map<String, ValidatedFieldConfig> jsonPathRules;

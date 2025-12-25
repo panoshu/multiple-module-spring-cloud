@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Slf4j
-@Component
 public class QueryParamObfuscationFilter extends BaseObfuscationFilter implements QueryFilter {
 
   private final Map<String, ValidatedFieldConfig> queryRules;

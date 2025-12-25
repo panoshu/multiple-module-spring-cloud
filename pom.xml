@@ -57,6 +57,34 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- 2nd Dependencies-->
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-biz</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-logging</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>outbound-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>consumer-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- 3rd Dependencies -->
       <dependency>
         <groupId>io.github.danielliu1123</groupId>
         <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>

@@ -4,6 +4,7 @@ import com.example.shared.core.api.IResultCode;
 import lombok.Getter;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.helpers.MessageFormatter;
 
 import java.io.Serial;
 import java.util.Objects;
@@ -14,7 +15,6 @@ import java.util.Objects;
  * @author <a href="mailto: panoshu@gmail.com">panoshu</a>
  * @since 2025/12/16 21:17
  */
-@Getter
 public abstract class BaseException extends RuntimeException {
 
   @Serial
@@ -22,14 +22,25 @@ public abstract class BaseException extends RuntimeException {
 
   private static final Object[] EMPTY_ARGS = new Object[0];
 
+  @Getter
   private final String code;
+
+  @Getter
   private final Object[] args;
 
-  private BaseException(String code, @Nullable String message,
+  private String detailMessage;
+
+  private BaseException(String code, @Nullable String messageTemplate,
                         @Nullable Throwable cause, @Nullable Object... args) {
-    super(message, cause);
+    super(format(messageTemplate, args), cause);
     this.code = code;
     this.args = args != null ? args : EMPTY_ARGS;
+  }
+
+  private static String format(String template, Object... args) {
+    if (template == null) return "Unknown Error";
+    if (args == null || args.length == 0) return template;
+    return MessageFormatter.arrayFormat(template, args).getMessage();
   }
 
   protected BaseException(IResultCode resultCode) {
@@ -46,6 +57,21 @@ public abstract class BaseException extends RuntimeException {
 
   protected BaseException(IResultCode resultCode, Throwable cause, Object... args) {
     this(resultCode.getCode(), resultCode.getMessage(), cause, args);
+  }
+
+  /**
+   * 流式 API：添加内部日志详情 (支持 {} 占位符)
+   * 用法：throw new BusinessException(...).withDetail("内部接口返回: {}", response);
+   */
+  public BaseException withDetail(String pattern, Object... detailArgs) {
+    this.detailMessage = format(pattern, detailArgs);
+    return this;
+  }
+
+  public String getFormatContent() {
+    return String.format(
+      "exception code: %s, user message: %s, detail message: %s",
+      this.code, super.getMessage(), this.detailMessage);
   }
 
   /**

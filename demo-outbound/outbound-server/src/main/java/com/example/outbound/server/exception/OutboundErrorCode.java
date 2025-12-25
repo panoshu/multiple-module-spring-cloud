@@ -15,11 +15,15 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum OutboundErrorCode implements IResultCode {
-
-  EXTERNAL_SERVICE_ERROR("89999", "外部调用错误: {}"),
-  STATUS_CANNOT_INTERCEPT("80010","物流拦截报错: {}"),
+  LOGISTICS_INFO_NOT_FOUND("80010", "Logistics Info Not Found"),
+  STATUS_CANNOT_INTERCEPT("80011","物流拦截报错: {}"),
+  LOGISTICS_QUERY_FAILED("80012", "logistics query failed"),
   PARAM_ERROR("80020", "物流发货报错: {}"),
   NOT_FOUND("800404", "信息未找到: {}"),
+  ALIPAY_BIZ_ERROR("80050", "支付宝服务业务异常"),
+  USER_NOT_EXIST("80051", "用户不存在"),
+  BALANCE_NOT_ENOUGH("80052", "余额不足"),
+  PAY_FAILED("80053", "Pay Failed"),
 
   ;
 

@@ -3,14 +3,12 @@ package com.example.share.logging.obfuscate.strategy;
 import com.example.share.logging.obfuscate.config.ObfuscationStrategyType;
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
 public class ObfuscationStrategyFactory {
 
   private final Map<ObfuscationStrategyType, ObfuscationStrategy> strategies;

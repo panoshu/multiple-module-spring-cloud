@@ -3,14 +3,16 @@ server:
     threads:
       max: 200
       min-spare: 20
-  port: 8080
+  port: 18089
 
 spring:
   application:
-    name: gateway-server
+    name: cjannuity-channel-outbound
   threads:
     virtual:
       enabled: true # JDK 21 虚拟线程开启
+  profiles:
+    include: local
 
 retrofit:
   # 全局默认
@@ -25,11 +27,3 @@ retrofit:
     # 圆通接口可能比较慢，单独给它设置长一点的超时
     com.example.outbound.server.infrastructure.yto.YtoRetrofitClient:
       read-timeout-ms: 5000
-
-external:
-  alipay:
-    url: "https://openapi.alipay.com/pay"
-  sf-express:
-    url: "https://bsp-oa.sf-express.com"
-  yto-express:
-    url: "https://openapi.yto.com"

@@ -12,7 +12,6 @@ import java.util.Set;
  * @author <a href="mailto: panoshu@gmail.com">panoshu</a>
  * @since 2025/12/24 17:52
  */
-@Component
 @EnableConfigurationProperties(ObfuscateProperties.class)
 public class ObfuscateConfig {
 

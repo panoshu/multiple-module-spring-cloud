@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
 public class HeaderObfuscationFilter extends BaseObfuscationFilter implements HeaderFilter {
 
   private final Map<String, ValidatedFieldConfig> headerRules;

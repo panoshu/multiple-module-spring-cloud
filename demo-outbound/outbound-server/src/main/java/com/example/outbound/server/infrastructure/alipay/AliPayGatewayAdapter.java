@@ -4,59 +4,82 @@ import com.example.outbound.dto.payment.PaymentDTO;
 import com.example.outbound.server.domain.payment.PaymentGateway;
 import com.example.outbound.server.domain.payment.PaymentOrder;
 import com.example.outbound.server.exception.OutboundErrorCode;
-import com.example.shared.core.exception.BusinessException;
-import com.example.shared.core.exception.SystemException;
+import com.example.outbound.server.infrastructure.AbstractGateway;
+import com.example.shared.core.api.IResultCode;
+import com.example.shared.core.api.SystemCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * AliPayGatewayAdapter
- *
- * @author YourName
- * @since 2025/12/14 21:04
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AliPayGatewayAdapter implements PaymentGateway {
+public class AliPayGatewayAdapter extends AbstractGateway<AliPayRequest, AliPayResponse> implements PaymentGateway {
 
-  private final AliPayRetrofitClient aliPayClient;
+  private final AliPayRetrofitClient client;
+
+  // —————— 1. 策略配置 ——————
+
+  @Override
+  protected boolean isSuccess(AliPayResponse response) {
+    return "10000".equals(response.getCode());
+  }
+
+  @Override
+  protected IResultCode getSystemError() {
+    return SystemCode.EXTERNAL_SERVICE_ERROR;
+  }
+
+  @Override
+  protected IResultCode getDefaultBusinessError() {
+    return OutboundErrorCode.ALIPAY_BIZ_ERROR;
+  }
+
+  // 覆盖默认日志格式，增加 SubMsg
+  @Override
+  protected String getDefaultErrorPattern() {
+    return "支付宝接口异常: code={}, msg={}, subMsg={}";
+  }
+
+  @Override
+  protected Object[] extractDefaultErrorArgs(AliPayResponse response) {
+    return new Object[]{ response.getCode(), response.getMsg(), response.getSubMsg() };
+  }
+
+  // —————— 2. 业务方法 ——————
 
   @Override
   public String executePay(PaymentOrder order) {
-    // Step 1: 转换 (Domain -> External DTO)
-    AliPayRequest request = new AliPayRequest();
-    request.setOutTradeNo(order.bizId());
-    request.setTotalAmount(order.amount().toString());
+    var builder = this.<String>buildCall("ExecuteAliPay", order.bizId())
+      .request(() -> new AliPayRequest().setOutTradeNo(order.bizId()))
+      .call(client::doPay)
 
-    // Step 2: 调用 (Retrofit 同步阻塞，交由虚拟线程调度)
-    try {
+      // 【自定义系统异常信息】
+      // 如果网络挂了，BaseException.detailMessage 会包含这个信息
+      .onSystemFailure(
+        "支付宝连接失败, 订单号: {}, 请检查网络配置或证书",
+        req -> new Object[]{ req.getOutTradeNo() }
+      )
 
-      AliPayResponse response = aliPayClient.doPay(request);
+      // 【自定义业务异常信息】
+      // 动态映射错误码 + 动态提取错误参数
+      .mapBusinessError(resp -> {
+        if ("40004".equals(resp.getCode())) return OutboundErrorCode.USER_NOT_EXIST;
+        return OutboundErrorCode.PAY_FAILED;
+      })
+      .onBusinessFailure(
+        "支付拒绝: subCode={}, subMsg={}, 建议重试",
+        resp -> new Object[]{ resp.getSubCode(), resp.getSubMsg() }
+      )
 
-      // Step 3: 校验与转换 (External DTO -> Domain Return)
-      if (!"10000".equals(response.getCode())) {
-        throw new BusinessException(
-          OutboundErrorCode.EXTERNAL_SERVICE_ERROR,
-          "Alipay Failed: " + response.getSubMsg()
-        );
-      }
+      .map(AliPayResponse::getTradeNo);
 
-      return response.getTradeNo();
-
-    } catch (BusinessException e) {
-      // 如果已经是封装好的异常，直接抛出
-      throw e;
-    } catch (Exception e) {
-      // 3. 处理网络层面的失败 (超时、DNS解析失败、连接被重置)
-      log.error("Call Alipay error", e);
-      throw SystemException.wrap(e);
-    }
+    return execute(builder);
   }
 
   @Override
   public PaymentDTO getPaymentDTO() {
-    return new PaymentDTO("name", 1, "type");
+    // 模拟实现
+    return new PaymentDTO("支付宝", 1, "ONLINE");
   }
 }

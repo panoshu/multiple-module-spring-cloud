@@ -4,8 +4,8 @@ import com.example.share.logging.obfuscate.config.ObfuscationStrategyType;
 import com.example.share.logging.obfuscate.config.param.HashSHA256Params;
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategy;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -21,7 +21,6 @@ import java.util.HexFormat;
  * @since 2025/12/23 17:24
  */
 @Slf4j
-@Component
 public class HashSHA256Strategy implements ObfuscationStrategy {
 
   // 使用常量定义算法和返回长度

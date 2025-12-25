@@ -6,6 +6,7 @@ import com.example.shared.core.api.SystemCode;
 import com.example.shared.core.exception.BusinessException;
 import com.example.shared.core.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -38,13 +39,11 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Result<Void>> handleBusinessException(
     BusinessException ex, WebRequest request) {
 
-    log.info("Business exception occurred: code={}, args={}",
-      ex.getCode(),
-      Arrays.toString(ex.getArgs()));
+    String traceId = getTraceId(request);
+    log.warn("[traceId={}]Business Exception: {}", traceId, ex.getFormatContent());
 
-    String message = formatMessage(ex.getCode(), ex.getMessage(), ex.getArgs());
     return ResponseEntity.ok(
-      Result.failure(ex.getCode(), message)
+      Result.failure(ex.getCode(), ex.getMessage())
     );
   }
 
@@ -54,12 +53,10 @@ public class GlobalExceptionHandler {
     SystemException ex, WebRequest request) {
 
     String traceId = getTraceId(request);
-    log.error("System exception [traceId={}]: code={}, message={}",
-      traceId, ex.getCode(), ex.getMessage(), ex);
+    log.error("[traceId={}]System Exception: {}", traceId, ex.getFormatContent());
 
-    // 对外返回：通用提示（避免泄露敏感信息）
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-      Result.failure(SystemCode.SYS_INTERNAL_ERROR)
+      Result.failure(SystemCode.SYS_INTERNAL_ERROR, ex.getMessage())
     );
   }
 
@@ -106,11 +103,6 @@ public class GlobalExceptionHandler {
     return null;
   }
 
-  // ——————— 工具方法 ———————
-
-  /**
-   * 格式化消息：支持 {} 占位符（与 IResultCode.formatMessage 保持一致）
-   */
   private String formatMessage(String code, String rawMessage, Object[] args) {
     if (rawMessage == null || args == null || args.length == 0) {
       return rawMessage != null ? rawMessage : "Unknown error";
@@ -129,7 +121,7 @@ public class GlobalExceptionHandler {
    */
   private String getTraceId(WebRequest request) {
     // 1. 优先从 MDC 获取（已通过 Filter/Interceptor 注入）
-    String traceId = org.slf4j.MDC.get("traceId");
+    String traceId = MDC.get("traceId");
     if (traceId != null) return traceId;
 
     // 2. 从 header 尝试提取（如 SkyWalking, Sleuth）
@@ -140,6 +132,6 @@ public class GlobalExceptionHandler {
         return id;
       }
     }
-    return "N/A";
+    return "";
   }
 }

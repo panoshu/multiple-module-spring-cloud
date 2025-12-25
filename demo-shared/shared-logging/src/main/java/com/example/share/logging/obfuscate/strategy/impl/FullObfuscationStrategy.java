@@ -5,7 +5,6 @@ import com.example.share.logging.obfuscate.config.param.FullParams;
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * description
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
  * @since 2025/12/23 17:22
  */
 @Slf4j
-@Component
 public class FullObfuscationStrategy implements ObfuscationStrategy {
   private static final int MAX_OBFUSCATION_LENGTH = 100;
   private static final String OBFUSCATION_CHAR = "*";

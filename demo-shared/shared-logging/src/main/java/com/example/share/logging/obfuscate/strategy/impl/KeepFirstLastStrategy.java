@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
  * @since 2025/12/23 17:23
  */
 @Slf4j
-@Component
 public class KeepFirstLastStrategy implements ObfuscationStrategy {
 
   private static final int DEFAULT_KEEP = 1;

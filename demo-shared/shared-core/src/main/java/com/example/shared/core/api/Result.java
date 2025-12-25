@@ -38,6 +38,15 @@ public record Result<T>(
     return new Result<>(SystemCode.SUCCESS.getCode(), SystemCode.SUCCESS.getMessage(), data, System.currentTimeMillis());
   }
 
+  public static <T> Result<T> failure(IResultCode resultCode, String message) {
+    return new Result<>(
+      resultCode.getCode(),
+      message,
+      null,
+      currentTimeMillis()
+    );
+  }
+
   public static <T> Result<T> failure(IResultCode resultCode, Object... args) {
     String msg = args.length == 0 ? resultCode.getMessage() : resultCode.formatMessage(args); // 利用前面新增的 formatMessage
     return new Result<>(

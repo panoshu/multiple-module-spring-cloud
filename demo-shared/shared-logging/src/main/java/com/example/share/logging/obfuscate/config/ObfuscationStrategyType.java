@@ -14,7 +14,8 @@ public enum ObfuscationStrategyType {
   KEEP_FIRST_LAST("KEEP_FIRST_LAST"),
   HASH_SHA256("HASH_SHA256"),
   PATTERN_REGEX("PATTERN_REGEX"),
-  CUSTOM("CUSTOM");
+
+  ;
 
   private final String value;
 

@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="mailto: panoshu@gmail.com">panoshu</a>
  * @since 2025/12/24 19:07
  */
-@Service
 public class ConfigurationValidator {
 
   private final StrategyValidatorFactory validatorFactory;
