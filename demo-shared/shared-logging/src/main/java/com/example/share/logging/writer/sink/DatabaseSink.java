@@ -19,10 +19,11 @@ public class DatabaseSink implements Sink {
   private final HttpExchangeLogMapper httpExchangeLogMapper;
 
   @Override
-  @Async
+  // @Async
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void write(@Nonnull Precorrelation precorrelation, @Nonnull HttpRequest httpRequest) {
     HttpExchangeLog requestLog = httpExchangeLogMapper.toRequestLog(precorrelation, httpRequest);
+    log.debug("=============dbsink=================="+requestLog.toString());
     logRepository.upsertRequest(requestLog);
   }
 

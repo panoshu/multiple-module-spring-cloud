@@ -1,3 +1,1 @@
-com.example.share.logging.autoconfigure.AsyncVirtualThreadConfig
-com.example.share.logging.autoconfigure.LogbookDatabaseAutoConfiguration
-com.example.share.logging.autoconfigure.LogbookObfuscationAutoConfiguration
+com.example.share.logging.autoconfigure.SharedLoggingAutoConfiguration

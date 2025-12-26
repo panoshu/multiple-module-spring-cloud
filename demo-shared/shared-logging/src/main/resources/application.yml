@@ -1,4 +1,15 @@
 logbook:
+  predicate:
+    include:
+      - path: /api/**
+        methods:
+          - GET
+          - POST
+      - path: /actuator/**
+    exclude:
+      - path: /h2-console/**
+  database:
+    enable: true
   obfuscate:
     global:
       enable: true

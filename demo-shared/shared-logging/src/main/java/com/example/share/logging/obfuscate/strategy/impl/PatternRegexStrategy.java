@@ -5,7 +5,6 @@ import com.example.share.logging.obfuscate.config.param.PatternRegexParams;
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * description

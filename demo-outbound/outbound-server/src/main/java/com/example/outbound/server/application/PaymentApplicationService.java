@@ -5,8 +5,8 @@ import com.example.outbound.dto.payment.PayResult;
 import com.example.outbound.dto.payment.PaymentDTO;
 import com.example.outbound.server.domain.payment.PaymentGateway;
 import com.example.outbound.server.domain.payment.PaymentOrder;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 /**

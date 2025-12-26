@@ -2,9 +2,9 @@ package com.example.shared.core.exception;
 
 import com.example.shared.core.api.IResultCode;
 import lombok.Getter;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import lombok.NonNull;
 import org.slf4j.helpers.MessageFormatter;
+import org.springframework.lang.Nullable;
 
 import java.io.Serial;
 import java.util.Objects;

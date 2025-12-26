@@ -8,11 +8,10 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.zalando.logbook.BodyFilter;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public class JsonBodyObfuscationFilter extends BaseObfuscationFilter implements 
   private final Map<String, ValidatedFieldConfig> jsonPathRules;
 
   private static final Configuration JSON_PATH_CONFIG = Configuration.builder()
-    .jsonProvider(new JacksonJsonNodeJsonProvider())
+    .jsonProvider(new JacksonJsonProvider())
     .mappingProvider(new JacksonMappingProvider())
     .options(com.jayway.jsonpath.Option.SUPPRESS_EXCEPTIONS)
     .options(com.jayway.jsonpath.Option.ALWAYS_RETURN_LIST)

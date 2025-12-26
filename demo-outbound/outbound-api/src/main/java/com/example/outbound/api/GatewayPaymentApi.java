@@ -17,7 +17,7 @@ import org.springframework.web.service.annotation.PostExchange;
  * @since 2025/12/14 20:35
  */
 
-@HttpExchange("outbound/payment")
+@HttpExchange("payment")
 public interface GatewayPaymentApi {
   @GetExchange("/{id}")
   Result<PaymentDTO> getPayment(@PathVariable("id") int paymentId);

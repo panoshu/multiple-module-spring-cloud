@@ -1,20 +1,16 @@
 package com.example.shared.core.autoconfigure;
 
-import com.example.shared.core.infrastructure.ExternalCallTemplate;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.context.annotation.Import;
 
 /**
- * AutoConfig
+ * description
  *
- * @author <a href="mailto: panoshu@gmail.com">panoshu</a>
- * @since 2025/12/25 23:17
+ * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
+ * @version 1.0
+ * @since 2025/12/26 13:27
  */
-@Configuration
+@AutoConfiguration
+@Import(InfrastructureConfiguration.class)
 public class SharedCoreAutoConfiguration {
-
-  @Bean
-  public ExternalCallTemplate externalCallTemplate() {
-    return new ExternalCallTemplate();
-  }
 }

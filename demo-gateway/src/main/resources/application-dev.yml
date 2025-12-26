@@ -1,0 +1,33 @@
+# sofa registry settings
+spring:
+  cloud:
+    gateway.server.webflux:
+    routes:
+      - id: cj-cp22teller-mweb
+        uri: lb://cp22teller-mweb
+        predicates:
+          - Method=POST
+          - Path=/eecsmweb/**
+
+run:
+  mode: NORMAL
+
+com:
+  alipay:
+    env: shared
+    instanceid: ${COM_ALIPAY_INSTANCEID}
+    ldc:
+      datacenter: ${CAFE_ENV_DC_NAME}
+      zone: ${CAFE_ENV_CELL_NAME}
+  antcloud:
+    antvip:
+      endpoint: acvip-inner.ant.cloud-dev.group.cpic.com
+    mw:
+      access: TMZKxdxmGDuPePnvEd
+      secret: sbSA60jMKV1qjCmDIscXCXFhSNTBZG0X
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.alipay.cloud: DEBUG
+    com.cjannuity.channel: DEBUG

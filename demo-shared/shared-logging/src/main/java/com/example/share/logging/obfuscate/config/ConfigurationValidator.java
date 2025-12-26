@@ -2,7 +2,6 @@ package com.example.share.logging.obfuscate.config;
 
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import com.example.share.logging.obfuscate.config.validator.StrategyValidatorFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

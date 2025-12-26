@@ -1,19 +1,25 @@
 server:
-  port: 8080
+  port: 18088
 
 spring:
   application:
-    name: api-gateway
+    name: cjannuity-channel-gateway
+  threads:
+    virtual:
+      enabled: true # JDK 21 虚拟线程开启
+  profiles:
+    include: local
 
   cloud:
     gateway.server.webflux:
       discovery:
         locator:
-          lower-case-service-id: true
+          lowerCaseServiceId: true
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 600000
 
-      # 全局 CORS 配置
       globalcors:
-        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
             # 允许的前端来源 —— 精准白名单
@@ -22,7 +28,6 @@ spring:
             # 支持通配模式 localhost 任意端口
             allowed-origin-patterns:
               - "http://localhost:*"
-            # 允许的 HTTP 方法
             allowed-methods:
               - GET
               - POST
@@ -42,62 +47,30 @@ spring:
             # 预检缓存时间
             max-age: 3600
 
-      # 路由配置
-      routes:
-        # ------------------ 示例 1：带 http method 校验的路由 ------------------
-        - id: user-service-get
-          uri: lb://user-service
-          predicates:
-            - Path=/user/**
-            - Method=GET            # 只允许 GET
-          filters:
-            - RemoveRequestHeader=Cookie
-            - AddResponseHeader=X-From-Gateway, true
+#纯本地调试
+#    sofa.discovery.enabled: false
+#    discovery:
+#      client.simple.instances:
+#        test-svc:
+#          - instanceId: test-svc-1
+#            uri: http://localhost:31001
+#            secure: false
+#            metadata:
+#              version: v1
+#              region: dev
+#          - instanceId: test-svc-2
+#            host: localhost
+#            port: 31002
+#            secure: true
+#            metadata:
+#              version: v2
+#              region: staging
 
-        # ------------------ 示例 2：允许 POST（如创建用户） ------------------
-        - id: user-service-post
-          uri: lb://user-service
-          predicates:
-            - Path=/user/**
-            - Method=POST           # 只允许 POST
-          filters:
-            - StripPrefix=1
-
-        # ------------------ 示例 3：正则匹配、host 匹配 ------------------
-        - id: order-service
-          uri: lb://order-service
-          predicates:
-            - Path=/order/**
-            - Method=GET,POST
-            - Host=api.example.com  # 访问 host 限制
-
-        # ------------------ 示例 4：全局重试、熔断示例 ------------------
-#        - id: product-service
-#          uri: lb://product-service
-#          predicates:
-#            - Path=/product/**
-#          filters:
-#            - name: Retry
-#              args:
-#                retries: 3
-#                statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE
-#            - name: CircuitBreaker
-#              args:
-#                name: productCircuit
-#                fallbackUri: forward:/fallback/product
-
-# ------------------ 日志配置 ------------------
 logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    reactor.netty.http.client: INFO
-
-
-gateway:
-  exclude-routes:
-    default-status: 403
-    rules:
-      - path: /aaa/**
-        methods: [GET, POST]
-        status: 404
-      - path: /internal/**
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30

@@ -1,5 +1,7 @@
 package com.example.shared.core.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
@@ -71,6 +73,7 @@ public record Result<T>(
   }
 
   // 可选：提供更安全的 isSuccess（避免字符串误配）
+  @JsonIgnore
   public boolean isFailure() {
     return !isSuccess();
   }

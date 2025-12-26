@@ -13,7 +13,7 @@ import org.springframework.web.service.annotation.PostExchange;
  * @author YourName
  * @since 2025/12/14 21:43
  */
-@HttpExchange("outbound/logistics")
+@HttpExchange("logistics")
 public interface GatewayLogisticsApi {
 
   @PostExchange("/query")

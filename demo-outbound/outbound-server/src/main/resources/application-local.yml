@@ -1,7 +1,7 @@
 spring:
   # ============ H2 数据库配置 ============
   datasource:
-    url: jdbc:h2:mem:testdb           # 内存数据库
+    url: jdbc:h2:~/test
     driver-class-name: org.h2.Driver
     username: sa
     password: password
@@ -19,6 +19,9 @@ spring:
   jdbc:
     client:
       enabled: true
+  h2.console:
+    enabled: true
+    path: /h2-console
 
 external:
   alipay:
@@ -28,13 +31,28 @@ external:
   yto-express:
     url: "https://openapi.yto.com"
 
-logging:
-  level:
-    root: INFO
-    com.example: DEBUG
-    com.alipay.cloud: DEBUG
+com:
+  alipay:
+    env: shared
+    instanceid: KUOGLXZ4UVL6
+    ldc:
+      datacenter: cn-cd-tbcd-am11001-a
+      zone: GZ00CP2K00
+  antcloud:
+    antvip:
+      endpoint: acvip-inner.ant.cloud-dev.group.cpic.com
+    mw:
+      access: TMZKxdxmGDuPePnvEd
+      secret: sbSA60jMKV1qjCmDIscXCXFhSNTBZG0X
 
 logbook:
+  filter:
+    enabled: true
+  predicate:
+    exclude:
+      - path: /h2-console/**
+  database:
+    enable: true
   obfuscate:
     global:
       enable: true
@@ -125,3 +143,10 @@ logbook:
           replacement: "***"
       FULL: {}
       HASH_SHA256: {}
+
+logging:
+  level:
+    root: DEBUG
+    com.example: DEBUG
+    com.alipay.cloud: DEBUG
+    org.zalando.logbook: TRACE

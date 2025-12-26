@@ -1,8 +1,8 @@
 package com.example.outbound.server.infrastructure.alipay;
 
 import com.github.lianjiatech.retrofit.spring.boot.interceptor.BasePathMatchInterceptor;
+import lombok.NonNull;
 import okhttp3.Response;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

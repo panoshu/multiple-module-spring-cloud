@@ -19,7 +19,7 @@ public interface StrategyValidator {
   ObfuscationStrategyType getStrategyType();
 
   /**
-   * 验证并转换参数
+   * 验证并转换参数, 需要自行处理参数为空的情况
    */
   StrategyParams validateAndConvert(Map<String, Object> params);
 

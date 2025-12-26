@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * 这是一个纯 POJO，不再需要 @Entity、@Table 等 JPA 注解
@@ -16,7 +15,7 @@ public class HttpExchangeLog {
 
   // 基础信息
   private Long id; // 自增主键
-  private UUID correlationId; // 业务关联主键
+  private String correlationId; // 业务关联主键
   private LocalDateTime createdTime; // 记录创建时间
 
   // 时间轴 (新增)

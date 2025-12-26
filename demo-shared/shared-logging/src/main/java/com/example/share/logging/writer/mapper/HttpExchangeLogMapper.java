@@ -4,20 +4,17 @@ import com.example.share.logging.writer.entity.HttpExchangeLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.zalando.logbook.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 
 /**
  * 核心职责：将 Logbook 的领域对象转换为持久化实体 HttpExchangeLog
  * 设计模式：Converter / Mapper / Factory
  */
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class HttpExchangeLogMapper {
 
@@ -30,7 +27,7 @@ public class HttpExchangeLogMapper {
     HttpExchangeLog logEntity = new HttpExchangeLog();
 
     // ID 与 时间
-    logEntity.setCorrelationId(UUID.fromString(precorrelation.getId()));
+    logEntity.setCorrelationId(precorrelation.getId());
     LocalDateTime now = LocalDateTime.now();
     logEntity.setCreatedTime(now);
     logEntity.setRequestTime(now);
@@ -51,8 +48,7 @@ public class HttpExchangeLogMapper {
     HttpExchangeLog logEntity = new HttpExchangeLog();
 
     // ID
-    logEntity.setCorrelationId(UUID.fromString(correlation.getId()));
-
+    logEntity.setCorrelationId(correlation.getId());
     // 时间计算 (从 Correlation 获取精准的开始时间)
     LocalDateTime startTime = LocalDateTime.ofInstant(correlation.getStart(), ZoneId.systemDefault());
     logEntity.setCreatedTime(startTime);

@@ -3,10 +3,8 @@ package com.example.share.logging.writer.repository;
 import com.example.share.logging.writer.entity.HttpExchangeLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Repository
 @RequiredArgsConstructor
 public class HttpExchangeLogRepository {
 
@@ -19,7 +17,7 @@ public class HttpExchangeLogRepository {
   @Transactional
   public void upsertRequest(HttpExchangeLog log) {
     String sql = """
-        INSERT INTO http_exchange_logs (
+        INSERT INTO http_exchange_log (
             correlation_id, created_time,
             request_time, method, uri, remote,
             request_headers, request_content, content_type,
@@ -60,7 +58,7 @@ public class HttpExchangeLogRepository {
   @Transactional
   public void upsertResponse(HttpExchangeLog log) {
     String sql = """
-        INSERT INTO http_exchange_logs (
+        INSERT INTO http_exchange_log (
             correlation_id, created_time,
             response_time, status_code, duration_millis,
             response_headers, response_content,

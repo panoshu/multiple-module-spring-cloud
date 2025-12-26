@@ -25,11 +25,6 @@
     <dependencies>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>consumer-api</artifactId>
-        <version>${demo-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
         <artifactId>consumer-adapter</artifactId>
         <version>${demo-version}</version>
       </dependency>

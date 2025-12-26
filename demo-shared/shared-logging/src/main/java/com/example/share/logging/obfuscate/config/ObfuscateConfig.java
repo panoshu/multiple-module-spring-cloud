@@ -1,7 +1,6 @@
 package com.example.share.logging.obfuscate.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Set;

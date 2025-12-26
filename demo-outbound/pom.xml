@@ -23,11 +23,6 @@
     <dependencies>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>outbound-api</artifactId>
-        <version>${demo-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
         <artifactId>outbound-server</artifactId>
         <version>${demo-version}</version>
       </dependency>

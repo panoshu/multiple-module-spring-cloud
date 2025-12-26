@@ -2,11 +2,11 @@ package com.example.share.logging.obfuscate.config.validator;
 
 import com.example.share.logging.obfuscate.config.ObfuscationStrategyType;
 import com.example.share.logging.obfuscate.config.param.StrategyParams;
-import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.stereotype.Component;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * StrategyValidatorFactory
@@ -14,26 +14,56 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="mailto: panoshu@gmail.com">panoshu</a>
  * @since 2025/12/24 16:35
  */
-@Component
+@Slf4j
 public class StrategyValidatorFactory {
 
-  private final Map<ObfuscationStrategyType, StrategyValidator> validatorMap;
+  private final Map<ObfuscationStrategyType, StrategyValidator> validators;
 
-  public StrategyValidatorFactory(ListableBeanFactory beanFactory) {
-    this.validatorMap = new ConcurrentHashMap<>();
+  public StrategyValidatorFactory(@NonNull List<StrategyValidator> strategyValidators) {
+    this.validators = this.registerValidators(strategyValidators);
+  }
 
-    // 自动收集所有 StrategyValidator 实现
-    Map<String, StrategyValidator> validators =
-      beanFactory.getBeansOfType(StrategyValidator.class);
+  private Map<ObfuscationStrategyType, StrategyValidator> registerValidators(
+    List<StrategyValidator> strategyValidators) {
 
-    validators.values().forEach(validator -> validatorMap.put(validator.getStrategyType(), validator));
+    Map<ObfuscationStrategyType, StrategyValidator> validatorMap = new HashMap<>();
 
-    // 验证是否所有策略都有对应的验证器
-    for (ObfuscationStrategyType strategyType : ObfuscationStrategyType.values()) {
-      if (!validatorMap.containsKey(strategyType)) {
-        throw new IllegalStateException(
-          "No validator found for strategy: " + strategyType);
+    strategyValidators.forEach(validator -> {
+      if (validator == null) {
+        log.warn("Skipping null strategy validator");
+        return;
       }
+
+      ObfuscationStrategyType strategyType = validator.getStrategyType();
+      if (strategyType == null) {
+        log.warn("Skipping validator with null strategy type: {}", validator.getClass().getSimpleName());
+        return;
+      }
+
+      if (validatorMap.containsKey(strategyType)) {
+        log.warn("Duplicate validator implementation for type '{}'. Using first implementation: {}. Duplicate implementation: {}",
+          strategyType,
+          validatorMap.get(strategyType).getClass().getSimpleName(),
+          validator.getClass().getSimpleName());
+      } else {
+        validatorMap.put(strategyType, validator);
+        log.debug("Registered validator: {} -> {}", strategyType, validator.getClass().getSimpleName());
+      }
+    });
+
+    validateAllStrategiesCovered(validatorMap);
+    return Map.copyOf(validatorMap);
+  }
+
+  private void validateAllStrategiesCovered(Map<ObfuscationStrategyType, StrategyValidator> validatorMap) {
+    Set<ObfuscationStrategyType> missingStrategies = Arrays.stream(ObfuscationStrategyType.values())
+      .filter(strategyType -> !validatorMap.containsKey(strategyType))
+      .collect(Collectors.toUnmodifiableSet());
+
+    if (!missingStrategies.isEmpty()) {
+      throw new IllegalStateException(
+        "Missing validators for required strategies: %s. Available strategies: %s"
+          .formatted(missingStrategies, validatorMap.keySet()));
     }
   }
 
@@ -41,12 +71,9 @@ public class StrategyValidatorFactory {
    * 获取策略验证器
    */
   public StrategyValidator getValidator(ObfuscationStrategyType strategyType) {
-    StrategyValidator validator = validatorMap.get(strategyType);
-    if (validator == null) {
-      throw new IllegalArgumentException(
-        "No validator registered for strategy type: " + strategyType);
-    }
-    return validator;
+    return Optional.ofNullable(validators.get(strategyType))
+      .orElseThrow(() -> new IllegalArgumentException(
+        "No validator found for strategy type: " + strategyType));
   }
 
   /**
@@ -54,7 +81,6 @@ public class StrategyValidatorFactory {
    */
   public StrategyParams validateParams(ObfuscationStrategyType strategyType,
                                        Map<String, Object> params) {
-    StrategyValidator validator = getValidator(strategyType);
-    return validator.validateAndConvert(params);
+    return getValidator(strategyType).validateAndConvert(params);
   }
 }

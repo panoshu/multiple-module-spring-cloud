@@ -29,12 +29,13 @@ CREATE TABLE IF NOT EXISTS http_exchange_log (
 
   -- 状态标记
   truncated BOOLEAN NOT NULL DEFAULT FALSE,
-  complete BOOLEAN NOT NULL DEFAULT FALSE,
-
-  -- 索引优化
-  INDEX idx_correlation_id (correlation_id),
-  INDEX idx_created_time (created_time),
-  INDEX idx_request_time (request_time),
-  INDEX idx_uri (uri(255)),  -- H2 支持前缀索引
-  INDEX idx_status_code (status_code)
+  complete BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- 单独创建索引（H2兼容版本）
+CREATE INDEX IF NOT EXISTS idx_correlation_id ON http_exchange_log(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_created_time ON http_exchange_log(created_time);
+CREATE INDEX IF NOT EXISTS idx_request_time ON http_exchange_log(request_time);
+-- H2不支持前缀索引语法 uri(255)，改为完整索引
+CREATE INDEX IF NOT EXISTS idx_uri ON http_exchange_log(uri);
+CREATE INDEX IF NOT EXISTS idx_status_code ON http_exchange_log(status_code);

@@ -1,6 +1,6 @@
 package com.example.shared.core.api;
 
-import org.jspecify.annotations.NonNull;
+import lombok.NonNull;
 
 import java.text.MessageFormat;
 
@@ -12,7 +12,8 @@ import java.text.MessageFormat;
  * @since 2025/12/16 21:15
  */
 public interface IResultCode {
-  @NonNull String getCode();
+  @NonNull
+  String getCode();
   @NonNull String getMessage();
 
   // 可选：提供消息格式化能力（与 BaseException 的 args 配合）

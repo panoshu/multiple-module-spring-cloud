@@ -5,7 +5,6 @@ import com.example.share.logging.obfuscate.config.ValidatedFieldConfig;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategyFactory;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.zalando.logbook.QueryFilter;
 

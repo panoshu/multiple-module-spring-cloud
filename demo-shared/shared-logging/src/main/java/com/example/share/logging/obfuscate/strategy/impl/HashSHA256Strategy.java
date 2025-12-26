@@ -6,7 +6,6 @@ import com.example.share.logging.obfuscate.config.param.StrategyParams;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategy;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
