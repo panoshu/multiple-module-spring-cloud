@@ -1,10 +1,16 @@
 spring:
   # ============ H2 数据库配置 ============
   datasource:
-    url: jdbc:h2:~/test
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:postgresql://127.0.0.1:15432/zorn-flow
+    username: engine_user
+    password: engine_user
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -31,19 +37,6 @@ external:
   yto-express:
     url: "https://openapi.yto.com"
 
-com:
-  alipay:
-    env: shared
-    instanceid: KUOGLXZ4UVL6
-    ldc:
-      datacenter: cn-cd-tbcd-am11001-a
-      zone: GZ00CP2K00
-  antcloud:
-    antvip:
-      endpoint: acvip-inner.ant.cloud-dev.group.cpic.com
-    mw:
-      access: TMZKxdxmGDuPePnvEd
-      secret: sbSA60jMKV1qjCmDIscXCXFhSNTBZG0X
 
 logbook:
   filter:
@@ -132,8 +125,8 @@ logbook:
     strategies:
       PARTIAL_HIDE:
         params:
-          show-prefix: 3
-          show-suffix: 3
+          show-prefix: 4
+          show-suffix: 4
       KEEP_FIRST_LAST:
         params:
           show-prefix: 1
@@ -146,7 +139,6 @@ logbook:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
     com.example: DEBUG
-    com.alipay.cloud: DEBUG
     org.zalando.logbook: TRACE

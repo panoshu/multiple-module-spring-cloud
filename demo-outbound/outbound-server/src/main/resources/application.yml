@@ -7,10 +7,10 @@ server:
 
 spring:
   application:
-    name: cjannuity-channel-outbound
+    name: outbound
   threads:
     virtual:
-      enabled: true # JDK 21 虚拟线程开启
+      enabled: true
   profiles:
     include: local
 

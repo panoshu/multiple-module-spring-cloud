@@ -9,6 +9,7 @@ import org.zalando.logbook.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Map;
 
 /**
  * 核心职责：将 Logbook 的领域对象转换为持久化实体 HttpExchangeLog
@@ -84,10 +85,18 @@ public class HttpExchangeLogMapper {
   }
 
   private String serializeHeaders(Object headers) {
+    if (headers == null) {
+      return "{}";
+    }
+    // 简单的 Map 判空优化，避免 Jackson 调用
+    if (headers instanceof Map && ((Map<?, ?>) headers).isEmpty()) {
+      return "{}";
+    }
+
     try {
       return objectMapper.writeValueAsString(headers);
     } catch (Exception e) {
-      log.warn("Failed to serialize headers", e);
+      log.warn("Failed to serialize headers. Error: {}", e.getMessage());
       return "{}";
     }
   }
@@ -97,13 +106,16 @@ public class HttpExchangeLogMapper {
       String body = message.getBodyAsString();
       return body != null ? body : "";
     } catch (IOException e) {
-      log.warn("Failed to read body", e);
+      log.warn("Failed to read body from message. Error: {}", e.getMessage());
       return "";
     }
   }
 
   private String safeGetHeader(HttpRequest request, String headerName) {
-    return request.getHeaders().entrySet().stream()
+    var headers = request.getHeaders();
+    if (headers == null) return "";
+
+    return headers.entrySet().stream()
       .filter(e -> e.getKey().equalsIgnoreCase(headerName))
       .findFirst()
       .map(e -> String.join(",", e.getValue()))

@@ -7,6 +7,7 @@ import com.example.outbound.dto.payment.PaymentDTO;
 import com.example.outbound.server.application.PaymentApplicationService;
 import com.example.shared.core.api.Result;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author YourName
  * @since 2025/12/14 21:09
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class PaymentController implements GatewayPaymentApi {
@@ -23,6 +25,8 @@ public class PaymentController implements GatewayPaymentApi {
 
   @Override
   public Result<PaymentDTO> getPayment(int paymentId) {
+    log.info(">>> [Controller] Handling Request | Thread: {} | IsVirtual: {}",
+      Thread.currentThread(), Thread.currentThread().isVirtual());
     return Result.success(applicationService.getPaymentDTO());
   }
 

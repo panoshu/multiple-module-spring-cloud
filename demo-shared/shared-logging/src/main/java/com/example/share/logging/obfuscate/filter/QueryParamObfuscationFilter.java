@@ -2,89 +2,100 @@ package com.example.share.logging.obfuscate.filter;
 
 import com.example.share.logging.obfuscate.config.ObfuscateConfig;
 import com.example.share.logging.obfuscate.config.ValidatedFieldConfig;
-import com.example.share.logging.obfuscate.strategy.ObfuscationStrategyFactory;
+import com.example.share.logging.obfuscate.service.ValueObfuscate;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.zalando.logbook.QueryFilter;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Slf4j
-public class QueryParamObfuscationFilter extends BaseObfuscationFilter implements QueryFilter {
+public class QueryParamObfuscationFilter implements QueryFilter {
 
   private final Map<String, ValidatedFieldConfig> queryRules;
+  private final ValueObfuscate valueObfuscate;
+  private final boolean enabled;
+  private static final Pattern AMPERSAND = Pattern.compile("&");
 
-  public QueryParamObfuscationFilter(ObfuscateConfig config,
-                                     ObfuscationStrategyFactory strategyFactory) {
-    super(config, strategyFactory);
+  public QueryParamObfuscationFilter(ObfuscateConfig config, ValueObfuscate valueObfuscate) {
     this.queryRules = config.getQueryRules();
-    log.debug("Initialized query parameter obfuscation with {} rules", queryRules.size());
+    this.valueObfuscate = valueObfuscate;
+    this.enabled = config.getGlobalConfig().enable();
+    log.info("Initialized Query Param Filter with {} rules", queryRules.size());
   }
 
   @Override
   public String filter(@Nonnull String query) {
-    if (!this.config.getGlobalConfig().enable() || query.isEmpty() || queryRules.isEmpty()) {
+    if (!enabled || query.isEmpty() || queryRules.isEmpty()) {
       return query;
     }
 
     try {
-      return obfuscateQueryParams(query);
-    } catch (Exception e) {
-      log.error("Failed to obfuscate query parameters: {}", e.getMessage(), e);
-      return query;
-    }
-  }
+      StringBuilder result = new StringBuilder(query.length() + 32);
+      String[] pairs = AMPERSAND.split(query, -1);
+      int matchCount = 0;
 
-  private String obfuscateQueryParams(String query) {
-    if (!query.contains("=")) {
-      return query;
-    }
+      for (int i = 0; i < pairs.length; i++) {
+        String pair = pairs[i];
+        int eqIdx = pair.indexOf('=');
 
-    String[] params = query.split("&");
-    boolean modified = false;
-    StringBuilder result = new StringBuilder(query.length());
+        if (eqIdx > 0) {
+          String key = decode(pair.substring(0, eqIdx));
+          String value = pair.substring(eqIdx + 1);
 
-    for (int i = 0; i < params.length; i++) {
-      String param = params[i];
-      if (param.isEmpty()) continue;
+          ValidatedFieldConfig rule = queryRules.get(key.toLowerCase());
+          if (rule != null) {
+            matchCount++;
+            if (log.isTraceEnabled()) {
+              log.trace("Obfuscating Query Param: [{}]", key);
+            }
 
-      String[] parts = param.split("=", 2);
-      String paramName = decode(parts[0]);
-      String paramValue = parts.length > 1 ? decode(parts[1]) : "";
-
-      if (StringUtils.hasText(paramName) && StringUtils.hasText(paramValue)) {
-        ValidatedFieldConfig fieldConfig = queryRules.get(paramName.toLowerCase());
-        if (fieldConfig != null) {
-          String obfuscatedValue = obfuscateValue(paramValue, fieldConfig);
-          if (!paramValue.equals(obfuscatedValue)) {
-            paramValue = obfuscatedValue;
-            modified = true;
+            String decodedVal = decode(value);
+            String maskedVal = valueObfuscate.obfuscate(decodedVal, rule);
+            result.append(encode(key)).append('=').append(encode(maskedVal));
+          } else {
+            result.append(pair);
           }
+        } else {
+          result.append(pair);
+        }
+
+        if (i < pairs.length - 1) {
+          result.append('&');
         }
       }
 
-      if (i > 0) result.append('&');
-      result.append(encode(parts[0]));
-      if (StringUtils.hasText(paramValue)) {
-        result.append('=').append(encode(paramValue));
+      if (matchCount > 0 && log.isDebugEnabled()) {
+        log.debug("Obfuscated {} query parameters", matchCount);
       }
+
+      return result.toString();
+
+    } catch (Exception e) {
+      log.warn("Query param obfuscation failed. Returning original query. Error: {}", e.getMessage());
+      return query;
     }
-
-    return modified ? result.toString() : query;
   }
 
-  private String decode(String value) {
-    return URLDecoder.decode(value, StandardCharsets.UTF_8);
+  private String decode(String s) {
+    try {
+      return URLDecoder.decode(s, StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      log.debug("URL Decode failed for string snippet: {}", s); // Debug 级别，防止刷屏
+      return s;
+    }
   }
 
-  private String encode(String value) {
-    return URLEncoder.encode(value, StandardCharsets.UTF_8)
-      .replace("+", "%20")
-      .replace("*", "%2A")
-      .replace("%7E", "~");
+  private String encode(String s) {
+    try {
+      return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      log.warn("URL Encode failed for value", e);
+      return s;
+    }
   }
 }

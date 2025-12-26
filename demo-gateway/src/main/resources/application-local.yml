@@ -4,96 +4,25 @@ spring:
     gateway.server.webflux:
       routes:
         - id: outbound
-          uri: lb://cjannuity-channel-outbound
+          uri: lb://outbound
           predicates:
             - Path=/api/outbound/**
           filters:
             - StripPrefix=2
-        - id: cj-cp22teller-mweb
-          uri: lb://cp22teller-mweb
-          predicates:
-            - Method=POST
-            - Path=/eecsmweb/mweb-*.do
-        - id: cj-cp21netapp-eweb
-          uri: lb://cp21netapp-eweb
-          predicates:
-            - Method=POST
-            - Path=/eecseweb/eweb-*.do
-        - id: cj-cp21netapp-cas
-          uri: lb://cp21netapp-cas
-          predicates:
-            - Method=POST
-            - Path=/api/cas/**
-          filters:
-            - StripPrefix=2
-        - id: cj-cp21netapp-outreach
-          uri: lb://cp21netapp-outreach
-          predicates:
-            - Method=POST
-            - Path=/api/outreach/**
-          filters:
-            - StripPrefix=2
-        - id: cj-cp21applet
-          uri: lb://cj-wxweb-bff
-          predicates:
-            - Method=POST,GET
-            - Path=/cj-grantor-api/**
-        - id: cj-cp21wxsvc-wxweb
-          uri: lb://wxweb
-          predicates:
-            - Method=POST,GET
-            - Path=/wxweb/**
-        - id: cj-cp21wxsvc-pension
-          uri: lb://pension
-          predicates:
-            - Method=POST,GET
-            - Path=/pension/**
 
-# 排除规则配置
 gateway:
   exclude-routes:
-    # 全局默认状态码（可选，默认 403）
-    default-status: 404
+    default-status: 403
     rules:
-      - path: /eecseweb/eweb-common.AnnuityReplyRecognize.do
-      - path: /eecseweb/eweb-common.CheckSms.do
-      - path: /eecseweb/eweb-common.GenSmsRegisterToken.do
-      - path: /eecseweb/eweb-registAccount.*
-      - path: /eecseweb/eweb-business.QueryQuestionnaireProblems.do
-      - path: /eecseweb/eweb-business.AnswerQuestionnaireProblems.do
-      - path: /eecseweb/eweb-business.UserCheckSmsToken.do
-      - path: /eecseweb/eweb-business.UserCheckSmsTokenS.do
-      - path: /eecseweb/eweb-staffPayS.changeContributionMethod.do
-      - path: /eecseweb/eweb-common.cmmOperationQuery.do
-      - path: /eecseweb/eweb-operator.ForgetPwdSmsValid.do
-      - path: /eecseweb/eweb-operator.GeneratorORCode.do
-      - path: /eecseweb/eweb-staff.InsertStaffSubmit.do
-      - path: /eecseweb/eweb-staff.CheckResultDelete.do
-      - path: /eecseweb/eweb-common.LicenceRecognizeOpenApi.do
-      - path: /eecseweb/eweb-common.IdentityRecognizeOpenApi.do
-
-run:
-  mode: NORMAL
-
-com:
-  alipay:
-    env: shared
-    instanceid: KUOGLXZ4UVL6
-    ldc:
-      datacenter: cn-cd-tbcd-am11001-a
-      zone: GZ00CP2K00
-  antcloud:
-    antvip:
-      endpoint: acvip-inner.ant.cloud-dev.group.cpic.com
-    mw:
-      access: TMZKxdxmGDuPePnvEd
-      secret: sbSA60jMKV1qjCmDIscXCXFhSNTBZG0X
+      - path: /aaa/**
+        methods: [GET, POST]
+        status: 404
+      - path: /internal/**
 
 logging:
   level:
     root: INFO
     com.example: DEBUG
-    com.alipay.cloud: DEBUG
     org.springframework: WARN
     org.springframework.cloud: WARN
     org.springframework.cloud.gateway: WARN

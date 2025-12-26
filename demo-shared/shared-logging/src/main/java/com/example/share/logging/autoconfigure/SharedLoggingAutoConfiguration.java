@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Import;
 @Import({
   LogbookDatabaseAutoConfiguration.class,
   LogbookObfuscationAutoConfiguration.class,
-  VirtualThreadConfig.class
 })
 public class SharedLoggingAutoConfiguration {
 }

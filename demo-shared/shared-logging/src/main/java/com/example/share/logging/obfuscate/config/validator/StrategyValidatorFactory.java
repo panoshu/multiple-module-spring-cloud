@@ -21,6 +21,7 @@ public class StrategyValidatorFactory {
 
   public StrategyValidatorFactory(@NonNull List<StrategyValidator> strategyValidators) {
     this.validators = this.registerValidators(strategyValidators);
+    log.debug("Registered {} obfuscation validators", validators.size());
   }
 
   private Map<ObfuscationStrategyType, StrategyValidator> registerValidators(
@@ -79,8 +80,7 @@ public class StrategyValidatorFactory {
   /**
    * 验证参数
    */
-  public StrategyParams validateParams(ObfuscationStrategyType strategyType,
-                                       Map<String, Object> params) {
+  public StrategyParams validateParams(ObfuscationStrategyType strategyType, Map<String, Object> params) {
     return getValidator(strategyType).validateAndConvert(params);
   }
 }

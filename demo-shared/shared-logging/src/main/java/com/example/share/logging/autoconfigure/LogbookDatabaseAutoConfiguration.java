@@ -1,7 +1,7 @@
 package com.example.share.logging.autoconfigure;
 
 import com.example.share.logging.writer.mapper.HttpExchangeLogMapper;
-import com.example.share.logging.writer.repository.HttpExchangeLogRepository;
+import com.example.share.logging.writer.repository.HttpExchangeLogPGRepository;
 import com.example.share.logging.writer.sink.DatabaseSink;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 import javax.sql.DataSource;
+import java.util.concurrent.Executor;
 
 @Configuration
 @ConditionalOnProperty(prefix = "logbook.database", name = "enable", havingValue = "true")
@@ -23,7 +24,6 @@ public class LogbookDatabaseAutoConfiguration {
 
   @Bean
   public JdbcClient jdbcClient(DataSource dataSource) {
-    // Spring Boot 3.2+ 推荐的 JdbcClient 创建方式
     return JdbcClient.create(dataSource);
   }
 
@@ -57,19 +57,28 @@ public class LogbookDatabaseAutoConfiguration {
     return new HttpExchangeLogMapper(objectMapper);
   }
 
+//  @Bean
+//  @ConditionalOnMissingBean
+//  @ConditionalOnBean(JdbcClient.class) // 确保 JdbcClient 存在
+//  public HttpExchangeLogRepository httpExchangeLogRepository(JdbcClient jdbcClient) {
+//    return new HttpExchangeLogRepository(jdbcClient);
+//  }
+
   @Bean
   @ConditionalOnMissingBean
   @ConditionalOnBean(JdbcClient.class) // 确保 JdbcClient 存在
-  public HttpExchangeLogRepository httpExchangeLogRepository(JdbcClient jdbcClient) {
-    return new HttpExchangeLogRepository(jdbcClient);
+  public HttpExchangeLogPGRepository httpExchangeLogPGRepository(JdbcClient jdbcClient) {
+    return new HttpExchangeLogPGRepository(jdbcClient);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnBean({HttpExchangeLogRepository.class, HttpExchangeLogMapper.class})
+  @ConditionalOnBean({HttpExchangeLogPGRepository.class, HttpExchangeLogMapper.class})
   public DatabaseSink databaseSink(
-    HttpExchangeLogRepository logRepository,
-    HttpExchangeLogMapper httpExchangeLogMapper) {
-    return new DatabaseSink(logRepository, httpExchangeLogMapper);
+    HttpExchangeLogPGRepository logRepository,
+    HttpExchangeLogMapper httpExchangeLogMapper,
+    Executor applicationTaskExecutor
+  ) {
+    return new DatabaseSink(logRepository, httpExchangeLogMapper,applicationTaskExecutor);
   }
 }

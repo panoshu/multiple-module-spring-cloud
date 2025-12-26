@@ -10,6 +10,7 @@ import com.example.share.logging.obfuscate.config.validator.impl.*;
 import com.example.share.logging.obfuscate.filter.HeaderObfuscationFilter;
 import com.example.share.logging.obfuscate.filter.JsonBodyObfuscationFilter;
 import com.example.share.logging.obfuscate.filter.QueryParamObfuscationFilter;
+import com.example.share.logging.obfuscate.service.ValueObfuscate;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategy;
 import com.example.share.logging.obfuscate.strategy.ObfuscationStrategyFactory;
 import com.example.share.logging.obfuscate.strategy.impl.*;
@@ -99,19 +100,25 @@ public class LogbookObfuscationAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public JsonBodyObfuscationFilter jsonBodyObfuscationFilter(ObfuscateConfig config, ObfuscationStrategyFactory factory) {
-    return new JsonBodyObfuscationFilter(config, factory);
+  public ValueObfuscate valueObfuscate(ObfuscationStrategyFactory factory) {
+    return new ValueObfuscate(factory);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public HeaderObfuscationFilter headerObfuscationFilter(ObfuscateConfig config, ObfuscationStrategyFactory factory) {
-    return new HeaderObfuscationFilter(config, factory);
+  public JsonBodyObfuscationFilter jsonBodyObfuscationFilter(ObfuscateConfig config, ValueObfuscate valueObfuscate) {
+    return new JsonBodyObfuscationFilter(config, valueObfuscate);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public QueryParamObfuscationFilter queryParamObfuscationFilter(ObfuscateConfig config, ObfuscationStrategyFactory factory) {
-    return new QueryParamObfuscationFilter(config, factory);
+  public HeaderObfuscationFilter headerObfuscationFilter(ObfuscateConfig config, ValueObfuscate valueObfuscate) {
+    return new HeaderObfuscationFilter(config, valueObfuscate);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public QueryParamObfuscationFilter queryParamObfuscationFilter(ObfuscateConfig config, ValueObfuscate valueObfuscate) {
+    return new QueryParamObfuscationFilter(config, valueObfuscate);
   }
 }

@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class HttpExchangeLog {
 
   // 基础信息
-  private Long id; // 自增主键
   private String correlationId; // 业务关联主键
   private LocalDateTime createdTime; // 记录创建时间
 

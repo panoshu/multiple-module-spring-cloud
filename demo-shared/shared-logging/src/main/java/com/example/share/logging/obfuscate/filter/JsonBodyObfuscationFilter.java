@@ -2,101 +2,96 @@ package com.example.share.logging.obfuscate.filter;
 
 import com.example.share.logging.obfuscate.config.ObfuscateConfig;
 import com.example.share.logging.obfuscate.config.ValidatedFieldConfig;
-import com.example.share.logging.obfuscate.strategy.ObfuscationStrategyFactory;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.example.share.logging.obfuscate.service.ValueObfuscate;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
+import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.zalando.logbook.BodyFilter;
 
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public class JsonBodyObfuscationFilter extends BaseObfuscationFilter implements BodyFilter {
+public class JsonBodyObfuscationFilter implements BodyFilter {
 
   private final Map<String, ValidatedFieldConfig> jsonPathRules;
+  private final ValueObfuscate valueObfuscate;
+  private final boolean enabled;
 
   private static final Configuration JSON_PATH_CONFIG = Configuration.builder()
-    .jsonProvider(new JacksonJsonProvider())
+    .jsonProvider(new JacksonJsonProvider()) // 使用 Jackson
     .mappingProvider(new JacksonMappingProvider())
-    .options(com.jayway.jsonpath.Option.SUPPRESS_EXCEPTIONS)
-    .options(com.jayway.jsonpath.Option.ALWAYS_RETURN_LIST)
+    .options(Option.SUPPRESS_EXCEPTIONS) // 抑制路径未找到异常
     .build();
 
-  public JsonBodyObfuscationFilter(ObfuscateConfig config,
-                                   ObfuscationStrategyFactory strategyFactory) {
-    super(config, strategyFactory);
+  public JsonBodyObfuscationFilter(ObfuscateConfig config, ValueObfuscate valueObfuscate) {
     this.jsonPathRules = config.getJsonPathRules();
-    log.debug("Initialized JSON body obfuscation with {} rules", jsonPathRules.size());
+    this.valueObfuscate = valueObfuscate;
+    this.enabled = config.getGlobalConfig().enable();
+
+    log.info("Initialized JSON Body Filter with {} rules", jsonPathRules.size());
   }
 
   @Override
   public String filter(String contentType, @Nonnull String body) {
-    if (!this.config.getGlobalConfig().enable() || !isJsonContentType(contentType) || jsonPathRules.isEmpty()) {
+    if (!enabled || !isJson(contentType) || jsonPathRules.isEmpty() || body.isBlank()) {
       return body;
     }
+
+    long startTime = System.nanoTime();
+    AtomicInteger matchCount = new AtomicInteger(0);
 
     try {
-      return obfuscateJsonBody(body);
+      DocumentContext context = JsonPath.using(JSON_PATH_CONFIG).parse(body);
+
+      for (Map.Entry<String, ValidatedFieldConfig> entry : jsonPathRules.entrySet()) {
+        String path = entry.getKey();
+        ValidatedFieldConfig fieldConfig = entry.getValue();
+
+        context.map(path, (currentValue, config) -> {
+          if (currentValue == null) return null;
+
+          // 记录命中详情 (Debug 级别)
+          if (log.isDebugEnabled()) {
+            log.debug("JsonPath matched: [{}], Strategy: [{}]", path, fieldConfig.strategy());
+          }
+          matchCount.incrementAndGet();
+
+          return valueObfuscate.obfuscate(currentValue.toString(), fieldConfig);
+        });
+      }
+
+      // 如果有修改，才进行序列化
+      if (matchCount.get() > 0) {
+        String result = context.jsonString();
+        recordPerformance(startTime, body.length(), matchCount.get());
+        return result;
+      }
+
+      return body;
+
     } catch (Exception e) {
-      log.error("Failed to obfuscate JSON body: {}", e.getMessage(), e);
+      // 记录解析失败，这通常意味着 Body 不是有效的 JSON，或者太大了
+      log.warn("JSON obfuscation skipped. Reason: {}. Body preview: {}",
+        e.getMessage(), body.substring(0, Math.min(body.length(), 100)));
       return body;
     }
   }
 
-  private String obfuscateJsonBody(String body) {
-    DocumentContext context = JsonPath.using(JSON_PATH_CONFIG).parse(body);
-    boolean modified = false;
-
-    for (Map.Entry<String, ValidatedFieldConfig> entry : jsonPathRules.entrySet()) {
-      String jsonPath = entry.getKey();
-      ValidatedFieldConfig fieldConfig = entry.getValue();
-
-      try {
-        List<?> values = context.read(jsonPath);
-        if (values != null && !values.isEmpty()) {
-          boolean pathModified = false;
-          for (int i = 0; i < values.size(); i++) {
-            Object value = values.get(i);
-            if (value != null) {
-              String original = extractStringValue(value);
-              String obfuscated = obfuscateValue(original, fieldConfig);
-              if (!original.equals(obfuscated)) {
-                context.set(jsonPath + "[" + i + "]", obfuscated);
-                pathModified = true;
-              }
-            }
-          }
-          if (pathModified) modified = true;
-        }
-      } catch (PathNotFoundException ignored) {
-        // 路径不存在，忽略
-      } catch (Exception e) {
-        log.warn("Failed to obfuscate field at path '{}': {}", jsonPath, e.getMessage());
-      }
+  private void recordPerformance(long startTime, int bodyLength, int matches) {
+    if (log.isDebugEnabled()) {
+      long duration = (System.nanoTime() - startTime) / 1000; // 微秒
+      log.debug("JSON Obfuscation completed. Matches: {}, BodySize: {} chars, Cost: {} us",
+        matches, bodyLength, duration);
     }
-
-    return modified ? context.jsonString() : body;
   }
 
-  private String extractStringValue(Object value) {
-    if (value instanceof JsonNode jsonNode) {
-      return jsonNode.isTextual() ? jsonNode.textValue() : jsonNode.toString();
-    }
-    return value.toString();
-  }
-
-  private boolean isJsonContentType(String contentType) {
-    if (contentType == null) return false;
-    String lower = contentType.toLowerCase();
-    return lower.contains("application/json") ||
-      lower.contains("text/json") ||
-      lower.contains("+json");
+  private boolean isJson(String contentType) {
+    return contentType != null && (contentType.contains("json") || contentType.contains("JSON"));
   }
 }
