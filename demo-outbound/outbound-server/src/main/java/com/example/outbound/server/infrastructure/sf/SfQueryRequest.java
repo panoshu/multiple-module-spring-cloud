@@ -1,7 +1,9 @@
 package com.example.outbound.server.infrastructure.sf;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.shared.core.model.BaseExternalRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 /**
  * SfQueryRequest
@@ -10,9 +12,10 @@ import lombok.Data;
  * @since 2025/12/14 21:30
  */
 @Data
-public class SfQueryRequest {
-  @JsonProperty("tracking_number")
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+public class SfQueryRequest extends BaseExternalRequest<SfQueryRequest> {
   private String trackingNumber;
-  @JsonProperty("phone_check")
-  private String phoneCheck;
+  private String checkPhoneNo;
+  private String customerCode;
 }

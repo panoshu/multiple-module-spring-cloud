@@ -10,5 +10,5 @@ import com.example.outbound.dto.payment.PaymentDTO;
  */
 public interface PaymentGateway {
   String executePay(PaymentOrder order);
-  PaymentDTO getPaymentDTO();
+  PaymentDTO queryMerchantInfo();
 }

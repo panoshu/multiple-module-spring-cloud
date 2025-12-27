@@ -2,21 +2,36 @@ package com.example.outbound.server.infrastructure.sf;
 
 import com.example.outbound.server.domain.logistics.*;
 import com.example.outbound.server.exception.OutboundErrorCode;
-import com.example.outbound.server.infrastructure.AbstractGateway;
 import com.example.shared.core.api.IResultCode;
 import com.example.shared.core.api.SystemCode;
+import com.example.shared.core.infrastructure.AbstractGateway;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SfGatewayAdapter extends AbstractGateway<SfQueryRequest, SfQueryResponse> implements LogisticsGateway {
 
-  private final SfRetrofitClient sfClient;
+  private final SfRetrofitClient client;
 
-  // —————— 1. 策略配置 ——————
+  // —————— 契约实现 ——————
+  @Override
+  protected boolean isSuccess(SfQueryResponse response) {
+    return response != null && "OK".equals(response.getHead());
+  }
+
+  @Override
+  protected IResultCode getSystemError() { return SystemCode.EXTERNAL_SERVICE_ERROR; }
+
+  @Override
+  protected IResultCode getDefaultBusinessError() { return OutboundErrorCode.SF_BIZ_ERROR; }
+
+  // —————— 业务接口实现 ——————
 
   @Override
   public boolean supports(String channel) {
@@ -24,73 +39,64 @@ public class SfGatewayAdapter extends AbstractGateway<SfQueryRequest, SfQueryRes
   }
 
   @Override
-  protected boolean isSuccess(SfQueryResponse response) {
-    // 顺丰逻辑：响应不空且路由列表不空即为成功
-    return response != null && response.getRoutes() != null;
-  }
+  public LogisticsInfo getLogisticsByTrackingNo(String trackingNo) {
+    return perform(
+      "SfByNo",
+      trackingNo,
+      () -> new SfQueryRequest().setTrackingNumber(trackingNo),
+      req -> client.doQuery(req.getHeaders(), req),
 
-  @Override
-  protected IResultCode getSystemError() {
-    return SystemCode.EXTERNAL_SERVICE_ERROR;
-  }
+      // 成功时的转换逻辑
+      this::convertToInfo,
 
-  @Override
-  protected IResultCode getDefaultBusinessError() {
-    // 顺丰一般没有错误码，失败通常意味着查无数据
-    return OutboundErrorCode.LOGISTICS_INFO_NOT_FOUND;
+      // [使用说明]: fallback 函数 (降级逻辑)
+      // 场景: 顺丰接口挂了，或者查不到数据，不想让前端报错，而是显示"暂无轨迹"。
+      // [触发时机]:
+      // 1. 系统异常 (网络断了、超时)
+      // 2. 业务异常 (isSuccess 返回 false, 比如顺丰返回 Head:ERR)
+      // 3. 转换异常 (convertToInfo 抛错)
+      // [参数 ex]: 原始异常对象，可用于记录日志
+      ex -> {
+        log.warn("顺丰接口调用降级, 单号: {}, 原因: {}", trackingNo, ex.getMessage());
+        // 返回一个"空"对象，保证业务不中断
+        return new LogisticsInfo("SF", LogisticsStatus.UNKNOWN, "暂无数据(降级)", CargoType.UNKNOWN, Collections.emptyList());
+      }
+    );
   }
-
-  @Override
-  protected String getDefaultErrorPattern() {
-    return "顺丰接口未返回有效路由信息: {}";
-  }
-
-  // —————— 2. 业务方法 ——————
 
   @Override
   public LogisticsInfo getLogisticsByPhone(String phone) {
-    return executeStandard(
-      "SfQueryByPhone",
-      phone,
-      () -> {
-        SfQueryRequest req = new SfQueryRequest();
-        req.setPhoneCheck(phone);
-        return req;
-      },
-      sfClient::queryRoutes,
-      resp -> toLogisticsInfo(phone, resp),
+    return queryLogistics("SfByPhone", phone,
+      () -> new SfQueryRequest().setCheckPhoneNo(phone)); // 顺丰可能有专门的手机号查询字段
+  }
 
-      // 【业务异常配置】
-      // 1. 指定错误码
-      OutboundErrorCode.LOGISTICS_INFO_NOT_FOUND,
-      // 2. 指定错误详情模板 (传递给 BusinessException.withDetail)
-      "顺丰查询无数据, 手机号: {}, 顺丰返回: {}",
-      // 3. 提取参数
-      resp -> new Object[]{ phone, resp }
+  // 私有复用方法：演示 [Perform] 带降级
+  private LogisticsInfo queryLogistics(String action, String bizId, java.util.function.Supplier<SfQueryRequest> reqFactory) {
+    return perform(
+      action,
+      bizId,
+      reqFactory,
+      // Remote Call
+      req -> client.doQuery(req.getHeaders(), req),
+      // Success Mapping
+      resp -> {
+        List<LogisticsNode> nodes = resp.getNodes() == null
+          ? Collections.emptyList()
+          : resp.getNodes();
+        return new LogisticsInfo("SF", resp.getStatus(), "查询成功", resp.getType(), nodes);
+      },
+      // Fallback (降级)
+      ex -> {
+        log.warn("顺丰查询降级: {}", ex.getMessage());
+        return new LogisticsInfo("SF", LogisticsStatus.UNKNOWN, "暂无数据(降级)", CargoType.UNKNOWN, Collections.emptyList());
+      }
     );
   }
 
-  @Override
-  public LogisticsInfo getLogisticsByTrackingNo(String trackingNo) {
-    // 【演示简单场景】
-    return executeSimple(
-      "SfQueryByNo",
-      trackingNo,
-      () -> {
-        SfQueryRequest req = new SfQueryRequest();
-        req.setTrackingNumber(trackingNo);
-        return req;
-      },
-      sfClient::queryRoutes,
-      resp -> toLogisticsInfo(trackingNo, resp)
-    );
-  }
-
-  // 私有转换方法
-  private LogisticsInfo toLogisticsInfo(String bizId, SfQueryResponse response) {
-    List<LogisticsNode> nodes = response.getRoutes().stream()
-      .map(r -> new LogisticsNode(r.getTime(), r.getRemark()))
-      .toList();
-    return new LogisticsInfo(bizId, LogisticsStatus.EXCEPTION, CargoType.FRESH, nodes);
+  private LogisticsInfo convertToInfo(SfQueryResponse resp) {
+    if (resp.getData() != null) {
+      resp.getData().stream().map(SfQueryResponse.TraceInfo::getProcessInfo).toList();
+    }
+    return new LogisticsInfo("YTO", LogisticsStatus.UNKNOWN, resp.getMessage(), CargoType.UNKNOWN, resp.getNodes());
   }
 }

@@ -27,7 +27,10 @@ public enum CargoType {
   ELECTRONICS("ELEC", "电子数码"),
 
   /** 大件货物 */
-  BULKY("BULKY", "大件物流");
+  BULKY("BULKY", "大件物流"),
+  UNKNOWN("UNKNOWN", "UNKNOWN"),
+
+  ;
 
   private final String code;
   private final String description;

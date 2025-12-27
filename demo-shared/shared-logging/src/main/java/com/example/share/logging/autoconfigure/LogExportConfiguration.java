@@ -63,7 +63,6 @@ public class LogExportConfiguration {
   }
 
   // --- 分发器 (Dispatcher) ---
-  // 关键点：将 List<LogExporter> 封装为一个 LogExporterDispatcher
   @Bean
   @ConditionalOnMissingBean
   public LogExporterDispatcher logExporterDispatcher(List<LogExporter> exporters) {

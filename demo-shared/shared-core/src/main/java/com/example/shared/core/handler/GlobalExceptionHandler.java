@@ -19,7 +19,6 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -65,20 +64,20 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Result<Void>> handleValidationException(
     MethodArgumentNotValidException ex, WebRequest request) {
 
-    List<FieldError> errors = ex.getBindingResult().getFieldErrors();
-    String validationMsg = errors.isEmpty()
-      ? "参数校验失败"
-      : errors.stream()
-      .map(error -> error.getField() + ": " + error.getDefaultMessage())
+    String traceId = getTraceId(request);
+
+    // 【优化点】规范化参数校验错误信息格式 "field: msg"
+    String errorMsg = ex.getBindingResult().getFieldErrors().stream()
+      .map(this::formatFieldError)
       .collect(Collectors.joining("; "));
 
-    String traceId = getTraceId(request);
-    String errorMsg = BusinessCode.VALIDATION_ERROR.formatMessage(validationMsg);
-    log.info("[traceId={}], {}", traceId, errorMsg);
+    // formatMessage 使用 Slf4j formatter，能正确处理 {}
+    String userMessage = BusinessCode.VALIDATION_ERROR.formatMessage(errorMsg);
 
-    return ResponseEntity.badRequest().body(
-      Result.failure(BusinessCode.VALIDATION_ERROR.getCode(), errorMsg)
-    );
+    log.info("[traceId={}] Validation Failed: {}", traceId, userMessage);
+
+    return ResponseEntity.badRequest()
+      .body(Result.failure(BusinessCode.VALIDATION_ERROR.getCode(), userMessage));
   }
 
   // ——————— 4. 其他未捕获异常（兜底） ———————
@@ -114,6 +113,10 @@ public class GlobalExceptionHandler {
         code, rawMessage, Arrays.toString(args), e);
       return rawMessage;
     }
+  }
+
+  private String formatFieldError(FieldError error) {
+    return String.format("[%s] %s", error.getField(), error.getDefaultMessage());
   }
 
   /**

@@ -2,7 +2,6 @@ package com.example.outbound.server.domain.logistics;
 
 import com.example.outbound.server.exception.OutboundErrorCode;
 import com.example.shared.core.exception.BusinessException;
-import lombok.Data;
 
 import java.util.List;
 
@@ -12,13 +11,13 @@ import java.util.List;
  * @author YourName
  * @since 2025/12/14 21:33
  */
-@Data
-public class LogisticsInfo {
-
-  private final String trackingNo;
-  private final LogisticsStatus status;
-  private final CargoType type;
-  private final List<LogisticsNode> nodes;
+public record LogisticsInfo(
+  String channel,
+  LogisticsStatus status,
+  String message,
+  CargoType type,
+  List<LogisticsNode> nodes
+) {
 
   // --- 领域行为 (Behavior) ---
 

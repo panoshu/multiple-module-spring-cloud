@@ -1,8 +1,7 @@
 package com.example.shared.core.api;
 
 import lombok.NonNull;
-
-import java.text.MessageFormat;
+import org.slf4j.helpers.MessageFormatter;
 
 /**
  * 统一状态码接口
@@ -21,7 +20,7 @@ public interface IResultCode {
     if (args == null || args.length == 0) {
       return getMessage();
     }
-    // JDK 21 推荐用 FormattedString + MessageFormat（或简单 {} 替换）
-    return MessageFormat.format(getMessage(), args);
+
+    return MessageFormatter.arrayFormat(getMessage(), args).getMessage();
   }
 }

@@ -75,17 +75,17 @@ public class LogisticsApplicationService {
 
   private LogisticsDTO toDto(LogisticsInfo info) {
     // 转换节点列表
-    List<LogisticsDTO.Node> nodeDtos = info.getNodes().stream() // 假设 Domain Entity 有 getNodes()
+    List<LogisticsDTO.Node> nodeDtos = info.nodes().stream() // 假设 Domain Entity 有 getNodes()
       .map(n -> new LogisticsDTO.Node(n.time(), n.desc()))
       .toList(); // JDK 16+ 直接用 toList()
 
     // 组装 DTO Record
     return new LogisticsDTO(
-      info.getTrackingNo(),
+      info.channel(),
 
       // 关键点：将领域枚举转换为前端可读的字符串
       // 例如：LogisticsStatus.TRANSPORTING -> "运输中" 或 "TRANSPORTING"
-      info.getStatus().name(),
+      info.status().name(),
 
       nodeDtos
     );

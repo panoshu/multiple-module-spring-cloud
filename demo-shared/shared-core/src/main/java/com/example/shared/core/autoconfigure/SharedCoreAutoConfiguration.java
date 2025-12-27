@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Import;
  * @since 2025/12/26 13:27
  */
 @AutoConfiguration
-@Import(InfrastructureConfiguration.class)
+@Import({
+  InfrastructureConfiguration.class,
+  TraceConfiguration.class
+  })
 public class SharedCoreAutoConfiguration {
 }

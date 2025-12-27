@@ -1,7 +1,9 @@
 package com.example.outbound.server.infrastructure.yt;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.shared.core.model.BaseExternalRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 /**
  * YtoRequest
@@ -10,10 +12,11 @@ import lombok.Data;
  * @since 2025/12/14 21:48
  */
 @Data
-public class YtoRequest {
-  @JsonProperty("waybill_No") // 圆通可能叫 waybill_No
-  private String waybillNo;
-
-  @JsonProperty("phone_no")
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+public class YtoRequest extends BaseExternalRequest<YtoRequest> {
+  private String waybillNo; // 运单号
   private String phoneNo;
+  private String userId;    // 圆通分配的ID
+  private String appKey;    // 密钥
 }

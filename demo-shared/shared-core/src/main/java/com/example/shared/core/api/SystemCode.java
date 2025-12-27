@@ -23,7 +23,4 @@ public enum SystemCode implements IResultCode{
   private final String code;
   private final String message;
 
-  // public String formatMessage(Object... args) {
-  //   return IResultCode.super.formatMessage(args);
-  // }
 }

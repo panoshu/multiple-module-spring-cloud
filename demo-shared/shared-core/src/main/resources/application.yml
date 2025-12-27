@@ -1,0 +1,18 @@
+shared:
+  trace:
+    enable: true
+    # 自动识别为 bizId 的字段名 (大小写敏感，反射匹配)
+    biz-id-fields:
+      - orderNo
+      - orderId
+      - bizId
+      - tradeNo
+    # 自动识别为 batchId 的字段名
+    batch-id-fields:
+      - batchNo
+      - batchId
+    # 自动识别为 jnlNo 的字段名
+    jnl-no-fields:
+      - serialNo
+      - traceNo
+      - jnlNo

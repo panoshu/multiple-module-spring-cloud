@@ -23,12 +23,12 @@ public class PaymentApplicationService {
   private final PaymentGateway paymentGateway;
 
   public PaymentDTO getPaymentDTO() {
-    return paymentGateway.getPaymentDTO();
+    return paymentGateway.queryMerchantInfo();
   }
 
   public PayResult processPayment(@NonNull PayCommand command) {
     // 1. DTO -> Domain Model
-    PaymentOrder order = new PaymentOrder(command.orderId(), command.amount());
+    PaymentOrder order = new PaymentOrder(command.orderId(), command.amount(), command.channel());
 
     // 2. 调用领域服务/网关
     // 这里可以做路由逻辑：比如根据 command.channel() 选择不同的 Gateway 实现

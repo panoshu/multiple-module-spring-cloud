@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.Serial;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -21,6 +23,26 @@ public class SystemException extends BaseException {
 
   @Serial
   private static final long serialVersionUID = 1L;
+
+  // 使用 Map 替代硬编码 Switch，支持动态注册
+  private static final Map<Class<? extends Throwable>, String> EXCEPTION_CODE_MAP = new ConcurrentHashMap<>();
+
+  static {
+    // 注册默认映射
+    registerExceptionCode(NullPointerException.class, "SYS_NPE");
+    registerExceptionCode(SQLException.class, "DB_ERROR");
+    registerExceptionCode(TimeoutException.class, "SYS_TIMEOUT");
+    registerExceptionCode(IOException.class, "IO_ERROR");
+    registerExceptionCode(IllegalArgumentException.class, "SYS_ILLEGAL_ARG");
+    registerExceptionCode(SecurityException.class, "SYS_SECURITY");
+  }
+
+  /**
+   * 开放扩展点：允许业务模块注册自定义异常对应的错误码
+   */
+  public static void registerExceptionCode(Class<? extends Throwable> exceptionClass, String code) {
+    EXCEPTION_CODE_MAP.put(exceptionClass, code);
+  }
 
   public SystemException(IResultCode resultCode) {
     super(resultCode);
@@ -58,20 +80,24 @@ public class SystemException extends BaseException {
       .toArray(String[]::new)) + " - "
       : "";
 
-    String message = prefix + originalMessage;
-    return new SystemException(code, message, cause);
+    return new SystemException(code, prefix + originalMessage, cause);
   }
 
   private static String generateCodeFromCause(Throwable cause) {
-    return switch (cause) {
-      case NullPointerException ignored -> "SYS_NPE";
-      case SQLException ignored -> "DB_ERROR";
-      case TimeoutException ignored -> "SYS_TIMEOUT";
-      case IOException ignored -> "IO_ERROR";
-      case IllegalArgumentException ignored-> "SYS_ILLEGAL_ARG";
-      case SecurityException ignored -> "SYS_SECURITY";
-      default -> "SYS_UNKNOWN";
-    };
+    if (cause == null) return "SYS_UNKNOWN";
+
+    // 1. 精确匹配
+    String code = EXCEPTION_CODE_MAP.get(cause.getClass());
+    if (code != null) return code;
+
+    // 2. 遍历继承关系匹配 (如 FileNotFoundException -> IOException)
+    for (Map.Entry<Class<? extends Throwable>, String> entry : EXCEPTION_CODE_MAP.entrySet()) {
+      if (entry.getKey().isAssignableFrom(cause.getClass())) {
+        return entry.getValue();
+      }
+    }
+
+    return "SYS_UNKNOWN";
   }
 
   // —————— 自定义错误码构造 ——————

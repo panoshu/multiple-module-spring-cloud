@@ -7,5 +7,5 @@ package com.example.outbound.server.domain.logistics;
  * @since 2025/12/14 22:03
  */
 public enum LogisticsStatus {
-  TRANSPORTING, DELIVERED, EXCEPTION
+  TRANSPORTING, DELIVERED, EXCEPTION, UNKNOWN
 }

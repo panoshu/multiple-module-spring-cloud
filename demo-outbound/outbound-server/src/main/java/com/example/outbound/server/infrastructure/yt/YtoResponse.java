@@ -1,7 +1,9 @@
 package com.example.outbound.server.infrastructure.yt;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.outbound.server.domain.logistics.LogisticsNode;
+import com.example.shared.core.model.BaseExternalResponse;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
@@ -12,16 +14,16 @@ import java.util.List;
  * @since 2025/12/14 21:48
  */
 @Data
-public class YtoResponse {
-  private String code;         // "1" 代表成功
+@EqualsAndHashCode(callSuper = true)
+public class YtoResponse extends BaseExternalResponse {
+  private String code;    // 1: 成功
   private String message;
-  private List<Trace> data;
+  private List<TraceInfo> data;
+  private List<LogisticsNode> nodes;
 
   @Data
-  public static class Trace {
-    @JsonProperty("upload_time")
+  public static class TraceInfo {
     private String uploadTime;
-    @JsonProperty("process_info")
     private String processInfo;
   }
 }

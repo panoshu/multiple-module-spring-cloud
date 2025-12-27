@@ -1,26 +1,37 @@
 package com.example.outbound.server.infrastructure.yt;
 
-import com.example.outbound.server.domain.logistics.*;
+import com.example.outbound.server.domain.logistics.CargoType;
+import com.example.outbound.server.domain.logistics.LogisticsGateway;
+import com.example.outbound.server.domain.logistics.LogisticsInfo;
+import com.example.outbound.server.domain.logistics.LogisticsStatus;
 import com.example.outbound.server.exception.OutboundErrorCode;
-import com.example.outbound.server.infrastructure.AbstractGateway;
 import com.example.shared.core.api.IResultCode;
 import com.example.shared.core.api.SystemCode;
+import com.example.shared.core.infrastructure.AbstractGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class YtoGatewayAdapter extends AbstractGateway<YtoRequest, YtoResponse> implements LogisticsGateway {
 
-  private final YtoRetrofitClient ytoClient;
+  private final YtoRetrofitClient client;
 
-  // —————— 1. 策略配置 ——————
+  // —————— 契约实现 ——————
+  @Override
+  protected boolean isSuccess(YtoResponse response) {
+    return response != null && "1".equals(response.getCode());
+  }
+
+  @Override
+  protected IResultCode getSystemError() { return SystemCode.EXTERNAL_SERVICE_ERROR; }
+
+  @Override
+  protected IResultCode getDefaultBusinessError() { return OutboundErrorCode.YT_BIZ_ERROR; }
+
+  // —————— 业务接口实现 ——————
 
   @Override
   public boolean supports(String channel) {
@@ -28,83 +39,44 @@ public class YtoGatewayAdapter extends AbstractGateway<YtoRequest, YtoResponse> 
   }
 
   @Override
-  protected boolean isSuccess(YtoResponse response) {
-    return "1".equals(response.getCode());
-  }
+  public LogisticsInfo getLogisticsByTrackingNo(String trackingNo) {
+    // [使用说明]: perform 是最简易的调用方式
+    // 场景: 当你不需要处理降级，希望上层业务感知到异常时使用。
+    return perform(
+      "YtoByNo",      // Action Name: 用于日志标记
+      trackingNo,     // Biz ID: 用于全链路追踪
 
-  @Override
-  protected IResultCode getSystemError() {
-    return SystemCode.EXTERNAL_SERVICE_ERROR;
-  }
+      // 1. 请求工厂: 构建请求体，可在此处通过 .addHeader() 注入额外头信息
+      () -> new YtoRequest().setWaybillNo(trackingNo).setUserId("GUEST"),
 
-  @Override
-  protected IResultCode getDefaultBusinessError() {
-    return SystemCode.EXTERNAL_SERVICE_ERROR;
-  }
+      // 2. 远程调用: 执行 Retrofit 接口
+      // [系统异常]: 如果网络超时、DNS失败，ExternalCallTemplate 会捕获并包装为 SystemException
+      client::queryTrace,
 
-  // 【定制点】：圆通有明确的 code 和 msg，我们在配置层定义好提取规则
-  // 这样下面的业务方法直接调 executeSimple 就能自动打出漂亮的日志
-  @Override
-  protected String getDefaultErrorPattern() {
-    return "圆通接口业务失败: code={}, msg={}";
+      // 3. 结果转换: 仅当 isSuccess() 返回 true 时执行
+      // [业务异常]: 如果 isSuccess() 返回 false，ExternalCallTemplate 会抛出 BusinessException，此处逻辑不会执行
+      this::convertToInfo
+    );
+    // [异常总结]: 此方法未配置 fallback。
+    // - 遇到网络问题 -> 抛出 SystemException (上层 GlobalExceptionHandler 捕获处理)
+    // - 遇到圆通报错 -> 抛出 BusinessException (上层捕获处理)
   }
-
-  @Override
-  protected Object[] extractDefaultErrorArgs(YtoResponse response) {
-    return new Object[]{ response.getCode(), response.getMessage() };
-  }
-
-  // —————— 2. 业务方法 ——————
 
   @Override
   public LogisticsInfo getLogisticsByPhone(String phone) {
-    return executeSimple(
-      "YtoQueryByPhone",
+    return perform(
+      "YtoByPhone",
       phone,
-      () -> {
-        YtoRequest req = new YtoRequest();
-        req.setPhoneNo(phone);
-        return req;
-      },
-      ytoClient::queryTrace,
-      resp -> toLogisticsInfo(phone, resp)
+      () -> new YtoRequest().setPhoneNo(phone).setUserId("GUEST"),
+      client::queryTrace,
+      this::convertToInfo
     );
   }
 
-  @Override
-  public LogisticsInfo getLogisticsByTrackingNo(String trackingNo) {
-    return executeStandard(
-      "YtoQueryByNo",
-      trackingNo,
-      () -> {
-        YtoRequest req = new YtoRequest();
-        req.setWaybillNo(trackingNo);
-        return req;
-      },
-      ytoClient::queryTrace,
-      resp -> toLogisticsInfo(trackingNo, resp),
-
-      // 1. 业务异常：指定为 "查询失败"
-      OutboundErrorCode.LOGISTICS_QUERY_FAILED,
-      "圆通业务报错: code={}, msg={}",
-      resp -> new Object[]{ resp.getCode(), resp.getMessage() },
-
-      // 2. 系统异常：额外记录运单号，方便运维直接看日志定位
-      "圆通接口网络异常, 运单号: {}, 请联系圆通技术支持",
-      req -> new Object[]{ req.getWaybillNo() }
-    );
-  }
-
-  // 私有转换方法
-  private LogisticsInfo toLogisticsInfo(String bizId, YtoResponse response) {
-    if (response.getData() == null) {
-      return new LogisticsInfo(bizId, LogisticsStatus.EXCEPTION, CargoType.FRESH, Collections.emptyList());
+  private LogisticsInfo convertToInfo(YtoResponse resp) {
+    if (resp.getData() != null) {
+      resp.getData().stream().map(YtoResponse.TraceInfo::getProcessInfo).toList();
     }
-
-    List<LogisticsNode> nodes = response.getData().stream()
-      .map(t -> new LogisticsNode(t.getUploadTime(), t.getProcessInfo()))
-      .collect(Collectors.toList());
-
-    return new LogisticsInfo(bizId, LogisticsStatus.EXCEPTION, CargoType.FRESH, nodes);
+    return new LogisticsInfo("YTO", LogisticsStatus.UNKNOWN, resp.getMessage(), CargoType.UNKNOWN, resp.getNodes());
   }
 }
