@@ -1,7 +1,7 @@
 spring:
   # ============ H2 数据库配置 ============
   datasource:
-    url: jdbc:postgresql://127.0.0.1:15432/zorn-flow
+    url: jdbc:postgresql://127.0.0.1:15432/zorn-flow?currentSchema=engine&timezone=Asia/Shanghai
     username: engine_user
     password: engine_user
     driver-class-name: org.postgresql.Driver
@@ -46,6 +46,8 @@ logbook:
       - path: /h2-console/**
   database:
     enable: true
+  file:
+    enable: true
   obfuscate:
     global:
       enable: true
@@ -53,6 +55,12 @@ logbook:
       enable-wildcard-paths: true
 
     fields:
+      name:
+        aliases:
+        strategy: KEEP_FIRST_LAST
+        params:
+          show-prefix: 1
+          show-suffix: 1
       password:
         aliases:
           - $.password
@@ -140,5 +148,6 @@ logbook:
 logging:
   level:
     root: INFO
-    com.example: DEBUG
+    com.example: INFO
     org.zalando.logbook: TRACE
+    com.example.share.logging.writer.impl.com.example.share.logging.writer.impl.FileLogExporter: INFO
