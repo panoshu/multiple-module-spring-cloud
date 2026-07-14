@@ -1,0 +1,9 @@
+package com.example.file.infrastructure.mapper;
+
+import com.example.file.infrastructure.entity.FileRecord;
+import com.mybatisflex.core.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface FileRecordMapper extends BaseMapper<FileRecord> {
+}

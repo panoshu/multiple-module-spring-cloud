@@ -1,0 +1,42 @@
+# sofa registry settings
+spring:
+  cloud:
+    nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
+    gateway.server.webflux:
+      discovery.locator:
+        enabled: true
+        lower-case-service-id: true
+      routes:
+        - id: consumer-service-route
+          uri: lb://consumer
+          predicates:
+            - Path=/consumer/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, demo-gateway
+        - id: integration-service-route
+          uri: lb://integration
+          predicates:
+            - Path=/integration/**
+          filters:
+            - StripPrefix=1
+
+gateway:
+  exclude-routes:
+    default-status: 403
+    rules:
+      - path: /aaa/**
+        methods: [ GET, POST ]
+        status: 404
+      - path: /internal/**
+
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    org.springframework: ERROR
+    org.springframework.cloud: ERROR
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web: INFO
+    reactor.netty.http.client: INFO
+    reactor.netty.http.server.AccessLog: INFO

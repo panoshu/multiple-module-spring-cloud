@@ -1,0 +1,18 @@
+# sofa registry settings
+spring:
+  cloud:
+    gateway.server.webflux:
+    routes:
+      - id: web
+        uri: lb://mweb
+        predicates:
+          - Method=POST
+          - Path=/web/**
+
+
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    com.alipay.cloud: INFO
+    org.springframework.cloud.gateway: INFO

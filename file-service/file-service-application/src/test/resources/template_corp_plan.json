@@ -1,0 +1,250 @@
+{
+  "templateId": "CORP_PLAN_V1",
+  "businessType": "CORP",
+  "inboundRule": {
+    "headerZone": {
+      "endRow": 2,
+      "fields": [
+        {
+          "cell": "B1",
+          "jsonPath": "$.header.planNo",
+          "type": "STRONG"
+        },
+        {
+          "cell": "D1",
+          "jsonPath": "$.header.planName",
+          "type": "STRONG"
+        },
+        {
+          "cell": "B2",
+          "jsonPath": "$.header.clientNo",
+          "type": "STRONG"
+        },
+        {
+          "cell": "D2",
+          "jsonPath": "$.header.clientName",
+          "type": "STRONG"
+        }
+      ]
+    },
+    "detailZone": {
+      "startRow": 8,
+      "endRowMarker": "====明细结束====",
+      "uniqueKeys": [
+        "name",
+        "idType",
+        "idNo"
+      ],
+      "fields": [
+        {
+          "col": "A",
+          "jsonPath": "$.details[*].seq",
+          "type": "STRONG"
+        },
+        {
+          "col": "B",
+          "jsonPath": "$.details[*].name",
+          "type": "STRONG"
+        },
+        {
+          "col": "C",
+          "jsonPath": "$.details[*].idType",
+          "type": "STRONG"
+        },
+        {
+          "col": "D",
+          "jsonPath": "$.details[*].idNo",
+          "type": "STRONG"
+        },
+        {
+          "col": "E",
+          "jsonPath": "$.details[*].idExpiry",
+          "type": "STRONG"
+        },
+        {
+          "col": "F",
+          "jsonPath": "$.details[*].empNo",
+          "type": "STRONG"
+        },
+        {
+          "col": "G",
+          "jsonPath": "$.details[*].gender",
+          "type": "STRONG"
+        },
+        {
+          "col": "H",
+          "jsonPath": "$.details[*].birthday",
+          "type": "STRONG"
+        },
+        {
+          "col": "I",
+          "jsonPath": "$.details[*].branchNo",
+          "type": "STRONG"
+        },
+        {
+          "col": "J",
+          "jsonPath": "$.details[*].salary",
+          "type": "STRONG"
+        },
+        {
+          "col": "K",
+          "jsonPath": "$.details[*].empCategory",
+          "type": "STRONG"
+        },
+        {
+          "col": "L",
+          "jsonPath": "$.details[*].workDate",
+          "type": "STRONG"
+        },
+        {
+          "col": "M",
+          "jsonPath": "$.details[*].joinDate",
+          "type": "STRONG"
+        }
+      ],
+      "dynamicFields": {
+        "startCol": "N",
+        "jsonPath": "$.details[*].attributes"
+      }
+    }
+  },
+  "outboundRule": {
+    "staticTexts": [
+      {
+        "cell": "A1",
+        "text": "企业计划编号："
+      },
+      {
+        "cell": "C1",
+        "text": "企业计划名称："
+      },
+      {
+        "cell": "A2",
+        "text": "企业客户号："
+      },
+      {
+        "cell": "C2",
+        "text": "企业客户名称："
+      },
+      {
+        "cell": "A6",
+        "text": "==== 以下为系统导出明细 ===="
+      }
+    ],
+    "headerZone": {
+      "endRow": 3,
+      "fields": [
+        {
+          "cell": "B1",
+          "jsonPath": "$.header.planNo",
+          "type": "STRONG"
+        },
+        {
+          "cell": "D1",
+          "jsonPath": "$.header.planName",
+          "type": "STRONG"
+        },
+        {
+          "cell": "B2",
+          "jsonPath": "$.header.clientNo",
+          "type": "STRONG"
+        },
+        {
+          "cell": "D2",
+          "jsonPath": "$.header.clientName",
+          "type": "STRONG"
+        }
+      ]
+    },
+    "detailZone": {
+      "startRow": 8,
+      "fields": [
+        {
+          "col": "A",
+          "jsonPath": "$.details[*].seq",
+          "type": "STRONG",
+          "exportTitle": "序号*"
+        },
+        {
+          "col": "B",
+          "jsonPath": "$.details[*].name",
+          "type": "STRONG",
+          "exportTitle": "个人姓名*"
+        },
+        {
+          "col": "C",
+          "jsonPath": "$.details[*].idType",
+          "type": "STRONG",
+          "exportTitle": "证件类型*"
+        },
+        {
+          "col": "D",
+          "jsonPath": "$.details[*].idNo",
+          "type": "STRONG",
+          "exportTitle": "证件编号*"
+        },
+        {
+          "col": "E",
+          "jsonPath": "$.details[*].idExpiry",
+          "type": "STRONG",
+          "exportTitle": "有效期截止日"
+        },
+        {
+          "col": "F",
+          "jsonPath": "$.details[*].empNo",
+          "type": "STRONG",
+          "exportTitle": "工号"
+        },
+        {
+          "col": "G",
+          "jsonPath": "$.details[*].gender",
+          "type": "STRONG",
+          "exportTitle": "性别*"
+        },
+        {
+          "col": "H",
+          "jsonPath": "$.details[*].birthday",
+          "type": "STRONG",
+          "exportTitle": "出生日期*"
+        },
+        {
+          "col": "I",
+          "jsonPath": "$.details[*].branchNo",
+          "type": "STRONG",
+          "exportTitle": "分支机构"
+        },
+        {
+          "col": "J",
+          "jsonPath": "$.details[*].salary",
+          "type": "STRONG",
+          "exportTitle": "上年度工资"
+        },
+        {
+          "col": "K",
+          "jsonPath": "$.details[*].empCategory",
+          "type": "STRONG",
+          "exportTitle": "员工类别"
+        },
+        {
+          "col": "L",
+          "jsonPath": "$.details[*].workDate",
+          "type": "STRONG",
+          "exportTitle": "参加工作日期"
+        },
+        {
+          "col": "M",
+          "jsonPath": "$.details[*].joinDate",
+          "type": "STRONG",
+          "exportTitle": "参加本公司日期"
+        },
+        {
+          "col": "N",
+          "jsonPath": "$.details[*].sysStatus",
+          "type": "STRONG",
+          "exportTitle": "系统状态"
+        }
+      ]
+    }
+  },
+  "jsonSchema": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"header\":{\"type\":\"object\"},\"details\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"salary\":{\"type\":\"number\"}},\"required\":[\"name\",\"idType\",\"idNo\",\"gender\"]}}}}"
+}

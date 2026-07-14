@@ -1,0 +1,70 @@
+{
+  "templateId": "CORP_PLAN_OUT_STD_V1",
+  "outboundRule": {
+    "staticTexts": [
+      {
+        "cell": "A1",
+        "text": "企业计划编号："
+      },
+      {
+        "cell": "C1",
+        "text": "企业计划名称："
+      },
+      {
+        "cell": "A2",
+        "text": "企业客户号："
+      },
+      {
+        "cell": "C2",
+        "text": "企业客户名称："
+      },
+      {
+        "cell": "A6",
+        "text": "基本信息"
+      }
+    ],
+    "headerZone": {
+      "endRow": 3,
+      "fields": [
+        {
+          "cell": "B1",
+          "jsonPath": "$.header.planNo",
+          "type": "STRONG"
+        },
+        {
+          "cell": "D1",
+          "jsonPath": "$.header.planName",
+          "type": "STRONG"
+        }
+      ]
+    },
+    "detailZone": {
+      "startRow": 8,
+      "fieldIdRow": 5,
+      "titleRow": 7,
+      "fields": [
+        {
+          "col": "A",
+          "jsonPath": "$.details[*].seq",
+          "type": "STRONG",
+          "fieldId": "XH",
+          "exportTitle": "序号*"
+        },
+        {
+          "col": "B",
+          "jsonPath": "$.details[*].name",
+          "type": "STRONG",
+          "fieldId": "XM",
+          "exportTitle": "个人姓名*"
+        },
+        {
+          "col": "C",
+          "jsonPath": "$.details[*].idType",
+          "type": "STRONG",
+          "fieldId": "ZJLX",
+          "exportTitle": "证件类型*"
+        }
+      ]
+    }
+  }
+}

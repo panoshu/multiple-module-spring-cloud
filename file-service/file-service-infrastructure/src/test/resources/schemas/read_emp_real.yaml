@@ -1,0 +1,80 @@
+schemaId: "read_emp_real"
+bizType: "EMPLOYEE_ONBOARDING"
+type: "READ"
+regions:
+  # 🟢 第一区：离散的主体信息 (默认从物理第 1 行开始向下流)
+  - regionId: "header_info"
+    type: "DISCRETE"
+    rows: 4 # 明确该区域占用 4 行高度
+    fields:
+      - jsonKey: "planNumber"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "REGION_RELATIVE"
+          row: 1
+          col: 2 # 对应 B 列
+      - jsonKey: "planName"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "REGION_RELATIVE"
+          row: 1
+          col: 4 # 对应 D 列
+      - jsonKey: "customerNumber"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "REGION_RELATIVE"
+          row: 2
+          col: 2
+      - jsonKey: "customerName"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "REGION_RELATIVE"
+          row: 2
+          col: 4
+
+  # 🟢 第二区：横表明细 (接在第一区后面，即从物理第 5 行开始)
+  - regionId: "detail_table"
+    type: "HORIZONTAL_TABLE"
+    tableMeta:
+      idRowIndex: 1       # 相对于本区域：第 1 行是 ID 头 (原绝对行 5)
+      nameRowIndex: 3     # 相对于本区域：第 3 行是中文头 (原绝对行 7)
+      dataStartRow: 4     # 相对于本区域：第 4 行开始数据 (原绝对行 8)
+      dataStartCol: 1     # 从第一列 (A列) 开始提取
+      endMarker: "如果在提交表单时本行以上部分存在空行" # 边界截断标识
+      allowDynamicFields: true
+      dynamicFieldPolicy: "AUTO_APPEND"
+      dynamicFieldInternalIdPrefix: "DYN_"
+    fields:
+      - jsonKey: "empName"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "HEADER_MATCH"
+          matchId: "XM"
+          matchName: "个人姓名*"
+      - jsonKey: "idCard"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "HEADER_MATCH"
+          matchId: "ZJHM"
+          matchName: "证件编号*"
+      - jsonKey: "gender"
+        fieldType: "DATA_FIELD"
+        dataType: "STRING"
+        locator:
+          strategy: "HEADER_MATCH"
+          matchId: "XB"
+          matchName: "性别*"
+      - jsonKey: "birthDate"
+        fieldType: "DATA_FIELD"
+        dataType: "DATE"
+        format: "yyyy-MM-dd"
+        locator:
+          strategy: "HEADER_MATCH"
+          matchId: "CSRQ"
+          matchName: "出生日期*"

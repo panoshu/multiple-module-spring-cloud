@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="author" th:content="${pdfMeta.author}"/>
+  <meta name="keywords" th:content="${pdfMeta.keywords}"/>
+  <meta name="subject" th:content="${pdfMeta.subject}"/>
+
+  <title th:text="${pdfMeta.title} ?: '函件预览'">银行函件</title>
+  <style>
+    /* ================== 金融函件专用样式 ================== */
+    @page {
+      size: A4;
+      margin: 30mm 20mm 25mm 20mm;
+      @top-center {
+        content: element(headerHtml);
+      }
+      @bottom-center {
+        content: element(footerHtml);
+      }
+    }
+
+    body {
+      font-family: 'SimSun', serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+    }
+
+    /* 1. 页眉 (Logo + 品牌) */
+    .fin-header {
+      position: running(headerHtml);
+      width: 100%;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+      display: table; /* PDFBox 不支持 Flex，用 Table 布局 */
+    }
+
+    .header-left {
+      display: table-cell;
+      vertical-align: bottom;
+    }
+
+    .header-right {
+      display: table-cell;
+      vertical-align: bottom;
+      text-align: right;
+      font-size: 12px;
+      color: #666;
+    }
+
+    /* 2. 业务样式 */
+    .salutation {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .content-para {
+      text-indent: 2em;
+      margin-bottom: 10px;
+      text-align: justify;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: #000;
+    }
+
+    .seal-box {
+      margin-top: 50px;
+      text-align: right;
+      position: relative;
+      padding-right: 20px;
+    }
+
+    .seal-img {
+      position: absolute;
+      right: 0;
+      top: -40px;
+      width: 120px;
+      z-index: -1;
+    }
+
+    /* 3. 页脚 */
+    .fin-footer {
+      position: running(footerHtml);
+      width: 100%;
+      border-top: 1px solid #ccc;
+      padding-top: 5px;
+      font-size: 10px;
+      color: #999;
+      text-align: center;
+    }
+
+    .page-num::before {
+      content: counter(page);
+    }
+  </style>
+</head>
+<body>
+
+<div class="fin-header">
+  <div class="header-left">
+    <img src="images/logo.png" style="height: 30px; vertical-align: middle;"/>
+    <span style="font-weight: bold; font-size: 16px; margin-left: 10px; vertical-align: middle;">XX 银行</span>
+  </div>
+  <div class="header-right">
+    股票代码: 000001<br/>
+    全国服务热线: 955XX
+  </div>
+</div>
+
+<div class="salutation">
+  尊敬的 <span th:text="${customerName}">张三</span> 先生/女士：
+</div>
+
+<div class="content-para">
+  您好！感谢您选择我行的理财服务。
+</div>
+<div class="content-para">
+  您名下的账户（尾号 <span class="highlight" th:text="${accountNo}">8888</span>）近期完成了一次风险评估。
+  评估结果显示您的风险承受能力等级为：<strong style="font-size: 15px;" th:text="${riskLevel}">稳健型</strong>。
+</div>
+<div class="content-para">
+  特此函告。如您有任何疑问，请咨询您的专属理财经理。
+</div>
+
+<div class="seal-box">
+  <img class="seal-img" src="images/seal.png"/>
+  <div>XX 银行运营中心</div>
+  <div th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">2026-01-24</div>
+</div>
+
+<div class="fin-footer">
+  本函件由系统自动生成，无需人工签章 | 第 <span class="page-num"></span> 页
+</div>
+
+</body>
+</html>

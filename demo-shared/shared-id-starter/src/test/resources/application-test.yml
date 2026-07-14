@@ -1,0 +1,8 @@
+shared:
+  id:
+    rules:
+      # 业务类型 : 物理数据库Key
+      VIP_ORDER: GLOBAL_ORDER_SEQ
+      NORMAL_ORDER: GLOBAL_ORDER_SEQ
+      # 即使代码传的是 "MY_LOAN"，实际去库里查 "LOAN_SEQ_V2"
+      MY_LOAN: LOAN_SEQ_V2

@@ -1,0 +1,50 @@
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+  port: 18090
+
+spring:
+  application:
+    name: integration
+  threads:
+    virtual:
+      enabled: true
+  profiles:
+    include: local
+
+trace:
+  context:
+    mapping:
+      # key(别名) : value(真实Header)
+      OrderId: X-Order-Id
+      UserId: X-User-Id
+      BizId: X-Biz-Id
+      BatchId: X-Batch-Id
+
+retrofit:
+  # 全局超时时间配置
+  global-timeout:
+    # 全局读取超时时间
+    read-timeout-ms: 3000
+    # 全局写入超时时间
+    write-timeout-ms: 3000
+    # 全局连接超时时间
+    connect-timeout-ms: 1000
+    # 全局完整调用超时时间
+    call-timeout-ms: 0
+  enable-error-decoder: true
+
+shared:
+  cache:
+    mode: L1_ONLY
+
+logging:
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30

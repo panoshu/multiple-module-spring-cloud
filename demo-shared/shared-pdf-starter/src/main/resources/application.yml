@@ -1,0 +1,16 @@
+shared:
+  pdf:
+    template-prefix: "classpath:/pdf-resource/templates/"
+    base-uri: "classpath:/pdf-resource/static/"
+    fonts:
+      - family-name: "SimHei"
+        path: "file:/C:/Windows/Fonts/SimHei.ttf"
+      - family-name: "SimSun"
+        path: "file:/C:/Program Files/Microsoft Office/root/vfs/Fonts/private/STSONG.TTF"
+      - family-name: Arial
+        path: "file:/C:/Windows/Fonts/ariali.ttf"
+    default-metadata:
+      author: demo-author
+      creator: demo-creator
+      keywords: demo, setting, keywords
+      subject: demo-subject

@@ -1,0 +1,17 @@
+schemaId: "employee_write_template"
+bizType: "EMPLOYEE_ONBOARDING"
+type: "WRITE"
+renderMode: "TEMPLATE"
+regions:
+  - id: "template_fill_region"
+    type: "HORIZONTAL_TABLE"
+    tableMeta:
+      dataStartRow: 8
+    fields:
+      # 在模板中通过锚点精准定位列索引
+      - jsonKey: "xh"
+        locator: { type: "COLUMN_MATCH", matchName: "XH" }
+      - jsonKey: "xm"
+        locator: { type: "COLUMN_MATCH", matchName: "姓名" }
+      - jsonKey: "ext_info.CJJHRQ"
+        locator: { type: "COLUMN_MATCH", matchName: "参加计划日期" }

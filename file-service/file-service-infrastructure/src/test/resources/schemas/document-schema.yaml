@@ -1,0 +1,46 @@
+schemaId: "employee_read_v1"
+bizType: "EMPLOYEE_ONBOARDING"
+type: "READ"
+deduplication:
+  enabled: true
+  uniqueKeys: [ "xh", "zjhm" ]
+
+regions:
+  # 离散区：读取企业主体信息
+  - id: "header_region"
+    type: "DISCRETE"
+    boundary: A1:D2
+    fields:
+      - jsonKey: "planNo"
+        locator: { type: "ANCHOR_RELATIVE", anchorText: "企业计划编号：", direction: "RIGHT", offset: 1 }
+      - jsonKey: "clientNo"
+        locator: { type: "ANCHOR_RELATIVE", anchorText: "企业客户号：", direction: "RIGHT", offset: 1 }
+
+  # 明细区：读取员工信息，并开启弱类型列采集
+  - id: "detail_region"
+    type: "HORIZONTAL_TABLE"
+    boundary: { startRow: 5, endRow: 1000 }
+    tableMeta:
+      idRowIndex: 5
+      nameRowIndex: 7
+      dataStartRow: 8
+      allowDynamicColumns: true
+      dynamicFieldsKey: "ext"
+      endMarker: "EOF"
+    fields:
+      - jsonKey: "xh"
+        label: "序号"
+        type: "NORMAL"
+        required: true
+        locator: { type: "COLUMN_MATCH", matchName: "XH" }
+      - jsonKey: "xm"
+        label: "姓名"
+        type: "NORMAL"
+        required: true
+        locator: { type: "COLUMN_MATCH", matchName: "XM" }
+      - jsonKey: "zjhm"
+        label: "证件号码"
+        type: "NORMAL"
+        required: true
+        locator: { type: "COLUMN_MATCH", matchName: "ZJHM" }
+        rules: [ { type: "REGEX", pattern: "^[0-9xX]{18}$", errorMessage: "证件号码格式不正确" } ]

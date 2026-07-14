@@ -1,0 +1,49 @@
+schemaId: "employee_write_scratch"
+bizType: "EMPLOYEE_ONBOARDING"
+type: "WRITE"
+renderMode: "SCRATCH"
+
+regions:
+  # 1. 主体信息区域 (DISCRETE)
+  - id: "header_write_region"
+    type: "DISCRETE"
+    staticElements:
+      # 企业计划信息
+      - cell: { row: 0, col: 0 }
+        text: "企业计划编号："
+      - cell: { row: 0, col: 1 }
+        text: "${planNo}" # 动态占位符，由应用层传入上下文替换
+      - cell: { row: 0, col: 2 }
+        text: "企业计划名称："
+      - cell: { row: 0, col: 3 }
+        text: "${planName}"
+
+      # 企业客户信息
+      - cell: { row: 1, col: 0 }
+        text: "企业客户号："
+      - cell: { row: 1, col: 1 }
+        text: "${clientNo}"
+      - cell: { row: 1, col: 2 }
+        text: "企业客户名称："
+      - cell: { row: 1, col: 3 }
+        text: "${clientName}"
+
+  # 2. 明细数据区域 (HORIZONTAL_TABLE)
+  - id: "detail_scratch_region"
+    type: "HORIZONTAL_TABLE"
+    tableMeta:
+      dataStartRow: 5 # 主体信息占用了2行，表头在第5行，数据从第6行开始
+    staticElements:
+      - cell: { row: 4, col: 0 }
+        text: "序号"
+      - cell: { row: 4, col: 1 }
+        text: "姓名"
+      - cell: { row: 4, col: 2 }
+        text: "参加计划日期"
+    fields:
+      - jsonKey: "xh"
+        staticHeaderName: "序号"
+      - jsonKey: "xm"
+        staticHeaderName: "姓名"
+      - jsonKey: "ext_info.CJJHRQ"
+        staticHeaderName: "参加计划日期"

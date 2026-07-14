@@ -1,0 +1,136 @@
+spring:
+  cloud:
+    nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:55432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
+    username: user_demo
+    password: passwd_demo
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+shared:
+  logging:
+    database:
+      enable: true
+    file:
+      enable: true
+    timing:
+      enable: true
+    obfuscate:
+      global:
+        enable: true
+        replacement: "***"
+        enable-wildcard-paths: true
+
+      fields:
+        password:
+          aliases:
+            - $.password
+            - $.user.credentials.password
+            - $.data.personalInfo.authentication.passwd
+            - $.users[*].credentials.password
+            - $..password
+            - header.authorization
+            - header.auth-token
+            - query.password
+            - query.pwd
+          strategy: PARTIAL_HIDE
+          replacement: "******"
+          params:
+            show-prefix: 3
+            show-suffix: 4
+
+        phone:
+          aliases:
+            - $.phone
+            - $.mobile
+            - $.contact.phoneNumber
+            - $.users[*].contact.phone
+            - $..phone
+            - $..mobile
+            - header.x-phone
+            - query.phone
+            - query.mobile
+          strategy: KEEP_FIRST_LAST
+          params:
+            show-prefix: 3
+            show-suffix: 4
+
+        email:
+          aliases:
+            - $.email
+            - $.user.email
+            - $.contact.email
+            - $..email
+            - header.x-email
+            - query.email
+          strategy: PARTIAL_HIDE
+          params:
+            show-prefix: 3
+            show-suffix: 3
+
+        creditCard:
+          aliases:
+            - $.creditCard
+            - $.cardNumber
+            - $.payment.card
+            - $..creditCard
+            - $..cardNumber
+          strategy: PATTERN_REGEX
+          params:
+            pattern: "\\b\\d{4}[ -]?\\d{4}[ -]?\\d{4}[ -]?\\d{4}\\b"
+            replacement: "****-****-****-****"
+
+        token:
+          aliases:
+            - $.token
+            - $.accessToken
+            - $.refreshToken
+            - $..token
+            - header.x-api-key
+            - header.x-auth-token
+            - header.authorization
+          strategy: HASH_SHA256
+
+      strategies:
+        PARTIAL_HIDE:
+          params:
+            show-prefix: 3
+            show-suffix: 3
+        KEEP_FIRST_LAST:
+          params:
+            show-prefix: 1
+            show-suffix: 1
+        PATTERN_REGEX:
+          params:
+            replacement: "***"
+        FULL: { }
+        HASH_SHA256: { }
+
+logbook:
+  filter:
+    enabled: true
+  predicate:
+    include:
+      - path: /api/**
+        methods:
+          - GET
+          - POST
+      - path: /actuator/**
+    exclude:
+      - path: /h2-console/**
+
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    com.example.shared.web.trace: INFO
+    org.zalando.logbook: TRACE
+    com.alibaba.nacos: ERROR
+    com.alibaba.cloud.nacos: ERROR
+    com.example.share.logging.writer.impl.com.example.share.logging.writer.impl.FileLogExporter: INFO

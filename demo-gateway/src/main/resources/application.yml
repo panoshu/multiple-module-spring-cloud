@@ -1,0 +1,73 @@
+server:
+  port: 18080
+
+spring:
+  application:
+    name: gateway
+  threads:
+    virtual:
+      enabled: true # JDK 21 虚拟线程开启
+  profiles:
+    include: local
+
+  cloud:
+    gateway.server.webflux:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 600000
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 允许的前端来源 —— 精准白名单
+            allowed-origins:
+              - "https://com.example"
+            # 支持通配模式 localhost 任意端口
+            allowed-origin-patterns:
+              - "http://localhost:*"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            # 允许的请求头
+            allowed-headers:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Tenant-Id"
+              - "X-Requested-With"
+            # 前端可读取的响应头
+            exposed-headers:
+              - "X-Trace-Id"
+              - "X-Request-Id"
+            # 是否允许 Cookie / JWT
+            allow-credentials: true
+            # 预检缓存时间
+            max-age: 3600
+
+#纯本地调试
+#    sofa.discovery.enabled: false
+#    discovery:
+#      client.simple.instances:
+#        test-svc:
+#          - instanceId: test-svc-1
+#            uri: http://localhost:31001
+#            secure: false
+#            metadata:
+#              version: v1
+#              region: dev
+#          - instanceId: test-svc-2
+#            host: localhost
+#            port: 31002
+#            secure: true
+#            metadata:
+#              version: v2
+#              region: staging
+
+logging:
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30

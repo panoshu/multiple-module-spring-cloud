@@ -1,0 +1,24 @@
+server:
+  # NATIVE: 使用底层容器(Tomcat/Undertow)的原生支持
+  # FRAMEWORK: 使用 Spring 的 ForwardedHeaderFilter (推荐，通用性强)
+  forward-headers-strategy: FRAMEWORK
+
+
+trace:
+  context:
+    mapping:
+      # key(别名) : value(真实Header)
+      order_id: x-order-id
+      user_id: x-user-id
+
+      # 如果没有别名，key 和 value 写一样的即可，或者代码逻辑支持只配置别名
+      # 但为了明确语义，建议总是配置映射
+      trace_id: x-trace-id
+
+# Micrometer 的原生配置不能省，要告诉框架哪些字段需要全链路传播
+management:
+  tracing:
+    baggage:
+      remote-fields: x-biz-id, x-order-id, x-user-id
+      correlation:
+        fields: x-biz-id, x-order-id, x-user-id
