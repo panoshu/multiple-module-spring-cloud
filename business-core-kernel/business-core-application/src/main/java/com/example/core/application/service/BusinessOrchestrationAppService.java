@@ -2,12 +2,12 @@ package com.example.core.application.service;
 
 import com.example.core.application.pipeline.StepPipelineExecutor;
 import com.example.core.domain.gateway.BusinessConfigGateway;
-import com.example.core.domain.aggregateroot.BusinessApplication;
-import com.example.core.domain.vauleobject.BusinessMetaContext;
-import com.example.core.domain.vauleobject.PipelineExecutionResult;
-import com.example.core.domain.vauleobject.enums.status.StepExecutionStatus;
-import com.example.core.domain.vauleobject.config.ExtractorConfig;
-import com.example.core.domain.vauleobject.config.StepRouteConfig;
+import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.vauleobject.PipelineExecutionResult;
+import com.example.core.domain.aggregate.vauleobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.aggregate.vauleobject.config.ExtractorConfig;
+import com.example.core.domain.aggregate.vauleobject.config.StepRouteConfig;
 import com.example.core.domain.repository.ApplicationRepository;
 import com.example.core.domain.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.service.registry.StepActionHandlerRegistry;

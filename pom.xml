@@ -118,6 +118,11 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>approval-service-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-utils</artifactId>
         <version>${project.version}</version>
       </dependency>

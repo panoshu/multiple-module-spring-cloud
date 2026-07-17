@@ -3,7 +3,7 @@ package com.example.core.application.listener;
 import com.example.core.application.service.BusinessOrchestrationAppService;
 import com.example.core.domain.event.StepEnteredEvent;
 import com.example.core.domain.gateway.BusinessConfigGateway;
-import com.example.core.domain.vauleobject.config.StepRouteConfig;
+import com.example.core.domain.aggregate.vauleobject.config.StepRouteConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

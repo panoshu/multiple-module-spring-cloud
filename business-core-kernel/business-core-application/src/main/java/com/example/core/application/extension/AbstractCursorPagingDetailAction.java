@@ -1,9 +1,9 @@
 package com.example.core.application.extension;
 
 import com.example.core.domain.gateway.ConditionEvaluationGateway;
-import com.example.core.domain.aggregateroot.BusinessApplication;
-import com.example.core.domain.vauleobject.BusinessMetaContext;
-import com.example.core.domain.vauleobject.ExtensionExecutionResult;
+import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.vauleobject.ExtensionExecutionResult;
 import com.example.core.domain.spi.StepExtensionAction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;

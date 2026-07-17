@@ -1,11 +1,11 @@
 package com.example.core.domain.gateway;
 
-import com.example.core.domain.vauleobject.BusinessMetaContext;
-import com.example.core.domain.vauleobject.config.ExtractorConfig;
-import com.example.core.domain.vauleobject.config.FormParsingConfig;
-import com.example.core.domain.vauleobject.config.MaterialRuleConfig;
-import com.example.core.domain.vauleobject.config.StepRouteConfig;
-import com.example.core.domain.vauleobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.vauleobject.config.ExtractorConfig;
+import com.example.core.domain.aggregate.vauleobject.config.FormParsingConfig;
+import com.example.core.domain.aggregate.vauleobject.config.MaterialRuleConfig;
+import com.example.core.domain.aggregate.vauleobject.config.StepRouteConfig;
+import com.example.core.domain.aggregate.vauleobject.enums.workflow.ApplicationFlowStep;
 
 import java.util.List;
 import java.util.Map;

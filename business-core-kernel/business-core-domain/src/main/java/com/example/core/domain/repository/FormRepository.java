@@ -1,6 +1,6 @@
 package com.example.core.domain.repository;
 
-import com.example.core.domain.aggregateroot.BusinessForm;
+import com.example.core.domain.aggregate.root.BusinessForm;
 import com.example.shared.domain.repository.Repository;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.FormId;

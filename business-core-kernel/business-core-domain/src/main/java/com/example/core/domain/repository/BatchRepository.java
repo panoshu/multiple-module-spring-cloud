@@ -1,6 +1,6 @@
 package com.example.core.domain.repository;
 
-import com.example.core.domain.aggregateroot.BusinessBatch;
+import com.example.core.domain.aggregate.root.BusinessBatch;
 import com.example.shared.domain.repository.Repository;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.BatchId;

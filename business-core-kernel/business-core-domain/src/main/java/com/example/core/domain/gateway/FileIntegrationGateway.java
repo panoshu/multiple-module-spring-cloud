@@ -1,7 +1,7 @@
 package com.example.core.domain.gateway;
 
-import com.example.core.domain.aggregateroot.BusinessForm;
-import com.example.core.domain.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.root.BusinessForm;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.FormId;
 
@@ -47,7 +47,7 @@ public interface FileIntegrationGateway {
   /**
    * 3. 获取文件上传的临时凭证 (Token/Presigned URL)
    * <p>
-   * 供 BFF 层或应用层申请，直接返回给前端用于直传 OSS，避免文件流经过业务服务器。
+   * 供 BFF 层或应用层申请，直接返回给前端用于直传给文件服务，避免文件流经过业务服务。
    */
   String applyUploadToken(String clientIp, String userId, long maxSize);
 }

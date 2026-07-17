@@ -1,6 +1,6 @@
 package com.example.core.domain.event;
 
-import com.example.core.domain.vauleobject.enums.status.BatchStatus;
+import com.example.core.domain.aggregate.vauleobject.enums.status.BatchStatus;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.EventId;

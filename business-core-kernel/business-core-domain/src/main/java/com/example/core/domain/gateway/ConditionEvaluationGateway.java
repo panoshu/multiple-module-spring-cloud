@@ -1,6 +1,6 @@
 package com.example.core.domain.gateway;
 
-import com.example.core.domain.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
 
 import java.util.Map;
 

@@ -1,8 +1,8 @@
 package com.example.core.domain.spi;
 
-import com.example.core.domain.aggregateroot.BusinessApplication;
-import com.example.core.domain.vauleobject.BusinessMetaContext;
-import com.example.core.domain.vauleobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.vauleobject.enums.status.StepExecutionStatus;
 
 /**
  * 业务步骤主处理器 (Step Main Handler)

@@ -2,11 +2,11 @@ package com.example.core.application.service;
 
 import com.example.core.domain.gateway.BusinessConfigGateway;
 import com.example.core.domain.gateway.FileIntegrationGateway;
-import com.example.core.domain.aggregateroot.BusinessApplication;
-import com.example.core.domain.aggregateroot.BusinessForm;
-import com.example.core.domain.vauleobject.BusinessFile;
-import com.example.core.domain.vauleobject.ParsedPlanResult;
-import com.example.core.domain.vauleobject.config.FormParsingConfig;
+import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.aggregate.root.BusinessForm;
+import com.example.core.domain.aggregate.vauleobject.BusinessFile;
+import com.example.core.domain.aggregate.vauleobject.ParsedPlanResult;
+import com.example.core.domain.aggregate.vauleobject.config.FormParsingConfig;
 import com.example.core.domain.repository.ApplicationRepository;
 import com.example.core.domain.repository.FormRepository;
 import com.example.shared.domain.event.EventBus;

@@ -1,7 +1,7 @@
 package com.example.core.application.service;
 
-import com.example.core.domain.aggregateroot.BusinessApplication;
-import com.example.core.domain.vauleobject.BusinessFile;
+import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.aggregate.vauleobject.BusinessFile;
 import com.example.core.domain.repository.ApplicationRepository;
 import com.example.shared.primitives.identity.ApplicationId;
 import lombok.RequiredArgsConstructor;
