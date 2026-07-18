@@ -3,6 +3,7 @@ package com.example.shared.event.autoconfiguration;
 import com.example.shared.cache.lock.DistributedLock;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
+import com.example.shared.domain.event.IntegrationEventConverter;
 import com.example.shared.event.bus.EventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
 import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
@@ -75,9 +76,10 @@ public class EventAutoConfiguration {
   public com.example.shared.domain.event.EventBus eventBus(
     List<EventDispatcher> dispatchers,
     EventStore eventStore,
-    EventDeliverer eventDeliverer
+    EventDeliverer eventDeliverer,
+    List<IntegrationEventConverter<?>> converters
   ) {
-    return new EventBus(dispatchers, eventStore, eventDeliverer);
+    return new EventBus(dispatchers, eventStore, eventDeliverer, converters);
   }
 
   // 4. Redis 分发器 (按需)

@@ -45,8 +45,8 @@ public class EventRecoveryJob {
         EventDispatcher dispatcher = dispatcherMap.get(entry.channel());
         if (dispatcher != null) {
           // 复用同一套投递逻辑
-          // NOTE: 临时 cast 保持编译，Task A5 会重构 EventRecoveryJob 使用 integrationEvent 原生类型
-          eventDeliverer.deliver(dispatcher, (DomainEvent) entry.integrationEvent(), entry.logId());
+          // NOTE: 临时 cast 保持编译，Task A5 会用 deliverRecovered 真正改造补偿流
+          eventDeliverer.deliver(dispatcher, (DomainEvent) entry.integrationEvent(), entry.integrationEvent(), entry.logId());
         }
       }
     } finally {
