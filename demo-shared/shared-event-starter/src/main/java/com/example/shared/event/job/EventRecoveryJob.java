@@ -1,6 +1,7 @@
 package com.example.shared.event.job;
 
 import com.example.shared.cache.lock.DistributedLock;
+import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.event.deliverer.EventDeliverer;
@@ -44,7 +45,8 @@ public class EventRecoveryJob {
         EventDispatcher dispatcher = dispatcherMap.get(entry.channel());
         if (dispatcher != null) {
           // 复用同一套投递逻辑
-          eventDeliverer.deliver(dispatcher, entry.event(), entry.logId());
+          // NOTE: 临时 cast 保持编译，Task A5 会重构 EventRecoveryJob 使用 integrationEvent 原生类型
+          eventDeliverer.deliver(dispatcher, (DomainEvent) entry.integrationEvent(), entry.logId());
         }
       }
     } finally {

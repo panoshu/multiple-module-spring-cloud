@@ -24,7 +24,7 @@ public class EventBus implements com.example.shared.domain.event.EventBus {
   public void publish(DomainEvent event) {
     // 1. [同步] 落库业务事件
     try {
-      eventStore.save(event);
+      eventStore.save(event, null, null);
     } catch (Exception e) {
       log.error("EventBus: Failed to save event. EventId: {}", event.eventId(), e);
       throw e; // 阻断业务
