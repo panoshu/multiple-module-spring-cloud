@@ -10,17 +10,14 @@ public class SpringEventDispatcher implements EventDispatcher {
   private final ApplicationEventPublisher publisher;
 
   @Override
-  public void dispatch(DomainEvent event) {
-    publisher.publishEvent(event);
+  public void dispatch(DomainEvent domainEvent, Object integrationEvent) {
+    // 本地分发始终发送领域事件，保留领域语义
+    publisher.publishEvent(domainEvent);
   }
 
   @Override
-  public String getChannelName() {
-    return "spring-local";
-  }
+  public String getChannelName() { return "spring-local"; }
 
   @Override
-  public boolean isRemote() {
-    return false; // 本地事件不强制异步，交给 TransactionalEventListener 处理
-  }
+  public boolean isRemote() { return false; }
 }

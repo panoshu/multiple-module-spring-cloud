@@ -60,7 +60,7 @@ public class EventBus implements com.example.shared.domain.event.EventBus {
 
   private void safeLocalDispatch(EventDispatcher dispatcher, DomainEvent event) {
     try {
-      dispatcher.dispatch(event);
+      dispatcher.dispatch(event, event);
     } catch (Exception e) {
       log.error("Local dispatch error", e);
     }

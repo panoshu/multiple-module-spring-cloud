@@ -35,7 +35,7 @@ public class EventDeliverer {
 
       // 2. 执行实际发送
       log.debug("Delivering event {} to channel {}", eventId, channel);
-      dispatcher.dispatch(event);
+      dispatcher.dispatch(event, event);
 
       // 3. 标记成功 (独立事务)
       eventStore.markSuccess(logId);
