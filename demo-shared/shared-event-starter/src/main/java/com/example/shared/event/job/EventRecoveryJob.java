@@ -1,7 +1,6 @@
 package com.example.shared.event.job;
 
 import com.example.shared.cache.lock.DistributedLock;
-import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.event.deliverer.EventDeliverer;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 public class EventRecoveryJob {
 
   private final EventStore eventStore;
-  private final EventDeliverer eventDeliverer; // 注入投递器
+  private final EventDeliverer eventDeliverer;
   private final List<EventDispatcher> dispatchers;
   private final DistributedLock distributedLock;
 
@@ -29,8 +28,8 @@ public class EventRecoveryJob {
   @PostConstruct
   public void init() {
     this.dispatcherMap = dispatchers.stream()
-      .filter(EventDispatcher::isRemote)
-      .collect(Collectors.toMap(EventDispatcher::getChannelName, d -> d));
+        .filter(EventDispatcher::isRemote)
+        .collect(Collectors.toMap(EventDispatcher::getChannelName, d -> d));
   }
 
   @Scheduled(fixedDelay = 30_000)
@@ -38,15 +37,14 @@ public class EventRecoveryJob {
     if (!distributedLock.tryLock("job:event-recovery", 0, 20, TimeUnit.SECONDS)) {
       return;
     }
-
     try {
       List<EventStore.PendingEntry> entries = eventStore.findPendingLogs(100);
       for (EventStore.PendingEntry entry : entries) {
         EventDispatcher dispatcher = dispatcherMap.get(entry.channel());
         if (dispatcher != null) {
-          // 复用同一套投递逻辑
-          // NOTE: 临时 cast 保持编译，Task A5 会用 deliverRecovered 真正改造补偿流
-          eventDeliverer.deliver(dispatcher, (DomainEvent) entry.integrationEvent(), entry.integrationEvent(), entry.logId());
+          // 补偿流：直接用反序列化好的 integrationEvent
+          eventDeliverer.deliverRecovered(dispatcher, entry.integrationEvent(),
+              entry.integrationType(), entry.logId());
         }
       }
     } finally {

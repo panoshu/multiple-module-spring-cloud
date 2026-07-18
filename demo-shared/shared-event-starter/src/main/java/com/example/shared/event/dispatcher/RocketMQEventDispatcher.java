@@ -19,7 +19,10 @@ public class RocketMQEventDispatcher implements EventDispatcher {
     String integrationType = payload.getClass().getSimpleName();
     // topic: event_FileParsed, tag: FileParsed
     String destination = "event_%s:%s".formatted(integrationType, integrationType);
-    String key = domainEvent.eventId().toString();
+    // 补偿流(domainEvent=null)用 integrationType 作为 fallback key
+    String key = domainEvent != null
+        ? domainEvent.eventId().toString()
+        : "recovery-" + integrationType;
 
     rocketMQTemplate.asyncSend(destination,
         MessageBuilder.withPayload(payload).setHeader("KEYS", key).build(),

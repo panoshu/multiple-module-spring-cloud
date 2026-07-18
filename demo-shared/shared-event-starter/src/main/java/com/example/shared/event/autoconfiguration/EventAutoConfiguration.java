@@ -29,23 +29,18 @@ import java.util.List;
 @AutoConfiguration
 public class EventAutoConfiguration {
 
-  // 1. 注册 Jackson Module (使得所有 ObjectMapper 都能正确序列化 ID)
   @Bean
   public DddJacksonModule dddJacksonModule() {
     return new DddJacksonModule();
   }
 
-  // 2. EventStore (持久化)
   @Bean
   @ConditionalOnMissingBean
   @ConditionalOnClass({DataSource.class, JdbcClient.class})
   public EventStore eventStore(JdbcClient jdbcClient, ObjectMapper objectMapper) {
-    // 如果当前环境有自定义ObjectMapper，Spring会自动注入
-    // 确保这个ObjectMapper加载了上面的 Module
     return new JdbcEventStore(jdbcClient, objectMapper);
   }
 
-  // 3. 本地分发器 (总是启用)
   @Bean
   @ConditionalOnMissingBean
   public SpringEventDispatcher springEventDispatcher(ApplicationEventPublisher publisher) {
@@ -62,45 +57,44 @@ public class EventAutoConfiguration {
   @ConditionalOnBean(DistributedLock.class)
   @ConditionalOnMissingBean
   public EventRecoveryJob eventRecoveryJob(
-    EventStore eventStore,
-    EventDeliverer eventDeliverer,
-    List<EventDispatcher> dispatchers,
-    DistributedLock distributedLock
-  ) {
+      EventStore eventStore,
+      EventDeliverer eventDeliverer,
+      List<EventDispatcher> dispatchers,
+      DistributedLock distributedLock) {
     return new EventRecoveryJob(eventStore, eventDeliverer, dispatchers, distributedLock);
   }
 
-  // 6. 核心 EventBus
   @Bean
   @ConditionalOnMissingBean
   public com.example.shared.domain.event.EventBus eventBus(
-    List<EventDispatcher> dispatchers,
-    EventStore eventStore,
-    EventDeliverer eventDeliverer,
-    List<IntegrationEventConverter<?>> converters
-  ) {
-    return new EventBus(dispatchers, eventStore, eventDeliverer, converters);
+      List<EventDispatcher> dispatchers,
+      EventStore eventStore,
+      EventDeliverer eventDeliverer,
+      @org.springframework.beans.factory.annotation.Autowired(required = false)
+      List<IntegrationEventConverter<?>> converters) {
+    List<IntegrationEventConverter<?>> actualConverters =
+        converters != null ? converters : List.of();
+    return new EventBus(dispatchers, eventStore, eventDeliverer, actualConverters);
   }
 
-  // 4. Redis 分发器 (按需)
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisTemplate")
   @ConditionalOnProperty(prefix = "shared.event.redis", name = "enabled", havingValue = "true")
   static class RedisConfig {
     @Bean
-    public EventDispatcher redisEventDispatcher(org.springframework.data.redis.core.RedisTemplate<String, Object> template) {
+    public EventDispatcher redisEventDispatcher(
+        org.springframework.data.redis.core.RedisTemplate<String, Object> template) {
       return new RedisEventDispatcher(template);
     }
   }
 
-  // 5. RocketMQ 分发器 (按需)
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(name = "org.apache.rocketmq.spring.core.RocketMQTemplate")
   @ConditionalOnProperty(prefix = "shared.event.rocketmq", name = "enabled", havingValue = "true")
   static class RocketMQConfig {
-
     @Bean
-    public EventDispatcher rocketMQEventDispatcher(org.apache.rocketmq.spring.core.RocketMQTemplate template) {
+    public EventDispatcher rocketMQEventDispatcher(
+        org.apache.rocketmq.spring.core.RocketMQTemplate template) {
       return new RocketMQEventDispatcher(template);
     }
   }
