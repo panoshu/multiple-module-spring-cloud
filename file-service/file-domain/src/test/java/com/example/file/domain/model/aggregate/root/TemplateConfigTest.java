@@ -50,7 +50,7 @@ class TemplateConfigTest {
         List.of(new TableDef("detailList", List.of(new FieldDef("itemNo", FieldType.STRING, true, null))))
     );
     SplitConfig split = new SplitConfig(List.of("detailList.deptCode"),
-        SplitMissPolicy.ERROR, null, null, true);
+        null, SplitMissPolicy.ERROR, null, null, true, 0);
     RegionDef region = new RegionDef("kv_basic", RegionType.KEY_VALUE, "properties",
         null, new KvStrategy(KvValuePosition.RIGHT, java.util.Map.of(), 3));
     SourceTemplateDef source = new SourceTemplateDef(TemplateCode.of("CUST_A_V2"),

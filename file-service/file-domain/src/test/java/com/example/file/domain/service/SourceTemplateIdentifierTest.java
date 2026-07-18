@@ -90,7 +90,7 @@ class SourceTemplateIdentifierTest {
         new CanonicalModelDef(List.of(), List.of()),
         List.of(),
         List.of(),
-        new SplitConfig(List.of(), null, null, null, false),
+        new SplitConfig(List.of(), null, null, null, null, false, 0),
         templates,
         UserNo.of("test")
     );

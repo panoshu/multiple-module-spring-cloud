@@ -2,7 +2,7 @@ package com.example.file.domain.model.aggregate.root;
 
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.domain.model.valueobject.BusinessContext;
-import com.example.file.domain.model.valueobject.RowError;
+import com.example.file.domain.model.valueobject.ValidationError;
 import com.example.file.domain.model.valueobject.ValidationResult;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
@@ -28,7 +28,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   private final Map<String, List<Map<String, Object>>> tables;
   private final int rowCount;
   private SubTaskStatus status;
-  private List<RowError> validationErrors = new ArrayList<>();
+  private List<ValidationError> validationErrors = new ArrayList<>();
   private final LocalDateTime expiresAt;
   private LocalDateTime consumedAt;
 
@@ -53,7 +53,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   public SubTaskData(SubTaskId id, FileTaskId fileTaskId, BizType bizType, String splitKeyValue,
                      BusinessContext context, Map<String, Object> properties,
                      Map<String, List<Map<String, Object>>> tables, int rowCount, SubTaskStatus status,
-                     List<RowError> validationErrors, LocalDateTime expiresAt, LocalDateTime consumedAt,
+                     List<ValidationError> validationErrors, LocalDateTime expiresAt, LocalDateTime consumedAt,
                      UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.fileTaskId = fileTaskId;
@@ -110,7 +110,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   public Map<String, List<Map<String, Object>>> tables() { return tables; }
   public int rowCount() { return rowCount; }
   public SubTaskStatus status() { return status; }
-  public List<RowError> validationErrors() { return List.copyOf(validationErrors); }
+  public List<ValidationError> validationErrors() { return List.copyOf(validationErrors); }
   public LocalDateTime expiresAt() { return expiresAt; }
   public LocalDateTime consumedAt() { return consumedAt; }
 }
