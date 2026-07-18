@@ -1,0 +1,37 @@
+# 文件名: source_cust_a_v1.yaml
+# 作用: 告诉引擎如何把客户A的表格，剥离并映射到 IMPORT_DECLARE 规范模型上
+templateCode: CUST_A_V1
+refBizType: IMPORT_DECLARE   # 🔗 强关联到上述的业务基线
+name: 客户A-标准进口申报表
+status: ACTIVE
+
+# 指纹识别：引擎扫描文件前10行，同时包含这两个词，即用本配置解析
+identify:
+  mode: AUTO
+  fingerprint: ["客户A专用申报单", "单位名称"] 
+
+headerRegion:
+  rows: auto
+  valuePosition: RIGHT
+  labelAliases:
+    # 冒号左边是基线 canonicalModel 中的 code，右边是表格里的文字
+    enterpriseName: ["单位名称", "公司名称"] 
+    declareDate:    ["申报日期"]
+    totalAmount:    ["总金额"]
+
+tableRegion:
+  headerRows: 1
+  matchBy: HEADER_NAME
+  columnAliases:
+    itemNo:    ["货号", "商品编号"]
+    itemName:  ["品名", "商品名称"]
+    qty:       ["数量"]
+    unitPrice: ["单价"]
+    amount:    ["金额"]
+  dataEnd:
+    markers: ["以下空白", "总计"] # 遇到这些词，明细表结束
+
+tailRegion:
+  valuePosition: RIGHT
+  labelAliases:
+    makerName: ["制单人", "填表人"]

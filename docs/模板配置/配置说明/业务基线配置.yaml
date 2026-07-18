@@ -1,0 +1,60 @@
+# =====================================================================
+# 业务基线定义
+# =====================================================================
+bizType: IMPORT_DECLARE      # [必填] 业务线唯一编码
+version: "2.0.0"             # [必填] 版本号
+errorPolicy: COLLECT_ALL     # [必填] 错误策略：FAIL_FAST, COLLECT_ALL, SKIP_ERROR_ROWS
+
+# ── 1. 规范模型 (Canonical Model) ──
+# 逻辑抽象为扁平的属性集(Properties)与结构化的表格集(Tables)
+canonicalModel:
+  properties:                # 业务对象中的单值字段集合
+    - code: enterpriseName   # [必填] 字段唯一编码
+      type: string           # [必填] 类型: string, decimal, integer, date, boolean
+      required: true         # [可选] 是否必填
+      pattern: "^[A-Z]+$"    # [可选] 正则校验
+  tables:                    # 业务对象中的多行列表集合
+    - code: detailList       # [必填] 表格唯一编码
+      fields:                # 表格内字段定义
+        - { code: itemNo, type: string, required: true }
+        - { code: amount, type: decimal, scale: 2 }
+
+# ── 2. 校验与计算规则 (通用规则) ──
+validation:
+  crossField:                # [可选] 跨字段校验，基于 Aviator 表达式
+    - scope: ROW
+      expr: "amount == round(qty * unitPrice, 2)"
+      message: "金额校验失败"
+derivation:                  # [可选] 派生逻辑，支持按拓扑排序
+  - { field: detailList.amount, expr: "round(qty * unitPrice, 2)" }
+
+# ── 3. 拆分方案配置 (Split Configuration) ──
+# 作用：引擎在渲染前，根据此配置将一份规范模型数据切割为多份目标数据包
+split:
+  # [必填] 拆分键：支持 properties 中的属性，或 tables 中的字段（按表格某列分组）
+  keys: [detailList.itemNo]
+
+  # [可选] 策略：当拆分键为空或未匹配到时该如何处理
+  onMiss: ERROR              # 可选：ERROR(抛异常), IGNORE(忽略), DEFAULT:xx(赋予默认值)
+
+  # [必填] 文件命名模板：定义输出文件的唯一标识
+  # 支持变量：{bizType}, {context.xxx}, {splitKey.xxx}, {seq:03}
+  fileNaming: "{bizType}_{splitKey.itemNo}_{seq:03}.xlsx"
+
+  # [可选] 上下文提升 (Context Promotion)
+  # 将拆分键的值自动注入到 BusinessContext 中，以便在映射阶段使用 {context.itemNo}
+  promoteToContext: true
+
+# ── 4. 目标映射区 (Target Mapping) ──
+# 定义如何将规范模型数据 + 业务回注Context 渲染为外部格式
+target:
+  template:
+    file: "templates/external_template.xlsx" # [必填] 目标Excel物理模板文件
+  mapping:
+    header:                  # [可选] 映射到外部Excel头部
+      - target: ent_name     # [必填] 目标Excel单元格占位符
+        from: properties.enterpriseName # [必填] 来源: properties.xx 或 context.xx (回注数据)
+        converter: "upper"   # [可选] 转换器: upper, lower, date:yyyyMMdd, round:2
+    detail:                  # [可选] 映射到外部Excel表格区
+      - target: c_item_no
+        from: detailList.itemNo

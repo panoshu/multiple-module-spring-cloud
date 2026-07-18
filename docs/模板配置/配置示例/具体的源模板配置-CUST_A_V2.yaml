@@ -1,0 +1,33 @@
+# 源模板配置, 对应各种上传的表格样式, 最终转换为标准数据格式
+# 文件: source_cust_a_v2.yaml
+templateCode: CUST_A_V2
+refBizType: IMPORT_DECLARE
+identify: { mode: AUTO, fingerprint: ["单位名称", "货号"] }
+
+# ── 区域流式解析 ──
+regions:
+  # 区域1：头部 K-V
+  - name: TopInfo
+    type: KEY_VALUE
+    bindTo: properties
+    strategy:
+      valuePosition: RIGHT
+      labelAliases:
+        enterpriseName: ["单位名称", "公司名称"]
+        declareDate:    ["申报日期"]
+
+  # 区域2：明细表格
+  - name: MainDetail
+    type: TABLE
+    bindTo: tables.detailList
+    trigger: { matchType: HEADER_SNIFF, minMatchCount: 2 }
+    strategy:
+      headerRows: 1
+      matchBy: HEADER_NAME
+      columnAliases:
+        itemNo:   ["货号", "料号"]
+        deptCode: ["所属部门", "部门代码"]
+        amount:   ["金额"]
+      dataEnd:
+        markers: ["以下空白", "合计"]
+        blankRowCount: 3

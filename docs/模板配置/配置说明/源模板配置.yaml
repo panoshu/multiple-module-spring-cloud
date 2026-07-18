@@ -1,0 +1,45 @@
+# =====================================================================
+# 模板识别路由
+# =====================================================================
+templateCode: CUST_A_V2      # [必填] 模板唯一编码
+refBizType: IMPORT_DECLARE   # [必填] 引用关联的 bizType
+identify:
+  mode: AUTO                 # [必填] 路由模式：AUTO, MANUAL
+  fingerprint: ["单位名称"]   # [AUTO模式必填] 识别特征词
+
+# =====================================================================
+# 区域布局流 (Regions)
+# 引擎将 Excel 视为一个有序的区域集合，状态机按顺序自动流转
+# =====================================================================
+regions:
+  # 区域定义：KEY_VALUE (键值对) | TABLE (数据表格)
+  - name: TopInfo            # [必填] 区域名
+    type: KEY_VALUE          # [必填] 解析器路由：KEY_VALUE (kv解析器) | TABLE (表格解析器)
+    bindTo: properties       # [必填] 绑定到 canonicalModel 的哪个节点(properties或tables.xx)
+    strategy:                # [必填] 特定解析器的策略配置
+      valuePosition: RIGHT   # [KEY_VALUE特有] RIGHT(键在左值在右), BELOW(键在上值在下)
+      labelAliases:          # [必填] 将表单中的标签映射到 canonicalModel 中的 code
+        enterpriseName: ["单位名称", "公司名称"]
+
+  - name: MainDetail
+    type: TABLE
+    bindTo: tables.detailList
+    trigger:                 # [可选] 状态机切换触发器：当前行命中此配置，则激活此区域
+      matchType: HEADER_SNIFF # 类型：HEADER_SNIFF(嗅探列名), REGEX(正则行匹配)
+      minMatchCount: 2       # 匹配度阈值：命中列别名中的几个词即触发
+    strategy:                # [TABLE特有]
+      headerRows: 1          # 表头行数
+      matchBy: HEADER_NAME   # 匹配方式：HEADER_NAME(按列名), COLUMN_INDEX(按序号)
+      columnAliases:         # 列识别字典
+        itemNo: ["货号", "料号"]
+      dataEnd:               # [必填] 区域退出标识
+        markers: ["以下空白", "合计"]
+        blankRowCount: 3     # 连续3空行退出
+
+  - name: BottomInfo
+    type: KEY_VALUE
+    bindTo: properties
+    strategy:
+      valuePosition: RIGHT
+      labelAliases:
+        makerName: ["制单人"]

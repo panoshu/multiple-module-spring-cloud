@@ -71,3 +71,9 @@ replay_pid*
 *.otf
 *.xlsx
 *.xls
+
+### Worktrees ###
+.worktrees/
+
+### Superpowers SDD workspace ###
+.superpowers/sdd/

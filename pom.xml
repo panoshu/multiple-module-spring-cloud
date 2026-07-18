@@ -15,7 +15,6 @@
     <module>demo-gateway</module>
     <module>demo-shared</module>
     <module>integration-service</module>
-    <module>file-service</module>
     <module>customer-service</module>
     <module>business-core-kernel</module>
     <module>approval-service</module>
@@ -53,6 +52,9 @@
     <openhtmltopdf-pdfbox.version>1.1.36</openhtmltopdf-pdfbox.version>
     <bcprov-jdk18on.version>1.84</bcprov-jdk18on.version>
     <bytebuddy.version>1.17.8</bytebuddy.version>
+    <fesod.version>2.0.2-incubating</fesod.version>
+    <aviator.version>5.4.3</aviator.version>
+    <rocketmq.version>2.3.0</rocketmq.version>
   </properties>
 
   <dependencyManagement>
@@ -255,6 +257,27 @@
         <artifactId>byte-buddy-agent</artifactId>
         <version>${bytebuddy.version}</version>
         <scope>test</scope>
+      </dependency>
+
+      <!-- RocketMQ -->
+      <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-spring-boot-starter</artifactId>
+        <version>${rocketmq.version}</version>
+      </dependency>
+
+      <!-- Apache Fesod-Sheet (Excel) -->
+      <dependency>
+        <groupId>org.apache.fesod</groupId>
+        <artifactId>fesod-sheet</artifactId>
+        <version>${fesod.version}</version>
+      </dependency>
+
+      <!-- Aviator (表达式引擎) -->
+      <dependency>
+        <groupId>com.googlecode.aviator</groupId>
+        <artifactId>aviator</artifactId>
+        <version>${aviator.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

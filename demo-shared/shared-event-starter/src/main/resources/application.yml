@@ -1,36 +1,14 @@
-shared:
-  trace:
-    enable: true
-    # 自动识别为 bizId 的字段名 (大小写敏感，反射匹配)
-    biz-id-fields:
-      - orderNo
-      - orderId
-      - bizId
-      - tradeNo
-    # 自动识别为 batchId 的字段名
-    batch-id-fields:
-      - batchNo
-      - batchId
-    # 自动识别为 jnlNo 的字段名
-    jnl-no-fields:
-      - serialNo
-      - traceNo
-      - jnlNo
+# RocketMQ 配置示例
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: event-producer-group
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
 
-  cache:
-    # 安全白名单
-    allowed-packages:
-      - com.example.consumer
-      - com.example.order
-    # L1 开关
-    l1:
-      enabled: true
-      maximum-size: 5000
-      ttl: 5m
-    # 缓存规则
-    rules:
-      user_info: # 开启 L1
-        ttl: 30m
-      product_stock: # 禁用 L1 (库存敏感)
-        ttl: 1h
-        l1-enabled: false
+shared:
+  event:
+    rocketmq:
+      enabled: true  # 启用 RocketMQ 分发器
+    redis:
+      enabled: false  # 可选：启用 Redis 分发器

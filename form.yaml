@@ -1,0 +1,90 @@
+bizType: IMPORT_DECLARE
+version: 3
+errorPolicy: COLLECT_ALL     # FAIL_FAST=整单拒绝(快速失败) | COLLECT_ALL=收集全部错误后整单拒绝
+                             # SKIP_ERROR_ROWS=剔除错误行,其余放行 —— 按业务场景配置
+
+# ── 1. 规范模型:该业务的标准字段集合 ──────────────
+canonicalModel:
+  headerFields:
+    - { code: enterpriseName, name: 企业名称, type: string, required: true, maxLength: 100 }
+    - { code: enterpriseCode, name: 企业代码, type: string, required: true, pattern: "^[0-9A-Z]{18}$" }
+    - { code: declareDate,    name: 申报日期, type: date,   required: true,
+        formats: ["yyyy-MM-dd", "yyyy/M/d", "yyyyMMdd"] }
+    - { code: totalAmount,    name: 总金额,   type: decimal, scale: 2, required: false }
+  detailFields:
+    - { code: itemNo,    name: 货号, type: string,  required: true }
+    - { code: itemName,  name: 品名, type: string,  required: true }
+    - { code: qty,       name: 数量, type: decimal, required: true, scale: 4 }
+    - { code: unitPrice, name: 单价, type: decimal, required: true, scale: 6 }
+    - { code: amount,    name: 金额, type: decimal, required: true, scale: 2 }
+    - { code: deptCode,  name: 部门, type: string,  required: true, dict: DEPT }
+
+# ── 2. 源模板:一种客户表单的版式定义 ──────────────
+sourceTemplates:
+  - code: CUST_A_V1
+    name: 客户A-进口申报表
+    identify:
+      mode: AUTO                                     # AUTO=特征自动识别 | MANUAL=上传时指定
+      fingerprint: ["企业名称", "item_no", "unit_price"]
+    sheet: { index: 0 }
+    headerRegion:                                    # 总体信息区(键值对)
+      rows: auto                                     # auto=明细表头之上;也可写 1-5
+      valuePosition: RIGHT                           # 值在标签右侧(RIGHT|BELOW)
+      labelAliases:
+        enterpriseName: ["企业名称", "单位名称", "公司名称"]
+        enterpriseCode: ["企业代码", "统一社会信用代码"]
+        declareDate:    ["申报日期", "填制日期"]
+    tableRegion:                                     # 明细表格区
+      headerRows: 2                                  # 英文表头行+中文表头行
+      matchBy: HEADER_NAME                           # 按名匹配,不按列号
+      columnAliases:
+        itemNo:    ["item_no", "Item No", "货号", "料号"]
+        itemName:  ["item_name", "品名", "商品名称"]
+        qty:       ["qty", "quantity", "数量"]
+        unitPrice: ["unit_price", "单价"]
+        amount:    ["amount", "金额"]
+        deptCode:  ["dept_code", "部门"]
+      dataEnd:
+        markers: ["以下空白", "END", "总计"]          # 结束标识
+        blankRowCount: 5                             # 连续5空行亦视为结束
+      ignoreRowPatterns: ["^说明[:：]", "^备注[:：]"]  # 噪声行
+
+# ── 3. 校验(字段级由模型元数据自动生成,此处只配表达式规则) ──
+validation:
+  crossField:
+    - { scope: ROW, expr: "amount == round(qty * unitPrice, 2)",
+        message: "金额({amount})不等于单价×数量" }
+  crossRow:
+    - { type: UNIQUE, keys: [itemNo], message: "货号 {value} 重复出现" }
+    - { expr: "abs(sum(detail.amount) - header.totalAmount) < 0.01",
+        when: "header.totalAmount != null", message: "明细合计与头部总金额不一致" }
+  masterData:
+    - { checker: enterpriseChecker, field: enterpriseCode }     # SPI 扩展
+
+# ── 4. 计算(自动按依赖拓扑排序) ──────────────────
+derivation:
+  - { field: detail.amount,      expr: "round(qty * unitPrice, 2)", when: "amount == null" }
+  - { field: header.totalAmount, expr: "sum(detail.amount)",        when: "totalAmount == null" }
+
+# ── 5. 拆分:一文件 → N 目标文件 ──────────────────
+split:
+  keys: [detail.deptCode]                            # 支持多字段组合
+  fileNaming: "{bizType}_{enterpriseCode}_{deptCode}_{seq:03}.xlsx"
+
+# ── 6. 目标模板与映射 ────────────────────────────
+target:
+  template:
+    version: "2026.1"
+    file: templates/import_declare_2026_1.xlsx       # 真实Excel模板,占位符填充
+    effectiveDate: "2026-02-01"                      # 带生效日期,新旧版本可并行
+  mapping:
+    header:
+      - { target: ent_name,  from: header.enterpriseName }
+      - { target: decl_date, from: header.declareDate, converter: "date:yyyyMMdd" }
+      - { target: total_amt, from: header.totalAmount, converter: "round:2" }
+      - { target: currency,  constant: "USD" }
+      - { target: dept,      from: splitKey.deptCode }   # 拆分键提升
+    detail:
+      - { target: c_item_no, from: itemNo }
+      - { target: c_amt,     from: amount }
+      - { target: c_dept,    from: deptCode, converter: "dict:DEPT_OUT" }

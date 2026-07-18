@@ -1,0 +1,49 @@
+# 文件名: import_declare_base.yaml
+# 作用: 定义业务基线、规范模型、校验规则和目标输出
+bizType: IMPORT_DECLARE
+version: "1.0.0"
+errorPolicy: COLLECT_ALL # 收集所有错误后统一报错
+
+# ── 1. 规范模型 (Canonical Model) ──
+# 引擎只认识这些 code，所有源模板解析后都会映射到这些 code 上
+canonicalModel:
+  headerFields:
+    - { code: enterpriseName, type: string, required: true, maxLength: 100 }
+    - { code: declareDate,    type: date,   required: true, formats: ["yyyy-MM-dd", "yyyy/MM/dd", "yyyyMMdd"] }
+    - { code: totalAmount,    type: decimal, scale: 2 } # 头部总金额（可由引擎自动计算）
+  detailFields:
+    - { code: itemNo,    type: string,  required: true }
+    - { code: itemName,  type: string,  required: true }
+    - { code: qty,       type: decimal, required: true, scale: 4 }
+    - { code: unitPrice, type: decimal, required: true, scale: 6 }
+    - { code: amount,    type: decimal, required: true, scale: 2 }
+  tailFields:
+    - { code: makerName, type: string,  required: false }
+
+# ── 2. 校验与计算规则 (跨客户通用) ──
+validation:
+  crossField:
+    - { scope: ROW, expr: "amount == round(qty * unitPrice, 2)", message: "明细行金额计算有误" }
+  crossRow:
+    - { expr: "header.totalAmount == null || abs(sum(detail.amount) - header.totalAmount) < 0.01", message: "明细金额合计与头部总金额不符" }
+
+derivation:
+  - { field: detail.amount, expr: "round(qty * unitPrice, 2)", when: "amount == null" }
+  - { field: header.totalAmount, expr: "sum(detail.amount)", when: "totalAmount == null" }
+
+# ── 3. 目标外部系统映射 (Target Mapping) ──
+target:
+  template:
+    file: "templates/external_import_declare_v2.xlsx" # 外部系统要求的空模板
+  mapping:
+    header:
+      - { target: ent_name,  from: header.enterpriseName }
+      - { target: decl_date, from: header.declareDate, converter: "date:yyyyMMdd" }
+      - { target: total_amt, from: header.totalAmount }
+      # 注意：systemTradeNo 不在规范模型中，它由业务系统在请求渲染时通过 Context 传入
+      - { target: trade_no,  from: context.systemTradeNo } 
+      - { target: operator,  from: tail.makerName }
+    detail:
+      - { target: c_item_no, from: detail.itemNo }
+      - { target: c_name,    from: detail.itemName }
+      - { target: c_qty,     from: detail.qty }

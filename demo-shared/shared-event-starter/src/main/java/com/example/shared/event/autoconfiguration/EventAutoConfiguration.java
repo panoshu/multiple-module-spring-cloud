@@ -5,7 +5,7 @@ import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.event.bus.EventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
-import com.example.shared.event.dispatcher.KafkaEventDispatcher;
+import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
 import com.example.shared.event.dispatcher.RedisEventDispatcher;
 import com.example.shared.event.dispatcher.SpringEventDispatcher;
 import com.example.shared.event.jackson.DddJacksonModule;
@@ -91,14 +91,15 @@ public class EventAutoConfiguration {
     }
   }
 
-  // 5. Kafka 分发器 (按需)
+  // 5. RocketMQ 分发器 (按需)
   @Configuration(proxyBeanMethods = false)
-  @ConditionalOnClass(name = "org.springframework.kafka.core.KafkaTemplate")
-  @ConditionalOnProperty(prefix = "shared.event.kafka", name = "enabled", havingValue = "true")
-  static class KafkaConfig {
+  @ConditionalOnClass(name = "org.apache.rocketmq.spring.core.RocketMQTemplate")
+  @ConditionalOnProperty(prefix = "shared.event.rocketmq", name = "enabled", havingValue = "true")
+  static class RocketMQConfig {
+
     @Bean
-    public EventDispatcher kafkaEventDispatcher(org.springframework.kafka.core.KafkaTemplate<String, Object> template) {
-      return new KafkaEventDispatcher(template);
+    public EventDispatcher rocketMQEventDispatcher(org.apache.rocketmq.spring.core.RocketMQTemplate template) {
+      return new RocketMQEventDispatcher(template);
     }
   }
 }
