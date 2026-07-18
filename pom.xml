@@ -18,6 +18,7 @@
     <module>customer-service</module>
     <module>business-core-kernel</module>
     <module>approval-service</module>
+    <module>file-service</module>
   </modules>
 
   <properties>
@@ -115,7 +116,7 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>file-service-api</artifactId>
+        <artifactId>file-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
