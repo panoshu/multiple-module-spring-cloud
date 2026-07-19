@@ -154,13 +154,20 @@ label 清理：去掉末尾的 `：`、`:`、空格。
 
 ## 4. YamlConfigLoader 完善设计
 
-### 4.1 YAML 配置结构
+### 4.1 设计原则：标准模型与表单样式解耦
+
+**核心原则**：`canonicalModel` 用业务语义命名，与具体表单样式无关；表单特定的列名通过 `sourceTemplates[].regions[].strategy.headerAliases` 映射到标准字段。
+
+这样当业务新增另一种表单样式（列名不同）时，`canonicalModel` 保持不变，只需新增一份 `sourceTemplate` 配置列名映射。
+
+### 4.2 YAML 配置结构
 
 ```yaml
 bizType: ENTERPRISE_PLAN
 version: "1.0"
 errorPolicy: COLLECT_ALL
 
+# 标准模型（业务语义命名，与表单无关）
 canonicalModel:
   properties:
     - { name: planNo, type: STRING, required: true }
@@ -172,16 +179,17 @@ canonicalModel:
   tables:
     - name: employees
       fields:
-        # 字段名与 Excel R5 列代码行对应（headerNameRow=1）
-        - { name: XH, type: INTEGER, required: true }
-        - { name: XM, type: STRING, required: true }
-        - { name: ZJLX, type: STRING, required: true }
-        - { name: ZJHM, type: STRING, required: true }
-        # ... 其余字段省略（共 42 列，按 R5 列代码命名）
+        # 业务语义命名，不绑定具体表单列名
+        - { name: seq, type: INTEGER, required: true }
+        - { name: name, type: STRING, required: true }
+        - { name: idType, type: STRING, required: true }
+        - { name: idNo, type: STRING, required: true }
+        # ... 其余业务字段省略
 
+# 校验规则（用标准字段名，不依赖表单列名）
 validationRules:
-  - { field: ZJHM, type: NOT_NULL, message: "证件编号不能为空", scope: TABLE_ROW }
-  - { field: XM, type: NOT_NULL, message: "姓名不能为空", scope: TABLE_ROW }
+  - { field: idNo, type: NOT_NULL, message: "证件编号不能为空", scope: TABLE_ROW }
+  - { field: name, type: NOT_NULL, message: "姓名不能为空", scope: TABLE_ROW }
 
 derivationRules: []
 
@@ -191,6 +199,7 @@ splitConfig:
   missPolicy: FAIL
   rowLimit: 1000
 
+# 源模板（表单特定，配置列名 → 标准字段映射）
 sourceTemplates:
   - id: STANDARD_TEMPLATE
     name: "企业计划标准模板"
@@ -210,7 +219,14 @@ sourceTemplates:
         trigger: { matchType: HEADER_SNIFF, minMatchCount: 5 }
         strategy:
           headerRows: 3
-          headerNameRow: 1     # 用第 1 行（R5 列代码 XH/XM/ZJLX...）作为列名
+          headerNameRow: 1     # 用第 1 行（R5 列代码 XH/XM/ZJLX...）作为识别列名
+          # headerAliases: 标准字段名 → 该列在表头行中可能的值（可列多个别名）
+          headerAliases:
+            seq: [XH, 序号*]
+            name: [XM, 个人姓名*]
+            idType: [ZJLX, 证件类型*]
+            idNo: [ZJHM, 证件编号*]
+            # ... 其余字段映射省略
           dataEnd: { markers: ["结束"], blankRowCount: 1 }
       - name: filler_info
         type: KEY_VALUE
@@ -221,15 +237,27 @@ sourceTemplates:
           maxBlankRows: 1
 ```
 
-### 4.2 完善内容
+### 4.3 headerNameRow 与 headerAliases 的协作
+
+- **headerNameRow**：指定用哪一行表头作为"列名识别行"（1-based，0=最后一行）
+- **headerAliases**：标准字段名 → 该列在表头行中可能出现的值列表
+
+解析流程：
+1. Parser 根据 `headerNameRow` 取对应行的单元格值作为"识别列名"
+2. Parser 遍历识别列名，通过 `headerAliases` 反查映射到标准字段名
+3. 数据行的单元格按"识别列名 → 标准字段名"映射后写入 `CanonicalData.tables`
+
+`headerAliases` 的 value 是列表，支持同一标准字段在不同表头行中的不同表达（如 `seq: [XH, 序号*]` 兼容 R5 列代码和 R7 中文表头）。
+
+### 4.4 完善内容
 
 `YamlConfigLoader.buildTemplateConfig` 方法完善：
 
-1. 解析 `canonicalModel` → `CanonicalModelDef`（PropertyFieldDef 列表 + TableDef 列表）
-2. 解析 `validationRules` → `List<ValidationRule>`
+1. 解析 `canonicalModel` → `CanonicalModelDef`（PropertyFieldDef 列表 + TableDef 列表，业务语义命名）
+2. 解析 `validationRules` → `List<ValidationRule>`（field 用标准字段名）
 3. 解析 `derivationRules` → `List<DerivationRule>`
 4. 解析 `splitConfig` → `SplitConfig`（含 SplitKeyDef 列表）
-5. 解析 `sourceTemplates` → `List<SourceTemplateDef>`（含 RegionDef 列表，含 RegionTrigger + RegionStrategy）
+5. 解析 `sourceTemplates` → `List<SourceTemplateDef>`（含 RegionDef 列表，含 RegionTrigger + RegionStrategy，TableStrategy 含 headerAliases 映射）
 
 ## 5. 三层测试设计
 
@@ -242,9 +270,9 @@ sourceTemplates:
 | 用例 | 验证点 |
 |------|--------|
 | `openStream_读取所有行` | 15 行，R1 非空，R3 空行 |
-| `parse_KV区域_多组label_value` | basic_info 解析出 4 个 KV |
-| `parse_表格区域_指定表头行` | headers 取 R5 列代码（headerNameRow=1），3 条数据行 |
-| `parse_表格区域_结束标记` | 遇"结束"行停止 |
+| `parse_KV区域_多组label_value` | basic_info 解析出 4 个 KV（planNo/planName/customerNo/customerName） |
+| `parse_表格区域_指定表头行并映射标准字段` | headerNameRow=1 取 R5 列代码识别，通过 headerAliases 映射后数据行字段为标准名（seq/name/idType/idNo...），3 条数据行 |
+| `parse_表格区域_结束标记` | 遇"结束"行停止，不把 R11 当数据 |
 | `parse_KV区域2_填表人` | filler=张三, reviewer=李四 |
 
 **配置构建**: Java 代码直接构建 `List<RegionDef>`
@@ -271,8 +299,8 @@ sourceTemplates:
 
 | 用例 | 验证点 |
 |------|--------|
-| `完整解析流程` | properties 6 个 KV，tables.employees 3 行 |
-| `校验流程` | 3 条数据行校验结果 |
+| `完整解析流程` | properties 6 个 KV（planNo/customerNo 等），tables.employees 3 行且字段为标准名（seq/name/idType/idNo 等，非 Excel 列代码） |
+| `校验流程` | 3 条数据行按标准字段名校验（idNo/name NOT_NULL） |
 | `拆分流程` | 按 customerNo 拆分 1 个子任务 |
 
 **配置构建**: Java 代码构建 `TemplateConfig`
