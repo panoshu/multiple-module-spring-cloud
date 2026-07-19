@@ -74,16 +74,60 @@ R15: 2 | 说明内容2
 | 问题 | 当前行为 | 期望行为 |
 |------|----------|----------|
 | KV 每行多组 label-value | 只读 col1=key, col2=value | 扫描所有列，按 label-value 对交替读取 |
-| 表格多行表头 | 取第一行作为 headers | 取第 headerRows 行作为 headers（最后一行） |
+| 表格多行表头 | 武断取最后一行作为 headers | 由配置 `headerNameRow` 指定第几行作为列名 |
 | 结束标记行 | 只靠空行退出 | 检查 DataEndRule.markers 匹配 |
 
-### 3.2 完善方案（不改领域模型）
+### 3.2 完善方案（需小幅修改领域模型）
 
-`KvStrategy` 和 `TableStrategy` 已有足够字段，只需改 `ExcelParserImpl`：
+#### 领域模型修改：TableStrategy 增加 headerNameRow 字段
 
-#### KV 多组解析
+当前 `TableStrategy` 只有 `headerRows`（表头总行数），无法指定用哪一行作为列名。增加 `headerNameRow` 字段：
 
-`parseKvRegion` 方法改为：扫描每行所有列，按列交替读取 label-value 对。
+```java
+public record TableStrategy(
+    int headerRows,
+    int headerNameRow,        // 新增：1-based，指定第几行作为列名
+    TableMatchBy matchBy,
+    Map<String, List<String>> headerAliases,
+    HeaderMatching headerMatching,
+    int maxRows,
+    DataEndRule dataEnd
+) implements RegionStrategy, ValueObject {
+  public TableStrategy {
+    if (headerRows <= 0) headerRows = 1;
+    // headerNameRow: 0 表示取最后一行（向后兼容），N 表示取第 N 行（1-based）
+    if (headerNameRow < 0) headerNameRow = 0;
+    if (headerNameRow > headerRows) headerNameRow = headerRows;
+    matchBy = matchBy == null ? TableMatchBy.HEADER_NAME : matchBy;
+    headerAliases = headerAliases == null ? Map.of() : Map.copyOf(headerAliases);
+    headerMatching = headerMatching == null ? HeaderMatching.STRICT : headerMatching;
+    if (maxRows < 0) maxRows = 0;
+  }
+}
+```
+
+**语义**：
+- `headerNameRow = 0`：取最后一行（`headerRows` 行），向后兼容现有行为
+- `headerNameRow = 1`：取第 1 行作为列名
+- `headerNameRow = N`（1 ≤ N ≤ headerRows）：取第 N 行作为列名
+
+**示例 Excel 的配置**：
+```yaml
+strategy:
+  headerRows: 3        # 共 3 行表头（R5 列代码 + R6 分组标题 + R7 中文表头）
+  headerNameRow: 1     # 用第 1 行（R5 列代码 XH/XM/ZJLX...）作为列名
+```
+
+**影响范围**（需同步更新）：
+- `file-domain/TableRegionParser.java`：第 36 行 `headerRowsRead == strategy.headerRows() - 1` 改为根据 `headerNameRow` 判断
+- `file-infrastructure/ExcelParserImpl.java`：`parseTableRegion` 同步逻辑
+- `file-domain/.../TableRegionParserTest.java`：构造调用增加 headerNameRow 参数
+- `file-domain/.../CanonicalModelBuilderTest.java`：构造调用增加 headerNameRow 参数
+- `file-infrastructure/.../TemplateConfigConverter.java`：JSON 序列化自动包含新字段，无需改 Converter 逻辑
+
+#### KV 多组解析（不改领域模型）
+
+`KvStrategy` 已有足够字段，只需改 `ExcelParserImpl.parseKvRegion`：扫描每行所有列，按列交替读取 label-value 对。
 
 ```
 对于每行:
@@ -98,20 +142,9 @@ R15: 2 | 说明内容2
 
 label 清理：去掉末尾的 `：`、`:`、空格。
 
-#### 多行表头取最后一行
+#### 结束标记检测（不改领域模型）
 
-`parseTableRegion` 方法改为：跳过 `headerRows - 1` 行，取第 `headerRows` 行作为 headers。
-
-```
-headerStart = triggerRow + 1
-headerRow = rows[headerStart + headerRows - 1]  // 最后一行表头
-headers = headerRow 的所有单元格值
-dataStart = headerStart + headerRows
-```
-
-#### 结束标记检测
-
-`parseTableRegion` 方法增加：检查每行第一列是否匹配 `DataEndRule.markers`。
+`DataEndRule.markers` 已有字段，只需改 `ExcelParserImpl.parseTableRegion`：检查每行第一列是否匹配 markers。
 
 ```
 对于每个数据行:
@@ -139,15 +172,16 @@ canonicalModel:
   tables:
     - name: employees
       fields:
-        - { name: seq, type: INTEGER, required: true }
-        - { name: name, type: STRING, required: true }
-        - { name: idType, type: STRING, required: true }
-        - { name: idNo, type: STRING, required: true }
-        # ... 其余字段省略
+        # 字段名与 Excel R5 列代码行对应（headerNameRow=1）
+        - { name: XH, type: INTEGER, required: true }
+        - { name: XM, type: STRING, required: true }
+        - { name: ZJLX, type: STRING, required: true }
+        - { name: ZJHM, type: STRING, required: true }
+        # ... 其余字段省略（共 42 列，按 R5 列代码命名）
 
 validationRules:
-  - { field: idNo, type: NOT_NULL, message: "证件编号不能为空", scope: TABLE_ROW }
-  - { field: name, type: NOT_NULL, message: "姓名不能为空", scope: TABLE_ROW }
+  - { field: ZJHM, type: NOT_NULL, message: "证件编号不能为空", scope: TABLE_ROW }
+  - { field: XM, type: NOT_NULL, message: "姓名不能为空", scope: TABLE_ROW }
 
 derivationRules: []
 
@@ -176,6 +210,7 @@ sourceTemplates:
         trigger: { matchType: HEADER_SNIFF, minMatchCount: 5 }
         strategy:
           headerRows: 3
+          headerNameRow: 1     # 用第 1 行（R5 列代码 XH/XM/ZJLX...）作为列名
           dataEnd: { markers: ["结束"], blankRowCount: 1 }
       - name: filler_info
         type: KEY_VALUE
@@ -208,7 +243,7 @@ sourceTemplates:
 |------|--------|
 | `openStream_读取所有行` | 15 行，R1 非空，R3 空行 |
 | `parse_KV区域_多组label_value` | basic_info 解析出 4 个 KV |
-| `parse_表格区域_多行表头` | headers 取 R7 中文表头，3 条数据行 |
+| `parse_表格区域_指定表头行` | headers 取 R5 列代码（headerNameRow=1），3 条数据行 |
 | `parse_表格区域_结束标记` | 遇"结束"行停止 |
 | `parse_KV区域2_填表人` | filler=张三, reviewer=李四 |
 
