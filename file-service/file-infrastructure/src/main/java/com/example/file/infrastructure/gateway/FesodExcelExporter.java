@@ -1,7 +1,9 @@
 package com.example.file.infrastructure.gateway;
 
+import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.model.valueobject.SplitUnit;
+import com.example.shared.exception.SystemException;
 import org.apache.fesod.sheet.ExcelWriter;
 import org.apache.fesod.sheet.FesodSheet;
 import org.apache.fesod.sheet.write.metadata.WriteSheet;
@@ -32,7 +34,14 @@ public class FesodExcelExporter implements ExcelExporter {
         Object value = e.getValue();
         if (value instanceof List<?> list) {
           // 列表变量：用 FillWrapper 包装，前缀 = regionName
-          // 模板占位符 {regionName.field} 会被替换为列表每项的 field 值
+          //
+          // fesod 2.0.2-incubating 限制：模板占位符必须用 {regionName.field} 语法
+          // （无前导点），而非 fesod 文档标准的 {.regionName.field}。
+          // 根因：ExcelWriteFillExecutor.prepareData() 中 collectPrefixIndex=0 时
+          // prefix 保持 null，与 FillWrapper("regionName", list) 的缓存键不匹配，
+          // 导致填充静默失败。改用 {regionName.field} 后 collectPrefixIndex>0，
+          // prefix 正确设置为 "regionName"，与 FillWrapper 缓存键匹配。
+          // 升级 fesod 后可考虑改回 {.regionName.field} 标准语法。
           if (!list.isEmpty()) {
             writer.fill(new FillWrapper(e.getKey(), list),
                 FillConfig.builder().forceNewRow(true).build(),
@@ -48,7 +57,7 @@ public class FesodExcelExporter implements ExcelExporter {
         writer.fill(simpleVars, writeSheet);
       }
     } catch (Exception e) {
-      throw new RuntimeException("Excel 模板填充失败", e);
+      throw new SystemException(FileErrorCodes.EXCEL_EXPORT_FAILED, e);
     }
   }
 }

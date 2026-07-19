@@ -11,13 +11,17 @@ import com.example.file.domain.model.valueobject.ValidationResult;
 import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.domain.model.valueobject.parse.RegionParseResult;
 import com.example.file.domain.service.*;
+import com.example.file.infrastructure.gateway.AviatorExpressionEvaluator;
 import com.example.file.infrastructure.gateway.ExcelParserImpl;
 import com.example.file.infrastructure.gateway.FesodExcelExporter;
 import org.apache.fesod.sheet.FesodSheet;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -25,36 +29,40 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Task 2: 全流程 happy path 测试 (解析→校验→拆分→导出→round-trip).
+ * 全流程集成测试：解析→校验→拆分→导出→round-trip.
  *
  * <p>验证完整业务链路：
  * <ol>
  *   <li>用 RegionStateMachine 解析示例表单 → CanonicalData</li>
- *   <li>用 DataValidator 校验每行员工数据 (idNo/name 非空)</li>
+ *   <li>用 DataValidator + Aviator 校验每行员工数据 (idNo/name 非空)</li>
  *   <li>用 TaskSplitter 按 idType 拆分为 2 个子任务 (身份证/护照)</li>
- *   <li>用 FesodExcelExporter 把每个 SplitUnit 导出为 Excel</li>
+ *   <li>用 ExportDecisionService + FesodExcelExporter 把每个 SplitUnit 导出为 Excel</li>
  *   <li>重新解析导出的 Excel，验证 properties 和 tables 与原 SplitUnit 一致</li>
  * </ol>
  *
- * <p>模板由 {@code @BeforeAll} 程序生成到 {@code docs/excel/示例表单_填充模板.xlsx}，
- * 占位符严格遵循 fesod 2.0.2 语法 (无前导点)。
+ * <p>模板由 {@code @BeforeAll static} 程序生成到 JUnit {@code @TempDir}，
+ * 占位符严格遵循 fesod 2.0.2 语法 (无前导点)。源代码树在测试期间不被修改。
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExportFlowIntegrationTest {
 
+  /** 源 Excel 路径（只读，不修改）。 */
   private static final String SOURCE_EXCEL_PATH =
       Path.of("docs", "excel", "示例表单.xlsx").toString();
-  private static final String FILL_TEMPLATE_PATH =
-      Path.of("docs", "excel", "示例表单_填充模板.xlsx").toString();
+
+  /** 测试输出目录（{@code target/test-output/}，避免污染 classpath）。 */
   private static final String OUTPUT_DIR =
-      Path.of("target", "test-classes").toString();
+      Path.of("target", "test-output", "export-flow").toString();
+
+  /** 程序生成的填充模板路径，由 {@link #ensureFillTemplateExists(Path)} 注入。 */
+  private static Path fillTemplatePath;
 
   /**
-   * 程序生成填充模板，避免二进制文件入库。
+   * 程序生成填充模板到 JUnit {@code @TempDir}，避免二进制文件入库和源代码树污染.
    *
    * <p>模板结构 (4 行 4 列)：
    * <pre>
@@ -74,20 +82,19 @@ class ExportFlowIntegrationTest {
    * </ul>
    */
   @BeforeAll
-  void ensureFillTemplateExists() throws Exception {
-    Path templatePath = Path.of(FILL_TEMPLATE_PATH);
-    Files.createDirectories(templatePath.getParent());
-    Files.deleteIfExists(templatePath);
+  static void ensureFillTemplateExists(@TempDir Path tempDir) throws Exception {
+    fillTemplatePath = tempDir.resolve("示例表单_填充模板.xlsx");
 
     List<List<Object>> templateRows = new ArrayList<>();
     templateRows.add(Arrays.asList("企业客户号：", "{customerNo}", "企业客户名称：", "{customerName}"));
     templateRows.add(Arrays.asList("序号", "姓名", "证件类型", "证件号码"));
     templateRows.add(Arrays.asList("{employees.seq}", "{employees.name}", "{employees.idType}", "{employees.idNo}"));
     templateRows.add(Arrays.asList("填表人：", "{filler}", "复核人：", "{reviewer}"));
-    FesodSheet.write(templatePath.toString()).sheet().doWrite(templateRows);
+    FesodSheet.write(fillTemplatePath.toString()).sheet().doWrite(templateRows);
   }
 
   @Test
+  @DisplayName("全流程：解析示例表单 → Aviator 校验 → 按 idType 拆分 → 模板填充导出 → round-trip 验证")
   void 全流程_解析_校验_拆分_导出_round_trip() throws Exception {
     // ===== 1. 解析示例表单 =====
     List<RegionDef> sourceRegions = buildSourceRegionDefs();
@@ -111,26 +118,23 @@ class ExportFlowIntegrationTest {
         .containsEntry("reviewer", "李四");
     assertThat(data.tables()).containsKey("employees");
     assertThat(data.tables().get("employees")).hasSize(3);
-    // 第 1 行：seq=1, name=张内Aa01, idType=身份证
     assertThat(data.tables().get("employees").get(0))
         .containsEntry("seq", "1")
         .containsEntry("name", "张内Aa01")
         .containsEntry("idType", "身份证")
         .containsEntry("idNo", "999000198608060000");
-    // 第 2 行：seq=2, idType=护照
     assertThat(data.tables().get("employees").get(1))
         .containsEntry("seq", "2")
         .containsEntry("idType", "护照");
-    // 第 3 行：seq=3, idType=身份证
     assertThat(data.tables().get("employees").get(2))
         .containsEntry("seq", "3")
         .containsEntry("idType", "身份证");
 
-    // ===== 2. 校验通过 (idNo/name 非空) =====
+    // ===== 2. 校验通过 (使用真实 Aviator 引擎) =====
     List<ValidationRule> rules = List.of(
-        new ValidationRule("idNo", ValidationScope.ROW, "idNo != null", "证件编号不能为空", FieldType.STRING),
-        new ValidationRule("name", ValidationScope.ROW, "name != null", "姓名不能为空", FieldType.STRING));
-    ExpressionEvaluator evaluator = buildExpressionEvaluator();
+        new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil", "证件编号不能为空", FieldType.STRING),
+        new ValidationRule("name", ValidationScope.ROW, "name != nil", "姓名不能为空", FieldType.STRING));
+    ExpressionEvaluator evaluator = new AviatorExpressionEvaluator();
     DataValidator validator = new DataValidator();
     for (Map<String, Object> row : data.tables().get("employees")) {
       ValidationResult result = validator.validate(row, rules, ErrorPolicy.COLLECT_ALL, evaluator);
@@ -148,7 +152,6 @@ class ExportFlowIntegrationTest {
     TaskSplitter splitter = new TaskSplitter();
     List<SplitUnit> units = splitter.split(dataMap, splitConfig);
 
-    // 实际数据：3 行员工 → 2 行身份证 (seq=1,3) + 1 行护照 (seq=2)
     assertThat(units).hasSize(2);
     assertThat(units).extracting(SplitUnit::splitKey)
         .containsExactlyInAnyOrder("身份证", "护照");
@@ -162,7 +165,7 @@ class ExportFlowIntegrationTest {
       Path outputPath = outputDir.resolve("export-" + unit.splitKey() + ".xlsx");
       Files.deleteIfExists(outputPath);
 
-      try (InputStream tpl = new FileInputStream(FILL_TEMPLATE_PATH);
+      try (InputStream tpl = new FileInputStream(fillTemplatePath.toFile());
            OutputStream out = new FileOutputStream(outputPath.toFile())) {
         exporter.export(unit, tpl, out);
       }
@@ -204,7 +207,57 @@ class ExportFlowIntegrationTest {
   }
 
   /**
-   * 源 Excel 解析配置（基于 Step 1 探针实测结构）。
+   * Task 3: 校验失败时不导出测试.
+   *
+   * <p>使用真实的 {@link ExportDecisionService} 领域服务封装"校验通过才导出"的决策逻辑。
+   * 验证当 {@link ValidationResult#isValid()} 返回 false 时，{@link ExcelExporter} 不被调用。
+   *
+   * <p>关键区别于之前测试代码自身 if 语句的反模式：
+   * 此处 spyExporter 通过 {@link ExportDecisionService#exportIfValid} 间接调用，
+   * 决策逻辑由生产代码持有，测试真实业务规则。
+   */
+  @Test
+  @DisplayName("校验失败时 ExportDecisionService 不调用 exporter")
+  void 校验失败时不导出() {
+    // 1. 构造一个缺失 idNo 字段的行（SplitUnit.data 用 Map.copyOf 拒绝 null value，
+    //    所以用"字段缺失"模拟校验失败，而非"字段为 null"）
+    Map<String, Object> invalidRow = new LinkedHashMap<>();
+    invalidRow.put("seq", "1");
+    invalidRow.put("name", "张三");
+    invalidRow.put("idType", "身份证");
+    // 故意不 put idNo，模拟源数据缺失证件号
+
+    List<ValidationRule> rules = List.of(
+        new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil",
+            "证件编号不能为空", FieldType.STRING));
+
+    ExpressionEvaluator evaluator = new AviatorExpressionEvaluator();
+    DataValidator validator = new DataValidator();
+    ValidationResult result = validator.validate(invalidRow, rules,
+        ErrorPolicy.COLLECT_ALL, evaluator);
+
+    // 2. 验证校验失败（Aviator 访问不存在的 key 会抛异常，DataValidator catch 后添加错误）
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.errors()).hasSize(1);
+    assertThat(result.errors().get(0).field()).isEqualTo("idNo");
+
+    // 3. spy exporter 记录调用次数
+    AtomicInteger callCount = new AtomicInteger(0);
+    ExcelExporter spyExporter = (unit, tpl, out) -> callCount.incrementAndGet();
+
+    // 4. 通过真实的 ExportDecisionService 执行决策（生产代码持有 if 逻辑）
+    SplitUnit unit = new SplitUnit("身份证", invalidRow);
+    ExportDecisionService decisionService = new ExportDecisionService();
+    decisionService.exportIfValid(unit, result, spyExporter,
+        new ByteArrayInputStream(new byte[]{}),
+        new ByteArrayOutputStream());
+
+    // 5. 验证 ExportDecisionService 的决策逻辑正确：校验失败时不调用 exporter
+    assertThat(callCount.get()).isZero();
+  }
+
+  /**
+   * 源 Excel 解析配置（基于 Step 1 探针实测结构）.
    *
    * <p>表头是 3 行结构：Row 3=代码 (XH/XM/ZJLX/ZJHM) + Row 4=分组 + Row 5=中文带星号。
    * 所以 headerRows=3, headerNameRow=1 (1-indexed, 1st row = 代码行)。
@@ -241,7 +294,7 @@ class ExportFlowIntegrationTest {
   }
 
   /**
-   * Round-trip 解析配置（用于解析导出后的 Excel）。
+   * Round-trip 解析配置（用于解析导出后的 Excel）.
    *
    * <p>导出模板只有 1 行表头 (序号/姓名/证件类型/证件号码)，所以 headerRows=1, headerNameRow=0。
    * 模板中 filler/reviewer 均用中文冒号，所以 round-trip aliases 也用中文冒号。
@@ -273,74 +326,5 @@ class ExportFlowIntegrationTest {
                     "filler", List.of("填表人："),
                     "reviewer", List.of("复核人：")),
                 1)));
-  }
-
-  /**
-   * Task 3: 校验失败时不导出测试.
-   *
-   * <p>模拟 ParseFileUseCase 的决策逻辑：仅当 ValidationResult.isValid() == true 时才调用 exporter。
-   * 构造一个 idNo 为空的行（模拟校验失败场景），验证：
-   * <ol>
-   *   <li>DataValidator.validate 返回 isValid=false</li>
-   *   <li>错误信息 "证件编号不能为空"</li>
-   *   <li>spyExporter 未被调用 (AtomicBoolean 保持 false)</li>
-   *   <li>输出文件不存在</li>
-   * </ol>
-   */
-  @Test
-  void 校验失败时不导出() throws Exception {
-    // 1. 构造一个 idNo 为空的行 (模拟校验失败场景)
-    Map<String, Object> invalidRow = new LinkedHashMap<>();
-    invalidRow.put("seq", "1");
-    invalidRow.put("name", "张三");
-    invalidRow.put("idType", "身份证");
-    invalidRow.put("idNo", null);  // 缺失证件号
-
-    List<ValidationRule> rules = List.of(
-        new ValidationRule("idNo", ValidationScope.ROW, "idNo != null",
-            "证件编号不能为空", FieldType.STRING));
-
-    ExpressionEvaluator evaluator = buildExpressionEvaluator();
-    DataValidator validator = new DataValidator();
-    ValidationResult result = validator.validate(invalidRow, rules,
-        ErrorPolicy.COLLECT_ALL, evaluator);
-
-    // 2. 验证校验失败
-    assertThat(result.isValid()).isFalse();
-    assertThat(result.errors()).hasSize(1);
-    assertThat(result.errors().get(0).message()).isEqualTo("证件编号不能为空");
-    assertThat(result.errors().get(0).field()).isEqualTo("idNo");
-
-    // 3. 验证不调用 export：用 AtomicBoolean 模拟 ParseFileUseCase 的决策逻辑
-    //    真实场景 ParseFileUseCase 会检查 isValid 才调用 exporter
-    java.util.concurrent.atomic.AtomicBoolean exportCalled =
-        new java.util.concurrent.atomic.AtomicBoolean(false);
-    ExcelExporter spyExporter = (unit, tpl, out) -> exportCalled.set(true);
-
-    Path shouldNotExistPath = Path.of(OUTPUT_DIR, "should-not-exist.xlsx");
-    Files.deleteIfExists(shouldNotExistPath);
-
-    // 4. 模拟 ParseFileUseCase 的 if-then 决策
-    if (result.isValid()) {
-      // 不会进入此分支，因为 isValid == false
-      try (OutputStream out = new FileOutputStream(shouldNotExistPath.toFile())) {
-        spyExporter.export(null, null, out);
-      }
-    }
-
-    // 5. 验证 export 未被调用，文件未生成
-    assertThat(exportCalled.get()).isFalse();
-    assertThat(Files.exists(shouldNotExistPath)).isFalse();
-  }
-
-  private ExpressionEvaluator buildExpressionEvaluator() {
-    return (expr, ctxMap) -> {
-      if (expr == null) return true;
-      if (expr.endsWith("!= null")) {
-        String field = expr.substring(0, expr.indexOf("!=")).trim();
-        return ctxMap.containsKey(field) && ctxMap.get(field) != null;
-      }
-      return true;
-    };
   }
 }

@@ -99,5 +99,9 @@ class FesodExcelExporterTest {
         .headRowNumber(0)
         .doReadSync();
     assertThat(rows.get(0).get(0)).isEqualTo("姓名：李四");
+    // 空列表时 FesodExcelExporter 不调用 writer.fill(FillWrapper)（if (!list.isEmpty()) 守卫），
+    // 但 fesod 在 fill(simpleVars, writeSheet) 扫描模板时会清理含 {items.seq} 占位符的行
+    // （因为 simpleVars 中没有 items 键），所以输出只剩 1 行。这是 fesod 的预期行为。
+    assertThat(rows).hasSize(1);
   }
 }

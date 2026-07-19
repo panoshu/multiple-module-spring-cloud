@@ -10,7 +10,8 @@ public enum FileErrorCodes implements ErrorDefinition {
   SUB_TASK_EXPIRED("FILE_SUB_TASK_EXPIRED", "子任务已过期"),
   SUB_TASK_INVALID("FILE_SUB_TASK_INVALID", "子任务校验失败"),
   IDENTIFY_FAILED("FILE_IDENTIFY_FAILED", "无法识别源模板"),
-  EXPRESSION_ERROR("FILE_EXPRESSION_ERROR", "表达式求值失败");
+  EXPRESSION_ERROR("FILE_EXPRESSION_ERROR", "表达式求值失败"),
+  EXCEL_EXPORT_FAILED("FILE_EXCEL_EXPORT_FAILED", "Excel 模板填充失败");
 
   private final String code;
   private final String message;
