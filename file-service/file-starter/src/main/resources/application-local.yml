@@ -21,3 +21,25 @@ logging:
     org.zalando.logbook: TRACE
     com.alibaba.nacos: ERROR
     com.alibaba.cloud.nacos: ERROR
+
+# 本地开发环境文件存储覆盖配置
+file:
+  storage:
+    targets:
+      - id: local-default
+        type: LOCAL
+        base-path: ${user.home}/.file-service/dev
+      - id: oss-source
+        type: LOCAL  # 本地开发强制 LOCAL，避免依赖 OSS
+        base-path: ${user.home}/.file-service/dev/source
+      - id: oss-export
+        type: LOCAL
+        base-path: ${user.home}/.file-service/dev/export
+      - id: nas-shared
+        type: LOCAL
+        base-path: ${user.home}/.file-service/dev/nas
+    routing:
+      source: local-default
+      export: oss-export
+      parsed: oss-source
+      archive: nas-shared

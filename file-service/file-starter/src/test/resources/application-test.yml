@@ -1,0 +1,24 @@
+# 测试环境配置 (使用 H2 + 本地存储)
+spring:
+  datasource:
+    url: jdbc:h2:mem:file-service-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-pg.sql
+
+file:
+  storage:
+    enabled: true
+    targets:
+      - id: local-default
+        type: LOCAL
+        base-path: ${java.io.tmpdir}/file-service-test
+    routing:
+      source: local-default
+      export: local-default
+      parsed: local-default
+      archive: local-default

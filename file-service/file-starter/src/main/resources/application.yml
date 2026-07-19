@@ -52,3 +52,42 @@ logging:
     rollingpolicy:
       total-size-cap: 1GB
       max-history: 30
+
+# 文件存储配置
+file:
+  storage:
+    enabled: true
+    targets:
+      - id: local-default
+        type: LOCAL
+        base-path: ${user.home}/.file-service/data
+        # 本地存储不需要 endpoint/bucket/ak/sk
+      - id: oss-source
+        type: OSS
+        endpoint: https://oss-cn-hangzhou.aliyuncs.com
+        bucket: file-source-prod
+        access-key-id: ${OSS_SOURCE_AK:}
+        access-key-secret: ${OSS_SOURCE_SK:}
+        base-path: source/
+        options:
+          secure: true
+      - id: oss-export
+        type: OSS
+        endpoint: https://oss-cn-hangzhou.aliyuncs.com
+        bucket: file-export-prod
+        access-key-id: ${OSS_EXPORT_AK:}
+        access-key-secret: ${OSS_EXPORT_SK:}
+        base-path: export/
+        options:
+          secure: true
+      - id: nas-shared
+        type: NAS
+        bucket: file-shared
+        base-path: /mnt/nas/file-service
+        options:
+          atomic-move: true
+    routing:
+      source: local-default
+      export: oss-export
+      parsed: oss-source
+      archive: nas-shared
