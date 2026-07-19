@@ -33,16 +33,19 @@ public class TableRegionParser implements RegionParser {
     while (stream.hasNext()) {
       RawRow row = stream.peek();
       if (row.isBlank()) { stream.next(); continue; }
-      if (ctx.isNextRegionTrigger(row)) break;
 
       stream.next();
       if (headerRowsRead < strategy.headerRows()) {
+        // 表头阶段：不检查 isNextRegionTrigger，因为表头行本身可能匹配下一个 region 的 trigger
+        // （例如 filler_info 的 HEADER_SNIFF(1) 会被任何非空行匹配）
         if (headerRowsRead == nameRowIdx) {
           headers = extractHeaders(row, strategy);
         }
         headerRowsRead++;
         continue;
       }
+      // 数据阶段：检查是否进入下一个 region
+      if (ctx.isNextRegionTrigger(row)) break;
       if (strategy.maxRows() > 0 && dataRowCount >= strategy.maxRows()) break;
       if (isDataEnd(row, strategy.dataEnd())) break;
       Map<String, Object> dataRow = mapDataRow(row, headers);
@@ -67,12 +70,16 @@ public class TableRegionParser implements RegionParser {
     int maxColIdx = cells.keySet().stream().mapToInt(Integer::intValue).max().orElse(-1);
     for (int i = 0; i <= maxColIdx; i++) {
       String cellValue = cells.get(i);
-      if (cellValue == null || cellValue.isBlank()) { headers.add(null); continue; }
+      if (cellValue == null || cellValue.isBlank()) {
+        // TableRegionResult 通过 List.copyOf 拒绝 null，用空串占位以保留列对齐
+        headers.add("");
+        continue;
+      }
       String canonical = strategy.headerAliases().entrySet().stream()
           .filter(e -> e.getValue().contains(cellValue))
           .map(Map.Entry::getKey)
           .findFirst()
-          .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? null : cellValue);
+          .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? "" : cellValue);
       headers.add(canonical);
     }
     return headers;
@@ -85,7 +92,8 @@ public class TableRegionParser implements RegionParser {
     int maxIdx = Math.min(headers.size() - 1, maxColIdx);
     for (int i = 0; i <= maxIdx; i++) {
       String key = headers.get(i);
-      if (key != null) dataRow.put(key, cells.get(i));
+      // 跳过空 header（null 或空串），不映射该列
+      if (key != null && !key.isEmpty()) dataRow.put(key, cells.get(i));
     }
     return dataRow;
   }
