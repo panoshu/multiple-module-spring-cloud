@@ -1,4 +1,4 @@
-package com.example.file.infrastructure.storage;
+package com.example.file.domain.gateway;
 
 import com.example.shared.primitives.identity.FileId;
 

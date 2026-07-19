@@ -34,10 +34,8 @@ public interface FileStorageGateway {
     /**
      * 复制文件到新用途对应的目标。
      * 返回 CopyResult (新 FileId + 新 storageKey)。
-     * 注意：返回类型在 infrastructure 层定义，这里使用 Object 占位以避免 domain 依赖 infra。
-     * 实际调用方（CopyFileUseCase）需强转为 CopyResult。
      */
-    Object copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId);
+    CopyResult copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId);
 
     /**
      * 计算文件 MD5

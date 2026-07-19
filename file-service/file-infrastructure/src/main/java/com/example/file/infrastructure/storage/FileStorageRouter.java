@@ -1,6 +1,7 @@
 package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.errorcode.FileErrorCodes;
+import com.example.file.domain.gateway.CopyResult;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
@@ -80,7 +81,7 @@ public class FileStorageRouter implements FileStorageGateway {
     }
 
     @Override
-    public Object copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId) {
+    public CopyResult copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId) {
         FileMetadata srcFile = metadataRepository.loadOrThrow(srcFileId);
         StorageTarget srcTarget = targetResolver.resolveById(srcFile.targetId());
         StorageTarget dstTarget = targetResolver.resolveByUsage(targetUsage, srcFile.bizType());
