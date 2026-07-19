@@ -4,6 +4,7 @@ import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.CopyResult;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
+import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
@@ -49,7 +50,7 @@ public class FileStorageRouter implements FileStorageGateway {
     }
 
     @Override
-    public void store(FileId fileId, InputStream content, long contentLength) {
+    public StoreResult store(FileId fileId, InputStream content, long contentLength) {
         FileMetadata file = metadataRepository.loadOrThrow(fileId);
         if (file.status() != FileStatus.PENDING_UPLOAD) {
             throw new SystemException(FileErrorCodes.FILE_ALREADY_UPLOADED)
@@ -59,6 +60,8 @@ public class FileStorageRouter implements FileStorageGateway {
         FileStorageBackend backend = resolveBackend(target.type());
         String storageKey = generateStorageKey(file);
         backend.store(target, storageKey, content, contentLength);
+        String md5 = backend.computeMd5(target, storageKey);
+        return new StoreResult(storageKey, md5);
     }
 
     @Override

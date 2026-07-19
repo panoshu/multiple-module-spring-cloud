@@ -4,10 +4,10 @@ import com.example.file.application.command.StoreFileCommand;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
+import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.SystemException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
 import com.example.shared.primitives.identity.FileId;
@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
@@ -28,7 +26,6 @@ public class StoreFileUseCase {
     private final FileMetadataRepository metadataRepository;
     private final FileStorageGateway storageGateway;
     private final StorageTargetResolver targetResolver;
-    private final EventBus eventBus;
 
     @Transactional
     public FileId createMetadata(StoreFileCommand command) {
@@ -49,8 +46,6 @@ public class StoreFileUseCase {
             command.expiresAt()
         );
         metadataRepository.save(file);
-        file.getDomainEvents().forEach(eventBus::publish);
-        file.clearDomainEvents();
         log.info("文件元数据已创建: fileId={}, usage={}, bizType={}",
             fileId, command.usage(), command.bizType());
         return fileId;
@@ -63,24 +58,9 @@ public class StoreFileUseCase {
             throw new SystemException(FileErrorCodes.FILE_ALREADY_UPLOADED)
                 .withLogDetail("fileId=" + fileId + ", 当前状态=" + file.status());
         }
-        storageGateway.store(fileId, content, contentLength);
-        String md5 = storageGateway.computeMd5(fileId);
-        String storageKey = generateStorageKey(file);
-        file.markUploaded(storageKey, md5);
+        StoreResult result = storageGateway.store(fileId, content, contentLength);
+        file.markUploaded(result.storageKey(), result.md5());
         metadataRepository.save(file);
-        file.getDomainEvents().forEach(eventBus::publish);
-        file.clearDomainEvents();
-        log.info("文件已存储: fileId={}, storageKey={}", fileId, storageKey);
-    }
-
-    private String generateStorageKey(FileMetadata file) {
-        String datePartition = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        return String.join("/",
-            file.bizType() != null ? file.bizType() : "default",
-            datePartition,
-            file.businessBatchId() != null ? file.businessBatchId().value() : "no-batch",
-            file.id().value(),
-            file.originalName()
-        );
+        log.info("文件已存储: fileId={}, storageKey={}", fileId, result.storageKey());
     }
 }

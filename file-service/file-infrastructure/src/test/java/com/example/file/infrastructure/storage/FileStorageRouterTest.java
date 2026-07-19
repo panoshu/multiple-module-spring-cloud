@@ -2,6 +2,7 @@ package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
+import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
@@ -48,8 +49,8 @@ class FileStorageRouterTest {
     }
 
     @Test
-    @DisplayName("store 应路由到 LOCAL 后端并写入文件")
-    void store_should_route_to_LOCAL_backend() throws IOException {
+    @DisplayName("store 应路由到 LOCAL 后端并返回 StoreResult")
+    void store_should_route_to_LOCAL_backend_and_return_store_result() throws IOException {
         FileId fileId = new FileId("01H8FILE001");
         StorageTarget target = new StorageTarget(
             "local-1", StorageType.LOCAL, null, null, tempDir.toString(),
@@ -63,10 +64,15 @@ class FileStorageRouterTest {
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
         when(targetResolver.resolveById("local-1")).thenReturn(target);
 
-        router.store(fileId, new ByteArrayInputStream("hello".getBytes()), 5);
+        StoreResult result = router.store(fileId, new ByteArrayInputStream("hello".getBytes()), 5);
 
-        // 验证文件已写入 (storageKey 由 Router 生成，包含日期)
-        // 由于 storageKey 内部生成，这里仅验证不抛异常即视为成功
+        assertThat(result).isNotNull();
+        assertThat(result.storageKey()).isNotBlank();
+        assertThat(result.md5()).isNotBlank();
+        // storageKey 格式: {bizType}/{date}/{batchId}/{fileId}/{originalName}
+        assertThat(result.storageKey()).contains("annuity");
+        assertThat(result.storageKey()).contains("01H8FILE001");
+        assertThat(result.storageKey()).endsWith("test.txt");
         verify(metadataRepository, atLeastOnce()).loadOrThrow(fileId);
     }
 

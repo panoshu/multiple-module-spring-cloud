@@ -9,7 +9,6 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
@@ -27,7 +26,6 @@ class CopyFileUseCaseTest {
     private FileMetadataRepository metadataRepository;
     private FileStorageGateway storageGateway;
     private StorageTargetResolver targetResolver;
-    private EventBus eventBus;
     private CopyFileUseCase useCase;
 
     @BeforeEach
@@ -35,8 +33,7 @@ class CopyFileUseCaseTest {
         metadataRepository = mock(FileMetadataRepository.class);
         storageGateway = mock(FileStorageGateway.class);
         targetResolver = mock(StorageTargetResolver.class);
-        eventBus = mock(EventBus.class);
-        useCase = new CopyFileUseCase(metadataRepository, storageGateway, targetResolver, eventBus);
+        useCase = new CopyFileUseCase(metadataRepository, storageGateway, targetResolver);
     }
 
     @Test
@@ -69,6 +66,5 @@ class CopyFileUseCaseTest {
 
         assertThat(result).isEqualTo(newFileId);
         verify(metadataRepository).save(any(FileMetadata.class));
-        verify(eventBus, atLeastOnce()).publish(any());
     }
 }

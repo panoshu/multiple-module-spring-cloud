@@ -17,8 +17,9 @@ public interface FileStorageGateway {
     /**
      * 存储文件流到后端。
      * 调用前 FileMetadata 必须已 create() 并持久化（status=PENDING_UPLOAD）。
+     * 返回 StoreResult，包含实际存储 key 和 MD5 校验值。
      */
-    void store(FileId fileId, InputStream content, long contentLength);
+    StoreResult store(FileId fileId, InputStream content, long contentLength);
 
     /**
      * 打开文件流。

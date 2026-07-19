@@ -6,7 +6,6 @@ import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.primitives.identity.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ public class CopyFileUseCase {
     private final FileMetadataRepository metadataRepository;
     private final FileStorageGateway storageGateway;
     private final StorageTargetResolver targetResolver;
-    private final EventBus eventBus;
 
     @Transactional
     public FileId copy(CopyFileCommand command) {
@@ -48,8 +46,6 @@ public class CopyFileUseCase {
         );
         newFile.markUploaded(copyResult.newStorageKey(), srcFile.md5());
         metadataRepository.save(newFile);
-        newFile.getDomainEvents().forEach(eventBus::publish);
-        newFile.clearDomainEvents();
 
         log.info("文件已复制: srcFileId={}, newFileId={}, targetUsage={}",
             command.srcFileId(), copyResult.newFileId(), command.targetUsage());

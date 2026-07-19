@@ -3,13 +3,13 @@ package com.example.file.application.usecase;
 import com.example.file.application.command.StoreFileCommand;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
+import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
@@ -18,10 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class StoreFileUseCaseTest {
@@ -29,7 +29,6 @@ class StoreFileUseCaseTest {
     private FileMetadataRepository metadataRepository;
     private FileStorageGateway storageGateway;
     private StorageTargetResolver targetResolver;
-    private EventBus eventBus;
     private StoreFileUseCase useCase;
 
     @BeforeEach
@@ -37,13 +36,12 @@ class StoreFileUseCaseTest {
         metadataRepository = mock(FileMetadataRepository.class);
         storageGateway = mock(FileStorageGateway.class);
         targetResolver = mock(StorageTargetResolver.class);
-        eventBus = mock(EventBus.class);
-        useCase = new StoreFileUseCase(metadataRepository, storageGateway, targetResolver, eventBus);
+        useCase = new StoreFileUseCase(metadataRepository, storageGateway, targetResolver);
     }
 
     @Test
-    @DisplayName("createMetadata 应保存元数据并发布事件")
-    void createMetadata_should_save_and_publish_event() {
+    @DisplayName("createMetadata 应保存元数据")
+    void createMetadata_should_save_metadata() {
         StoreFileCommand cmd = new StoreFileCommand(
             "test.xlsx", 1024, "application/octet-stream",
             FileUsage.SOURCE, "annuity", "business-core",
@@ -59,7 +57,6 @@ class StoreFileUseCaseTest {
 
         assertThat(fileId).isNotNull();
         verify(metadataRepository).save(any(FileMetadata.class));
-        verify(eventBus, atLeastOnce()).publish(any());
     }
 
     @Test
@@ -72,12 +69,14 @@ class StoreFileUseCaseTest {
             "oss-source", StorageType.OSS, UserNo.of("u1"), null
         );
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
-        when(storageGateway.computeMd5(fileId)).thenReturn("md5hash");
+        when(storageGateway.store(eq(fileId), any(), eq(5L)))
+            .thenReturn(new StoreResult("test-storage-key", "test-md5"));
 
         useCase.store(fileId, new ByteArrayInputStream("hello".getBytes()), 5);
 
         assertThat(file.status()).isEqualTo(FileStatus.UPLOADED);
-        assertThat(file.md5()).isEqualTo("md5hash");
+        assertThat(file.md5()).isEqualTo("test-md5");
+        assertThat(file.storageKey()).isEqualTo("test-storage-key");
         verify(storageGateway).store(eq(fileId), any(), eq(5L));
         verify(metadataRepository).save(any(FileMetadata.class));
     }

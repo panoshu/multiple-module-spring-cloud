@@ -3,6 +3,7 @@ package com.example.file.infrastructure.storage;
 import com.example.file.domain.gateway.CopyResult;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
+import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
@@ -20,8 +21,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,13 +34,8 @@ import static org.mockito.Mockito.when;
  * 使用真实 Spring 上下文加载 StorageAutoConfiguration + LocalFileStorage + FileStorageRouter。
  * FileMetadataRepository 使用 Mockito mock（测试焦点在存储引擎，不在数据库）。
  *
- * <p>实现说明（与 brief 偏差）：
- * brief 假设 {@code FileStorageRouter.store()} 内部会调用 {@code file.markUploaded()}
- * 修改 FileMetadata 状态。但实际生产代码 {@code store()} 仅写入物理文件，不修改
- * FileMetadata 状态。因此本测试在 {@code store()} 后显式调用
- * {@code file.markUploaded(predictedStorageKey, null)} 来过渡状态，使后续
- * {@code open()} / {@code computeMd5()} / {@code copy()} 能取到 storageKey。
- * storageKey 通过复制 {@link FileStorageRouter} 的生成逻辑在测试中预测。
+ * <p>store() 返回 StoreResult (storageKey + md5)，测试用返回值调用 markUploaded
+ * 来过渡 FileMetadata 状态，使后续 open()/computeMd5()/copy()/exists() 能取到 storageKey。
  */
 @SpringBootTest(classes = StorageTestConfiguration.class)
 @TestPropertySource(properties = {
@@ -76,7 +70,6 @@ class StorageIntegrationTest {
         FileId fileId = new FileId("01H8INTEGRATION01");
         byte[] content = "hello-storage-integration".getBytes();
 
-        // store() 需要 PENDING_UPLOAD 状态的 FileMetadata
         FileMetadata file = FileMetadata.create(
             fileId, "test.txt", content.length, "text/plain",
             FileUsage.SOURCE, "annuity", "biz-app", BatchId.of("BATCH_TEST"),
@@ -84,12 +77,10 @@ class StorageIntegrationTest {
         );
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
 
-        storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
+        StoreResult result = storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
 
-        // 偏差说明: 实际 store() 不会修改 FileMetadata 状态，需手动过渡到 UPLOADED
-        // 使后续 open()/computeMd5() 能从 file.storageKey() 取到正确的 key
-        String predictedStorageKey = predictStorageKey(file);
-        file.markUploaded(predictedStorageKey, null);
+        // 用返回的 StoreResult 调用 markUploaded，使后续 open()/computeMd5() 能取到 storageKey
+        file.markUploaded(result.storageKey(), result.md5());
 
         try (InputStream opened = storageGateway.open(fileId)) {
             String md5 = storageGateway.computeMd5(fileId);
@@ -104,20 +95,17 @@ class StorageIntegrationTest {
         FileId srcFileId = new FileId("01H8INTEGRATION02");
         byte[] content = "copy-source-content".getBytes();
 
-        // 先 store 源文件
         FileMetadata srcFile = FileMetadata.create(
             srcFileId, "source.txt", content.length, "text/plain",
             FileUsage.SOURCE, "annuity", "biz-app", BatchId.of("BATCH_TEST"),
             "local-default", StorageType.LOCAL, UserNo.of("u1"), null
         );
         when(metadataRepository.loadOrThrow(srcFileId)).thenReturn(srcFile);
-        storageGateway.store(srcFileId, new ByteArrayInputStream(content), content.length);
 
-        // 偏差说明: 手动过渡到 UPLOADED，使 copy() 能取到 srcFile.storageKey()
-        String predictedStorageKey = predictStorageKey(srcFile);
-        srcFile.markUploaded(predictedStorageKey, null);
+        StoreResult storeResult = storageGateway.store(srcFileId, new ByteArrayInputStream(content), content.length);
+        srcFile.markUploaded(storeResult.storageKey(), storeResult.md5());
 
-        // copy: srcFile 已有 storageKey (store 后 markUploaded 设置)
+        // copy: srcFile 已有 storageKey
         CopyResult copyResult = storageGateway.copy(
             srcFileId, FileUsage.EXPORT, BatchId.of("BATCH_TEST")
         );
@@ -145,14 +133,11 @@ class StorageIntegrationTest {
         when(metadataRepository.load(fileId)).thenReturn(Optional.empty());
         assertThat(storageGateway.exists(fileId)).isFalse();
 
-        // store
-        storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
+        // store 返回 StoreResult，用它调用 markUploaded
+        StoreResult storeResult = storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
+        file.markUploaded(storeResult.storageKey(), storeResult.md5());
 
-        // 偏差说明: 手动过渡到 UPLOADED，使 exists() 能取到 file.storageKey() 检查物理文件
-        String predictedStorageKey = predictStorageKey(file);
-        file.markUploaded(predictedStorageKey, null);
-
-        // store 后：load 返回 file → exists 通过文件系统判断返回 true
+        // store 后：load 返回 file (已含 storageKey) → exists 返回 true
         when(metadataRepository.load(fileId)).thenReturn(Optional.of(file));
         assertThat(storageGateway.exists(fileId)).isTrue();
     }
@@ -169,20 +154,5 @@ class StorageIntegrationTest {
         assertThat(exportTarget).isNotNull();
         assertThat(exportTarget.type()).isEqualTo(StorageType.LOCAL);
         assertThat(exportTarget.targetId()).isEqualTo("local-default");
-    }
-
-    /**
-     * 复制 FileStorageRouter.generateStorageKey() 的逻辑，预测 storageKey。
-     * 格式: {bizType}/{date}/{batchId}/{fileId}/{originalName}
-     */
-    private static String predictStorageKey(FileMetadata file) {
-        String datePartition = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        return String.join("/",
-            file.bizType() != null ? file.bizType() : "default",
-            datePartition,
-            file.businessBatchId() != null ? file.businessBatchId().value() : "no-batch",
-            file.id().value(),
-            file.originalName()
-        );
     }
 }
