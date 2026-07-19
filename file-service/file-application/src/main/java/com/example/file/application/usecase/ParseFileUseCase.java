@@ -28,6 +28,7 @@ import com.example.file.domain.service.TaskSplitter;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
+import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +94,7 @@ public class ParseFileUseCase {
     TemplateConfig config = configRepository.findActive(task.bizType())
         .orElseThrow(() -> new IllegalStateException("No active template config for bizType: " + task.bizType().value()));
 
-    try (InputStream inputStream = fileStorage.open(task.sourceFileRef())) {
+    try (InputStream inputStream = fileStorage.open(new FileId(task.sourceFileRef()))) {
       RawRowStream identifyStream = excelParser.openStream(inputStream);
       Optional<SourceTemplateDef> matched = identifier.identify(config, identifyStream);
 
@@ -110,7 +111,7 @@ public class ParseFileUseCase {
       task.markSplitting();
       parseTaskRepository.save(task);
 
-      try (InputStream parseStream = fileStorage.open(task.sourceFileRef())) {
+      try (InputStream parseStream = fileStorage.open(new FileId(task.sourceFileRef()))) {
         RawRowStream stream = excelParser.openStream(parseStream);
 
         List<RegionParseResult> regions = stateMachine.drive(stream, matched.get().regions(), new ParseContext(matched.get().regions()));
