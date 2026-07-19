@@ -24,7 +24,7 @@ class CanonicalModelBuilderTest {
         new RegionDef("header", RegionType.KEY_VALUE, "properties", null,
             new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3)),
         new RegionDef("items", RegionType.TABLE, "items", null,
-            new TableStrategy(1, null, Map.of(), null, 0, null))
+            new TableStrategy(1, 0, null, Map.of(), null, 0, null))
     );
     List<RegionParseResult> regions = List.of(
         new KvRegionResult("header", Map.of("applicant", "张三", "idCard", "110")),

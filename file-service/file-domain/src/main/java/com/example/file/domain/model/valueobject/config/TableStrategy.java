@@ -9,6 +9,7 @@ import java.util.Map;
 
 public record TableStrategy(
     int headerRows,
+    int headerNameRow,
     TableMatchBy matchBy,
     Map<String, List<String>> headerAliases,
     HeaderMatching headerMatching,
@@ -17,6 +18,8 @@ public record TableStrategy(
 ) implements RegionStrategy, ValueObject {
   public TableStrategy {
     if (headerRows <= 0) headerRows = 1;
+    if (headerNameRow < 0) headerNameRow = 0;
+    if (headerNameRow > headerRows) headerNameRow = headerRows;
     matchBy = matchBy == null ? TableMatchBy.HEADER_NAME : matchBy;
     headerAliases = headerAliases == null ? Map.of() : Map.copyOf(headerAliases);
     headerMatching = headerMatching == null ? HeaderMatching.STRICT : headerMatching;

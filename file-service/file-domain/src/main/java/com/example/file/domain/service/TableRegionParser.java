@@ -4,6 +4,7 @@ import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.enums.HeaderMatching;
 import com.example.file.domain.model.enums.RegionType;
 import com.example.file.domain.model.valueobject.RawRowStream;
+import com.example.file.domain.model.valueobject.config.DataEndRule;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.domain.model.valueobject.config.TableStrategy;
 import com.example.file.domain.model.valueobject.parse.RawRow;
@@ -25,6 +26,9 @@ public class TableRegionParser implements RegionParser {
     List<Map<String, Object>> rows = new ArrayList<>();
     int dataRowCount = 0;
     int headerRowsRead = 0;
+    int nameRowIdx = strategy.headerNameRow() == 0
+        ? strategy.headerRows() - 1
+        : strategy.headerNameRow() - 1;
 
     while (stream.hasNext()) {
       RawRow row = stream.peek();
@@ -33,13 +37,14 @@ public class TableRegionParser implements RegionParser {
 
       stream.next();
       if (headerRowsRead < strategy.headerRows()) {
-        if (headerRowsRead == strategy.headerRows() - 1) {
+        if (headerRowsRead == nameRowIdx) {
           headers = extractHeaders(row, strategy);
         }
         headerRowsRead++;
         continue;
       }
       if (strategy.maxRows() > 0 && dataRowCount >= strategy.maxRows()) break;
+      if (isDataEnd(row, strategy.dataEnd())) break;
       Map<String, Object> dataRow = mapDataRow(row, headers);
       if (!dataRow.isEmpty()) {
         rows.add(dataRow);
@@ -47,6 +52,13 @@ public class TableRegionParser implements RegionParser {
       }
     }
     return new TableRegionResult(regionDef.name(), headers, rows);
+  }
+
+  private boolean isDataEnd(RawRow row, DataEndRule dataEnd) {
+    if (dataEnd == null || dataEnd.markers().isEmpty()) return false;
+    String firstCell = row.cells().get(0);
+    if (firstCell == null) return false;
+    return dataEnd.markers().contains(firstCell.trim());
   }
 
   private List<String> extractHeaders(RawRow row, TableStrategy strategy) {
