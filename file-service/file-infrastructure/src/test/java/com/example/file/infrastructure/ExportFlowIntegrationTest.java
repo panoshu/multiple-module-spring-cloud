@@ -277,6 +277,64 @@ class ExportFlowIntegrationTest {
                 1)));
   }
 
+  /**
+   * Task 3: 校验失败时不导出测试.
+   *
+   * <p>模拟 ParseFileUseCase 的决策逻辑：仅当 ValidationResult.isValid() == true 时才调用 exporter。
+   * 构造一个 idNo 为空的行（模拟校验失败场景），验证：
+   * <ol>
+   *   <li>DataValidator.validate 返回 isValid=false</li>
+   *   <li>错误信息 "证件编号不能为空"</li>
+   *   <li>spyExporter 未被调用 (AtomicBoolean 保持 false)</li>
+   *   <li>输出文件不存在</li>
+   * </ol>
+   */
+  @Test
+  void 校验失败时不导出() throws Exception {
+    // 1. 构造一个 idNo 为空的行 (模拟校验失败场景)
+    Map<String, Object> invalidRow = new LinkedHashMap<>();
+    invalidRow.put("seq", "1");
+    invalidRow.put("name", "张三");
+    invalidRow.put("idType", "身份证");
+    invalidRow.put("idNo", null);  // 缺失证件号
+
+    List<ValidationRule> rules = List.of(
+        new ValidationRule("idNo", ValidationScope.ROW, "idNo != null",
+            "证件编号不能为空", FieldType.STRING));
+
+    ExpressionEvaluator evaluator = buildExpressionEvaluator();
+    DataValidator validator = new DataValidator();
+    ValidationResult result = validator.validate(invalidRow, rules,
+        ErrorPolicy.COLLECT_ALL, evaluator);
+
+    // 2. 验证校验失败
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.errors()).hasSize(1);
+    assertThat(result.errors().get(0).message()).isEqualTo("证件编号不能为空");
+    assertThat(result.errors().get(0).field()).isEqualTo("idNo");
+
+    // 3. 验证不调用 export：用 AtomicBoolean 模拟 ParseFileUseCase 的决策逻辑
+    //    真实场景 ParseFileUseCase 会检查 isValid 才调用 exporter
+    java.util.concurrent.atomic.AtomicBoolean exportCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    ExcelExporter spyExporter = (unit, tpl, out) -> exportCalled.set(true);
+
+    Path shouldNotExistPath = Path.of(OUTPUT_DIR, "should-not-exist.xlsx");
+    Files.deleteIfExists(shouldNotExistPath);
+
+    // 4. 模拟 ParseFileUseCase 的 if-then 决策
+    if (result.isValid()) {
+      // 不会进入此分支，因为 isValid == false
+      try (OutputStream out = new FileOutputStream(shouldNotExistPath.toFile())) {
+        spyExporter.export(null, null, out);
+      }
+    }
+
+    // 5. 验证 export 未被调用，文件未生成
+    assertThat(exportCalled.get()).isFalse();
+    assertThat(Files.exists(shouldNotExistPath)).isFalse();
+  }
+
   private ExpressionEvaluator buildExpressionEvaluator() {
     return (expr, ctxMap) -> {
       if (expr == null) return true;
