@@ -42,18 +42,23 @@ class ExcelParserImplTest {
       while (stream.hasNext()) {
         RawRow row = stream.next();
         if (count == 0) {
-          // 实际文件 idx=0 即企业客户号 KV 行（spec 期望的 R1 企业计划编号行在文件中不存在）
+          // idx=0 是企业计划编号 KV 行（headRowNumber=0 不跳过首行）
+          assertThat(row.isBlank()).isFalse();
+          assertThat(row.cells().get(0)).isEqualTo("企业计划编号：");
+        }
+        if (count == 1) {
+          // idx=1 是企业客户号 KV 行
           assertThat(row.isBlank()).isFalse();
           assertThat(row.cells().get(0)).isEqualTo("企业客户号：");
         }
-        if (count == 2) {
-          // idx=2 是 XH/XM/ZJLX/ZJHM 代码表头行（42 cells，非 blank）
+        if (count == 3) {
+          // idx=3 是 XH/XM/ZJLX/ZJHM 代码表头行（42 cells，非 blank）
           assertThat(row.isBlank()).isFalse();
           assertThat(row.cells().get(0)).isEqualTo("XH");
         }
         count++;
       }
-      assertThat(count).isEqualTo(13);
+      assertThat(count).isEqualTo(14);
     }
   }
 

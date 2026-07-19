@@ -87,7 +87,7 @@ public class ExcelParserImpl implements ExcelParser {
       @Override
       public void doAfterAllAnalysed(AnalysisContext context) {
       }
-    }).sheet().doRead();
+    }).sheet().headRowNumber(0).doRead();
     return rows;
   }
 

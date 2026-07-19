@@ -47,6 +47,8 @@ public class FesodExcelExporter implements ExcelExporter {
       if (!simpleVars.isEmpty()) {
         writer.fill(simpleVars, writeSheet);
       }
+    } catch (Exception e) {
+      throw new RuntimeException("Excel 模板填充失败", e);
     }
   }
 }

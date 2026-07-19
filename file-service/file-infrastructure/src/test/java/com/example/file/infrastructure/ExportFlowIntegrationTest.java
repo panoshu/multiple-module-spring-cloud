@@ -56,32 +56,30 @@ class ExportFlowIntegrationTest {
   /**
    * 程序生成填充模板，避免二进制文件入库。
    *
-   * <p>模板结构 (5 行 4 列)：
+   * <p>模板结构 (4 行 4 列)：
    * <pre>
-   * 行 0: 员工信息表                                                 (标题行，fesod 默认 headRowNumber=1 会跳过此行)
-   * 行 1: 企业客户号： | {customerNo}    | 企业客户名称： | {customerName}    (KV，label 和 placeholder 分单元格)
-   * 行 2: 序号       | 姓名            | 证件类型      | 证件号码           (静态表头)
-   * 行 3: {employees.seq} | {employees.name} | {employees.idType} | {employees.idNo}  (列表占位符行，无前导点)
-   * 行 4: 填表人：   | {filler}        | 复核人：      | {reviewer}        (KV，label 和 placeholder 分单元格)
+   * 行 0: 企业客户号： | {customerNo}    | 企业客户名称： | {customerName}    (KV，label 和 placeholder 分单元格)
+   * 行 1: 序号       | 姓名            | 证件类型      | 证件号码           (静态表头)
+   * 行 2: {employees.seq} | {employees.name} | {employees.idType} | {employees.idNo}  (列表占位符行，无前导点)
+   * 行 3: 填表人：   | {filler}        | 复核人：      | {reviewer}        (KV，label 和 placeholder 分单元格)
    * </pre>
    *
    * <p>关键设计：
    * <ul>
    *   <li>label 和 placeholder 必须放在不同单元格，否则导出后 cell 内容会变成
    *       "label+value" 合并字符串，round-trip 解析时 fingerprint 精确匹配会失败。</li>
-   *   <li>模板首行必须有内容 (标题行)，否则 {@code ExcelParserImpl.openStream} 因
-   *       fesod 默认 {@code headRowNumber=1} 会跳过首行 KV，导致 round-trip 解析失败。</li>
+   *   <li>每次运行都重新生成模板（不跳过已存在文件），确保模板格式与测试代码同步。</li>
+   *   <li>{@code ExcelParserImpl.openStream} 已设置 {@code headRowNumber(0)}，
+   *       不会跳过首行 KV，无需 workaround 标题行。</li>
    * </ul>
    */
   @BeforeAll
   void ensureFillTemplateExists() throws Exception {
     Path templatePath = Path.of(FILL_TEMPLATE_PATH);
     Files.createDirectories(templatePath.getParent());
-    if (Files.exists(templatePath)) return;
+    Files.deleteIfExists(templatePath);
 
     List<List<Object>> templateRows = new ArrayList<>();
-    // 标题行：作为 fesod 默认 headRowNumber=1 的 "head" 被跳过，确保后续 KV 行不被丢弃
-    templateRows.add(Arrays.asList("员工信息表", null, null, null));
     templateRows.add(Arrays.asList("企业客户号：", "{customerNo}", "企业客户名称：", "{customerName}"));
     templateRows.add(Arrays.asList("序号", "姓名", "证件类型", "证件号码"));
     templateRows.add(Arrays.asList("{employees.seq}", "{employees.name}", "{employees.idType}", "{employees.idNo}"));
