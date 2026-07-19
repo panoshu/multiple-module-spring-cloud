@@ -1,13 +1,11 @@
 package com.example.approval.types;
 
-import com.example.shared.domain.aggregate.valueobject.ValueObject;
-
 /**
  * 账管人编码
  *
  * @author approval-service
  */
-public record AccountManagerCode(String value) implements ValueObject {
+public record AccountManagerCode(String value)  {
 
   public AccountManagerCode {
     if (value == null || value.isBlank()) {

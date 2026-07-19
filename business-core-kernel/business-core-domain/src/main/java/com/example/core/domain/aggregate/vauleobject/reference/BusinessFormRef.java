@@ -1,6 +1,6 @@
 package com.example.core.domain.aggregate.vauleobject.reference;
 
-import com.example.core.primitives.business.status.FormStatus;
+import com.example.core.domain.aggregate.vauleobject.enums.status.FormStatus;
 import com.example.shared.primitives.identity.FormId;
 
 /**

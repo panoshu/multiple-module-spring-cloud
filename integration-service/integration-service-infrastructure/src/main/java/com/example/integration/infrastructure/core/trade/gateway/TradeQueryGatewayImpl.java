@@ -3,11 +3,12 @@ package com.example.integration.infrastructure.core.trade.gateway;
 import com.example.integration.domain.trade.gateway.TradeQueryGateway;
 import com.example.integration.domain.trade.model.TradePortfolioBalance;
 import com.example.integration.domain.trade.model.TradePortfolioQuery;
+import com.example.integration.infrastructure.core.common.adapter.TradeQueryClient;
 import com.example.integration.infrastructure.core.common.gateway.BaseTradeGateway;
 import com.example.integration.infrastructure.core.trade.dto.Query5564Req;
 import com.example.integration.infrastructure.core.trade.dto.Query5564Res;
 import com.example.integration.infrastructure.core.trade.mapper.TradePortfolioInfraMapper;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 /**

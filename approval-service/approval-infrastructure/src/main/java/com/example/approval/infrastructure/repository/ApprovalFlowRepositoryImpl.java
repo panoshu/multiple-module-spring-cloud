@@ -12,6 +12,7 @@ import com.example.approval.infrastructure.mapper.ApprovalFlowMapper;
 import com.example.approval.infrastructure.mapper.ApprovalNodeMapper;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.enums.FlowStatus;
+import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static com.example.approval.infrastructure.entity.table.ApprovalFlowDOTableDef.APPROVAL_FLOW_DO;
 import static com.example.approval.infrastructure.entity.table.ApprovalNodeDOTableDef.APPROVAL_NODE_DO;
@@ -155,6 +157,50 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
 
         // 保存审批节点
         saveNodes(flow.id(), flow.getNodes());
+    }
+
+    @Override
+    public void delete(ApprovalFlow flow) {
+        if (flow == null) {
+            return;
+        }
+        String flowIdStr = flow.id().value().toString();
+        // 先删除子表（节点）
+        nodeMapper.deleteByQuery(
+                QueryWrapper.create().where(APPROVAL_NODE_DO.FLOW_ID.eq(flowIdStr))
+        );
+        // 再删除主表
+        flowMapper.deleteById(flowIdStr);
+        log.debug("删除审批流: flowId={}", flow.id());
+    }
+
+    @Override
+    public void deleteById(ApprovalFlowId id) {
+        if (id == null) {
+            return;
+        }
+        String flowIdStr = id.value().toString();
+        nodeMapper.deleteByQuery(
+                QueryWrapper.create().where(APPROVAL_NODE_DO.FLOW_ID.eq(flowIdStr))
+        );
+        flowMapper.deleteById(flowIdStr);
+        log.debug("根据ID删除审批流: flowId={}", id);
+    }
+
+    @Override
+    public List<ApprovalFlow> loadAll() {
+        List<ApprovalFlowDO> flowDOs = flowMapper.selectAll();
+        return flowDOs.stream()
+                .map(this::convertToFlowWithNodes)
+                .toList();
+    }
+
+    @Override
+    public void streamByAppId(ApprovalFlowId id, Consumer<AggregateRoot<ApprovalFlowId>> processor) {
+        if (id == null || processor == null) {
+            return;
+        }
+        load(id).ifPresent(processor);
     }
 
     @Override

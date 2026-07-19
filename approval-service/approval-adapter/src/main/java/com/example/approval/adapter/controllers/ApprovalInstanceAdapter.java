@@ -7,8 +7,8 @@ import com.example.approval.api.dto.PendingApprovalDTO;
 import com.example.approval.api.request.*;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
 import com.example.approval.application.service.ApprovalInstanceService;
-import com.example.shared.primitives.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,9 +76,9 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
     }
 
     @Override
-    public ApiResult<PageInfo<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
+    public ApiResult<PageData<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
         log.info("查询待审批列表: approver={}", request.approver());
-        PageInfo<PendingApprovalDTO> pageResult = approvalInstanceService.listMyPendingApprovals(request);
+        PageData<PendingApprovalDTO> pageResult = approvalInstanceService.listMyPendingApprovals(request);
         return ApiResult.success(pageResult);
     }
 

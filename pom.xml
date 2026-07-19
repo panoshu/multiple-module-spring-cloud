@@ -15,7 +15,6 @@
     <module>demo-gateway</module>
     <module>demo-shared</module>
     <module>integration-service</module>
-    <module>customer-service</module>
     <module>business-core-kernel</module>
     <module>approval-service</module>
     <module>file-service</module>
@@ -102,11 +101,6 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>business-core-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>customer-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

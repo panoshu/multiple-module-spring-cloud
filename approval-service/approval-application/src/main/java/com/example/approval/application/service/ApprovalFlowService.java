@@ -15,7 +15,7 @@ import com.example.approval.types.ApprovalFlowId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.UserNo;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -153,7 +153,7 @@ public class ApprovalFlowService {
      * @return 审批流分页列表
      */
     @Transactional(readOnly = true)
-    public PageInfo<ApprovalFlowDTO> listApprovalFlows(ListApprovalFlowsRequest request) {
+    public PageData<ApprovalFlowDTO> listApprovalFlows(ListApprovalFlowsRequest request) {
         // TODO: 实现分页查询逻辑
         // 这里需要根据状态等条件查询审批流列表
         throw new UnsupportedOperationException("待实现分页查询逻辑");

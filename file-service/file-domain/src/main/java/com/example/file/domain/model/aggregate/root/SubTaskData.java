@@ -2,6 +2,7 @@ package com.example.file.domain.model.aggregate.root;
 
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.domain.model.valueobject.BusinessContext;
+import com.example.file.domain.model.valueobject.SubTaskSummary;
 import com.example.file.domain.model.valueobject.ValidationError;
 import com.example.file.domain.model.valueobject.ValidationResult;
 import com.example.file.types.BizType;
@@ -100,6 +101,12 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
     if (fileTaskId == null) throw new IllegalStateException("fileTaskId null");
     if (bizType == null) throw new IllegalStateException("bizType null");
     if (status == null) throw new IllegalStateException("status null");
+  }
+
+  public SubTaskSummary toSummary() {
+    int valid = (status == SubTaskStatus.VALID || status == SubTaskStatus.CONSUMED) ? rowCount : 0;
+    int invalid = (status == SubTaskStatus.INVALID) ? rowCount : 0;
+    return new SubTaskSummary(id(), splitKeyValue, rowCount, valid, invalid, status);
   }
 
   public FileTaskId fileTaskId() { return fileTaskId; }

@@ -23,8 +23,11 @@ public interface PortfolioBalanceConverter {
 
   /**
    * 1. 核心入口
+   *
+   * <p>source = "domain" 指向 toDtoBalance 的参数名，MapStruct 会将整个 TradePortfolioBalance
+   * 传给 {@link #toPageData(TradePortfolioBalance)} 进行桥接组装。
    */
-  @Mapping(target = "pageResult", source = "aggregate", qualifiedByName = "domainToPageData")
+  @Mapping(target = "pageResult", source = "domain", qualifiedByName = "domainToPageData")
   PortfolioBalanceDTO toDtoBalance(TradePortfolioBalance domain);
 
   /**

@@ -17,7 +17,7 @@ import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.UserNo;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -58,7 +58,7 @@ public class ApprovalInstanceService {
                 instanceId,
                 request.flowId(),
                 FlowVersion.of(flow.flowVersion().value()),
-                ApplicationId.of(request.businessNo()),
+                new ApplicationId(request.businessNo()),
                 null, // initiatorPlan
                 UserNo.of(request.initiator())
         );
@@ -229,7 +229,7 @@ public class ApprovalInstanceService {
      * @return 待审批分页列表
      */
     @Transactional(readOnly = true)
-    public PageInfo<PendingApprovalDTO> listMyPendingApprovals(ListMyPendingApprovalsRequest request) {
+    public PageData<PendingApprovalDTO> listMyPendingApprovals(ListMyPendingApprovalsRequest request) {
         // TODO: 实现待审批列表查询逻辑
         // 这里需要根据审批人和状态查询待审批的实例列表
         throw new UnsupportedOperationException("待实现待审批列表查询逻辑");

@@ -5,8 +5,8 @@ import com.example.approval.api.dto.ApprovalFlowDTO;
 import com.example.approval.api.request.*;
 import com.example.approval.api.response.ApprovalFlowIdResponse;
 import com.example.approval.application.service.ApprovalFlowService;
-import com.example.shared.primitives.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,9 +57,9 @@ public class ApprovalFlowAdapter implements ApprovalFlowApi {
     }
 
     @Override
-    public ApiResult<PageInfo<ApprovalFlowDTO>> list(ListApprovalFlowsRequest request) {
+    public ApiResult<PageData<ApprovalFlowDTO>> list(ListApprovalFlowsRequest request) {
         log.info("列表查询审批流");
-        PageInfo<ApprovalFlowDTO> pageResult = approvalFlowService.listApprovalFlows(request);
+        PageData<ApprovalFlowDTO> pageResult = approvalFlowService.listApprovalFlows(request);
         return ApiResult.success(pageResult);
     }
 

@@ -12,8 +12,8 @@ import com.example.approval.api.request.StartApprovalRequest;
 import com.example.approval.api.request.TransferRequest;
 import com.example.approval.api.request.WithdrawRequest;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
-import com.example.shared.primitives.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.shared.web.core.dto.PageData;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -90,7 +90,7 @@ public interface ApprovalInstanceApi {
      * @return 待审批分页列表
      */
     @PostExchange("/my-pending")
-    ApiResult<PageInfo<PendingApprovalDTO>> listMyPending(@RequestBody @Valid ListMyPendingApprovalsRequest request);
+    ApiResult<PageData<PendingApprovalDTO>> listMyPending(@RequestBody @Valid ListMyPendingApprovalsRequest request);
 
     /**
      * 审批历史

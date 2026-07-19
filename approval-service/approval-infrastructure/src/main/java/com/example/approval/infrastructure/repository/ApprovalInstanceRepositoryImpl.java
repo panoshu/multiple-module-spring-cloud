@@ -13,6 +13,7 @@ import com.example.approval.infrastructure.mapper.ApprovalNodeExecutionMapper;
 import com.example.approval.infrastructure.mapper.ApprovalRecordMapper;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
+import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.UserNo;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static com.example.approval.infrastructure.entity.table.ApprovalInstanceDOTableDef.APPROVAL_INSTANCE_DO;
 import static com.example.approval.infrastructure.entity.table.ApprovalNodeExecutionDOTableDef.APPROVAL_NODE_EXECUTION_DO;
@@ -61,10 +63,22 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
             return Optional.empty();
         }
 
+        return Optional.of(convertToInstanceWithDetails(instanceDO));
+    }
+
+    /**
+     * 将审批实例DO转换为包含节点执行记录和审批记录的完整聚合根
+     *
+     * @param instanceDO 审批实例DO
+     * @return 审批实例聚合根
+     */
+    private ApprovalInstance convertToInstanceWithDetails(ApprovalInstanceDO instanceDO) {
+        String instanceIdStr = instanceDO.getId();
+
         // 查询节点执行记录
         List<ApprovalNodeExecutionDO> executionDOs = executionMapper.selectListByQuery(
                 QueryWrapper.create()
-                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceId.value().toString()))
+                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
                         .orderBy(APPROVAL_NODE_EXECUTION_DO.NODE_ORDER.asc())
         );
 
@@ -107,7 +121,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
         ApprovalInstance instance = converter.toDomain(instanceDO);
 
         // 使用重建方法创建完整的聚合根
-        return Optional.of(ApprovalInstance.reconstitute(
+        return ApprovalInstance.reconstitute(
                 instance.id(),
                 instance.flowId(),
                 instance.flowVersion(),
@@ -122,7 +136,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
                 instance.createdAt(),
                 instance.updatedAt(),
                 instance.version()
-        ));
+        );
     }
 
     @Override
@@ -151,6 +165,69 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
 
         // 发布领域事件
         publishDomainEvents(instance);
+    }
+
+    @Override
+    public void delete(ApprovalInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        String instanceIdStr = instance.id().value().toString();
+        // 先删除审批记录（通过 execution 关联）
+        recordMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
+                                QueryWrapper.create()
+                                        .select(APPROVAL_NODE_EXECUTION_DO.ID)
+                                        .from(APPROVAL_NODE_EXECUTION_DO)
+                                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+                        ))
+        );
+        // 再删除节点执行记录
+        executionMapper.deleteByQuery(
+                QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+        );
+        // 最后删除主表
+        instanceMapper.deleteById(instanceIdStr);
+        log.debug("删除审批实例: instanceId={}", instance.id());
+    }
+
+    @Override
+    public void deleteById(ApprovalInstanceId id) {
+        if (id == null) {
+            return;
+        }
+        String instanceIdStr = id.value().toString();
+        recordMapper.deleteByQuery(
+                QueryWrapper.create()
+                        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
+                                QueryWrapper.create()
+                                        .select(APPROVAL_NODE_EXECUTION_DO.ID)
+                                        .from(APPROVAL_NODE_EXECUTION_DO)
+                                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+                        ))
+        );
+        executionMapper.deleteByQuery(
+                QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+        );
+        instanceMapper.deleteById(instanceIdStr);
+        log.debug("根据ID删除审批实例: instanceId={}", id);
+    }
+
+    @Override
+    public List<ApprovalInstance> loadAll() {
+        List<ApprovalInstanceDO> instanceDOs = instanceMapper.selectAll();
+        return instanceDOs.stream()
+                .map(this::convertToInstanceWithDetails)
+                .toList();
+    }
+
+    @Override
+    public void streamByAppId(ApprovalInstanceId id, Consumer<AggregateRoot<ApprovalInstanceId>> processor) {
+        if (id == null || processor == null) {
+            return;
+        }
+        load(id).ifPresent(processor);
     }
 
     @Override

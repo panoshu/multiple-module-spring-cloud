@@ -48,15 +48,15 @@ public interface ApprovalInstanceConverter {
      * @param instance 审批实例领域对象
      * @return 审批实例DO对象
      */
-    @Mapping(target = "id", source = "id.value")
-    @Mapping(target = "flowId", source = "flowId.value")
-    @Mapping(target = "flowVersion", source = "flowVersion.value")
-    @Mapping(target = "businessApplicationId", source = "businessApplicationId.value")
-    @Mapping(target = "currentNodeOrder", source = "currentNodeOrder.value")
-    @Mapping(target = "status", source = "status", qualifiedByName = "instanceStatusToString")
-    @Mapping(target = "createdBy", source = "createdBy.value")
-    @Mapping(target = "updatedBy", source = "updatedBy.value")
-    @Mapping(target = "version", source = "version.value")
+    @Mapping(target = "id", expression = "java(instance.id() != null ? String.valueOf(instance.id().value()) : null)")
+    @Mapping(target = "flowId", expression = "java(instance.flowId() != null ? String.valueOf(instance.flowId().value()) : null)")
+    @Mapping(target = "flowVersion", expression = "java(instance.flowVersion() != null ? instance.flowVersion().value() : null)")
+    @Mapping(target = "businessApplicationId", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId().value() : null)")
+    @Mapping(target = "currentNodeOrder", expression = "java(instance.currentNodeOrder() != null ? instance.currentNodeOrder().value() : null)")
+    @Mapping(target = "status", expression = "java(instanceStatusToString(instance.status()))")
+    @Mapping(target = "createdBy", expression = "java(instance.createdBy() != null ? instance.createdBy().value() : null)")
+    @Mapping(target = "updatedBy", expression = "java(instance.updatedBy() != null ? instance.updatedBy().value() : null)")
+    @Mapping(target = "version", expression = "java(instance.version() != null ? (int) instance.version().value() : null)")
     @Mapping(target = "deleted", constant = "false")
     ApprovalInstanceDO toDO(ApprovalInstance instance);
 
@@ -66,19 +66,27 @@ public interface ApprovalInstanceConverter {
      * @param instanceDO 审批实例DO对象
      * @return 审批实例领域对象
      */
-    @Mapping(target = "id", source = "id", qualifiedByName = "toApprovalInstanceId")
-    @Mapping(target = "flowId", source = "flowId", qualifiedByName = "toApprovalFlowId")
-    @Mapping(target = "flowVersion", source = "flowVersion", qualifiedByName = "toFlowVersion")
-    @Mapping(target = "businessApplicationId", source = "businessApplicationId", qualifiedByName = "toApplicationId")
-    @Mapping(target = "currentNodeOrder", source = "currentNodeOrder", qualifiedByName = "toNodeOrder")
-    @Mapping(target = "status", source = "status", qualifiedByName = "stringToInstanceStatus")
-    @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdAt", source = "createTime")
-    @Mapping(target = "updatedAt", source = "updateTime")
-    @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-    @Mapping(target = "nodeExecutions", ignore = true)
-    ApprovalInstance toDomain(ApprovalInstanceDO instanceDO);
+    default ApprovalInstance toDomain(ApprovalInstanceDO instanceDO) {
+        if (instanceDO == null) {
+            return null;
+        }
+        return ApprovalInstance.reconstitute(
+                toApprovalInstanceId(instanceDO.getId()),
+                toApprovalFlowId(instanceDO.getFlowId()),
+                toFlowVersion(instanceDO.getFlowVersion()),
+                toApplicationId(instanceDO.getBusinessApplicationId()),
+                toNodeOrder(instanceDO.getCurrentNodeOrder()),
+                stringToInstanceStatus(instanceDO.getStatus()),
+                instanceDO.getInitiatorPlan(),
+                instanceDO.getCurrentPlan(),
+                null,
+                toUserNo(instanceDO.getCreatedBy()),
+                toUserNo(instanceDO.getUpdatedBy()),
+                instanceDO.getCreateTime(),
+                instanceDO.getUpdateTime(),
+                toVersion(instanceDO.getVersion())
+        );
+    }
 
     /**
      * 节点执行记录领域对象转DO对象
@@ -86,13 +94,15 @@ public interface ApprovalInstanceConverter {
      * @param execution 节点执行记录领域对象
      * @return 节点执行记录DO对象
      */
-    @Mapping(target = "id", source = "id.value")
-    @Mapping(target = "nodeId", source = "nodeId.value")
-    @Mapping(target = "nodeOrder", source = "nodeOrder.value")
-    @Mapping(target = "status", source = "status", qualifiedByName = "executionStatusToString")
-    @Mapping(target = "createdBy", source = "createdBy.value")
-    @Mapping(target = "updatedBy", source = "updatedBy.value")
-    @Mapping(target = "version", source = "version.value")
+    @Mapping(target = "id", expression = "java(execution.id() != null ? String.valueOf(execution.id().value()) : null)")
+    @Mapping(target = "nodeId", expression = "java(execution.nodeId() != null ? String.valueOf(execution.nodeId().value()) : null)")
+    @Mapping(target = "nodeOrder", expression = "java(execution.nodeOrder() != null ? execution.nodeOrder().value() : null)")
+    @Mapping(target = "status", expression = "java(executionStatusToString(execution.status()))")
+    @Mapping(target = "startedAt", expression = "java(execution.startedAt())")
+    @Mapping(target = "completedAt", expression = "java(execution.completedAt())")
+    @Mapping(target = "createdBy", expression = "java(execution.createdBy() != null ? execution.createdBy().value() : null)")
+    @Mapping(target = "updatedBy", expression = "java(execution.updatedBy() != null ? execution.updatedBy().value() : null)")
+    @Mapping(target = "version", expression = "java(execution.version() != null ? (int) execution.version().value() : null)")
     @Mapping(target = "deleted", constant = "false")
     ApprovalNodeExecutionDO toExecutionDO(NodeExecution execution);
 
@@ -102,17 +112,25 @@ public interface ApprovalInstanceConverter {
      * @param executionDO 节点执行记录DO对象
      * @return 节点执行记录领域对象
      */
-    @Mapping(target = "id", source = "id", qualifiedByName = "toExecutionId")
-    @Mapping(target = "nodeId", source = "nodeId", qualifiedByName = "toNodeId")
-    @Mapping(target = "nodeOrder", source = "nodeOrder", qualifiedByName = "toNodeOrder")
-    @Mapping(target = "status", source = "status", qualifiedByName = "stringToExecutionStatus")
-    @Mapping(target = "approvals", ignore = true)
-    @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdAt", source = "createTime")
-    @Mapping(target = "updatedAt", source = "updateTime")
-    @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-    NodeExecution toExecutionDomain(ApprovalNodeExecutionDO executionDO);
+    default NodeExecution toExecutionDomain(ApprovalNodeExecutionDO executionDO) {
+        if (executionDO == null) {
+            return null;
+        }
+        return NodeExecution.reconstitute(
+                toExecutionId(executionDO.getId()),
+                toNodeId(executionDO.getNodeId()),
+                toNodeOrder(executionDO.getNodeOrder()),
+                stringToExecutionStatus(executionDO.getStatus()),
+                null,
+                executionDO.getStartedAt(),
+                executionDO.getCompletedAt(),
+                toUserNo(executionDO.getCreatedBy()),
+                toUserNo(executionDO.getUpdatedBy()),
+                executionDO.getCreateTime(),
+                executionDO.getUpdateTime(),
+                toVersion(executionDO.getVersion())
+        );
+    }
 
     /**
      * 审批记录领域对象转DO对象
@@ -120,15 +138,16 @@ public interface ApprovalInstanceConverter {
      * @param record 审批记录领域对象
      * @return 审批记录DO对象
      */
-    @Mapping(target = "id", source = "id.value")
-    @Mapping(target = "approverId", source = "approverId.value")
-    @Mapping(target = "action", source = "action", qualifiedByName = "approvalActionToString")
-    @Mapping(target = "opinion", source = "opinion.value")
-    @Mapping(target = "rejectTarget", source = "rejectTarget", qualifiedByName = "rejectTargetToJson")
-    @Mapping(target = "transferTo", source = "transferTo.value")
-    @Mapping(target = "createdBy", source = "createdBy.value")
-    @Mapping(target = "updatedBy", source = "updatedBy.value")
-    @Mapping(target = "version", source = "version.value")
+    @Mapping(target = "id", expression = "java(record.id() != null ? String.valueOf(record.id().value()) : null)")
+    @Mapping(target = "approverId", expression = "java(record.approverId() != null ? record.approverId().value() : null)")
+    @Mapping(target = "action", expression = "java(approvalActionToString(record.action()))")
+    @Mapping(target = "opinion", expression = "java(approvalOpinionToString(record.opinion()))")
+    @Mapping(target = "rejectTarget", expression = "java(rejectTargetToJson(record.rejectTarget()))")
+    @Mapping(target = "transferTo", expression = "java(record.transferTo() != null ? record.transferTo().value() : null)")
+    @Mapping(target = "operatedAt", expression = "java(record.operatedAt())")
+    @Mapping(target = "createdBy", expression = "java(record.createdBy() != null ? record.createdBy().value() : null)")
+    @Mapping(target = "updatedBy", expression = "java(record.updatedBy() != null ? record.updatedBy().value() : null)")
+    @Mapping(target = "version", expression = "java(record.version() != null ? (int) record.version().value() : null)")
     @Mapping(target = "deleted", constant = "false")
     ApprovalRecordDO toRecordDO(ApprovalRecord record);
 
@@ -138,18 +157,25 @@ public interface ApprovalInstanceConverter {
      * @param recordDO 审批记录DO对象
      * @return 审批记录领域对象
      */
-    @Mapping(target = "id", source = "id", qualifiedByName = "toRecordId")
-    @Mapping(target = "approverId", source = "approverId", qualifiedByName = "toUserNo")
-    @Mapping(target = "action", source = "action", qualifiedByName = "stringToApprovalAction")
-    @Mapping(target = "opinion", source = "opinion", qualifiedByName = "toApprovalOpinion")
-    @Mapping(target = "rejectTarget", source = "rejectTarget", qualifiedByName = "jsonToRejectTarget")
-    @Mapping(target = "transferTo", source = "transferTo", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdAt", source = "createTime")
-    @Mapping(target = "updatedAt", source = "updateTime")
-    @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-    ApprovalRecord toRecordDomain(ApprovalRecordDO recordDO);
+    default ApprovalRecord toRecordDomain(ApprovalRecordDO recordDO) {
+        if (recordDO == null) {
+            return null;
+        }
+        return ApprovalRecord.reconstitute(
+                toRecordId(recordDO.getId()),
+                toUserNo(recordDO.getApproverId()),
+                stringToApprovalAction(recordDO.getAction()),
+                toApprovalOpinion(recordDO.getOpinion()),
+                jsonToRejectTarget(recordDO.getRejectTarget()),
+                toUserNo(recordDO.getTransferTo()),
+                recordDO.getOperatedAt(),
+                toUserNo(recordDO.getCreatedBy()),
+                toUserNo(recordDO.getUpdatedBy()),
+                recordDO.getCreateTime(),
+                recordDO.getUpdateTime(),
+                toVersion(recordDO.getVersion())
+        );
+    }
 
     // ========== 类型转换方法 ==========
 
@@ -165,7 +191,7 @@ public interface ApprovalInstanceConverter {
 
     @Named("toApplicationId")
     default ApplicationId toApplicationId(String id) {
-        return id != null ? ApplicationId.of(id) : null;
+        return id != null ? new ApplicationId(id) : null;
     }
 
     @Named("toFlowVersion")
@@ -206,6 +232,10 @@ public interface ApprovalInstanceConverter {
     @Named("toApprovalOpinion")
     default ApprovalOpinion toApprovalOpinion(String opinion) {
         return opinion != null ? ApprovalOpinion.of(opinion) : ApprovalOpinion.empty();
+    }
+
+    default String approvalOpinionToString(ApprovalOpinion opinion) {
+        return opinion != null ? opinion.value() : null;
     }
 
     @Named("instanceStatusToString")

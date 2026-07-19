@@ -8,8 +8,8 @@ import com.example.approval.api.request.ListApprovalFlowsRequest;
 import com.example.approval.api.request.MatchApprovalFlowRequest;
 import com.example.approval.api.request.UpdateApprovalFlowRequest;
 import com.example.approval.api.response.ApprovalFlowIdResponse;
-import com.example.shared.primitives.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.shared.web.core.dto.PageData;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -66,7 +66,7 @@ public interface ApprovalFlowApi {
      * @return 审批流分页列表
      */
     @PostExchange("/list")
-    ApiResult<PageInfo<ApprovalFlowDTO>> list(@RequestBody @Valid ListApprovalFlowsRequest request);
+    ApiResult<PageData<ApprovalFlowDTO>> list(@RequestBody @Valid ListApprovalFlowsRequest request);
 
     /**
      * 匹配审批流

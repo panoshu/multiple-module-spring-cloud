@@ -133,4 +133,4 @@ logging:
     org.zalando.logbook: TRACE
     com.alibaba.nacos: ERROR
     com.alibaba.cloud.nacos: ERROR
-    com.example.share.logging.writer.impl.com.example.share.logging.writer.impl.FileLogExporter: INFO
+    com.example.shared.logging.writer.impl.com.example.shared.logging.writer.impl.FileLogExporter: INFO

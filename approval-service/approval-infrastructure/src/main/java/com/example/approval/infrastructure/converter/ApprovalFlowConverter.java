@@ -42,14 +42,14 @@ public interface ApprovalFlowConverter {
      * @param flow 审批流领域对象
      * @return 审批流DO对象
      */
-    @Mapping(target = "id", source = "id.value")
-    @Mapping(target = "flowName", source = "flowName.value")
-    @Mapping(target = "matchRules", source = "matchRules", qualifiedByName = "matchRulesToJson")
-    @Mapping(target = "flowVersion", source = "flowVersion.value")
-    @Mapping(target = "status", source = "status", qualifiedByName = "flowStatusToString")
-    @Mapping(target = "createdBy", source = "createdBy.value")
-    @Mapping(target = "updatedBy", source = "updatedBy.value")
-    @Mapping(target = "version", source = "version.value")
+    @Mapping(target = "id", expression = "java(flow.id() != null ? String.valueOf(flow.id().value()) : null)")
+    @Mapping(target = "flowName", expression = "java(flow.flowName() != null ? flow.flowName().value() : null)")
+    @Mapping(target = "matchRules", expression = "java(matchRulesToJson(flow.matchRules()))")
+    @Mapping(target = "flowVersion", expression = "java(flow.flowVersion() != null ? flow.flowVersion().value() : null)")
+    @Mapping(target = "status", expression = "java(flowStatusToString(flow.status()))")
+    @Mapping(target = "createdBy", expression = "java(flow.createdBy() != null ? flow.createdBy().value() : null)")
+    @Mapping(target = "updatedBy", expression = "java(flow.updatedBy() != null ? flow.updatedBy().value() : null)")
+    @Mapping(target = "version", expression = "java(flow.version() != null ? (int) flow.version().value() : null)")
     @Mapping(target = "deleted", constant = "false")
     ApprovalFlowDO toDO(ApprovalFlow flow);
 
@@ -59,18 +59,24 @@ public interface ApprovalFlowConverter {
      * @param flowDO 审批流DO对象
      * @return 审批流领域对象
      */
-    @Mapping(target = "id", source = "id", qualifiedByName = "toApprovalFlowId")
-    @Mapping(target = "flowName", source = "flowName", qualifiedByName = "toFlowName")
-    @Mapping(target = "matchRules", source = "matchRules", qualifiedByName = "jsonToMatchRules")
-    @Mapping(target = "flowVersion", source = "flowVersion", qualifiedByName = "toFlowVersion")
-    @Mapping(target = "status", source = "status", qualifiedByName = "stringToFlowStatus")
-    @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdAt", source = "createTime")
-    @Mapping(target = "updatedAt", source = "updateTime")
-    @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-    @Mapping(target = "nodes", ignore = true)
-    ApprovalFlow toDomain(ApprovalFlowDO flowDO);
+    default ApprovalFlow toDomain(ApprovalFlowDO flowDO) {
+        if (flowDO == null) {
+            return null;
+        }
+        return ApprovalFlow.reconstitute(
+                toApprovalFlowId(flowDO.getId()),
+                toFlowName(flowDO.getFlowName()),
+                jsonToMatchRules(flowDO.getMatchRules()),
+                null,
+                toFlowVersion(flowDO.getFlowVersion()),
+                stringToFlowStatus(flowDO.getStatus()),
+                toUserNo(flowDO.getCreatedBy()),
+                toUserNo(flowDO.getUpdatedBy()),
+                flowDO.getCreateTime(),
+                flowDO.getUpdateTime(),
+                toVersion(flowDO.getVersion())
+        );
+    }
 
     /**
      * 审批节点领域对象转DO对象
@@ -78,18 +84,19 @@ public interface ApprovalFlowConverter {
      * @param node 审批节点领域对象
      * @return 审批节点DO对象
      */
-    @Mapping(target = "id", source = "id.value")
+    @Mapping(target = "id", expression = "java(node.id() != null ? String.valueOf(node.id().value()) : null)")
     @Mapping(target = "flowId", ignore = true)
-    @Mapping(target = "nodeOrder", source = "nodeOrder.value")
-    @Mapping(target = "nodeType", source = "nodeType", qualifiedByName = "nodeTypeToString")
-    @Mapping(target = "terminalLevel", source = "terminalLevel", qualifiedByName = "terminalLevelToInteger")
-    @Mapping(target = "approverType", source = "approverType", qualifiedByName = "approverTypeToString")
-    @Mapping(target = "approverIds", source = "approverIds", qualifiedByName = "userNoListToJson")
-    @Mapping(target = "roleIds", source = "roleIds", qualifiedByName = "stringListToJson")
-    @Mapping(target = "signMode", source = "signMode", qualifiedByName = "signModeToString")
-    @Mapping(target = "createdBy", source = "createdBy.value")
-    @Mapping(target = "updatedBy", source = "updatedBy.value")
-    @Mapping(target = "version", source = "version.value")
+    @Mapping(target = "nodeOrder", expression = "java(node.nodeOrder() != null ? node.nodeOrder().value() : null)")
+    @Mapping(target = "nodeType", expression = "java(nodeTypeToString(node.nodeType()))")
+    @Mapping(target = "specifiedPlanId", expression = "java(node.specifiedPlanId().orElse(null))")
+    @Mapping(target = "terminalLevel", expression = "java(terminalLevelToInteger(node.terminalLevel().orElse(null)))")
+    @Mapping(target = "approverType", expression = "java(approverTypeToString(node.approverType()))")
+    @Mapping(target = "approverIds", expression = "java(userNoListToJson(node.approverIds()))")
+    @Mapping(target = "roleIds", expression = "java(stringListToJson(node.roleIds()))")
+    @Mapping(target = "signMode", expression = "java(signModeToString(node.signMode()))")
+    @Mapping(target = "createdBy", expression = "java(node.createdBy() != null ? node.createdBy().value() : null)")
+    @Mapping(target = "updatedBy", expression = "java(node.updatedBy() != null ? node.updatedBy().value() : null)")
+    @Mapping(target = "version", expression = "java(node.version() != null ? (int) node.version().value() : null)")
     @Mapping(target = "deleted", constant = "false")
     ApprovalNodeDO toNodeDO(ApprovalNode node);
 
@@ -99,20 +106,27 @@ public interface ApprovalFlowConverter {
      * @param nodeDO 审批节点DO对象
      * @return 审批节点领域对象
      */
-    @Mapping(target = "id", source = "id", qualifiedByName = "toNodeId")
-    @Mapping(target = "nodeOrder", source = "nodeOrder", qualifiedByName = "toNodeOrder")
-    @Mapping(target = "nodeType", source = "nodeType", qualifiedByName = "stringToNodeType")
-    @Mapping(target = "terminalLevel", source = "terminalLevel", qualifiedByName = "integerToTerminalLevel")
-    @Mapping(target = "approverType", source = "approverType", qualifiedByName = "stringToApproverType")
-    @Mapping(target = "approverIds", source = "approverIds", qualifiedByName = "jsonToUserNoList")
-    @Mapping(target = "roleIds", source = "roleIds", qualifiedByName = "jsonToStringList")
-    @Mapping(target = "signMode", source = "signMode", qualifiedByName = "stringToSignMode")
-    @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
-    @Mapping(target = "createdAt", source = "createTime")
-    @Mapping(target = "updatedAt", source = "updateTime")
-    @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-    ApprovalNode toNodeDomain(ApprovalNodeDO nodeDO);
+    default ApprovalNode toNodeDomain(ApprovalNodeDO nodeDO) {
+        if (nodeDO == null) {
+            return null;
+        }
+        return ApprovalNode.reconstitute(
+                toNodeId(nodeDO.getId()),
+                toNodeOrder(nodeDO.getNodeOrder()),
+                stringToNodeType(nodeDO.getNodeType()),
+                nodeDO.getSpecifiedPlanId(),
+                integerToTerminalLevel(nodeDO.getTerminalLevel()),
+                stringToApproverType(nodeDO.getApproverType()),
+                jsonToUserNoList(nodeDO.getApproverIds()),
+                jsonToStringList(nodeDO.getRoleIds()),
+                stringToSignMode(nodeDO.getSignMode()),
+                toUserNo(nodeDO.getCreatedBy()),
+                toUserNo(nodeDO.getUpdatedBy()),
+                nodeDO.getCreateTime(),
+                nodeDO.getUpdateTime(),
+                toVersion(nodeDO.getVersion())
+        );
+    }
 
     // ========== 类型转换方法 ==========
 
