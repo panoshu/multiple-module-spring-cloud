@@ -8,6 +8,7 @@ import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.file.types.TemplateCode;
+import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ class ParseTaskTest {
   @Test
   void should_create_pending_task() {
     ParseTask task = ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
-        "sample.xlsx", "ref://sample.xlsx", ErrorPolicy.COLLECT_ALL,
+        "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
         List.of("detailList.deptCode"), UserNo.of("u1"));
 
     assertThat(task.status()).isEqualTo(TaskStatus.PENDING);
@@ -89,7 +90,7 @@ class ParseTaskTest {
 
   private ParseTask newTask() {
     return ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
-        "sample.xlsx", "ref://sample.xlsx", ErrorPolicy.COLLECT_ALL,
+        "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
         List.of("detailList.deptCode"), UserNo.of("u1"));
   }
 }

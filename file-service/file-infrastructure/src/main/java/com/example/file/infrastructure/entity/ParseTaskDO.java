@@ -18,7 +18,7 @@ public class ParseTaskDO {
     private String bizType;
     private String templateCode;
     private String sourceFileName;
-    private String sourceFileRef;
+    private String sourceFileId;
     private String status;
     private String errorPolicy;
     private String splitKeys;

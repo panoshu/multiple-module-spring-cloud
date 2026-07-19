@@ -94,7 +94,7 @@ public class ParseFileUseCase {
     TemplateConfig config = configRepository.findActive(task.bizType())
         .orElseThrow(() -> new IllegalStateException("No active template config for bizType: " + task.bizType().value()));
 
-    try (InputStream inputStream = fileStorage.open(new FileId(task.sourceFileRef()))) {
+    try (InputStream inputStream = fileStorage.open(task.sourceFileId())) {
       RawRowStream identifyStream = excelParser.openStream(inputStream);
       Optional<SourceTemplateDef> matched = identifier.identify(config, identifyStream);
 
@@ -111,7 +111,7 @@ public class ParseFileUseCase {
       task.markSplitting();
       parseTaskRepository.save(task);
 
-      try (InputStream parseStream = fileStorage.open(new FileId(task.sourceFileRef()))) {
+      try (InputStream parseStream = fileStorage.open(task.sourceFileId())) {
         RawRowStream stream = excelParser.openStream(parseStream);
 
         List<RegionParseResult> regions = stateMachine.drive(stream, matched.get().regions(), new ParseContext(matched.get().regions()));

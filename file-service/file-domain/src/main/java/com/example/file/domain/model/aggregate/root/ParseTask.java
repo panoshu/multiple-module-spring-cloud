@@ -9,6 +9,7 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   private BizType bizType;
   private TemplateCode templateCode;
   private String sourceFileName;
-  private String sourceFileRef;
+  private FileId sourceFileId;
   private TaskStatus status;
   private ErrorPolicy errorPolicy;
   private List<String> splitKeys;
@@ -34,12 +35,12 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   private LocalDateTime finishedAt;
 
   // 业务创建
-  private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, String sourceFileRef,
+  private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, FileId sourceFileId,
                     ErrorPolicy errorPolicy, List<String> splitKeys, UserNo userNo) {
     super(id, userNo);
     this.bizType = bizType;
     this.sourceFileName = sourceFileName;
-    this.sourceFileRef = sourceFileRef;
+    this.sourceFileId = sourceFileId;
     this.errorPolicy = errorPolicy;
     this.splitKeys = List.copyOf(splitKeys);
     this.status = TaskStatus.PENDING;
@@ -48,7 +49,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   // 数据库重建
   public ParseTask(FileTaskId id, BizType bizType, TemplateCode templateCode, String sourceFileName,
-                   String sourceFileRef, TaskStatus status, ErrorPolicy errorPolicy, List<String> splitKeys,
+                   FileId sourceFileId, TaskStatus status, ErrorPolicy errorPolicy, List<String> splitKeys,
                    int totalRows, int subTaskCount, int validCount, int invalidCount,
                    List<SubTaskSummary> subTaskSummaries, List<TaskError> errors,
                    LocalDateTime startedAt, LocalDateTime finishedAt,
@@ -57,7 +58,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     this.bizType = bizType;
     this.templateCode = templateCode;
     this.sourceFileName = sourceFileName;
-    this.sourceFileRef = sourceFileRef;
+    this.sourceFileId = sourceFileId;
     this.status = status;
     this.errorPolicy = errorPolicy;
     this.splitKeys = splitKeys;
@@ -72,12 +73,12 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   }
 
   public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
-                                 String sourceFileRef, ErrorPolicy errorPolicy,
+                                 FileId sourceFileId, ErrorPolicy errorPolicy,
                                  List<String> splitKeys, UserNo userNo) {
     if (bizType == null) throw new IllegalArgumentException("bizType null");
     if (errorPolicy == null) throw new IllegalArgumentException("errorPolicy null");
     if (sourceFileName == null || sourceFileName.isBlank()) throw new IllegalArgumentException("sourceFileName empty");
-    return new ParseTask(id, bizType, sourceFileName, sourceFileRef, errorPolicy, splitKeys, userNo);
+    return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo);
   }
 
   public void markParsing() { this.status = TaskStatus.PARSING; }
@@ -125,7 +126,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   public BizType bizType() { return bizType; }
   public TemplateCode templateCode() { return templateCode; }
   public String sourceFileName() { return sourceFileName; }
-  public String sourceFileRef() { return sourceFileRef; }
+  public FileId sourceFileId() { return sourceFileId; }
   public TaskStatus status() { return status; }
   public ErrorPolicy errorPolicy() { return errorPolicy; }
   public List<String> splitKeys() { return splitKeys; }

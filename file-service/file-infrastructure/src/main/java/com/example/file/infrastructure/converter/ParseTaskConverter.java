@@ -10,6 +10,7 @@ import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,7 +31,7 @@ public interface ParseTaskConverter {
   @Mapping(target = "bizType", expression = "java(bizTypeToString(task.bizType()))")
   @Mapping(target = "templateCode", expression = "java(templateCodeToString(task.templateCode()))")
   @Mapping(target = "sourceFileName", expression = "java(task.sourceFileName())")
-  @Mapping(target = "sourceFileRef", expression = "java(task.sourceFileRef())")
+  @Mapping(target = "sourceFileId", expression = "java(fileIdToString(task.sourceFileId()))")
   @Mapping(target = "status", expression = "java(taskStatusToString(task.status()))")
   @Mapping(target = "errorPolicy", expression = "java(errorPolicyToString(task.errorPolicy()))")
   @Mapping(target = "splitKeys", expression = "java(stringListToJson(task.splitKeys()))")
@@ -53,6 +54,7 @@ public interface ParseTaskConverter {
   @Mapping(target = "id", source = "id", qualifiedByName = "toFileTaskId")
   @Mapping(target = "bizType", source = "bizType", qualifiedByName = "stringToBizType")
   @Mapping(target = "templateCode", source = "templateCode", qualifiedByName = "stringToTemplateCode")
+  @Mapping(target = "sourceFileId", source = "sourceFileId", qualifiedByName = "toFileId")
   @Mapping(target = "status", source = "status", qualifiedByName = "stringToTaskStatus")
   @Mapping(target = "errorPolicy", source = "errorPolicy", qualifiedByName = "stringToErrorPolicy")
   @Mapping(target = "splitKeys", source = "splitKeys", qualifiedByName = "jsonToStringList")
@@ -69,6 +71,15 @@ public interface ParseTaskConverter {
   @Named("toFileTaskId")
   default FileTaskId toFileTaskId(String id) {
     return id != null ? FileTaskId.of(id) : null;
+  }
+
+  default String fileIdToString(FileId fileId) {
+    return fileId != null ? fileId.value() : null;
+  }
+
+  @Named("toFileId")
+  default FileId toFileId(String fileId) {
+    return fileId != null ? new FileId(fileId) : null;
   }
 
   @Named("toUserNo")

@@ -30,7 +30,7 @@ public class UploadFileUseCase {
         taskId,
         BizType.of(cmd.bizType()),
         cmd.sourceFileName(),
-        cmd.sourceFileRef(),
+        cmd.sourceFileId(),
         ErrorPolicy.COLLECT_ALL,
         List.of(),
         UserNo.of(cmd.uploader())
