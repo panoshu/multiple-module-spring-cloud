@@ -1,8 +1,46 @@
 package com.example.file.domain.gateway;
 
+import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.primitives.identity.FileId;
+import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+
 import java.io.InputStream;
 
+/**
+ * 文件存储网关 SPI
+ * <p>
+ * 端口接口，由 FileStorageRouter 实现。
+ * SPI 签名仅用 FileId，不暴露 storageKey/targetId。
+ */
 public interface FileStorageGateway {
 
-  InputStream open(String fileRef);
+    /**
+     * 存储文件流到后端。
+     * 调用前 FileMetadata 必须已 create() 并持久化（status=PENDING_UPLOAD）。
+     */
+    void store(FileId fileId, InputStream content, long contentLength);
+
+    /**
+     * 打开文件流。
+     * 调用方必须 try-with-resources 关闭流。
+     */
+    InputStream open(FileId fileId);
+
+    /**
+     * 判断文件是否存在于存储后端
+     */
+    boolean exists(FileId fileId);
+
+    /**
+     * 复制文件到新用途对应的目标。
+     * 返回 CopyResult (新 FileId + 新 storageKey)。
+     * 注意：返回类型在 infrastructure 层定义，这里使用 Object 占位以避免 domain 依赖 infra。
+     * 实际调用方（CopyFileUseCase）需强转为 CopyResult。
+     */
+    Object copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId);
+
+    /**
+     * 计算文件 MD5
+     */
+    String computeMd5(FileId fileId);
 }
