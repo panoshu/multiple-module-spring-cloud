@@ -34,20 +34,21 @@ public class TableRegionParser implements RegionParser {
       RawRow row = stream.peek();
       if (row.isBlank()) { stream.next(); continue; }
 
-      stream.next();
       if (headerRowsRead < strategy.headerRows()) {
         // 表头阶段：不检查 isNextRegionTrigger，因为表头行本身可能匹配下一个 region 的 trigger
         // （例如 filler_info 的 HEADER_SNIFF(1) 会被任何非空行匹配）
+        stream.next();
         if (headerRowsRead == nameRowIdx) {
           headers = extractHeaders(row, strategy);
         }
         headerRowsRead++;
         continue;
       }
-      // 数据阶段：检查是否进入下一个 region
+      // 数据阶段：先检查再消费，trigger 行 / dataEnd 行留给下一个 region 或跳过
       if (ctx.isNextRegionTrigger(row)) break;
       if (strategy.maxRows() > 0 && dataRowCount >= strategy.maxRows()) break;
       if (isDataEnd(row, strategy.dataEnd())) break;
+      stream.next();
       Map<String, Object> dataRow = mapDataRow(row, headers);
       if (!dataRow.isEmpty()) {
         rows.add(dataRow);

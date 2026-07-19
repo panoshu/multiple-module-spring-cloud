@@ -1,11 +1,15 @@
 package com.example.file.domain.service;
 
 import com.example.file.domain.model.enums.HeaderMatching;
+import com.example.file.domain.model.enums.KvValuePosition;
 import com.example.file.domain.model.enums.RegionType;
 import com.example.file.domain.model.enums.TableMatchBy;
+import com.example.file.domain.model.enums.TriggerMatchType;
 import com.example.file.domain.model.valueobject.RawRowStream;
 import com.example.file.domain.model.valueobject.config.DataEndRule;
+import com.example.file.domain.model.valueobject.config.KvStrategy;
 import com.example.file.domain.model.valueobject.config.RegionDef;
+import com.example.file.domain.model.valueobject.config.RegionTrigger;
 import com.example.file.domain.model.valueobject.config.TableStrategy;
 import com.example.file.domain.model.valueobject.parse.RawRow;
 import com.example.file.domain.model.valueobject.parse.TableRegionResult;
@@ -82,6 +86,46 @@ class TableRegionParserTest {
 
     assertThat(result.rows()).hasSize(1);
     assertThat(result.rows().get(0)).containsEntry("code", "A1");
+  }
+
+  @Test
+  void should_leave_trigger_row_for_next_region_when_no_dataEnd() {
+    // 回归测试 (C1)：表格无 dataEnd marker，数据行后紧跟下一个 KV region 的 trigger 行。
+    // 旧实现：先 stream.next() 再 isNextRegionTrigger 检查 → trigger 行被消费，下一个 region 漏掉首行。
+    // 新实现：先 isNextRegionTrigger 检查再 stream.next() → trigger 行留在流中，下一个 region 正确消费。
+    RegionDef tableDef = new RegionDef("items", RegionType.TABLE, "items",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
+        new TableStrategy(
+            1, 0, TableMatchBy.HEADER_NAME,
+            Map.of("code", List.of("code")),
+            HeaderMatching.STRICT, 100, null));
+    RegionDef kvDef = new RegionDef("footer", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
+        new KvStrategy(KvValuePosition.RIGHT, Map.of("filler", List.of("填表人")), 3));
+    List<RegionDef> regions = List.of(tableDef, kvDef);
+    ParseContext ctx = new ParseContext(regions);
+
+    RawRowStream stream = new FakeStream(List.of(
+        RawRow.of(0, Map.of(0, "code"), false),
+        RawRow.of(1, Map.of(0, "A1"), false),
+        RawRow.of(2, Map.of(0, "A2"), false),
+        RawRow.of(3, Map.of(0, "填表人", 1, "张三"), false),
+        RawRow.of(4, Map.of(), true)));
+
+    // 模拟 RegionStateMachine.drive 行为：先 enterRegion(0)，再 parse
+    ctx.enterRegion(0);
+    TableRegionParser parser = new TableRegionParser();
+    TableRegionResult result = (TableRegionResult) parser.parse(stream, tableDef, ctx);
+
+    // 表格 region 应得 2 行数据，trigger 行（"填表人 张三"）不应被消费
+    assertThat(result.rows()).hasSize(2);
+    assertThat(result.rows().get(0)).containsEntry("code", "A1");
+    assertThat(result.rows().get(1)).containsEntry("code", "A2");
+
+    // trigger 行应留在流中，供下一个 region 消费
+    assertThat(stream.hasNext()).isTrue();
+    RawRow triggerRow = stream.peek();
+    assertThat(triggerRow.cells().get(0)).isEqualTo("填表人");
   }
 
   static class FakeStream implements RawRowStream {

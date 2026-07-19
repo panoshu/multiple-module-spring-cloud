@@ -24,11 +24,12 @@ public class YamlConfigLoader implements ConfigLoader {
     Yaml yaml = new Yaml();
 
     Map<String, Object> baseline = yaml.load(baselineYaml);
+    if (baseline == null) baseline = new LinkedHashMap<>();
 
     List<Map<String, Object>> sourceTemplates = new ArrayList<>();
     for (String sourceYaml : sourceTemplateYamls) {
       Map<String, Object> source = yaml.load(sourceYaml);
-      sourceTemplates.add(source);
+      sourceTemplates.add(source == null ? new LinkedHashMap<>() : source);
     }
 
     return buildTemplateConfig(bizType, baseline, sourceTemplates, version, operator);
