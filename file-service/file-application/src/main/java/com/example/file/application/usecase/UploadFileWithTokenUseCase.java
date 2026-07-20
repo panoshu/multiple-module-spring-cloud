@@ -1,23 +1,21 @@
 package com.example.file.application.usecase;
 
+import com.example.file.application.service.FileAccessLogWriter;
 import com.example.file.application.util.TokenHashUtil;
+import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StoreResult;
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
-import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
 import com.example.shared.primitives.identity.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,6 +35,9 @@ import java.io.IOException;
  * 失败分支：
  * - token 解密失败：仅日志记录（无 fileId，无法写 FileAccessLog）
  * - load/verify/store/complete 失败：写 FileAccessLog(ACCESS, FAIL)
+ * <p>
+ * 审计流水写入通过独立的 {@link FileAccessLogWriter} Bean 完成，
+ * 其上的 {@code @Transactional(REQUIRES_NEW)} 才能通过 Spring AOP 代理生效。
  */
 @Slf4j
 @Service
@@ -46,7 +47,7 @@ public class UploadFileWithTokenUseCase {
     private final FileMetadataRepository metadataRepository;
     private final FileTokenService tokenService;
     private final FileStorageGateway storageGateway;
-    private final FileAccessLogRepository logRepository;
+    private final FileAccessLogWriter fileAccessLogWriter;
 
     @Transactional
     public FileId upload(String token, SessionUser session, MultipartFile file, String clientIp) {
@@ -68,8 +69,8 @@ public class UploadFileWithTokenUseCase {
         try {
             meta = metadataRepository.loadOrThrow(fileId);
             tokenService.verifyAndConsumeUploadToken(token, session, meta);
-        } catch (SystemException e) {
-            writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+        } catch (SystemException | DomainException e) {
+            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
             throw e;
         }
 
@@ -81,35 +82,22 @@ public class UploadFileWithTokenUseCase {
                 result.storageKey(), result.digest()
             );
             metadataRepository.save(meta);
-            writeAccessLogSuccess(meta, session, clientIp, token);
+            fileAccessLogWriter.writeAccessLogSuccess(meta, session, clientIp, token);
             log.info("文件已通过 Token 上传: fileId={}, storageKey={}", meta.id(), result.storageKey());
             return meta.id();
-        } catch (IOException | RuntimeException e) {
-            writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw new SystemException(com.example.file.domain.errorcode.FileErrorCodes.FILE_STORAGE_FAILED, e)
+        } catch (IOException e) {
+            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
+                .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
+        } catch (DomainException | SystemException e) {
+            // 业务异常透传，避免丢失原始错误码语义，但需写 FAIL 流水
+            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+            throw e;
+        } catch (RuntimeException e) {
+            // 其他未预期异常包装为存储失败
+            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
                 .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
         }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void writeAccessLogSuccess(FileMetadata meta, SessionUser session, String clientIp, String token) {
-        FileAccessLog accessLog = FileAccessLog.access(
-            meta.id(), meta.usage(), meta.accessScope(), session.userNo(),
-            meta.sourceApp(), clientIp, TokenHashUtil.sha256(token),
-            FileAccessResult.SUCCESS, null
-        );
-        logRepository.save(accessLog);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void writeAccessLogFailed(FileId fileId, FileTokenPayload payload, SessionUser session,
-                                      String clientIp, String token, String reason) {
-        FileAccessScope scope = new FileAccessScope(session.customerNo(), session.productNo());
-        FileAccessLog accessLog = FileAccessLog.access(
-            fileId, payload.usage(), scope, session.userNo(),
-            "unknown", clientIp, TokenHashUtil.sha256(token),
-            FileAccessResult.FAIL, reason
-        );
-        logRepository.save(accessLog);
     }
 }

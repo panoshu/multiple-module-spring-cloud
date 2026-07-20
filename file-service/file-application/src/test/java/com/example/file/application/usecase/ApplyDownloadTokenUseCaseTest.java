@@ -9,6 +9,7 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
+import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.CustomerNo;
@@ -70,7 +71,7 @@ class ApplyDownloadTokenUseCaseTest {
     }
 
     @Test
-    @DisplayName("apply 在 ttl 为空时应抛 IllegalArgumentException")
+    @DisplayName("apply 在 ttl 为空时应抛 DomainException(INVALID_OPERATION)")
     void apply_should_throw_when_ttl_is_null() {
         FileId fileId = new FileId("01H8TESTFILE001");
         ApplyDownloadTokenCommand cmd = new ApplyDownloadTokenCommand(
@@ -80,8 +81,8 @@ class ApplyDownloadTokenUseCaseTest {
         );
 
         assertThatThrownBy(() -> useCase.apply(cmd))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("ttl 不能为空");
+            .isInstanceOf(DomainException.class)
+            .matches(ex -> ((DomainException) ex).code().equals(SharedDomainErrorCode.INVALID_OPERATION.code()));
         verifyNoInteractions(metadataRepository, logRepository, tokenService);
     }
 

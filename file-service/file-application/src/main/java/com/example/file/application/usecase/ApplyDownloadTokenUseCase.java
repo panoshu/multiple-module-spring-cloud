@@ -7,6 +7,8 @@ import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
+import com.example.shared.domain.errorcode.SharedDomainErrorCode;
+import com.example.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,8 @@ public class ApplyDownloadTokenUseCase {
     @Transactional
     public String apply(ApplyDownloadTokenCommand cmd) {
         if (cmd.ttl() == null) {
-            throw new IllegalArgumentException("ttl 不能为空");
+            throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+                .withLogDetail("ttl 不能为空");
         }
 
         FileMetadata file = metadataRepository.loadOrThrow(cmd.fileId());

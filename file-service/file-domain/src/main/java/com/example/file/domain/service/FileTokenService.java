@@ -33,13 +33,18 @@ public class FileTokenService {
     }
 
     /**
-     * 仅解密 token，不做业务校验（不校验过期/会话/文件，不消费 token）。
+     * 解密 token 获取载荷（不消费 token，不做校验）。
      * <p>
-     * 用于应用层在调用 {@link #verifyAndConsumeUploadToken} / {@link #verifyAndConsumeDownloadToken}
-     * 之前先取出 fileId 加载 FileMetadata 的场景：因为 verify 系列方法要求 file 非空，
-     * 而应用层需要 fileId 才能从 Repository load 出 file。
+     * <b>使用约束</b>：此方法仅供应用层在调用 {@link #verifyAndConsumeUploadToken} 或
+     * {@link #verifyAndConsumeDownloadToken} 前取出 fileId 加载 FileMetadata 使用。
+     * 调用方必须随后调用 verifyAndConsumeXxxToken 完成完整校验与一次性消费，
+     * 否则 token 一次性语义将被破坏。
      * <p>
-     * 解密失败或格式错误抛 SystemException(FILE_TOKEN_INVALID)（由 FileTokenGateway 抛出）。
+     * <b>无副作用</b>：仅 SM4 解密，不调用 tokenStore.markUsed。
+     *
+     * @param token 加密 token
+     * @return token 载荷
+     * @throws SystemException 如果 token 解密失败
      */
     public FileTokenPayload decrypt(String token) {
         return tokenGateway.decrypt(token);

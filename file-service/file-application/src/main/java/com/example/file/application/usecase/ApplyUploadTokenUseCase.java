@@ -9,6 +9,8 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
+import com.example.shared.domain.errorcode.SharedDomainErrorCode;
+import com.example.shared.exception.DomainException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
 import com.example.shared.primitives.identity.FileId;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +43,8 @@ public class ApplyUploadTokenUseCase {
     @Transactional
     public ApplyUploadTokenResult apply(ApplyUploadTokenCommand cmd) {
         if (cmd.ttl() == null) {
-            throw new IllegalArgumentException("ttl 不能为空");
+            throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+                .withLogDetail("ttl 不能为空");
         }
 
         FileId fileId = new FileId(UlidAlgorithm.generate());

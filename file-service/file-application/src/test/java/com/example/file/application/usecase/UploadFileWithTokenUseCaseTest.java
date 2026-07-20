@@ -1,9 +1,9 @@
 package com.example.file.application.usecase;
 
+import com.example.file.application.service.FileAccessLogWriter;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StoreResult;
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
@@ -22,7 +22,6 @@ import com.example.shared.primitives.identity.UserNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +31,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -42,6 +42,7 @@ class UploadFileWithTokenUseCaseTest {
     private FileTokenService tokenService;
     private FileStorageGateway storageGateway;
     private FileAccessLogRepository logRepository;
+    private FileAccessLogWriter fileAccessLogWriter;
     private UploadFileWithTokenUseCase useCase;
 
     @BeforeEach
@@ -50,7 +51,8 @@ class UploadFileWithTokenUseCaseTest {
         tokenService = mock(FileTokenService.class);
         storageGateway = mock(FileStorageGateway.class);
         logRepository = mock(FileAccessLogRepository.class);
-        useCase = new UploadFileWithTokenUseCase(metadataRepository, tokenService, storageGateway, logRepository);
+        fileAccessLogWriter = mock(FileAccessLogWriter.class);
+        useCase = new UploadFileWithTokenUseCase(metadataRepository, tokenService, storageGateway, fileAccessLogWriter);
     }
 
     @Test
@@ -75,10 +77,10 @@ class UploadFileWithTokenUseCaseTest {
 
         assertThat(result).isEqualTo(fileId);
         verify(metadataRepository).save(any(FileMetadata.class));
-        ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
-        verify(logRepository).save(logCaptor.capture());
-        FileAccessLog savedLog = logCaptor.getValue();
-        assertThat(savedLog.tokenHash()).hasSize(64);
+        // SUCCESS 流水通过 FileAccessLogWriter 写入（独立 REQUIRES_NEW 事务）
+        verify(fileAccessLogWriter).writeAccessLogSuccess(eq(file), eq(session), eq("10.0.0.1"), eq("encrypted-token"));
+        // 不应直接调用 logRepository.save 写 ACCESS 流水
+        verifyNoInteractions(logRepository);
     }
 
     @Test
@@ -93,6 +95,7 @@ class UploadFileWithTokenUseCaseTest {
         assertThatThrownBy(() -> useCase.upload("bad-token", session, multipart, "10.0.0.1"))
             .isInstanceOf(SystemException.class);
         verifyNoInteractions(logRepository);
+        verifyNoInteractions(fileAccessLogWriter);
         verifyNoInteractions(metadataRepository);
     }
 
@@ -116,11 +119,36 @@ class UploadFileWithTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
             .isInstanceOf(SystemException.class);
-        ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
-        verify(logRepository).save(logCaptor.capture());
-        FileAccessLog savedLog = logCaptor.getValue();
-        assertThat(savedLog.result()).isEqualTo(com.example.file.domain.model.aggregate.valueobject.FileAccessResult.FAIL);
+        // FAIL 流水通过 FileAccessLogWriter 写入（独立 REQUIRES_NEW 事务）
+        verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        verifyNoInteractions(logRepository);
         verifyNoInteractions(storageGateway);
+    }
+
+    @Test
+    @DisplayName("upload 存储失败: 写 FAIL 流水并包装为 SystemException(FILE_STORAGE_FAILED)")
+    void upload_should_write_fail_log_when_store_fails() {
+        FileId fileId = new FileId("01H8TESTFILE003");
+        FileMetadata file = newPendingFile(fileId);
+        FileTokenPayload payload = new FileTokenPayload(
+            "tok-001", fileId, FileUsage.SOURCE, "annuity",
+            CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
+            List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(10)
+        );
+        when(tokenService.decrypt("encrypted-token")).thenReturn(payload);
+        when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
+        when(storageGateway.store(eq(fileId), any(), eq(5L)))
+            .thenThrow(new SystemException(FileErrorCodes.FILE_STORAGE_FAILED));
+
+        SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
+        MultipartFile multipart = new MockMultipartFile("file", "test.txt", "text/plain", "hello".getBytes());
+
+        // SystemException 应透传，不被包装丢失错误码
+        assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
+            .isInstanceOf(SystemException.class)
+            .matches(ex -> ((SystemException) ex).code().equals(FileErrorCodes.FILE_STORAGE_FAILED.code()));
+        verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        verifyNoInteractions(logRepository);
     }
 
     private FileMetadata newPendingFile(FileId fileId) {

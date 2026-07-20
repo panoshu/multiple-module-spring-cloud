@@ -1,10 +1,10 @@
 package com.example.file.application.usecase;
 
+import com.example.file.application.service.FileAccessLogWriter;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.model.aggregate.root.FileAccessLog;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
@@ -30,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -40,6 +41,7 @@ class DownloadFileWithTokenUseCaseTest {
     private FileTokenService tokenService;
     private FileStorageGateway storageGateway;
     private FileAccessLogRepository logRepository;
+    private FileAccessLogWriter fileAccessLogWriter;
     private DownloadFileWithTokenUseCase useCase;
 
     @BeforeEach
@@ -48,7 +50,8 @@ class DownloadFileWithTokenUseCaseTest {
         tokenService = mock(FileTokenService.class);
         storageGateway = mock(FileStorageGateway.class);
         logRepository = mock(FileAccessLogRepository.class);
-        useCase = new DownloadFileWithTokenUseCase(metadataRepository, tokenService, storageGateway, logRepository);
+        fileAccessLogWriter = mock(FileAccessLogWriter.class);
+        useCase = new DownloadFileWithTokenUseCase(metadataRepository, tokenService, storageGateway, logRepository, fileAccessLogWriter);
     }
 
     @Test
@@ -74,10 +77,13 @@ class DownloadFileWithTokenUseCaseTest {
         assertThat(ctx.size()).isEqualTo(1024L);
         assertThat(ctx.contentType()).isEqualTo("application/xlsx");
         assertThat(ctx.digest()).isEqualTo("sm3-digest");
+        // SUCCESS 流水仍直接由 prepareDownload 事务内的 logRepository.save 写入
         ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
         verify(logRepository).save(logCaptor.capture());
         FileAccessLog savedLog = logCaptor.getValue();
         assertThat(savedLog.tokenHash()).hasSize(64);
+        // 不应触发 FAIL 流水写入
+        verifyNoInteractions(fileAccessLogWriter);
     }
 
     @Test
@@ -90,7 +96,7 @@ class DownloadFileWithTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.prepareDownload("bad-token", session, "10.0.0.1"))
             .isInstanceOf(SystemException.class);
-        verifyNoInteractions(logRepository, metadataRepository, storageGateway);
+        verifyNoInteractions(logRepository, metadataRepository, storageGateway, fileAccessLogWriter);
     }
 
     @Test
@@ -112,10 +118,9 @@ class DownloadFileWithTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.prepareDownload("encrypted-token", session, "10.0.0.1"))
             .isInstanceOf(SystemException.class);
-        ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
-        verify(logRepository).save(logCaptor.capture());
-        FileAccessLog savedLog = logCaptor.getValue();
-        assertThat(savedLog.result()).isEqualTo(FileAccessResult.FAIL);
+        // FAIL 流水通过 FileAccessLogWriter 写入（独立 REQUIRES_NEW 事务）
+        verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        verifyNoInteractions(logRepository);
     }
 
     private FileMetadata newPendingFile(FileId fileId) {
