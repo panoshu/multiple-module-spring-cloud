@@ -91,7 +91,8 @@ class FileStorageRouterTest {
         Files.writeString(filePath, "content");
 
         FileMetadata file = FileMetadata.reconstitute(
-            fileId, "test.txt", 7, "text/plain", "md5",
+            fileId, "test.txt", 7L, "text/plain", "md5",
+            null, null, null,
             "local-1", StorageType.LOCAL, "annuity/" + datePartition + "/BATCH_001/01H8FILE002/test.txt",
             FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
             FileStatus.UPLOADED, UserNo.of("u1"), null, null,
@@ -126,7 +127,8 @@ class FileStorageRouterTest {
         Files.writeString(filePath, "hello");
 
         FileMetadata file = FileMetadata.reconstitute(
-            fileId, "test.txt", 5, "text/plain", "md5",
+            fileId, "test.txt", 5L, "text/plain", "md5",
+            null, null, null,
             "local-1", StorageType.LOCAL, "test.txt",
             FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
             FileStatus.UPLOADED, UserNo.of("u1"), null, null,

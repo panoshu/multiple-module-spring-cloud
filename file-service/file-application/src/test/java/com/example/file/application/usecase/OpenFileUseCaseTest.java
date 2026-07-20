@@ -39,7 +39,8 @@ class OpenFileUseCaseTest {
     void open_should_throw_when_file_is_deleted() {
         FileId fileId = new FileId("01H8DEL001");
         FileMetadata file = FileMetadata.reconstitute(
-            fileId, "test.txt", 5, "text/plain", "md5",
+            fileId, "test.txt", 5L, "text/plain", "md5",
+            null, null, null,
             "local-1", StorageType.LOCAL, "key",
             FileUsage.SOURCE, "annuity", "biz", BatchId.of("B001"),
             FileStatus.DELETED, UserNo.of("u1"), null, null,

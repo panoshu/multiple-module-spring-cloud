@@ -124,7 +124,8 @@ class FileMetadataTest {
     void reconstitute_should_restore_all_fields() {
         LocalDateTime now = LocalDateTime.now();
         FileMetadata file = FileMetadata.reconstitute(
-            TEST_FILE_ID, "test.xlsx", 1024, "application/octet-stream", "md5hash",
+            TEST_FILE_ID, "test.xlsx", 1024L, "application/octet-stream", "md5hash",
+            null, null, null,
             "oss-source", StorageType.OSS, "storage/key",
             FileUsage.SOURCE, "annuity", "business-core", TEST_BATCH_ID,
             FileStatus.UPLOADED, TEST_USER, now, null,

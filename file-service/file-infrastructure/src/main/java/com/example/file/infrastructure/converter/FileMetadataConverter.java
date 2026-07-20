@@ -46,9 +46,12 @@ public interface FileMetadataConverter {
         return FileMetadata.reconstitute(
             new FileId(aDo.getId()),
             aDo.getOriginalName(),
-            aDo.getSize() != null ? aDo.getSize() : 0L,
+            aDo.getSize(),
             aDo.getContentType(),
             aDo.getMd5(),
+            null,  // digest: 暂未持久化，由 Token 路径 completeUpload 时填充
+            null,  // digestAlgorithm: 暂未持久化
+            null,  // accessScope: 暂未持久化，由 Token 路径 createForUpload 时填充
             aDo.getTargetId(),
             aDo.getStorageType() != null ? StorageType.valueOf(aDo.getStorageType()) : null,
             aDo.getStorageKey(),
