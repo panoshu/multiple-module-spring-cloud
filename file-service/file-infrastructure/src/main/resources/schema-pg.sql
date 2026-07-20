@@ -55,6 +55,18 @@ COMMENT ON COLUMN t_file_metadata.expires_at IS '过期时间（NULL=永久）';
 COMMENT ON COLUMN t_file_metadata.deleted IS '逻辑删除标志';
 COMMENT ON COLUMN t_file_metadata.version IS '乐观锁版本号';
 
+-- Token 访问机制扩展（Task 13）
+ALTER TABLE t_file_metadata ADD COLUMN IF NOT EXISTS access_scope JSONB;
+ALTER TABLE t_file_metadata ADD COLUMN IF NOT EXISTS digest VARCHAR(128);
+ALTER TABLE t_file_metadata ADD COLUMN IF NOT EXISTS digest_algorithm VARCHAR(20) DEFAULT 'SM3';
+ALTER TABLE t_file_metadata ALTER COLUMN original_name DROP NOT NULL;
+ALTER TABLE t_file_metadata ALTER COLUMN size DROP NOT NULL;
+ALTER TABLE t_file_metadata ALTER COLUMN storage_key DROP NOT NULL;
+
+COMMENT ON COLUMN t_file_metadata.access_scope IS '访问范围 JSON: {"customerNo":"C001","productNo":"P001"}';
+COMMENT ON COLUMN t_file_metadata.digest IS '内容摘要（SM3）';
+COMMENT ON COLUMN t_file_metadata.digest_algorithm IS '摘要算法: SM3';
+
 -- ParseTask 表字段迁移（source_file_ref → source_file_id）
 -- 注意：此 DDL 仅用于新建库，旧库迁移需单独执行
 -- ALTER TABLE t_file_parse_task RENAME COLUMN source_file_ref TO source_file_id;

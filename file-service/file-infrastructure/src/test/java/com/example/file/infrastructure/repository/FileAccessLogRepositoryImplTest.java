@@ -6,7 +6,7 @@ import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.repository.FileAccessLogRepository;
-import com.example.file.infrastructure.FileAccessLogRepositoryTestConfiguration;
+import com.example.file.infrastructure.FileInfrastructureTestConfiguration;
 import com.example.shared.primitives.identity.CustomerNo;
 import com.example.shared.primitives.identity.FileAccessLogId;
 import com.example.shared.primitives.identity.FileId;
@@ -28,13 +28,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * FileAccessLogRepositoryImpl 集成测试。
  *
- * <p>使用 H2 内存数据库 + MyBatis-Flex，通过 {@link FileAccessLogRepositoryTestConfiguration}
+ * <p>使用 H2 内存数据库 + MyBatis-Flex，通过 {@link FileInfrastructureTestConfiguration}
  * 限定 Spring 上下文只加载 repository/converter/mapper 包 Bean，避免级联触发
  * shared-id-starter / shared-cache-starter / redisson 等无关自动配置。
  *
  * <p>每个测试方法通过 @Sql 重建 t_file_access_log 表，保证用例间隔离。
  */
-@SpringBootTest(classes = FileAccessLogRepositoryTestConfiguration.class)
+@SpringBootTest(classes = FileInfrastructureTestConfiguration.class)
 @Sql(scripts = "/schema-file-access-log.sql")
 @DisplayName("FileAccessLogRepositoryImpl 集成测试")
 class FileAccessLogRepositoryImplTest {

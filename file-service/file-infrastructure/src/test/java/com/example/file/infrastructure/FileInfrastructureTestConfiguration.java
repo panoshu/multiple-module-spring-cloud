@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 
 /**
- * FileAccessLogRepositoryImpl 集成测试专用启动配置。
+ * file-infrastructure 集成测试通用启动配置。
  *
  * <p>设计要点：
  * <ul>
@@ -28,6 +28,10 @@ import javax.sql.DataSource;
  *       避免扫描 storage / gateway 等无关 Bean（依赖 Redis/Kona 等不在测试范围）</li>
  *   <li>表结构通过测试类 @Sql 在每个测试方法前初始化（H2 兼容 DDL）</li>
  * </ul>
+ *
+ * <p>历史：原 {@code FileAccessLogRepositoryTestConfiguration}（Task 12）仅服务于
+ * FileAccessLogRepositoryImplTest；Task 13 新增 FileMetadataTokenRepositoryTest 时
+ * 复用同一配置，故重命名为通用命名。
  */
 @SpringBootConfiguration
 @ComponentScan(basePackages = {
@@ -36,7 +40,7 @@ import javax.sql.DataSource;
 })
 @MapperScan("com.example.file.infrastructure.mapper")
 @EnableTransactionManagement
-public class FileAccessLogRepositoryTestConfiguration {
+public class FileInfrastructureTestConfiguration {
 
     /**
      * H2 内存数据源（PostgreSQL 兼容模式），不使用连接池。
@@ -48,7 +52,7 @@ public class FileAccessLogRepositoryTestConfiguration {
     @Bean
     public DataSource dataSource() {
         return new DriverManagerDataSource(
-            "jdbc:h2:mem:file-access-log-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
+            "jdbc:h2:mem:file-infrastructure-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
             "sa",
             ""
         );

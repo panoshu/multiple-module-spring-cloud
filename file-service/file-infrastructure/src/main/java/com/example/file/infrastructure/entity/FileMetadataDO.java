@@ -34,6 +34,11 @@ public class FileMetadataDO {
     private LocalDateTime uploadedAt;
     private LocalDateTime expiresAt;
 
+    // Token 访问机制扩展字段（Task 13）
+    private String accessScope;       // JSON 字符串（PostgreSQL JSONB）
+    private String digest;            // 内容摘要（SM3）
+    private String digestAlgorithm;   // 摘要算法: SM3
+
     private String createdBy;
     private String updatedBy;
 
