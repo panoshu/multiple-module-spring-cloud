@@ -7,6 +7,7 @@ import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.shared.domain.annotation.DomainService;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
 
 import java.time.Duration;
@@ -55,7 +56,7 @@ public class FileTokenService {
      * 生成下载 token
      */
     public String generateDownloadToken(FileMetadata file, Duration ttl) {
-        file.verifyDownloadable();
+        assertDownloadable(file);
         FileTokenPayload payload = new FileTokenPayload(
             UUID.randomUUID().toString(),
             file.id(),
@@ -99,7 +100,7 @@ public class FileTokenService {
     public FileTokenPayload verifyAndConsumeDownloadToken(String token, SessionUser session,
                                                            FileMetadata file) {
         FileTokenPayload payload = decryptAndVerify(token, session, file);
-        file.verifyDownloadable();
+        assertDownloadable(file);
 
         Duration remainingTtl = Duration.between(LocalDateTime.now(), payload.expireAt());
         if (!tokenStore.markUsed(payload.tokenId(), remainingTtl)) {
@@ -140,5 +141,21 @@ public class FileTokenService {
         }
 
         return payload;
+    }
+
+    /**
+     * 校验文件可下载，统一转换为 SystemException(FILE_NOT_DOWNLOADABLE)
+     * <p>
+     * file.verifyDownloadable() 抛 DomainException(SharedDomainErrorCode.INVALID_OPERATION)，
+     * 与本服务其他失败路径（SystemException(FILE_TOKEN_*)) 不一致，此处统一异常类型，
+     * 便于上层应用服务（Task 15 UseCases）按 SystemException 统一处理。
+     */
+    private void assertDownloadable(FileMetadata file) {
+        try {
+            file.verifyDownloadable();
+        } catch (DomainException e) {
+            throw new SystemException(FileErrorCodes.FILE_NOT_DOWNLOADABLE)
+                .withLogDetail("文件状态不允许下载, fileId=" + file.id() + ", status=" + file.status());
+        }
     }
 }

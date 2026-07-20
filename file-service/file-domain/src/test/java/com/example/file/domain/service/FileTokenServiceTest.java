@@ -8,7 +8,6 @@ import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
-import com.example.shared.exception.BaseException;
 import com.example.shared.exception.SystemException;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.CustomerNo;
@@ -58,13 +57,12 @@ class FileTokenServiceTest {
     }
 
     @Test
-    @DisplayName("generateDownloadToken 文件未上传抛异常")
+    @DisplayName("generateDownloadToken 文件未上传抛 SystemException(FILE_NOT_DOWNLOADABLE)")
     void should_throw_when_generate_download_token_for_pending_file() {
         FileMetadata file = newPendingFile();
-        // brief 原期望 SystemException，但 file.verifyDownloadable() 抛 DomainException；
-        // 二者均继承 BaseException，按基类断言以保留 brief 意图（"未上传 → 抛异常"）
         assertThatThrownBy(() -> service.generateDownloadToken(file, Duration.ofMinutes(15)))
-            .isInstanceOf(BaseException.class);
+            .isInstanceOf(SystemException.class)
+            .hasMessageContaining("不允许下载");
     }
 
     @Test
