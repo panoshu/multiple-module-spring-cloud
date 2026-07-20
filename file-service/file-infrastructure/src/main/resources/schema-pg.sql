@@ -60,3 +60,49 @@ COMMENT ON COLUMN t_file_metadata.version IS '乐观锁版本号';
 -- ALTER TABLE t_file_parse_task RENAME COLUMN source_file_ref TO source_file_id;
 -- ALTER TABLE t_file_parse_task ALTER COLUMN source_file_id TYPE VARCHAR(64);
 -- CREATE INDEX IF NOT EXISTS idx_parse_task_source_file_id ON t_file_parse_task(source_file_id);
+
+-- 文件访问流水表（Token 申请 APPLY / 实际访问 ACCESS 双记录，用于审计）
+CREATE TABLE IF NOT EXISTS t_file_access_log (
+    id              VARCHAR(64)   NOT NULL,
+    file_id         VARCHAR(64)   NOT NULL,
+    action          VARCHAR(20)   NOT NULL,
+    usage           VARCHAR(20)   NOT NULL,
+    customer_no     VARCHAR(64)   NOT NULL,
+    product_no      VARCHAR(64)   NOT NULL,
+    operator        VARCHAR(64)   NOT NULL,
+    source_app      VARCHAR(64),
+    source_ip       VARCHAR(64),
+    token_hash      VARCHAR(128)  NOT NULL,
+    result          VARCHAR(20)   NOT NULL,
+    fail_reason     VARCHAR(512),
+    occur_at        TIMESTAMP     NOT NULL,
+    created_by      VARCHAR(64)   NOT NULL,
+    updated_by      VARCHAR(64),
+    create_time     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted         BOOLEAN       DEFAULT FALSE,
+    version         INT           DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_access_log_file_id ON t_file_access_log(file_id);
+CREATE INDEX IF NOT EXISTS idx_access_log_token_hash ON t_file_access_log(token_hash);
+CREATE INDEX IF NOT EXISTS idx_access_log_action_time ON t_file_access_log(action, occur_at);
+CREATE INDEX IF NOT EXISTS idx_access_log_customer_product ON t_file_access_log(customer_no, product_no, occur_at);
+
+COMMENT ON TABLE t_file_access_log IS '文件访问流水表（APPLY=申请token, ACCESS=实际访问）';
+COMMENT ON COLUMN t_file_access_log.id IS '流水ID（FileAccessLogId）';
+COMMENT ON COLUMN t_file_access_log.file_id IS '文件ID（FileId）';
+COMMENT ON COLUMN t_file_access_log.action IS '动作类型: APPLY=申请token, ACCESS=实际访问';
+COMMENT ON COLUMN t_file_access_log.usage IS '文件用途: SOURCE/PARSED/EXPORT/ARCHIVE';
+COMMENT ON COLUMN t_file_access_log.customer_no IS '客户号';
+COMMENT ON COLUMN t_file_access_log.product_no IS '产品号';
+COMMENT ON COLUMN t_file_access_log.operator IS '操作人（UserNo）';
+COMMENT ON COLUMN t_file_access_log.source_app IS '来源系统标识';
+COMMENT ON COLUMN t_file_access_log.source_ip IS '来源 IP（仅 ACCESS 记录）';
+COMMENT ON COLUMN t_file_access_log.token_hash IS 'token SHA-256 哈希，用于关联 APPLY 与 ACCESS 记录';
+COMMENT ON COLUMN t_file_access_log.result IS '访问结果: SUCCESS/FAIL/EXPIRED/REJECTED';
+COMMENT ON COLUMN t_file_access_log.fail_reason IS '失败原因（result != SUCCESS 时填充）';
+COMMENT ON COLUMN t_file_access_log.occur_at IS '发生时间';
+COMMENT ON COLUMN t_file_access_log.deleted IS '逻辑删除标志';
+COMMENT ON COLUMN t_file_access_log.version IS '乐观锁版本号';
