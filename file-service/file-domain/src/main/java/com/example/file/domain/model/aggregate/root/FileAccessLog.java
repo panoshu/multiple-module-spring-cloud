@@ -124,12 +124,6 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
         if (tokenHash == null || tokenHash.isBlank()) throw new IllegalArgumentException("tokenHash 不能为空");
     }
 
-    public void markSuccess() {
-        this.result = FileAccessResult.SUCCESS;
-        this.failReason = null;
-        markUpdated(operator);
-    }
-
     public void markFail(String failReason) {
         this.result = FileAccessResult.FAIL;
         this.failReason = failReason;
