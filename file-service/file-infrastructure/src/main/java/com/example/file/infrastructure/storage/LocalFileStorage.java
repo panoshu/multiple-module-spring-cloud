@@ -73,7 +73,7 @@ public class LocalFileStorage implements FileStorageBackend {
     }
 
     @Override
-    public String computeMd5(StorageTarget target, String storageKey) {
+    public String computeDigest(StorageTarget target, String storageKey) {
         Path fullPath = resolvePath(target, storageKey);
         try (InputStream in = Files.newInputStream(fullPath)) {
             return DigestUtils.md5Hex(in);

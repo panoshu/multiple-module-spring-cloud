@@ -60,7 +60,7 @@ public class FileStorageRouter implements FileStorageGateway {
         FileStorageBackend backend = resolveBackend(target.type());
         String storageKey = generateStorageKey(file);
         backend.store(target, storageKey, content, contentLength);
-        String md5 = backend.computeMd5(target, storageKey);
+        String md5 = backend.computeDigest(target, storageKey);
         return new StoreResult(storageKey, md5);
     }
 
@@ -106,11 +106,11 @@ public class FileStorageRouter implements FileStorageGateway {
     }
 
     @Override
-    public String computeMd5(FileId fileId) {
+    public String computeDigest(FileId fileId) {
         FileMetadata file = metadataRepository.loadOrThrow(fileId);
         StorageTarget target = targetResolver.resolveById(file.targetId());
         FileStorageBackend backend = resolveBackend(target.type());
-        return backend.computeMd5(target, file.storageKey());
+        return backend.computeDigest(target, file.storageKey());
     }
 
     private FileStorageBackend resolveBackend(StorageType type) {

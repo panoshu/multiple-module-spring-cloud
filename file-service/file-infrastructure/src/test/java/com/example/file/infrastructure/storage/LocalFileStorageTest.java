@@ -69,15 +69,15 @@ class LocalFileStorageTest {
     }
 
     @Test
-    @DisplayName("computeMd5 应返回正确的 MD5")
-    void computeMd5_should_return_correct_md5() {
+    @DisplayName("computeDigest 应返回正确的 MD5")
+    void computeDigest_should_return_correct_md5() {
         StorageTarget target = newTarget();
         byte[] data = "hello world".getBytes();
         storage.store(target, "file.txt", new ByteArrayInputStream(data), data.length);
 
-        String md5 = storage.computeMd5(target, "file.txt");
+        String digest = storage.computeDigest(target, "file.txt");
         String expected = DigestUtils.md5Hex(data);
-        assertThat(md5).isEqualTo(expected);
+        assertThat(digest).isEqualTo(expected);
     }
 
     @Test

@@ -59,7 +59,7 @@ public class StoreFileUseCase {
                 .withLogDetail("fileId=" + fileId + ", 当前状态=" + file.status());
         }
         StoreResult result = storageGateway.store(fileId, content, contentLength);
-        file.markUploaded(result.storageKey(), result.md5());
+        file.markUploaded(result.storageKey(), result.digest());
         metadataRepository.save(file);
         log.info("文件已存储: fileId={}, storageKey={}", fileId, result.storageKey());
     }

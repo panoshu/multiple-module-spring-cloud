@@ -30,12 +30,12 @@ import static org.mockito.Mockito.when;
 /**
  * 存储引擎端到端集成测试。
  *
- * <p>验证 Store → Open → ComputeMd5 → Exists → Copy 全流程，使用 LOCAL 后端。
+ * <p>验证 Store → Open → ComputeDigest → Exists → Copy 全流程，使用 LOCAL 后端。
  * 使用真实 Spring 上下文加载 StorageAutoConfiguration + LocalFileStorage + FileStorageRouter。
  * FileMetadataRepository 使用 Mockito mock（测试焦点在存储引擎，不在数据库）。
  *
- * <p>store() 返回 StoreResult (storageKey + md5)，测试用返回值调用 markUploaded
- * 来过渡 FileMetadata 状态，使后续 open()/computeMd5()/copy()/exists() 能取到 storageKey。
+ * <p>store() 返回 StoreResult (storageKey + digest)，测试用返回值调用 markUploaded
+ * 来过渡 FileMetadata 状态，使后续 open()/computeDigest()/copy()/exists() 能取到 storageKey。
  */
 @SpringBootTest(classes = StorageTestConfiguration.class)
 @TestPropertySource(properties = {
@@ -65,7 +65,7 @@ class StorageIntegrationTest {
     }
 
     @Test
-    @DisplayName("Local 后端: store → open → computeMd5 完整流程")
+    @DisplayName("Local 后端: store → open → computeDigest 完整流程")
     void local_backend_store_open_md5_flow() throws Exception {
         FileId fileId = new FileId("01H8INTEGRATION01");
         byte[] content = "hello-storage-integration".getBytes();
@@ -79,12 +79,12 @@ class StorageIntegrationTest {
 
         StoreResult result = storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
 
-        // 用返回的 StoreResult 调用 markUploaded，使后续 open()/computeMd5() 能取到 storageKey
-        file.markUploaded(result.storageKey(), result.md5());
+        // 用返回的 StoreResult 调用 markUploaded，使后续 open()/computeDigest() 能取到 storageKey
+        file.markUploaded(result.storageKey(), result.digest());
 
         try (InputStream opened = storageGateway.open(fileId)) {
-            String md5 = storageGateway.computeMd5(fileId);
-            assertThat(md5).isNotBlank();
+            String digest = storageGateway.computeDigest(fileId);
+            assertThat(digest).isNotBlank();
             assertThat(opened.readAllBytes()).isEqualTo(content);
         }
     }
@@ -103,7 +103,7 @@ class StorageIntegrationTest {
         when(metadataRepository.loadOrThrow(srcFileId)).thenReturn(srcFile);
 
         StoreResult storeResult = storageGateway.store(srcFileId, new ByteArrayInputStream(content), content.length);
-        srcFile.markUploaded(storeResult.storageKey(), storeResult.md5());
+        srcFile.markUploaded(storeResult.storageKey(), storeResult.digest());
 
         // copy: srcFile 已有 storageKey
         CopyResult copyResult = storageGateway.copy(
@@ -135,7 +135,7 @@ class StorageIntegrationTest {
 
         // store 返回 StoreResult，用它调用 markUploaded
         StoreResult storeResult = storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
-        file.markUploaded(storeResult.storageKey(), storeResult.md5());
+        file.markUploaded(storeResult.storageKey(), storeResult.digest());
 
         // store 后：load 返回 file (已含 storageKey) → exists 返回 true
         when(metadataRepository.load(fileId)).thenReturn(Optional.of(file));

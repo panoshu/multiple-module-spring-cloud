@@ -68,7 +68,7 @@ class FileStorageRouterTest {
 
         assertThat(result).isNotNull();
         assertThat(result.storageKey()).isNotBlank();
-        assertThat(result.md5()).isNotBlank();
+        assertThat(result.digest()).isNotBlank();
         // storageKey 格式: {bizType}/{date}/{batchId}/{fileId}/{originalName}
         assertThat(result.storageKey()).contains("annuity");
         assertThat(result.storageKey()).contains("01H8FILE001");
@@ -116,8 +116,8 @@ class FileStorageRouterTest {
     }
 
     @Test
-    @DisplayName("computeMd5 应返回正确 MD5")
-    void computeMd5_should_return_correct_md5() throws IOException {
+    @DisplayName("computeDigest 应返回正确 MD5")
+    void computeDigest_should_return_correct_md5() throws IOException {
         FileId fileId = new FileId("01H8FILE003");
         StorageTarget target = new StorageTarget(
             "local-1", StorageType.LOCAL, null, null, tempDir.toString(),
@@ -137,7 +137,7 @@ class FileStorageRouterTest {
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
         when(targetResolver.resolveById("local-1")).thenReturn(target);
 
-        String md5 = router.computeMd5(fileId);
-        assertThat(md5).isNotBlank();
+        String digest = router.computeDigest(fileId);
+        assertThat(digest).isNotBlank();
     }
 }

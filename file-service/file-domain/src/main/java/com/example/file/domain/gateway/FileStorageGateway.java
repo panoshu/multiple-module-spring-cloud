@@ -39,7 +39,7 @@ public interface FileStorageGateway {
     CopyResult copy(FileId srcFileId, FileUsage targetUsage, BatchId businessBatchId);
 
     /**
-     * 计算文件 MD5
+     * 计算文件摘要（SM3）
      */
-    String computeMd5(FileId fileId);
+    String computeDigest(FileId fileId);
 }

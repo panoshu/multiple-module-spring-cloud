@@ -24,5 +24,5 @@ public interface FileStorageBackend {
 
     void copy(StorageTarget target, String srcKey, String dstKey);
 
-    String computeMd5(StorageTarget target, String storageKey);
+    String computeDigest(StorageTarget target, String storageKey);
 }

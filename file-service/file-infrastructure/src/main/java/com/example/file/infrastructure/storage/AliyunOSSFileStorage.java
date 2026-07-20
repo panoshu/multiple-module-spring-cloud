@@ -87,7 +87,7 @@ public class AliyunOSSFileStorage implements FileStorageBackend {
     }
 
     @Override
-    public String computeMd5(StorageTarget target, String storageKey) {
+    public String computeDigest(StorageTarget target, String storageKey) {
         OSS client = getClient(target);
         try {
             ObjectMetadata meta = client.getObjectMetadata(target.bucket(), storageKey);
@@ -100,7 +100,7 @@ public class AliyunOSSFileStorage implements FileStorageBackend {
             return eTag;
         } catch (Exception e) {
             throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("OSS computeMd5 failed: key=" + storageKey);
+                .withLogDetail("OSS computeDigest failed: key=" + storageKey);
         }
     }
 
