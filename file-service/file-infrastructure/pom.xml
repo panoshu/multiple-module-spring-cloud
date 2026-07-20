@@ -53,6 +53,11 @@
       <artifactId>kona-crypto</artifactId>
       <version>1.0.15</version>
     </dependency>
+    <!-- Redisson: RedisFileTokenStore 基于 RBucket.setIfAbsent 实现 SETNX + TTL -->
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
