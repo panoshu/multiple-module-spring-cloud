@@ -13,6 +13,7 @@ import com.example.file.application.usecase.ApplyUploadTokenUseCase.ApplyUploadT
 import com.example.file.application.usecase.DownloadFileWithTokenUseCase;
 import com.example.file.application.usecase.DownloadFileWithTokenUseCase.DownloadContext;
 import com.example.file.application.usecase.UploadFileWithTokenUseCase;
+import com.example.file.application.util.TokenHashUtil;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
@@ -190,18 +191,13 @@ public class FileAccessAdapter implements FileAccessApi {
 
     /**
      * 计算 token 的 SHA-256 短摘要（前 8 位）用于日志脱敏。
+     *
+     * <p>复用 {@link TokenHashUtil#sha256} 避免重复实现 SHA-256 逻辑；
+     * 截取前 8 位以满足日志脱敏的最小需要（M3 follow-up）。
+     * 失败时返回 8 位占位串 {@code "sha256-e"}（来源于 {@code TokenHashUtil} 的
+     * {@code "sha256-error"} 截断），仅用于日志，不影响主流程。
      */
     private static String sha256Short(String token) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(token.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 4; i++) {
-                sb.append(String.format("%02x", hash[i]));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return "<hash-failed>";
-        }
+        return TokenHashUtil.sha256(token).substring(0, 8);
     }
 }
