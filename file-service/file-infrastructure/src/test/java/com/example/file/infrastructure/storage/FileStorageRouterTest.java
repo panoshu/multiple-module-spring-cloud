@@ -12,6 +12,8 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.UserNo;
+import com.tencent.kona.crypto.KonaCryptoProvider;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Security;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -38,6 +41,13 @@ class FileStorageRouterTest {
     private FileMetadataRepository metadataRepository;
     private StorageTargetResolver targetResolver;
     private FileStorageGateway router;
+
+    @BeforeAll
+    static void registerKonaProvider() {
+        if (Security.getProvider("KonaCrypto") == null) {
+            Security.addProvider(new KonaCryptoProvider());
+        }
+    }
 
     @BeforeEach
     void setUp() {

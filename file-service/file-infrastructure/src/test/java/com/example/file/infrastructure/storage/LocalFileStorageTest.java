@@ -2,7 +2,9 @@ package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
-import org.apache.commons.codec.digest.DigestUtils;
+import com.tencent.kona.crypto.KonaCryptoProvider;
+import org.apache.commons.codec.binary.Hex;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -12,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.Security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +25,13 @@ class LocalFileStorageTest {
 
     @TempDir
     Path tempDir;
+
+    @BeforeAll
+    static void registerKonaProvider() {
+        if (Security.getProvider("KonaCrypto") == null) {
+            Security.addProvider(new KonaCryptoProvider());
+        }
+    }
 
     @Test
     @DisplayName("store 应将文件写入本地路径并创建父目录")
@@ -69,14 +80,15 @@ class LocalFileStorageTest {
     }
 
     @Test
-    @DisplayName("computeDigest 应返回正确的 MD5")
-    void computeDigest_should_return_correct_md5() {
+    @DisplayName("computeDigest 应返回正确的 SM3")
+    void computeDigest_should_return_correct_sm3() throws Exception {
         StorageTarget target = newTarget();
         byte[] data = "hello world".getBytes();
         storage.store(target, "file.txt", new ByteArrayInputStream(data), data.length);
 
         String digest = storage.computeDigest(target, "file.txt");
-        String expected = DigestUtils.md5Hex(data);
+        MessageDigest sm3 = MessageDigest.getInstance("SM3", "KonaCrypto");
+        String expected = Hex.encodeHexString(sm3.digest(data));
         assertThat(digest).isEqualTo(expected);
     }
 

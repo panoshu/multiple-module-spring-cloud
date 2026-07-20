@@ -14,10 +14,12 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.shared.exception.SystemException;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -89,18 +91,18 @@ public class AliyunOSSFileStorage implements FileStorageBackend {
     @Override
     public String computeDigest(StorageTarget target, String storageKey) {
         OSS client = getClient(target);
-        try {
-            ObjectMetadata meta = client.getObjectMetadata(target.bucket(), storageKey);
-            String eTag = meta.getETag();
-            // OSS ETag 对于单片上传等于 MD5 (不含引号)
-            // 注意：分片上传的 ETag 不是 MD5，此处假设单片上传场景
-            if (eTag != null) {
-                eTag = eTag.replace("\"", "");
+        try (OSSObject object = client.getObject(new GetObjectRequest(target.bucket(), storageKey));
+             InputStream in = object.getObjectContent()) {
+            MessageDigest sm3 = MessageDigest.getInstance("SM3", "KonaCrypto");
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                sm3.update(buffer, 0, bytesRead);
             }
-            return eTag;
+            return Hex.encodeHexString(sm3.digest());
         } catch (Exception e) {
             throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("OSS computeDigest failed: key=" + storageKey);
+                .withLogDetail("OSS SM3 摘要计算失败: bucket=" + target.bucket() + ", key=" + storageKey);
         }
     }
 

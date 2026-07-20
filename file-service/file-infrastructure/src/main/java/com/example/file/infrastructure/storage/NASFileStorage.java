@@ -5,7 +5,7 @@ import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
 
 @Slf4j
 @Component
@@ -81,10 +82,16 @@ public class NASFileStorage implements FileStorageBackend {
     public String computeDigest(StorageTarget target, String storageKey) {
         Path fullPath = resolvePath(target, storageKey);
         try (InputStream in = Files.newInputStream(fullPath)) {
-            return DigestUtils.md5Hex(in);
-        } catch (IOException e) {
+            MessageDigest sm3 = MessageDigest.getInstance("SM3", "KonaCrypto");
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                sm3.update(buffer, 0, bytesRead);
+            }
+            return Hex.encodeHexString(sm3.digest());
+        } catch (Exception e) {
             throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("md5 failed, path=" + fullPath);
+                .withLogDetail("SM3 摘要计算失败, path=" + fullPath);
         }
     }
 
