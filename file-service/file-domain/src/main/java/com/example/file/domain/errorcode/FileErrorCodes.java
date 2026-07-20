@@ -29,7 +29,19 @@ public enum FileErrorCodes implements ErrorDefinition {
 
   // Download/Read 相关
   FILE_DOWNLOAD_FAILED("FILE_DOWNLOAD_FAILED", "文件下载失败"),
-  FILE_STREAM_CLOSED("FILE_STREAM_CLOSED", "文件流已关闭");
+  FILE_STREAM_CLOSED("FILE_STREAM_CLOSED", "文件流已关闭"),
+
+  // Token 访问相关
+  FILE_TOKEN_INVALID("FILE_TOKEN_INVALID", "文件访问 token 无效或已过期"),
+  FILE_TOKEN_EXPIRED("FILE_TOKEN_EXPIRED", "文件访问 token 已过期"),
+  FILE_TOKEN_ALREADY_USED("FILE_TOKEN_ALREADY_USED", "文件访问 token 已被使用"),
+  FILE_TOKEN_MISMATCH("FILE_TOKEN_MISMATCH", "文件访问 token 与当前用户不匹配"),
+  FILE_CONTENT_TYPE_NOT_ALLOWED("FILE_CONTENT_TYPE_NOT_ALLOWED", "文件类型不被允许"),
+  FILE_SIZE_EXCEEDED("FILE_SIZE_EXCEEDED", "文件大小超出限制"),
+  FILE_NOT_UPLOADABLE("FILE_NOT_UPLOADABLE", "文件当前状态不允许上传"),
+  FILE_NOT_DOWNLOADABLE("FILE_NOT_DOWNLOADABLE", "文件当前状态不允许下载"),
+  FILE_DIGEST_MISMATCH("FILE_DIGEST_MISMATCH", "文件摘要校验失败"),
+  FILE_TOKEN_SECRET_NOT_CONFIGURED("FILE_TOKEN_SECRET_NOT_CONFIGURED", "文件 token 密钥未配置");
 
   private final String code;
   private final String message;
