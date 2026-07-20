@@ -43,3 +43,6 @@ file:
       export: oss-export
       parsed: oss-source
       archive: nas-shared
+  # 本地开发环境 Token 密钥覆盖（仅本地使用，禁止提交真实密钥）
+  token:
+    secret-key: "MDEyMzQ1Njc4OWFiY2RlZg=="  # 16 字节 "0123456789abcdef" 的 Base64

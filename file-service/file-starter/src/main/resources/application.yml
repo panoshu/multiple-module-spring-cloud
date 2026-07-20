@@ -91,3 +91,14 @@ file:
       export: oss-export
       parsed: oss-source
       archive: nas-shared
+  # 文件访问 Token 配置（Task 16: FileAccessAdapter + KonaFileTokenGateway + RedisFileTokenStore）
+  token:
+    # SM4 密钥（Base64 编码，16 字节）。生产环境通过环境变量注入，禁止硬编码
+    secret-key: ${FILE_TOKEN_SECRET_KEY:}
+    # token 默认有效期：上传/下载各 15 分钟
+    default-upload-ttl: 15m
+    default-download-ttl: 15m
+    # Redis 一次性 token 标记存储
+    redis:
+      key-prefix: "file:token:used:"
+      default-ttl: 15m

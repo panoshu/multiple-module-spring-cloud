@@ -12,6 +12,11 @@
   <dependencies>
     <dependency><groupId>com.example</groupId><artifactId>file-api</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>file-application</artifactId></dependency>
+    <!--
+      file-adapter 直接依赖 file-infrastructure 以注入 FileTokenProperties
+      (FileTokenProperties 在 file-infrastructure，adapter 层允许依赖 infrastructure)。
+    -->
+    <dependency><groupId>com.example</groupId><artifactId>file-infrastructure</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>shared-web-starter</artifactId></dependency>
     <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
     <dependency>

@@ -1,0 +1,40 @@
+# file-infrastructure 测试通用配置（Task 16）
+#
+# 设计要点：
+#   - file-infrastructure 测试模块独立于 file-starter，不依赖 file-starter 的 application.yml
+#   - 此配置仅当 spring.profiles.active=test 时由 Spring Boot 加载
+#   - FileAccessIntegrationTest 不依赖数据库（焦点是 Token 加解密 + 一次性使用语义），
+#     通过 FileAccessIntegrationTestConfiguration 显式 @SpringBootConfiguration 加载，
+#     不触发 DataSourceAutoConfiguration；此处的 datasource 段供未来需要 DB 的测试复用
+#
+# 注意：file-infrastructure 已存在 schema-file-access-log.sql / schema-file-metadata.sql
+#       (H2 兼容 DDL)，schema-pg.sql 在 H2 中不兼容（JSONB 类型），
+#       因此 H2 测试不要使用 schema-locations: classpath:schema-pg.sql
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:file-service-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+file:
+  storage:
+    enabled: true
+    targets:
+      - id: local-default
+        type: LOCAL
+        base-path: ${java.io.tmpdir}/file-service-test
+    routing:
+      source: local-default
+      export: local-default
+      parsed: local-default
+      archive: local-default
+  # Token 测试配置（SM4 密钥使用 16 字节 "0123456789abcdef" 的 Base64 编码）
+  token:
+    secret-key: "MDEyMzQ1Njc4OWFiY2RlZg=="
+    default-upload-ttl: 15m
+    default-download-ttl: 15m
+    redis:
+      key-prefix: "test:file:token:used:"
+      default-ttl: 15m
