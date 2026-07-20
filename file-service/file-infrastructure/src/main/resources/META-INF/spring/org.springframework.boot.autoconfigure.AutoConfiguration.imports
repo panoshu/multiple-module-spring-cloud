@@ -1,1 +1,2 @@
 com.example.file.infrastructure.storage.StorageAutoConfiguration
+com.example.file.infrastructure.storage.KonaAutoConfiguration
