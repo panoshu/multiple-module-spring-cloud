@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * 使用上传 Token 上传文件 UseCase
@@ -27,14 +28,15 @@ import java.io.IOException;
  * 流程：
  * 1. 解密 token 获取 payload（不消费 token，仅取出 fileId）
  * 2. load FileMetadata
- * 3. verifyAndConsumeUploadToken 完整校验 + 一次性消费
- * 4. 调用 FileStorageGateway.store 存储文件
- * 5. FileMetadata.completeUpload 标记 UPLOADED
- * 6. 写入 FileAccessLog(ACCESS, SUCCESS/FAIL) 审计流水
+ * 3. 文件类型/大小校验（基于 token payload 配置，在 markUsed 之前，校验失败 token 未消费可重试）
+ * 4. verifyAndConsumeUploadToken 完整校验 + 一次性消费
+ * 5. 调用 FileStorageGateway.store 存储文件
+ * 6. FileMetadata.completeUpload 标记 UPLOADED
+ * 7. 写入 FileAccessLog(ACCESS, SUCCESS/FAIL) 审计流水
  * <p>
  * 失败分支：
  * - token 解密失败：仅日志记录（无 fileId，无法写 FileAccessLog）
- * - load/verify/store/complete 失败：写 FileAccessLog(ACCESS, FAIL)
+ * - load/校验/verify/store/complete 失败：写 FileAccessLog(ACCESS, FAIL)
  * <p>
  * 审计流水写入通过独立的 {@link FileAccessLogWriter} Bean 完成，
  * 其上的 {@code @Transactional(REQUIRES_NEW)} 才能通过 Spring AOP 代理生效。
@@ -64,17 +66,18 @@ public class UploadFileWithTokenUseCase {
 
         FileId fileId = payload.fileId();
 
-        // 2. load FileMetadata + 3. 完整校验并消费 token
+        // 2. load FileMetadata + 3. 文件类型/大小校验 + 4. 完整校验并消费 token
         FileMetadata meta;
         try {
             meta = metadataRepository.loadOrThrow(fileId);
+            validateUploadFileConstraints(payload, file);
             tokenService.verifyAndConsumeUploadToken(token, session, meta);
         } catch (SystemException | DomainException e) {
             fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
             throw e;
         }
 
-        // 4. 存储文件 + 5. completeUpload
+        // 5. 存储文件 + 6. completeUpload
         try {
             StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
             meta.completeUpload(
@@ -98,6 +101,31 @@ public class UploadFileWithTokenUseCase {
             fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
             throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
                 .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
+        }
+    }
+
+    /**
+     * 校验上传文件的类型和大小是否符合 token payload 中的配置。
+     * <p>
+     * 校验在 {@code verifyAndConsumeUploadToken}（含 markUsed）之前执行，
+     * 校验失败时 token 不会被消费，用户可修正文件后重新申请或重试。
+     * <p>
+     * 当 {@code allowedContentTypes}/{@code allowedMaxSize} 为 null 时跳过对应校验
+     * （下载 token 场景；上传 token 正常情况下两者均非空）。
+     */
+    private void validateUploadFileConstraints(FileTokenPayload payload, MultipartFile file) {
+        List<String> allowedTypes = payload.allowedContentTypes();
+        if (allowedTypes != null && !allowedTypes.isEmpty()) {
+            String contentType = file.getContentType();
+            if (contentType == null || !allowedTypes.contains(contentType)) {
+                throw new SystemException(FileErrorCodes.FILE_CONTENT_TYPE_NOT_ALLOWED)
+                    .withLogDetail("fileId=" + payload.fileId() + ", contentType=" + contentType);
+            }
+        }
+        Long allowedMaxSize = payload.allowedMaxSize();
+        if (allowedMaxSize != null && file.getSize() > allowedMaxSize) {
+            throw new SystemException(FileErrorCodes.FILE_SIZE_EXCEEDED)
+                .withLogDetail("fileId=" + payload.fileId() + ", size=" + file.getSize() + ", max=" + allowedMaxSize);
         }
     }
 }

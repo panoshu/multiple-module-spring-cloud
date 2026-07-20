@@ -70,7 +70,7 @@ class UploadFileWithTokenUseCaseTest {
         when(storageGateway.store(eq(fileId), any(), eq(5L)))
             .thenReturn(new StoreResult("storage-key-001", "sm3-digest"));
 
-        MultipartFile multipart = new MockMultipartFile("file", "test.txt", "text/plain", "hello".getBytes());
+        MultipartFile multipart = new MockMultipartFile("file", "test.xlsx", "application/xlsx", "hello".getBytes());
         SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
 
         FileId result = useCase.upload("encrypted-token", session, multipart, "10.0.0.1");
@@ -115,7 +115,7 @@ class UploadFileWithTokenUseCaseTest {
             .thenThrow(new SystemException(FileErrorCodes.FILE_TOKEN_ALREADY_USED));
 
         SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
-        MultipartFile multipart = new MockMultipartFile("file", "test.txt", "text/plain", "x".getBytes());
+        MultipartFile multipart = new MockMultipartFile("file", "test.xlsx", "application/xlsx", "x".getBytes());
 
         assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
             .isInstanceOf(SystemException.class);
@@ -141,13 +141,67 @@ class UploadFileWithTokenUseCaseTest {
             .thenThrow(new SystemException(FileErrorCodes.FILE_STORAGE_FAILED));
 
         SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
-        MultipartFile multipart = new MockMultipartFile("file", "test.txt", "text/plain", "hello".getBytes());
+        MultipartFile multipart = new MockMultipartFile("file", "test.xlsx", "application/xlsx", "hello".getBytes());
 
         // SystemException 应透传，不被包装丢失错误码
         assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
             .isInstanceOf(SystemException.class)
             .matches(ex -> ((SystemException) ex).code().equals(FileErrorCodes.FILE_STORAGE_FAILED.code()));
         verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        verifyNoInteractions(logRepository);
+    }
+
+    @Test
+    @DisplayName("upload 文件类型不允许: 写 FAIL 流水并抛 SystemException(FILE_CONTENT_TYPE_NOT_ALLOWED)，token 未消费")
+    void upload_should_write_fail_log_when_content_type_not_allowed() {
+        FileId fileId = new FileId("01H8TESTFILE004");
+        FileMetadata file = newPendingFile(fileId);
+        FileTokenPayload payload = new FileTokenPayload(
+            "tok-001", fileId, FileUsage.SOURCE, "annuity",
+            CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
+            List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(10)
+        );
+        when(tokenService.decrypt("encrypted-token")).thenReturn(payload);
+        when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
+
+        SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
+        // contentType 不在 allowedContentTypes 中
+        MultipartFile multipart = new MockMultipartFile("file", "test.txt", "text/plain", "hello".getBytes());
+
+        assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
+            .isInstanceOf(SystemException.class)
+            .matches(ex -> ((SystemException) ex).code().equals(FileErrorCodes.FILE_CONTENT_TYPE_NOT_ALLOWED.code()));
+        // 校验失败时写 FAIL 流水
+        verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        // 校验在 verifyAndConsume 之前，token 不应被消费
+        verify(tokenService, never()).verifyAndConsumeUploadToken(anyString(), any(), any());
+        verifyNoInteractions(storageGateway);
+        verifyNoInteractions(logRepository);
+    }
+
+    @Test
+    @DisplayName("upload 文件大小超限: 写 FAIL 流水并抛 SystemException(FILE_SIZE_EXCEEDED)，token 未消费")
+    void upload_should_write_fail_log_when_size_exceeded() {
+        FileId fileId = new FileId("01H8TESTFILE005");
+        FileMetadata file = newPendingFile(fileId);
+        FileTokenPayload payload = new FileTokenPayload(
+            "tok-001", fileId, FileUsage.SOURCE, "annuity",
+            CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
+            null, 1L, LocalDateTime.now().plusMinutes(10)  // 跳过类型校验， maxSize=1
+        );
+        when(tokenService.decrypt("encrypted-token")).thenReturn(payload);
+        when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
+
+        SessionUser session = new SessionUser(UserNo.of("u1"), CustomerNo.of("C001"), ProductNo.of("P001"));
+        // size=5 > maxSize=1
+        MultipartFile multipart = new MockMultipartFile("file", "test.xlsx", "application/xlsx", "hello".getBytes());
+
+        assertThatThrownBy(() -> useCase.upload("encrypted-token", session, multipart, "10.0.0.1"))
+            .isInstanceOf(SystemException.class)
+            .matches(ex -> ((SystemException) ex).code().equals(FileErrorCodes.FILE_SIZE_EXCEEDED.code()));
+        verify(fileAccessLogWriter).writeAccessLogFailed(eq(fileId), eq(payload), eq(session), eq("10.0.0.1"), eq("encrypted-token"), anyString());
+        verify(tokenService, never()).verifyAndConsumeUploadToken(anyString(), any(), any());
+        verifyNoInteractions(storageGateway);
         verifyNoInteractions(logRepository);
     }
 
