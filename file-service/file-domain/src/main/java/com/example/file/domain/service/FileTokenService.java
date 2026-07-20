@@ -33,6 +33,19 @@ public class FileTokenService {
     }
 
     /**
+     * 仅解密 token，不做业务校验（不校验过期/会话/文件，不消费 token）。
+     * <p>
+     * 用于应用层在调用 {@link #verifyAndConsumeUploadToken} / {@link #verifyAndConsumeDownloadToken}
+     * 之前先取出 fileId 加载 FileMetadata 的场景：因为 verify 系列方法要求 file 非空，
+     * 而应用层需要 fileId 才能从 Repository load 出 file。
+     * <p>
+     * 解密失败或格式错误抛 SystemException(FILE_TOKEN_INVALID)（由 FileTokenGateway 抛出）。
+     */
+    public FileTokenPayload decrypt(String token) {
+        return tokenGateway.decrypt(token);
+    }
+
+    /**
      * 生成上传 token
      */
     public String generateUploadToken(FileMetadata file, List<String> allowedContentTypes,
