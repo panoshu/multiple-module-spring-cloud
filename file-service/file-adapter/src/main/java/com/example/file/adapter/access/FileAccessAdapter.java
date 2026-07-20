@@ -13,8 +13,10 @@ import com.example.file.application.usecase.ApplyUploadTokenUseCase.ApplyUploadT
 import com.example.file.application.usecase.DownloadFileWithTokenUseCase;
 import com.example.file.application.usecase.DownloadFileWithTokenUseCase.DownloadContext;
 import com.example.file.application.usecase.UploadFileWithTokenUseCase;
+import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
+import com.example.shared.exception.BusinessException;
 import com.example.shared.primitives.identity.CustomerNo;
 import com.example.shared.primitives.identity.ProductNo;
 import com.example.shared.primitives.identity.UserNo;
@@ -148,11 +150,26 @@ public class FileAccessAdapter implements FileAccessApi {
 
     /**
      * 从 HTTP Header 提取 SessionUser（X-User-No / X-Customer-No / X-Product-No）。
+     *
+     * <p>显式校验 header 存在性：{@link FileAccessApi} 接口仅声明 token + file，
+     * Spring MVC 不会强制这些 header 存在。缺失时若直接调用 {@link UserNo#of} 等方法
+     * 会抛 {@link IllegalArgumentException}，被 {@code GlobalExceptionHandler} 兜底为 500；
+     * 此处提前校验，缺失时抛 {@link BusinessException}，由 {@code handleBaseException}
+     * 返回业务错误码 + 明确错误信息（fix I1）。
      */
     private SessionUser extractSession(HttpServletRequest request) {
         String userNo = request.getHeader("X-User-No");
         String customerNo = request.getHeader("X-Customer-No");
         String productNo = request.getHeader("X-Product-No");
+        if (userNo == null || userNo.isBlank()
+            || customerNo == null || customerNo.isBlank()
+            || productNo == null || productNo.isBlank()) {
+            throw new BusinessException(FileErrorCodes.FILE_SESSION_HEADER_MISSING)
+                .withUserDetail("X-User-No / X-Customer-No / X-Product-No Header 不能为空")
+                .withLogDetail("缺失的 Header: X-User-No=" + (userNo == null || userNo.isBlank())
+                    + ", X-Customer-No=" + (customerNo == null || customerNo.isBlank())
+                    + ", X-Product-No=" + (productNo == null || productNo.isBlank()));
+        }
         return new SessionUser(
             UserNo.of(userNo),
             CustomerNo.of(customerNo),

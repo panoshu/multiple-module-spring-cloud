@@ -41,7 +41,8 @@ public enum FileErrorCodes implements ErrorDefinition {
   FILE_NOT_UPLOADABLE("FILE_NOT_UPLOADABLE", "文件当前状态不允许上传"),
   FILE_NOT_DOWNLOADABLE("FILE_NOT_DOWNLOADABLE", "文件当前状态不允许下载"),
   FILE_DIGEST_MISMATCH("FILE_DIGEST_MISMATCH", "文件摘要校验失败"),
-  FILE_TOKEN_SECRET_NOT_CONFIGURED("FILE_TOKEN_SECRET_NOT_CONFIGURED", "文件 token 密钥未配置");
+  FILE_TOKEN_SECRET_NOT_CONFIGURED("FILE_TOKEN_SECRET_NOT_CONFIGURED", "文件 token 密钥未配置"),
+  FILE_SESSION_HEADER_MISSING("FILE_SESSION_HEADER_MISSING", "会话 Header 缺失");
 
   private final String code;
   private final String message;
