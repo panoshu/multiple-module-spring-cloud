@@ -1,0 +1,348 @@
+---
+name: "java-design-craftsmanship"
+description: "Java 编码设计原则与设计模式应用技能：在创建新类/新模块、重构现有代码、设计 API/接口、Code Review 时激活，引导识别代码坏味道、应用 SOLID 原则和 GoF 模式来简化代码、提升扩展性和灵活性。当用户需要做设计判断（何时用模式、用哪个模式）时调用。"
+---
+
+# Java 设计原则与设计模式应用
+
+> **本技能是引导性流程，不是机械规则。** 应用原则和模式需要判断和权衡，本技能提供决策树、权衡清单和示例对照，帮助在编码时做出更好的设计决策。
+> 硬性可机械执行的约束（如"方法不超过 50 行"）已沉淀到 `04-代码编写约束.md`，本技能不重复。
+
+## 一、激活时机
+
+在以下场景激活本技能：
+
+| 场景 | 激活动作 |
+|------|----------|
+| 创建新类/新模块 | 先做 Smell 识别 → 再决定是否需要模式 |
+| 重构现有代码 | 按 Smell 清单逐项检查 → 对应重构手法 |
+| 设计 API/接口 | 应用 ISP/DIP 决策清单 |
+| Code Review | 按 Smell 清单 review |
+| 需求变更频繁 | 评估是否违反 OCP → 引入策略/工厂 |
+| 类/方法膨胀 | 评估是否违反 SRP → 拆分 |
+
+**反激活**：纯 CRUD、简单工具方法、一次性脚本（应用 KISS/YAGNI，直接写）。
+
+---
+
+## 二、Smell 识别清单（先识别问题，再选模式）
+
+按"坏味道 → 违反原则 → 推荐模式/手法"组织。先看症状，再对症下药。
+
+### 2.1 类级别 Smell
+
+| Smell | 症状 | 违反原则 | 推荐手法 |
+|-------|------|----------|----------|
+| **God Class** | 一个类 > 500 行或承担多个职责 | SRP | 拆分为多个类（Extract Class） |
+| **Feature Envy** | 方法大量操作别的对象的数据 | 违反迪米特 | 把方法移到数据所属的类（Move Method） |
+| **Shotgun Surgery** | 改一个需求要动 10 个类 | 低内聚 | 重新划分模块边界 |
+| **Data Class** | 类只有字段+getter/setter，无行为 | 贫血模型 | 把行为移到数据类（DDD 值对象/实体） |
+| **God Object** | 一个类被到处注入 | 迪米特/ISP | 拆接口（Extract Interface） |
+| **Parallel Hierarchies** | 两个继承体系一一对应 | — | 用策略/访问者合并，或用组合替代继承 |
+
+### 2.2 方法级别 Smell
+
+| Smell | 症状 | 违反原则 | 推荐手法 |
+|-------|------|----------|----------|
+| **Long Method** | 方法 > 50 行 | SRP | Extract Method → 形成模板方法 |
+| **Long Parameter List** | 参数 > 5 个 | — | 用 Builder / Parameter Object |
+| **Switch on Type** | `if-else`/`switch` 按类型分支 ≥3 个且会增长 | OCP | 策略模式 + 工厂 |
+| **Flag Argument** | `boolean` 参数控制方法走两条路径 | SRP | 拆成两个方法 |
+| **Data Clumps** | 多处出现相同的参数组合 | DRY | 提取为对象 |
+| **Magic Number** | 代码里直接写常量值 | — | 提取为常量或枚举 |
+| **Comment-as-Code** | 大段注释解释"这段在做什么" | — | Extract Method，让方法名自解释 |
+
+### 2.3 依赖关系 Smell
+
+| Smell | 症状 | 违反原则 | 推荐手法 |
+|-------|------|----------|----------|
+| **Hard-coded Dependency** | 直接 `new` 具体实现类 | DIP | 依赖注入 + 接口 |
+| **Train Wreck** | `a.getB().getC().do()` 链式调用 > 2 层 | 迪米特 | 让 a 直接做这件事（Tell, Don't Ask） |
+| **Circular Dependency** | A 依赖 B，B 依赖 A | — | 引入中间抽象或事件解耦 |
+| **跨层 new** | domain 层 `new` infrastructure 类 | DIP | 用 SPI 接口 + Repository 模式 |
+
+### 2.4 变化性 Smell（最该用模式的信号）
+
+| Smell | 症状 | 推荐模式 |
+|-------|------|----------|
+| **分支爆炸** | 同一 if-else 在多处出现 | 策略 + 工厂 |
+| **新类型频繁新增** | 每加一种类型要改多处 | 策略 + 注册表 |
+| **流程固定步骤可变** | 算法骨架不变，步骤实现不同 | 模板方法 |
+| **跨系统接口不兼容** | 集成外部系统时接口不匹配 | 适配器 |
+| **状态驱动行为** | 对象行为随状态变化 | 状态模式 |
+| **一对多通知** | 一个变化要通知多个不相关的对象 | 观察者 |
+| **请求需多步过滤** | 校验/处理链路 | 责任链 |
+| **复杂对象构造** | 构造参数 > 4 个或分步骤 | Builder |
+
+---
+
+## 三、SOLID 原则应用决策清单
+
+### 3.1 SRP（单一职责）
+
+**检查问题**："这个类变化的理由有几个？"
+
+- 类名含 "And"/"Or"/"Manager"/"Util" → 可能违反 SRP
+- 一个类被多个不相关的 use case 修改 → 违反
+- 类的 public 方法 > 20 个 → 可能违反
+
+**应用方式**：
+- Extract Class：按变化原因拆分
+- Extract Method：长方法拆短
+
+**反例**：
+```java
+// ❌ 一个类同时管用户、订单、发邮件
+class UserService {
+  void createUser(...) {...}
+  void placeOrder(...) {...}
+  void sendEmail(...) {...}
+}
+```
+
+### 3.2 OCP（开闭原则）
+
+**检查问题**："加新功能时要改老代码吗？"
+
+- 每加一个分支都要改 if-else → 违反
+- 改一个模块要 touch 多个无关文件 → 违反
+
+**应用方式**：
+- 策略模式 + 工厂：新分支 = 新策略类 + 注册
+- 模板方法：新变体 = 新子类
+- 配置化：把变化点提取为配置
+
+**决策**：
+```
+分支数？
+  ≤2 且稳定 → 简单 if-else（KISS）
+  3-5 且偶尔变化 → 枚举 + switch
+  >5 或频繁变化 → 策略 + 工厂
+```
+
+### 3.3 LSP（里氏替换）
+
+**检查问题**："子类能完全替换父类吗？"
+
+- 子类抛出父类没抛的异常 → 违反
+- 子类方法返回 null 而父类不会 → 违反
+- 子类忽略父类方法（空实现）→ 违反
+
+**应用方式**：
+- 优先组合而非继承
+- 如果必须继承，子类只扩展不收缩父类行为
+
+### 3.4 ISP（接口隔离）
+
+**检查问题**："调用方依赖了它不需要的方法吗？"
+
+- 接口方法 > 7 个 → 检查是否该拆
+- 实现类有空方法 → 必须拆
+- 一个接口被多个不相关的类实现 → 必须拆
+
+**应用方式**：按调用方角色拆接口
+
+### 3.5 DIP（依赖倒置）
+
+**检查问题**："高层模块依赖了低层具体实现吗？"
+
+- domain 层 `new` infrastructure 类 → 严重违反
+- 高层模块直接 `new` 低层类 → 违反
+- 跨模块直接依赖实现而非接口 → 违反
+
+**应用方式**：
+- SPI 接口定义在高层，实现在低层
+- Spring 依赖注入
+- 六边形架构端口适配器
+
+---
+
+## 四、设计模式决策树
+
+### 4.1 创建对象时
+
+```
+构造逻辑复杂吗？
+  否 → 直接 new / 静态工厂
+  是 ↓
+  是不是多维度组合？
+    是 → 抽象工厂 / 建造者
+    否 ↓
+    是不是产品族？
+      是 → 抽象工厂
+      否 → 工厂方法
+参数 > 4 个？→ Builder
+需要唯一实例？→ 单例（Spring @Component 默认单例）
+```
+
+### 4.2 处理变化时
+
+```
+变化的是什么？
+  算法/策略 → 策略模式
+  算法骨架 → 模板方法
+  对象状态 → 状态模式
+  请求处理链 → 责任链
+  事件通知 → 观察者
+  接口不兼容 → 适配器
+  需要简化复杂子系统 → 外观
+  需要增强对象功能 → 装饰器
+  需要控制访问 → 代理
+```
+
+### 4.3 行为分发时
+
+```
+分支判断的是什么？
+  类型 → 策略 + 工厂（最常用）
+  状态 → 状态模式
+  数据 → 配置驱动 / 规则引擎
+```
+
+---
+
+## 五、项目实战对照表
+
+### 5.1 项目中已有的好实践
+
+| 场景 | 项目实例 | 应用的模式/原则 |
+|------|----------|----------------|
+| 跨层解耦 | `FileTokenStore` SPI + `RedisFileTokenStore` 实现 | DIP + Repository 模式 |
+| 算法可替换 | `ExpressionEvaluator` 接口 + `AviatorExpressionEvaluator` 实现 | 策略模式 |
+| 流程固定步骤可变 | `AggregateRoot.validateInvariants()` 子类实现 | 模板方法 |
+| 事件解耦 | `registerDomainEvent()` + MQ 发布 | 观察者模式 |
+| 复杂对象构造 | `FillConfig.builder().forceNewRow(true).build()` | Builder |
+| 简化子系统 | `SharedCacheTemplate` 屏蔽 CacheManager 细节 | 外观模式 |
+| L1+L2 增强 | `LayeredCache` 包装 L1+L2 | 装饰器模式 |
+| 接口转换 | `FileAccessConverter` (MapStruct) | 适配器模式 |
+| 状态驱动行为 | `ConfigStatus.DRAFT/ACTIVE/DEPRECATED` | 状态模式（轻量） |
+| 一致性边界 | `TemplateConfig` 聚合根 + 内部实体 | DDD 聚合 |
+| 不可变描述 | record 类型的 Value Object | DDD 值对象 |
+
+### 5.2 反例与改进
+
+| 反例 | 问题 | 改进 |
+|------|------|------|
+| Adapter 里写 if-else 判断文件类型 | 违反 OCP | 抽取 `FileTypeHandler` 策略接口 |
+| `a.getB().getC().do()` 链式调用 | 违反迪米特 | 让 a 提供 `a.doThing()` |
+| Service 里 `new XxxRepository()` | 违反 DIP | 改为构造函数注入 |
+| 一个 Service 类 1000 行 | 违反 SRP | 按 use case 拆分 |
+
+---
+
+## 六、何时**不**该用模式（KISS/YAGNI 检查）
+
+应用模式前必问的 3 个问题：
+
+### 6.1 真的需要吗？
+
+```
+Q1: 是否真的有变化？（不是假想的"未来可能"）
+  否 → YAGNI，不用模式
+  是 ↓
+Q2: 变化频率？
+  一次性 → 简单 if-else
+  偶尔 → 配置/枚举
+  频繁 → 考虑模式
+  ↓
+Q3: 模式引入的复杂度是否值得？
+  不值得 → KISS，不用
+  值得 → 用
+```
+
+### 6.2 模式滥用反例
+
+```java
+// ❌ 过度设计：简单 Hello World 套 5 层抽象
+interface GreetingStrategy { String greet(String name); }
+class EnglishGreetingStrategy implements GreetingStrategy { ... }
+class GreetingStrategyFactory { ... }
+class GreetingService { private GreetingStrategy strategy; ... }
+
+// ✅ 简单实现
+class GreetingService {
+  String greet(String name) { return "Hello, " + name; }
+}
+```
+
+### 6.3 简单优先原则
+
+- 能用 if-else 解决的，不用策略模式
+- 能用配置解决的，不用工厂
+- 能用组合解决的，不用继承
+- 能用方法解决的，不用类
+- 能用类解决的，不用框架
+
+---
+
+## 七、重构手法速查（Kent Beck + Martin Fowler）
+
+### 7.1 常用重构手法
+
+| 手法 | 适用场景 | 步骤 |
+|------|----------|------|
+| **Extract Method** | 长方法 | 把一段代码提取为方法，方法名自解释 |
+| **Extract Class** | God Class | 把相关字段+方法提取为新类 |
+| **Move Method** | Feature Envy | 把方法移到它真正所属的类 |
+| **Replace Conditional with Polymorphism** | Switch on Type | 用策略/状态模式替代分支 |
+| **Replace Inheritance with Delegation** | LSP 违反 | 改用组合 |
+| **Introduce Parameter Object** | Long Parameter List | 把参数封装为对象 |
+| **Hide Delegate** | Train Wreck | 让中间对象封装调用 |
+| **Extract Interface** | God Object | 按调用方角色拆接口 |
+
+### 7.2 重构安全步骤
+
+1. **先写测试**（覆盖现有行为）
+2. **小步重构**（每步运行测试）
+3. **一次只改一件事**（不要顺手改 bug）
+4. **提交频繁**（每步一个 commit）
+
+---
+
+## 八、设计原则速记口诀
+
+- **SRP**：一个类一个变化的理由
+- **OCP**：加功能不改老代码
+- **LSP**：子类能换父类
+- **ISP**：接口按角色拆
+- **DIP**：依赖抽象不依赖具体
+- **DRY**：三思而后复制
+- **KISS**：保持简单
+- **YAGNI**：你不会需要它
+- **组合优于继承**
+- **Tell, Don't Ask**：命令而非查询
+
+---
+
+## 九、与项目规则的边界
+
+| 内容 | 归属 | 性质 |
+|------|------|------|
+| "方法不超过 50 行" | `04-代码编写约束.md` | 硬性 Rule |
+| "参数不超过 5 个" | `04-代码编写约束.md` | 硬性 Rule |
+| "domain 层禁止 new infrastructure 类" | `03-领域模型约束.md` | 硬性 Rule |
+| "何时用策略模式" | 本 Skill | 引导性 |
+| "何时该拆类" | 本 Skill | 引导性 |
+| "模式决策树" | 本 Skill | 引导性 |
+| "重构手法" | 本 Skill | 引导性 |
+
+**使用方式**：
+- 编码时：Rule 机械执行，Skill 按需激活
+- Review 时：Rule 作硬性检查清单，Skill 作软性质量评估
+- 学习时：先读 Skill 理解为什么，再看 Rule 知道边界
+
+---
+
+## 十、激活后的工作流程
+
+当本 Skill 激活时，按以下步骤工作：
+
+1. **识别场景**：是新代码设计？还是老代码重构？还是 Review？
+2. **Smell 扫描**：按第二节清单逐项检查
+3. **原则检查**：按第三节决策清单评估 SOLID
+4. **模式选择**：若需要模式，按第四节决策树选择
+5. **KISS/YAGNI 检查**：按第六节确认是否真的需要
+6. **应用**：小步实施，每步可验证
+7. **验证**：测试通过 + 编译通过 + 符合 Rule
+
+**重要**：本 Skill 不替代 TDD。重构/设计前确保有测试覆盖。
