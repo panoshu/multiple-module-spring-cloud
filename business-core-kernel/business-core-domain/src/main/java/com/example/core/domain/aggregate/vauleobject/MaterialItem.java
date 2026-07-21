@@ -59,7 +59,7 @@ public record MaterialItem(
     }
 
     var remaining = uploadInfo.get().files().stream()
-      .filter(f -> !f.equals(fileId))
+      .filter(f -> !f.fileId().equals(fileId))
       .toList();
 
     return new MaterialItem(
