@@ -1,0 +1,58 @@
+# 测试环境配置 (H2 内存数据库 + PostgreSQL 兼容模式)
+# 演示用：禁用 Nacos / Redis，仅验证业务编排链路
+spring:
+  autoconfigure:
+    exclude:
+      # 禁用 Nacos 服务发现自动配置（测试环境无需注册中心）
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosServiceRegistryAutoConfiguration
+      - com.alibaba.cloud.nacos.NacosAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryClientConfiguration
+      # 禁用 Retrofit 日志自动配置（测试环境无 logbook-okhttp 依赖，会触发 NoClassDefFoundError）
+      - com.example.shared.client.autoconfigure.ClientAutoConfiguration
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    discovery:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:annuity_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql
+
+mybatis-flex:
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# shared-logging-starter 的 SanitizationProperties 强制校验 @NotNull global 和 @NotEmpty fields
+# 测试环境不实际使用脱敏，仅提供最小合法配置让上下文绑定通过
+shared:
+  logging:
+    obfuscate:
+      global:
+        enable: false
+        replacement: "***"
+        enable-wildcard-paths: false
+      fields:
+        password:
+          aliases:
+            - $.password
+          strategy: FULL
+      strategies:
+        FULL: { }
+
+logging:
+  level:
+    root: WARN
+    com.example: INFO
+    com.example.annuity: DEBUG
+    org.springframework: WARN
+    com.alibaba.nacos: OFF
+    com.alibaba.cloud.nacos: OFF
