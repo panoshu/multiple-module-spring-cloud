@@ -1,0 +1,38 @@
+[
+  {
+    "currentStep": "FORM_DETAIL_INGESTION",
+    "nextStep": "DATA_VERIFICATION",
+    "taskType": "SYSTEM_TASK",
+    "preValidations": [],
+    "mainProcessor": null,
+    "detailProcessors": [],
+    "sideEffects": []
+  },
+  {
+    "currentStep": "DATA_VERIFICATION",
+    "nextStep": "MATERIAL_PREPARATION",
+    "taskType": "SYSTEM_TASK",
+    "preValidations": [],
+    "mainProcessor": null,
+    "detailProcessors": [],
+    "sideEffects": []
+  },
+  {
+    "currentStep": "MATERIAL_PREPARATION",
+    "nextStep": "APPROVAL",
+    "taskType": "SYSTEM_TASK",
+    "preValidations": [],
+    "mainProcessor": "planMaterialPreparationHandler",
+    "detailProcessors": [],
+    "sideEffects": []
+  },
+  {
+    "currentStep": "APPROVAL",
+    "nextStep": "COMPLETED",
+    "taskType": "USER_TASK",
+    "preValidations": [],
+    "mainProcessor": null,
+    "detailProcessors": [],
+    "sideEffects": []
+  }
+]
