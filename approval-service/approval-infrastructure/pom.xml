@@ -18,6 +18,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>approval-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-id-starter</artifactId>
     </dependency>
     <dependency>
