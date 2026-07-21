@@ -275,8 +275,12 @@ final class KernelAggregateReflector {
     return e != null ? e.name() : null;
   }
 
-  static String nullableId(com.example.shared.primitives.identity.Identifier<?> id) {
-    return id != null ? id.value() : null;
+  static <T> String nullableId(com.example.shared.primitives.identity.Identifier<T> id) {
+    if (id == null) {
+      return null;
+    }
+    T value = id.value();
+    return value != null ? value.toString() : null;
   }
 
   static String accountManagerValue(AccountManager am) {
