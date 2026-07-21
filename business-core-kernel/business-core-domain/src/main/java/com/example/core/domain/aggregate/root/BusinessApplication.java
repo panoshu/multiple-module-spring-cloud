@@ -1,12 +1,12 @@
 package com.example.core.domain.aggregate.root;
 
-import com.example.core.domain.aggregate.vauleobject.*;
+import com.example.core.domain.aggregate.valueobject.*;
 import com.example.core.domain.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.event.ApplicationSpawnedEvent;
 import com.example.core.domain.event.PipelineExecutedEvent;
 import com.example.core.domain.event.StepEnteredEvent;
-import com.example.core.domain.aggregate.vauleobject.enums.status.ApplicationStatus;
-import com.example.core.domain.aggregate.vauleobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.domain.aggregate.valueobject.enums.status.ApplicationStatus;
+import com.example.core.domain.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.*;

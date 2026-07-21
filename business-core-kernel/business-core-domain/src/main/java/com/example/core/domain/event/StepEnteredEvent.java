@@ -1,6 +1,6 @@
 package com.example.core.domain.event;
 
-import com.example.core.domain.aggregate.vauleobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.domain.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.EventId;

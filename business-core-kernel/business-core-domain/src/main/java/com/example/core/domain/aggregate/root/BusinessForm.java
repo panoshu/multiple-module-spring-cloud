@@ -1,11 +1,11 @@
 package com.example.core.domain.aggregate.root;
 
-import com.example.core.domain.aggregate.vauleobject.BusinessContext;
-import com.example.core.domain.aggregate.vauleobject.BusinessFile;
-import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.vauleobject.OperatorInfo;
-import com.example.core.domain.aggregate.vauleobject.reference.PlanBizApplicationRef;
-import com.example.core.domain.aggregate.vauleobject.enums.status.FormStatus;
+import com.example.core.domain.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.aggregate.valueobject.BusinessFile;
+import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.aggregate.valueobject.reference.PlanBizApplicationRef;
+import com.example.core.domain.aggregate.valueobject.enums.status.FormStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FormId;

@@ -2,10 +2,10 @@ package com.example.core.domain.aggregate.root;
 
 import com.example.core.domain.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.event.BatchStatusChangedEvent;
-import com.example.core.domain.aggregate.vauleobject.BusinessContext;
-import com.example.core.domain.aggregate.vauleobject.OperatorInfo;
-import com.example.core.domain.aggregate.vauleobject.reference.BusinessFormRef;
-import com.example.core.domain.aggregate.vauleobject.enums.status.BatchStatus;
+import com.example.core.domain.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.aggregate.valueobject.reference.BusinessFormRef;
+import com.example.core.domain.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.BatchId;

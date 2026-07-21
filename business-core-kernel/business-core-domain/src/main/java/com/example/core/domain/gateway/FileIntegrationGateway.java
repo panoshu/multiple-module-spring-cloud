@@ -1,7 +1,7 @@
 package com.example.core.domain.gateway;
 
 import com.example.core.domain.aggregate.root.BusinessForm;
-import com.example.core.domain.aggregate.vauleobject.BusinessMetaContext;
+import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.FormId;
 

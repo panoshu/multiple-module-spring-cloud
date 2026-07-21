@@ -1,9 +1,9 @@
 package com.example.core.domain.service.engine;
 
 import com.example.core.domain.annotation.DomainService;
-import com.example.core.domain.aggregate.vauleobject.MaterialConditionContext;
-import com.example.core.domain.aggregate.vauleobject.MaterialItem;
-import com.example.core.domain.aggregate.vauleobject.config.MaterialRuleConfig;
+import com.example.core.domain.aggregate.valueobject.MaterialConditionContext;
+import com.example.core.domain.aggregate.valueobject.MaterialItem;
+import com.example.core.domain.aggregate.valueobject.config.MaterialRuleConfig;
 
 import java.util.ArrayList;
 import java.util.List;
