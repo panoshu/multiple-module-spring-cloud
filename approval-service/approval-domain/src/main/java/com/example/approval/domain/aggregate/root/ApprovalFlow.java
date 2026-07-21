@@ -33,12 +33,12 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
     /**
      * 审批流名称
      */
-    private final FlowName flowName;
+    private FlowName flowName;
 
     /**
      * 匹配规则
      */
-    private final MatchRules matchRules;
+    private MatchRules matchRules;
 
     /**
      * 审批节点列表
@@ -123,9 +123,9 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
     /**
      * 更新审批流
      *
-     * @param flowName   审批流名称
-     * @param matchRules 匹配规则
-     * @param nodes      审批节点列表
+     * @param flowName   审批流名称（null 表示不更新）
+     * @param matchRules 匹配规则（null 表示不更新）
+     * @param nodes      审批节点列表（null 或空表示不更新）
      * @param operator   操作人
      */
     public void update(FlowName flowName, MatchRules matchRules, List<ApprovalNode> nodes, UserNo operator) {
@@ -134,14 +134,10 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
                     .withLogDetail("废弃状态的审批流不能更新, ApprovalFlowId: %s".formatted(this.id()));
         }
         if (flowName != null) {
-            // flowName 是 final 的，这里需要通过重建来更新，但在聚合根中通常使用可变字段
-            throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID)
-                    .withLogDetail("审批流名称不可修改");
+            this.flowName = flowName;
         }
         if (matchRules != null) {
-            // matchRules 是 final 的，同样的问题
-            throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID)
-                    .withLogDetail("匹配规则不可修改");
+            this.matchRules = matchRules;
         }
         if (nodes != null && !nodes.isEmpty()) {
             this.nodes.clear();
