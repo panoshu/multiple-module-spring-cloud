@@ -32,6 +32,6 @@ public enum CoreDomainErrorCode implements ErrorDefinition {
 
   @Override
   public String message() {
-    return "";
+    return this.message;
   }
 }
