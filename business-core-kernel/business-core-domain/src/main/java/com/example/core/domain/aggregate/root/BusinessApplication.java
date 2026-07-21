@@ -257,6 +257,40 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   }
 
+  /**
+   * 公开业务扩展字段（只读）。
+   * <p>
+   * 供业务服务的 {@code AnnuityExtensionResolver} 等组件类型安全地读取扩展字段，
+   * 避免在业务服务中使用反射访问私有字段。
+   *
+   * @return 扩展字段实例，若未设置则返回 null
+   */
+  public BusinessExtension businessExtension() {
+    return this.businessExtension;
+  }
+
+  /**
+   * 公开操作人信息（只读）。
+   * <p>
+   * 供通知、审计等扩展动作获取操作人信息，避免反射。
+   *
+   * @return 操作人信息实例
+   */
+  public OperatorInfo operatorInfo() {
+    return this.operatorInfo;
+  }
+
+  /**
+   * 公开业务上下文（只读）。
+   * <p>
+   * 供客户画像查询等扩展动作获取客户/产品/方案维度信息，避免反射。
+   *
+   * @return 业务上下文实例
+   */
+  public BusinessContext businessContext() {
+    return this.businessContext;
+  }
+
   public BatchId getBatchId() {
     return batchId;
   }
