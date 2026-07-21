@@ -29,7 +29,7 @@
   </dependencies>
 
   <build>
-    <finalName>demo-consumer</finalName>
+    <finalName>integration-service</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
