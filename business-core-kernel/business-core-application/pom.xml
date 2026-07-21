@@ -21,6 +21,16 @@
       <artifactId>business-core-domain</artifactId>
     </dependency>
 
+    <!-- 外部服务 API（@HttpExchange 接口，供通用 Handler 调用 file-service / approval-service） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>approval-api</artifactId>
+    </dependency>
+
     <!-- Spring 事务管理 -->
     <dependency>
       <groupId>org.springframework</groupId>
@@ -32,6 +42,12 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- Spring Web (提供 @HttpExchange 等注解支持) -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
     </dependency>
 
     <dependency>
@@ -48,6 +64,13 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- 测试依赖 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

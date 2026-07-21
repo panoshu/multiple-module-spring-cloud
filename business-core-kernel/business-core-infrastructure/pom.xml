@@ -16,6 +16,15 @@
       <groupId>com.example</groupId>
       <artifactId>business-core-domain</artifactId>
     </dependency>
+    <!-- 外部服务 API（供 Gateway 实现调用 file-service / approval-service） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>approval-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-client-starter</artifactId>

@@ -54,6 +54,17 @@
         <artifactId>business-core-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <!-- 外部服务 API（父 pom 仅声明了 file-api，approval-api 需在此声明） -->
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>approval-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
