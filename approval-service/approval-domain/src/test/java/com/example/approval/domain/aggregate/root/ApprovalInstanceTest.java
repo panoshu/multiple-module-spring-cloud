@@ -26,6 +26,7 @@ class ApprovalInstanceTest {
     private static final UserNo APPROVER_1 = UserNo.of("user-001");
     private static final UserNo APPROVER_2 = UserNo.of("user-002");
     private static final ApplicationId BUSINESS_APP_ID = new ApplicationId("app-001");
+    private static final String BUSINESS_TYPE = "ANNUITY";
 
     private ApprovalInstance newApprovingInstance() {
         ApprovalInstance instance = ApprovalInstance.create(
@@ -33,6 +34,7 @@ class ApprovalInstanceTest {
                 ApprovalFlowId.of(1L),
                 FlowVersion.initial(),
                 BUSINESS_APP_ID,
+                BUSINESS_TYPE,
                 "initiator-plan",
                 INITIATOR);
         instance.start(INITIATOR);

@@ -126,6 +126,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
                 instance.flowId(),
                 instance.flowVersion(),
                 instance.businessApplicationId(),
+                instance.businessType(),
                 instance.currentNodeOrder(),
                 instance.status(),
                 instance.initiatorPlan(),

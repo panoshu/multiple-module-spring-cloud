@@ -4,6 +4,10 @@ import com.example.approval.domain.aggregate.entity.ApprovalNode;
 import com.example.approval.domain.aggregate.entity.ApprovalRecord;
 import com.example.approval.domain.aggregate.entity.NodeExecution;
 import com.example.approval.domain.errorcode.ApprovalDomainErrorCode;
+import com.example.approval.domain.event.ApprovalInstanceApproved;
+import com.example.approval.domain.event.ApprovalInstanceCreated;
+import com.example.approval.domain.event.ApprovalInstanceRejected;
+import com.example.approval.domain.event.ApprovalInstanceWithdrawn;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
 import com.example.approval.domain.valueobject.FlowVersion;
 import com.example.approval.domain.valueobject.NodeOrder;
@@ -48,6 +52,11 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     private final ApplicationId businessApplicationId;
 
     /**
+     * 业务类型
+     */
+    private final String businessType;
+
+    /**
      * 当前节点顺序
      */
     private NodeOrder currentNodeOrder;
@@ -76,11 +85,13 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
      * 场景1: 业务创建
      */
     private ApprovalInstance(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                              ApplicationId businessApplicationId, String initiatorPlan, UserNo operator) {
+                              ApplicationId businessApplicationId, String businessType,
+                              String initiatorPlan, UserNo operator) {
         super(id, operator);
         this.flowId = flowId;
         this.flowVersion = flowVersion;
         this.businessApplicationId = businessApplicationId;
+        this.businessType = businessType;
         this.initiatorPlan = initiatorPlan;
         this.currentPlan = initiatorPlan;
         this.currentNodeOrder = NodeOrder.first();
@@ -92,13 +103,14 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
      * 场景2: 从数据库重建
      */
     private ApprovalInstance(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                              ApplicationId businessApplicationId, NodeOrder currentNodeOrder, InstanceStatus status,
+                              ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                               String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
                               UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
         super(id, createdBy, updatedBy, createdAt, updatedAt, version);
         this.flowId = flowId;
         this.flowVersion = flowVersion;
         this.businessApplicationId = businessApplicationId;
+        this.businessType = businessType;
         this.currentNodeOrder = currentNodeOrder;
         this.status = status;
         this.initiatorPlan = initiatorPlan;
@@ -113,12 +125,14 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
      * @param flowId                审批流ID
      * @param flowVersion           审批流版本
      * @param businessApplicationId 业务申请ID
+     * @param businessType          业务类型
      * @param initiatorPlan         发起人方案
      * @param operator              操作人
      * @return ApprovalInstance 实例
      */
     public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                                           ApplicationId businessApplicationId, String initiatorPlan, UserNo operator) {
+                                           ApplicationId businessApplicationId, String businessType,
+                                           String initiatorPlan, UserNo operator) {
         if (flowId == null) {
             throw new IllegalArgumentException("审批流ID不能为空");
         }
@@ -131,17 +145,21 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
         if (operator == null) {
             throw new IllegalArgumentException("操作人不能为空");
         }
-        return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, initiatorPlan, operator);
+        ApprovalInstance instance = new ApprovalInstance(id, flowId, flowVersion, businessApplicationId,
+                businessType, initiatorPlan, operator);
+        instance.registerDomainEvent(
+                ApprovalInstanceCreated.of(id, businessApplicationId.value(), businessType));
+        return instance;
     }
 
     /**
      * 静态工厂方法 - 从数据库重建
      */
     public static ApprovalInstance reconstitute(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                                                 ApplicationId businessApplicationId, NodeOrder currentNodeOrder, InstanceStatus status,
+                                                 ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                                                  String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
                                                  UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
-        return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, currentNodeOrder, status,
+        return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
                 initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version);
     }
 
@@ -169,19 +187,25 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
      */
     public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, UserNo operator) {
         validateCanApprove(approverId);
-        
+
         // 创建审批记录
         RecordId recordId = RecordId.of(System.currentTimeMillis()); // 简单生成ID，实际应由Repository生成
         ApprovalRecord record = ApprovalRecord.approve(recordId, approverId, opinion, operator);
-        
+
         // 获取或创建当前节点的执行记录
         NodeExecution execution = getOrCreateCurrentExecution(node, operator);
         execution.addApprovalRecord(record, operator);
-        
+
         // 根据签批模式决定是否标记节点完成
         if (node.isOrSign() || allApproversApproved(node, execution)) {
             execution.markApproved(operator);
             moveToNextNode(node, operator);
+        }
+
+        // 当状态变为 APPROVED 时派发领域事件
+        if (this.status == InstanceStatus.APPROVED) {
+            registerDomainEvent(
+                    ApprovalInstanceApproved.of(id(), businessApplicationId.value(), businessType));
         }
     }
 
@@ -194,21 +218,27 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
      * @param rejectTarget 驳回目标
      * @param operator     操作人
      */
-    public void reject(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, 
+    public void reject(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
                        RejectTarget rejectTarget, UserNo operator) {
         validateCanApprove(approverId);
-        
+
         // 创建审批记录
         RecordId recordId = RecordId.of(System.currentTimeMillis());
         ApprovalRecord record = ApprovalRecord.reject(recordId, approverId, opinion, rejectTarget, operator);
-        
+
         // 获取或创建当前节点的执行记录
         NodeExecution execution = getOrCreateCurrentExecution(node, operator);
         execution.addApprovalRecord(record, operator);
         execution.markRejected(operator);
-        
+
         // 处理驳回逻辑
         handleRejection(rejectTarget, operator);
+
+        // 当状态变为 REJECTED 时派发领域事件
+        if (this.status == InstanceStatus.REJECTED) {
+            registerDomainEvent(
+                    ApprovalInstanceRejected.of(id(), businessApplicationId.value(), businessType));
+        }
     }
 
     /**
@@ -223,11 +253,11 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     public void transfer(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
                           UserNo transferTo, UserNo operator) {
         validateCanApprove(approverId);
-        
+
         // 创建审批记录
         RecordId recordId = RecordId.of(System.currentTimeMillis());
         ApprovalRecord record = ApprovalRecord.transfer(recordId, approverId, opinion, transferTo, operator);
-        
+
         // 获取或创建当前节点的执行记录
         NodeExecution execution = getOrCreateCurrentExecution(node, operator);
         execution.addApprovalRecord(record, operator);
@@ -245,14 +275,18 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
             throw new DomainException(ApprovalDomainErrorCode.WITHDRAW_NOT_BY_INITIATOR)
                     .withLogDetail("只有发起人可以撤回审批实例, ApprovalInstanceId: %s".formatted(this.id()));
         }
-        
+
         if (this.status != InstanceStatus.APPROVING) {
             throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_NOT_APPROVING)
                     .withLogDetail("只有审批中的实例才能撤回, ApprovalInstanceId: %s, status: %s".formatted(this.id(), this.status));
         }
-        
+
         this.status = InstanceStatus.WITHDRAWN;
         this.markUpdated(operator);
+
+        // 派发领域事件
+        registerDomainEvent(
+                ApprovalInstanceWithdrawn.of(id(), businessApplicationId.value(), businessType));
     }
 
     /**
@@ -264,12 +298,12 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     private void moveToNextNode(ApprovalNode currentNode, UserNo operator) {
         NodeOrder nextOrder = currentNodeOrder.next();
         this.currentNodeOrder = nextOrder;
-        
+
         // 如果没有下一个节点，标记为已通过
         if (this.currentNodeOrder.value() > getMaxNodeOrder()) {
             this.status = InstanceStatus.APPROVED;
         }
-        
+
         this.markUpdated(operator);
     }
 
@@ -442,6 +476,10 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
         return businessApplicationId;
     }
 
+    public String businessType() {
+        return businessType;
+    }
+
     public NodeOrder currentNodeOrder() {
         return currentNodeOrder;
     }
@@ -473,6 +511,11 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
         // 校验业务申请ID
         if (businessApplicationId == null) {
             throw new IllegalStateException("业务申请ID不能为空");
+        }
+
+        // 校验业务类型
+        if (businessType == null || businessType.isBlank()) {
+            throw new IllegalStateException("业务类型不能为空");
         }
 
         // 校验当前节点顺序

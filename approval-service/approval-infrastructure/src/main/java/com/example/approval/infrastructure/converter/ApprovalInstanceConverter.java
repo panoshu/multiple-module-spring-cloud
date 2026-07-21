@@ -52,6 +52,8 @@ public interface ApprovalInstanceConverter {
     @Mapping(target = "flowId", expression = "java(instance.flowId() != null ? String.valueOf(instance.flowId().value()) : null)")
     @Mapping(target = "flowVersion", expression = "java(instance.flowVersion() != null ? instance.flowVersion().value() : null)")
     @Mapping(target = "businessApplicationId", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId().value() : null)")
+    @Mapping(target = "businessNo", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId().value() : null)")
+    @Mapping(target = "businessType", expression = "java(instance.businessType())")
     @Mapping(target = "currentNodeOrder", expression = "java(instance.currentNodeOrder() != null ? instance.currentNodeOrder().value() : null)")
     @Mapping(target = "status", expression = "java(instanceStatusToString(instance.status()))")
     @Mapping(target = "createdBy", expression = "java(instance.createdBy() != null ? instance.createdBy().value() : null)")
@@ -75,6 +77,7 @@ public interface ApprovalInstanceConverter {
                 toApprovalFlowId(instanceDO.getFlowId()),
                 toFlowVersion(instanceDO.getFlowVersion()),
                 toApplicationId(instanceDO.getBusinessApplicationId()),
+                instanceDO.getBusinessType(),
                 toNodeOrder(instanceDO.getCurrentNodeOrder()),
                 stringToInstanceStatus(instanceDO.getStatus()),
                 instanceDO.getInitiatorPlan(),

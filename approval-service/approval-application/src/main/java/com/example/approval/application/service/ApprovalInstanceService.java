@@ -59,6 +59,7 @@ public class ApprovalInstanceService {
                 request.flowId(),
                 FlowVersion.of(flow.flowVersion().value()),
                 new ApplicationId(request.businessNo()),
+                request.businessType(),
                 null, // initiatorPlan
                 UserNo.of(request.initiator())
         );
@@ -276,7 +277,7 @@ public class ApprovalInstanceService {
                 instance.id(),
                 instance.flowId(),
                 instance.businessApplicationId().value(),
-                null, // businessType
+                instance.businessType(),
                 instance.status().name(),
                 instance.createdBy().value(),
                 instance.currentNodeOrder().toString(),

@@ -16,16 +16,22 @@ import java.time.LocalDateTime;
 public record ApprovalInstanceCreated(
         EventId eventId,
         LocalDateTime occurredOn,
-        ApprovalInstanceId instanceId
+        ApprovalInstanceId instanceId,
+        String businessNo,
+        String businessType
 ) implements DomainEvent {
 
     /**
      * 静态工厂方法
      *
-     * @param instanceId 审批实例ID
+     * @param instanceId   审批实例ID
+     * @param businessNo   业务单号
+     * @param businessType 业务类型
      * @return ApprovalInstanceCreated 实例
      */
-    public static ApprovalInstanceCreated of(ApprovalInstanceId instanceId) {
-        return new ApprovalInstanceCreated(EventId.generate(), LocalDateTime.now(), instanceId);
+    public static ApprovalInstanceCreated of(ApprovalInstanceId instanceId,
+                                              String businessNo, String businessType) {
+        return new ApprovalInstanceCreated(EventId.generate(), LocalDateTime.now(),
+                instanceId, businessNo, businessType);
     }
 }

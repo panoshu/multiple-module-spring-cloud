@@ -16,16 +16,22 @@ import java.time.LocalDateTime;
 public record ApprovalInstanceWithdrawn(
         EventId eventId,
         LocalDateTime occurredOn,
-        ApprovalInstanceId instanceId
+        ApprovalInstanceId instanceId,
+        String businessNo,
+        String businessType
 ) implements DomainEvent {
 
     /**
      * 静态工厂方法
      *
-     * @param instanceId 审批实例ID
+     * @param instanceId   审批实例ID
+     * @param businessNo   业务单号
+     * @param businessType 业务类型
      * @return ApprovalInstanceWithdrawn 实例
      */
-    public static ApprovalInstanceWithdrawn of(ApprovalInstanceId instanceId) {
-        return new ApprovalInstanceWithdrawn(EventId.generate(), LocalDateTime.now(), instanceId);
+    public static ApprovalInstanceWithdrawn of(ApprovalInstanceId instanceId,
+                                                String businessNo, String businessType) {
+        return new ApprovalInstanceWithdrawn(EventId.generate(), LocalDateTime.now(),
+                instanceId, businessNo, businessType);
     }
 }
