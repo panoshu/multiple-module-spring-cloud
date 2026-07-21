@@ -8,5 +8,5 @@ package com.example.core.domain.aggregate.valueobject.enums.status;
  * @since 2026/5/13 12:35
  */
 public enum ApplicationStatus {
-  DRAFT, PROCESSING, REJECTED, COMPLETED, CANCELLED
+  DRAFT, PROCESSING, REJECTED, COMPLETED, CANCELLED, WITHDRAWN
 }

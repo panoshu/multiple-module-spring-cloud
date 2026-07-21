@@ -18,11 +18,13 @@ import com.example.shared.primitives.identity.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 应用层编排服务
@@ -35,6 +37,10 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class BusinessOrchestrationAppService {
+
+  private static final String APPROVAL_RESULT_APPROVED = "APPROVED";
+  private static final String APPROVAL_RESULT_REJECTED = "REJECTED";
+  private static final String APPROVAL_RESULT_WITHDRAWN = "WITHDRAWN";
 
   private final StepActionHandlerRegistry handlerRegistry;
   private final BusinessFactExtractorRegistry factExtractorRegistry;
@@ -88,6 +94,67 @@ public class BusinessOrchestrationAppService {
       app.getDomainEvents().forEach(eventBus::publish);
       app.clearDomainEvents();
     });
+  }
+
+  /**
+   * 根据文件任务 ID 反查业务申请单并推进流程。
+   * <p>
+   * 由 {@code FileParsedEventListener} 在收到文件解析完成事件后调用。
+   * 通过 {@link ApplicationRepository#findByFileTaskId(String)} 反查申请单，
+   * 命中后复用 {@link #advanceStep(ApplicationId)} 推进至下一节点。
+   *
+   * @param fileTaskId 文件任务 ID（来自 {@code FileParsedEventDTO.fileTaskId()}）
+   */
+  @Transactional
+  public void advanceByFileTaskId(String fileTaskId) {
+    Optional<BusinessApplication> appOpt = applicationRepository.findByFileTaskId(fileTaskId);
+    if (appOpt.isEmpty()) {
+      log.warn("未找到 fileTaskId={} 对应的业务申请单，忽略文件解析完成事件", fileTaskId);
+      return;
+    }
+    advanceStep(appOpt.get().id());
+  }
+
+  /**
+   * 根据审批结果推进或终止业务申请单。
+   * <p>
+   * 由 {@code ApprovalResultEventListener} 在收到审批结果事件后调用。
+   * <ul>
+   * <li>{@code APPROVED}：推进到下一个流程节点（复用 {@link #advanceStep(ApplicationId)}）；</li>
+   * <li>{@code REJECTED}：将申请单状态置为 REJECTED；</li>
+   * <li>{@code WITHDRAWN}：将申请单状态置为 WITHDRAWN。</li>
+   * </ul>
+   *
+   * @param businessNo 业务编号（即 {@code ApplicationId.value()}，来自审批事件的 businessNo 字段）
+   * @param result     审批结果字符串，取值为 APPROVED / REJECTED / WITHDRAWN
+   */
+  @Transactional
+  public void advanceByApprovalResult(String businessNo, String result) {
+    ApplicationId appId = new ApplicationId(businessNo);
+    switch (result) {
+      case APPROVAL_RESULT_APPROVED -> advanceStep(appId);
+      case APPROVAL_RESULT_REJECTED -> rejectApplication(appId);
+      case APPROVAL_RESULT_WITHDRAWN -> withdrawApplication(appId);
+      default -> throw new IllegalArgumentException("未知的审批结果类型: " + result);
+    }
+  }
+
+  private void rejectApplication(ApplicationId appId) {
+    BusinessApplication app = applicationRepository.loadOrThrow(appId);
+    app.reject();
+    saveAndPublishEvents(app);
+  }
+
+  private void withdrawApplication(ApplicationId appId) {
+    BusinessApplication app = applicationRepository.loadOrThrow(appId);
+    app.withdraw();
+    saveAndPublishEvents(app);
+  }
+
+  private void saveAndPublishEvents(BusinessApplication app) {
+    applicationRepository.save(app);
+    app.getDomainEvents().forEach(eventBus::publish);
+    app.clearDomainEvents();
   }
 
   // ==========================================

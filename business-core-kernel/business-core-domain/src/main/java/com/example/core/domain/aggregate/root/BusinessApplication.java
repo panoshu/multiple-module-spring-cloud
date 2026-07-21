@@ -189,6 +189,32 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   }
 
   /**
+   * 领域行为：审批驳回，将申请单状态置为 REJECTED。
+   * <p>
+   * 由审批结果事件监听器在收到 {@code ApprovalInstanceRejectedEventDTO} 后调用。
+   * 状态一旦进入 REJECTED 即为终态，不可再流转。
+   */
+  public void reject() {
+    if (this.status == ApplicationStatus.REJECTED) {
+      return;
+    }
+    this.status = ApplicationStatus.REJECTED;
+  }
+
+  /**
+   * 领域行为：审批撤回，将申请单状态置为 WITHDRAWN。
+   * <p>
+   * 由审批结果事件监听器在收到 {@code ApprovalInstanceWithdrawnEventDTO} 后调用。
+   * 状态一旦进入 WITHDRAWN 即为终态，不可再流转。
+   */
+  public void withdraw() {
+    if (this.status == ApplicationStatus.WITHDRAWN) {
+      return;
+    }
+    this.status = ApplicationStatus.WITHDRAWN;
+  }
+
+  /**
    * 领域行为：记录管道执行轨迹
    * 聚合根本身并不会把这些详细的日志保存在自己的成员变量里（太重了），
    * 而是通过领域事件派发出去，让日志/审计限界上下文去持久化。
