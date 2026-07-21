@@ -332,6 +332,12 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
 
     /**
      * 判断所有审批人是否都已审批
+     * <p>
+     * 对于指定用户审批节点（SPECIFIED_USER），approverIds 非空，按列表逐一校验。
+     * 对于指定角色审批节点（SPECIFIED_ROLE），approverIds 为空、roleIds 非空：
+     * 运行时无法在领域层确定角色对应的全部用户，因此保守返回 false，
+     * 避免 AND_SIGN 角色审批节点在第一次审批时即被错误标记完成。
+     * 仅当既无 approverIds 也无 roleIds（配置异常）时才返回 true。
      *
      * @param node      审批节点
      * @param execution 节点执行记录
@@ -340,7 +346,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     private boolean allApproversApproved(ApprovalNode node, NodeExecution execution) {
         List<UserNo> approverIds = node.approverIds();
         if (approverIds.isEmpty()) {
-            return true;
+            return node.roleIds().isEmpty();
         }
         return approverIds.stream()
                 .allMatch(execution::hasApprovedBy);
