@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>annuity-service</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>annuity-domain</artifactId>
+  <description>年金服务 - 领域层（实体、值对象、聚合根扩展、SPI 实现）</description>
+  <dependencies>
+    <dependency><groupId>com.example</groupId><artifactId>shared-domain</artifactId></dependency>
+    <dependency><groupId>com.example</groupId><artifactId>annuity-types</artifactId></dependency>
+    <!-- 依赖 kernel 领域层以扩展 BusinessExtension、实现 BusinessFactExtractor -->
+    <dependency><groupId>com.example</groupId><artifactId>business-core-domain</artifactId></dependency>
+    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
