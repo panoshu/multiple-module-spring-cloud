@@ -1,6 +1,6 @@
 package com.example.annuity.infrastructure.configuration;
 
-import com.example.shared.domain.annotation.DomainService;
+import com.example.core.domain.annotation.DomainService;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,6 +11,11 @@ import org.springframework.context.annotation.Configuration;
  * {@code com.example.business} 包，需在此补充扫描 {@code com.example.annuity} 包，
  * 使 {@link com.example.annuity.domain.extractor.AnnuityFactExtractor} 等
  * 标注 {@link DomainService} 的领域服务能被 Spring 容器管理。
+ * <p>
+ * 注意：kernel 存在两个同名 {@code @DomainService} 注解
+ * （{@code com.example.shared.domain.annotation.DomainService} 与
+ *  {@code com.example.core.domain.annotation.DomainService}），
+ * annuity-domain 的 {@code AnnuityFactExtractor} 使用 core 版本，此处必须与之保持一致。
  *
  * @author annuity-service
  * @since 2026/7/21
