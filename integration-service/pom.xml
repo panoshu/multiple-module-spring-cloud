@@ -20,6 +20,7 @@
     <module>integration-service-application</module>
     <module>integration-service-infrastructure</module>
     <module>integration-service-starter</module>
+    <module>integration-service-types</module>
   </modules>
 
   <dependencyManagement>
@@ -47,6 +48,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>integration-service-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>integration-service-types</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>
