@@ -40,7 +40,7 @@ public record TradeRootResponse<T>(
   @JsonIgnore
   @Override
   public boolean isSuccess() {
-    return "0000".equals(Optional.of(statusInfo())
+    return "0000".equals(Optional.ofNullable(statusInfo())
       .map(TradeRspHead.StatusInfo::msgCode)
       .orElse(null));
   }
@@ -55,7 +55,7 @@ public record TradeRootResponse<T>(
     if (isSuccess()) {
       return null;
     }
-    return Optional.of(statusInfo())
+    return Optional.ofNullable(statusInfo())
       .map(TradeRspHead.StatusInfo::msgCode)
       .orElse("MISSING");
   }
@@ -70,7 +70,7 @@ public record TradeRootResponse<T>(
     if (isSuccess()) {
       return null;
     }
-    return Optional.of(statusInfo())
+    return Optional.ofNullable(statusInfo())
       .map(TradeRspHead.StatusInfo::msgInfo)
       .filter(s -> !s.isBlank())
       .orElse("Unknown error");
