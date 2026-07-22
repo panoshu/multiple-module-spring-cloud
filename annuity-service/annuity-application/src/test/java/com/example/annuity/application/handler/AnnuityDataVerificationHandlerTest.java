@@ -7,6 +7,7 @@ import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.core.domain.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.primitives.identity.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,8 @@ import static org.mockito.Mockito.*;
 @DisplayName("AnnuityDataVerificationHandler 编排逻辑")
 class AnnuityDataVerificationHandlerTest {
 
+  private static final UserNo OPERATOR = UserNo.of("U-TEST");
+
   @Mock private AnnuityExtensionResolver extensionResolver;
   @Mock private AnnuityEmployeeVerificationRule verificationRule;
   @Mock private AnnuityEmployeeBatchRepository batchRepository;
@@ -35,16 +38,37 @@ class AnnuityDataVerificationHandlerTest {
     ApplicationId appId = new ApplicationId("APP-001");
     BusinessApplication app = mock(BusinessApplication.class);
     when(app.id()).thenReturn(appId);
+    when(app.updatedBy()).thenReturn(OPERATOR);
     AnnuityEmployeeBatch batch = mock(AnnuityEmployeeBatch.class);
     when(batch.pendingDetails()).thenReturn(List.of());
-    when(batch.isAllProcessed()).thenReturn(true);
+    when(batch.anomalyCount()).thenReturn(0);
     when(batchRepository.findByApplicationId(appId)).thenReturn(Optional.of(batch));
 
     StepExecutionStatus status = handler.execute(app, null);
 
     assertThat(status).isEqualTo(StepExecutionStatus.SUCCESS);
-    verify(batch).complete();
+    verify(batch).complete(OPERATOR);
     verify(batchRepository).save(batch);
+  }
+
+  @Test
+  @DisplayName("存在异常明细 - 返回 FAILED 且批次标记失败,不调用 complete")
+  void execute_anomalyReturnsFailed() {
+    ApplicationId appId = new ApplicationId("APP-002");
+    BusinessApplication app = mock(BusinessApplication.class);
+    when(app.id()).thenReturn(appId);
+    when(app.updatedBy()).thenReturn(OPERATOR);
+    AnnuityEmployeeBatch batch = mock(AnnuityEmployeeBatch.class);
+    when(batch.pendingDetails()).thenReturn(List.of());
+    when(batch.anomalyCount()).thenReturn(1);
+    when(batchRepository.findByApplicationId(appId)).thenReturn(Optional.of(batch));
+
+    StepExecutionStatus status = handler.execute(app, null);
+
+    assertThat(status).isEqualTo(StepExecutionStatus.FAILED);
+    verify(batch).fail("存在异常明细", OPERATOR);
+    verify(batchRepository).save(batch);
+    verify(batch, never()).complete(any());
   }
 
   @Test

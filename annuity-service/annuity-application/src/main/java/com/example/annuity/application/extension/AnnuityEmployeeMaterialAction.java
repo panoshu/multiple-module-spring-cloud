@@ -50,7 +50,7 @@ public class AnnuityEmployeeMaterialAction implements StepExtensionAction {
 
     for (AnnuityEmployeeDetail detail : batch.verifiedDetails()) {
       List<AnnuityEmployeeMaterial> materials = materialRule.calculate(detail, context);
-      detail.assignMaterials(materials);
+      detail.assignMaterials(materials, app.updatedBy());
     }
 
     batchRepository.save(batch);

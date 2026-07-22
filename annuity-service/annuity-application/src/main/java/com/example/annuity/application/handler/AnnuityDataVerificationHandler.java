@@ -51,21 +51,22 @@ public class AnnuityDataVerificationHandler implements StepActionHandler {
     for (AnnuityEmployeeDetail detail : batch.pendingDetails()) {
       Optional<String> error = verificationRule.verify(detail);
       if (error.isPresent()) {
-        batch.markDetailAnomaly(detail.id(), error.get());
+        batch.markDetailAnomaly(detail.id(), error.get(), app.updatedBy());
         log.warn("员工明细核查异常, detailId={}, reason={}", detail.id().value(), error.get());
       } else {
         batch.markDetailProcessed(detail.id(), app.updatedBy());
       }
     }
 
-    if (batch.isAllProcessed()) {
-      batch.complete();
-    } else if (batch.anomalyCount() > 0) {
-      batch.fail("存在异常明细");
+    if (batch.anomalyCount() > 0) {
+      batch.fail("存在异常明细", app.updatedBy());
       batchRepository.save(batch);
+      log.info("年金数据核查失败(存在异常明细), applicationId={}, anomalyCount={}",
+          app.id(), batch.anomalyCount());
       return StepExecutionStatus.FAILED;
     }
 
+    batch.complete(app.updatedBy());
     batchRepository.save(batch);
     log.info("年金数据核查完成, applicationId={}, processedCount={}, anomalyCount={}",
         app.id(), batch.processedCount(), batch.anomalyCount());

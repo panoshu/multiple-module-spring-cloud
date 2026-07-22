@@ -5,6 +5,7 @@ import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeBatchStat
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeDetailStatus;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
+import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.UserNo;
 import org.junit.jupiter.api.DisplayName;
@@ -53,30 +54,38 @@ class AnnuityEmployeeBatchTest {
   }
 
   @Test
-  @DisplayName("markDetailAnomaly 递增 anomalyCount")
-  void markDetailAnomaly_incrementsAnomalyCount() {
+  @DisplayName("markDetailAnomaly 递增 anomalyCount 并更新版本号")
+  void markDetailAnomaly_incrementsAnomalyCountAndVersion() {
     AnnuityEmployeeBatch batch = createBatch(1);
     batch.addDetail(createDetail("D-001", "张三"));
-    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "身份证错误");
+    Version initialVersion = batch.version();
+    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "身份证错误", OPERATOR);
     assertThat(batch.anomalyCount()).isEqualTo(1);
+    assertThat(batch.version()).isEqualTo(initialVersion.next());
+    assertThat(batch.updatedBy()).isEqualTo(OPERATOR);
   }
 
   @Test
-  @DisplayName("complete 在所有明细处理完后将状态置为 COMPLETED")
-  void complete_changesStatusToCompleted() {
+  @DisplayName("complete 在所有明细处理完后将状态置为 COMPLETED 并更新版本号")
+  void complete_changesStatusToCompletedAndIncrementsVersion() {
     AnnuityEmployeeBatch batch = createBatch(1);
     batch.addDetail(createDetail("D-001", "张三"));
     batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR);
-    batch.complete();
+    Version initialVersion = batch.version();
+    batch.complete(OPERATOR);
     assertThat(batch.status()).isEqualTo(AnnuityEmployeeBatchStatus.COMPLETED);
+    assertThat(batch.version()).isEqualTo(initialVersion.next());
   }
 
   @Test
-  @DisplayName("fail 将状态置为 FAILED 并记录原因")
-  void fail_changesStatusToFailed() {
+  @DisplayName("fail 将状态置为 FAILED 并更新版本号")
+  void fail_changesStatusToFailedAndIncrementsVersion() {
     AnnuityEmployeeBatch batch = createBatch(1);
-    batch.fail("存在异常明细");
+    Version initialVersion = batch.version();
+    batch.fail("存在异常明细", OPERATOR);
     assertThat(batch.status()).isEqualTo(AnnuityEmployeeBatchStatus.FAILED);
+    assertThat(batch.version()).isEqualTo(initialVersion.next());
+    assertThat(batch.updatedBy()).isEqualTo(OPERATOR);
   }
 
   @Test
@@ -84,7 +93,7 @@ class AnnuityEmployeeBatchTest {
   void complete_throwsWhenNotAllProcessed() {
     AnnuityEmployeeBatch batch = createBatch(1);
     batch.addDetail(createDetail("D-001", "张三"));
-    assertThatThrownBy(batch::complete)
+    assertThatThrownBy(() -> batch.complete(OPERATOR))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("未全部处理");
   }
@@ -95,7 +104,7 @@ class AnnuityEmployeeBatchTest {
     AnnuityEmployeeBatch batch = createBatch(2);
     batch.addDetail(createDetail("D-001", "张三"));
     batch.addDetail(createDetail("D-002", "李四"));
-    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-002"), "异常");
+    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-002"), "异常", OPERATOR);
     batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR);
     // markDetailProcessed 内部调用 detail.verify(operator),将明细状态变更为 VERIFIED
     assertThat(batch.verifiedDetails()).hasSize(1);
@@ -120,8 +129,8 @@ class AnnuityEmployeeBatchTest {
   void markDetailAnomaly_throwsWhenAlreadyAnomaly() {
     AnnuityEmployeeBatch batch = createBatch(1);
     batch.addDetail(createDetail("D-001", "张三"));
-    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "异常");
-    assertThatThrownBy(() -> batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "再次异常"))
+    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "异常", OPERATOR);
+    assertThatThrownBy(() -> batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "再次异常", OPERATOR))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("不可重复标记");
   }

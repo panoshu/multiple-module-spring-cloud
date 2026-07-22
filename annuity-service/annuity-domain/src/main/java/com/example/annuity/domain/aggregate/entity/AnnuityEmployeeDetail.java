@@ -93,24 +93,26 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
   /**
    * 标记明细异常
    */
-  public void markAnomaly(String reason) {
+  public void markAnomaly(String reason, UserNo operator) {
     if (this.status == AnnuityEmployeeDetailStatus.ANOMALY) {
       throw new IllegalStateException("明细已标记为异常,不可重复标记: " + this.id());
     }
     this.status = AnnuityEmployeeDetailStatus.ANOMALY;
     this.anomalyReason = reason;
+    markUpdated(operator);
   }
 
   /**
    * 挂载材料清单
    */
-  public void assignMaterials(List<AnnuityEmployeeMaterial> materials) {
+  public void assignMaterials(List<AnnuityEmployeeMaterial> materials, UserNo operator) {
     if (this.status != AnnuityEmployeeDetailStatus.VERIFIED) {
       throw new IllegalStateException("未核查状态不可分配材料,当前: " + this.status);
     }
     this.materials = new ArrayList<>(materials);
     this.materialPreparedAt = LocalDateTime.now();
     this.status = AnnuityEmployeeDetailStatus.MATERIAL_READY;
+    markUpdated(operator);
   }
 
   /**
