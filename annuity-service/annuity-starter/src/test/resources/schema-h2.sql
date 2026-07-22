@@ -186,3 +186,52 @@ CREATE TABLE IF NOT EXISTS sys_event_dispatch_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dispatch_status_retry ON sys_event_dispatch_log (status, next_retry_at);
+
+-- -----------------------------------------------------------------------------
+-- 5. 年金员工明细批次表（H2 兼容版）
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS t_annuity_employee_batch (
+    id                      VARCHAR(64)   NOT NULL,
+    application_id          VARCHAR(64)   NOT NULL,
+    batch_status            VARCHAR(32)   NOT NULL DEFAULT 'PENDING',
+    total_employee_count    INT           NOT NULL DEFAULT 0,
+    processed_count         INT           NOT NULL DEFAULT 0,
+    anomaly_count           INT           NOT NULL DEFAULT 0,
+    created_by              VARCHAR(64)   NOT NULL,
+    updated_by              VARCHAR(64),
+    create_time             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted                 INT           DEFAULT 0,
+    version                 INT           DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_annuity_emp_batch_application_id ON t_annuity_employee_batch(application_id);
+CREATE INDEX IF NOT EXISTS idx_annuity_emp_batch_status ON t_annuity_employee_batch(batch_status);
+
+-- -----------------------------------------------------------------------------
+-- 6. 年金员工明细表（H2 兼容版）
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS t_annuity_employee_detail (
+    id                      VARCHAR(64)   NOT NULL,
+    batch_id                VARCHAR(64)   NOT NULL,
+    employee_name           VARCHAR(255)  NOT NULL,
+    id_card_no              VARCHAR(32)   NOT NULL,
+    age                     INT,
+    monthly_salary          BIGINT,
+    monthly_contribution    BIGINT,
+    detail_status           VARCHAR(32)   NOT NULL DEFAULT 'PENDING',
+    anomaly_reason          VARCHAR(512),
+    materials               TEXT,
+    verified_at             TIMESTAMP,
+    material_prepared_at    TIMESTAMP,
+    created_by              VARCHAR(64)   NOT NULL,
+    updated_by              VARCHAR(64),
+    create_time             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted                 INT           DEFAULT 0,
+    version                 INT           DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_annuity_emp_detail_batch_id ON t_annuity_employee_detail(batch_id);
+CREATE INDEX IF NOT EXISTS idx_annuity_emp_detail_status ON t_annuity_employee_detail(detail_status);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_annuity_emp_detail_idcard ON t_annuity_employee_detail(batch_id, id_card_no);

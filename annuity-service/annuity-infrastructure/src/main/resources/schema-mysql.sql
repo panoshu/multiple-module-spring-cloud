@@ -139,3 +139,52 @@ CREATE TABLE IF NOT EXISTS `t_annuity_form` (
     KEY `idx_annuity_form_customer_no`   (`customer_no`),
     KEY `idx_annuity_form_create_time`   (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='年金业务表单表';
+
+-- -----------------------------------------------------------------------------
+-- 4. 年金员工明细批次表
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `t_annuity_employee_batch` (
+    `id`                      VARCHAR(64)   NOT NULL                          COMMENT '批次 ID（AnnuityEmployeeBatchId）',
+    `application_id`          VARCHAR(64)   NOT NULL                          COMMENT '关联申请单 ID（ApplicationId）',
+    `batch_status`            VARCHAR(32)   NOT NULL DEFAULT 'PENDING'        COMMENT '批次状态: PENDING/PROCESSING/COMPLETED/FAILED',
+    `total_employee_count`    INT           NOT NULL DEFAULT 0                COMMENT '员工总数',
+    `processed_count`         INT           NOT NULL DEFAULT 0                COMMENT '已处理数',
+    `anomaly_count`           INT           NOT NULL DEFAULT 0                COMMENT '异常数',
+    `created_by`              VARCHAR(64)   NOT NULL                          COMMENT '创建人',
+    `updated_by`              VARCHAR(64)   DEFAULT NULL                      COMMENT '更新人',
+    `create_time`             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '创建时间',
+    `update_time`             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`                 BOOLEAN       DEFAULT FALSE                     COMMENT '逻辑删除标志',
+    `version`                 INT           DEFAULT 0                         COMMENT '乐观锁版本号',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_annuity_emp_batch_application_id` (`application_id`),
+    KEY `idx_annuity_emp_batch_status` (`batch_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='年金员工明细批次表';
+
+-- -----------------------------------------------------------------------------
+-- 5. 年金员工明细表
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `t_annuity_employee_detail` (
+    `id`                      VARCHAR(64)   NOT NULL                          COMMENT '明细 ID（AnnuityEmployeeDetailId）',
+    `batch_id`                VARCHAR(64)   NOT NULL                          COMMENT '关联批次 ID',
+    `employee_name`           VARCHAR(255)  NOT NULL                          COMMENT '员工姓名',
+    `id_card_no`              VARCHAR(32)   NOT NULL                          COMMENT '身份证号',
+    `age`                     INT           DEFAULT NULL                      COMMENT '年龄',
+    `monthly_salary`          BIGINT        DEFAULT NULL                      COMMENT '月薪（分）',
+    `monthly_contribution`    BIGINT        DEFAULT NULL                      COMMENT '月缴存额（分）',
+    `detail_status`           VARCHAR(32)   NOT NULL DEFAULT 'PENDING'        COMMENT '明细状态: PENDING/VERIFIED/ANOMALY/MATERIAL_READY',
+    `anomaly_reason`          VARCHAR(512)  DEFAULT NULL                      COMMENT '异常原因',
+    `materials`               JSON          DEFAULT NULL                      COMMENT '材料清单（JSON 数组）',
+    `verified_at`             DATETIME      DEFAULT NULL                      COMMENT '核查时间',
+    `material_prepared_at`    DATETIME      DEFAULT NULL                      COMMENT '材料准备时间',
+    `created_by`              VARCHAR(64)   NOT NULL                          COMMENT '创建人',
+    `updated_by`              VARCHAR(64)   DEFAULT NULL                      COMMENT '更新人',
+    `create_time`             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '创建时间',
+    `update_time`             TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`                 BOOLEAN       DEFAULT FALSE                     COMMENT '逻辑删除标志',
+    `version`                 INT           DEFAULT 0                         COMMENT '乐观锁版本号',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_annuity_emp_detail_idcard` (`batch_id`, `id_card_no`),
+    KEY `idx_annuity_emp_detail_batch_id` (`batch_id`),
+    KEY `idx_annuity_emp_detail_status` (`detail_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='年金员工明细表';
