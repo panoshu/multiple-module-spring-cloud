@@ -1,4 +1,4 @@
-package com.example.core.infrastructure.gateway;
+package com.example.core.infrastructure.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;

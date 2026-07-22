@@ -1,4 +1,4 @@
-package com.example.core.infrastructure.configuration;
+package com.example.core.infrastructure.engine.configuration;
 
 import com.example.shared.domain.annotation.DomainService;
 import org.springframework.context.annotation.ComponentScan;

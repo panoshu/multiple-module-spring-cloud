@@ -1,4 +1,4 @@
-package com.example.core.infrastructure.json;
+package com.example.core.infrastructure.engine.json;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

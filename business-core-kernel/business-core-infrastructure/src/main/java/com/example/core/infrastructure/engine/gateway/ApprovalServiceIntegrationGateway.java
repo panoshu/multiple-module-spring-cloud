@@ -1,4 +1,4 @@
-package com.example.core.infrastructure.gateway;
+package com.example.core.infrastructure.engine.gateway;
 
 import com.example.approval.api.ApprovalFlowApi;
 import com.example.approval.api.ApprovalInstanceApi;

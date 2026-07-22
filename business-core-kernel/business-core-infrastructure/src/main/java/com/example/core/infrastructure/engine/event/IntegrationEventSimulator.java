@@ -1,4 +1,4 @@
-package com.example.core.infrastructure.event;
+package com.example.core.infrastructure.engine.event;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

@@ -1,7 +1,7 @@
-package com.example.core.infrastructure.configuration;
+package com.example.core.infrastructure.engine.configuration;
 
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
-import com.example.core.infrastructure.json.BusinessExtensionMixIn;
+import com.example.core.infrastructure.engine.json.BusinessExtensionMixIn;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
