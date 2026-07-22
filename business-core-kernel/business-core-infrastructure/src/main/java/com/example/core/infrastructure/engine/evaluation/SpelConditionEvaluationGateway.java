@@ -3,6 +3,7 @@ package com.example.core.infrastructure.engine.evaluation;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -11,9 +12,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * description
+ * 基于 Spring SpEL 的条件求值网关实现
+ * <p>
+ * 解析后的 {@link Expression} 实例会被缓存，避免相同表达式重复解析带来的性能开销。
+ * <p>
+ * 通过配置 {@code core.engine.condition-evaluator.type=spel} 显式启用,或保持缺省(无配置)
+ * 自动启用。若需切换为 Aviator 引擎,设置 {@code core.engine.condition-evaluator.type=aviator}
+ * 即会激活 {@link AviatorConditionEvaluationGateway} 并停用本实现。
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0
@@ -21,9 +29,11 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "core.engine.condition-evaluator", name = "type", havingValue = "spel", matchIfMissing = true)
 public class SpelConditionEvaluationGateway implements ConditionEvaluationGateway {
 
   private final ExpressionParser parser = new SpelExpressionParser();
+  private final Map<String, Expression> expressionCache = new ConcurrentHashMap<>();
 
   @Override
   public boolean evaluate(String conditionExpression, BusinessMetaContext context) {
@@ -57,7 +67,7 @@ public class SpelConditionEvaluationGateway implements ConditionEvaluationGatewa
 
   private boolean doEvaluate(String expressionStr, StandardEvaluationContext context) {
     try {
-      Expression expression = parser.parseExpression(expressionStr);
+      Expression expression = expressionCache.computeIfAbsent(expressionStr, parser::parseExpression);
       Boolean result = expression.getValue(context, Boolean.class);
       return Boolean.TRUE.equals(result);
     } catch (Exception e) {

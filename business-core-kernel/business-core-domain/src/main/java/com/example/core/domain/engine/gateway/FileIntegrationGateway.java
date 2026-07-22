@@ -38,11 +38,15 @@ public interface FileIntegrationGateway {
    * 2. 流式下载文件 (防 OOM 大杀器)
    * <p>
    * 供应用层的 AbstractJsonStreamIngestionAction 使用，直接获取底层 JSON 流。
+   * <p>
+   * <b>【为何需要 context】</b>文件服务的下载需先申请下载令牌,令牌申请要求校验
+   * 客户/产品/下载人一致性,这些信息由 {@link BusinessMetaContext} 提供。
    *
-   * @param fileId 文件服务返回的统一文件标识
+   * @param fileId  文件服务返回的统一文件标识
+   * @param context 业务上下文(提供 customerNo/productNo 等令牌申请要素)
    * @return 文件的输入流
    */
-  InputStream downloadStream(FileId fileId);
+  InputStream downloadStream(FileId fileId, BusinessMetaContext context);
 
   /**
    * 3. 获取文件上传的临时凭证 (Token/Presigned URL)

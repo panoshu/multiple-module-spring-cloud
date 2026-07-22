@@ -76,7 +76,7 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
   }
 
   @Override
-  public InputStream downloadStream(FileId fileId) {
+  public InputStream downloadStream(FileId fileId, BusinessMetaContext context) {
     log.info("[Mock] 返回模拟员工明细 JSON 流, fileId={}", fileId.value());
     String mockJson = """
         [

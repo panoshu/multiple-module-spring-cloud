@@ -1,6 +1,6 @@
 package com.example.core.domain.engine.service.step;
 
-import com.example.core.domain.engine.annotation.DomainService;
+import com.example.shared.domain.annotation.DomainService;
 import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.engine.aggregate.valueobject.config.MaterialRuleConfig;

@@ -9,6 +9,7 @@ import com.example.shared.primitives.identity.PlanNo;
 import com.example.shared.primitives.identity.ProductNo;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 配置查询上下文
@@ -27,6 +28,22 @@ public record BusinessMetaContext(
   AccountManager accountManager,
   Map<String, Object> extensionFacts
 ) {
+
+  /**
+   * 紧凑构造器:将 extensionFacts 归一化为可变且线程安全的 {@link ConcurrentHashMap}。
+   * <p>
+   * <b>【为何需要】</b>编排管道的 {@code applyContextMutations} 会向 extensionFacts 写入突变数据,
+   * 同时异步扩展动作通过 {@code CompletableFuture} 并发读取同一上下文。原始 Map 既可能不可变
+   * (如 {@code Collections.emptyMap()})导致写入抛异常,也可能在并发读写下产生可见性问题。
+   * 统一包装为 ConcurrentHashMap 后,既保留 putAll 写入语义,又保证多线程安全。
+   */
+  public BusinessMetaContext {
+    if (extensionFacts == null) {
+      extensionFacts = new ConcurrentHashMap<>();
+    } else if (!(extensionFacts instanceof ConcurrentHashMap)) {
+      extensionFacts = new ConcurrentHashMap<>(extensionFacts);
+    }
+  }
 
   public static BusinessMetaContext of(BusinessContext businessContext) {
     return new BusinessMetaContext(

@@ -4,7 +4,7 @@ import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.domain.dto.AnnuityEmployeeDTO;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
-import com.example.core.domain.engine.annotation.DomainService;
+import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.UserNo;
 

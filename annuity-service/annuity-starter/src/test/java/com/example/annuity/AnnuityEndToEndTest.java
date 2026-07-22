@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.lang.reflect.Field;
@@ -63,7 +62,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(classes = AnnuityApplication.class)
 @ActiveProfiles("test")
-@Import(KernelDomainServiceTestConfiguration.class)
 @DisplayName("年金业务端到端集成测试")
 class AnnuityEndToEndTest {
 

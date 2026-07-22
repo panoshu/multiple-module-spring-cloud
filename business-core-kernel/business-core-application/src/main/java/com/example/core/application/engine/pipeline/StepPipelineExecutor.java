@@ -73,7 +73,12 @@ public class StepPipelineExecutor {
       records.add(record);
     }
 
-    return new PipelineExecutionResult(true, records);
+    // 4. 聚合执行结果:致命失败已在 executeSyncAction/handleUnexpectedException 中抛出 SystemException 中断,
+    //    到达此处表示链路完整跑完。isSuccess 仅在所有动作均非 FAILURE 时为 true,
+    //    使调用方能够区分"链路完成但有非致命失败"与"全部成功"。
+    boolean isSuccess = records.stream()
+      .noneMatch(record -> PipelineExecutionResult.ActionStatus.FAILURE.equals(record.status()));
+    return new PipelineExecutionResult(isSuccess, records);
   }
 
 
@@ -86,7 +91,7 @@ public class StepPipelineExecutor {
   private boolean isConditionMatched(StepExtensionConfig config, BusinessMetaContext context) {
     boolean matched = conditionEvaluator.evaluate(config.condition(), context);
     if (!matched) {
-      log.debug("扩展动作 [{}] 未满足 SpEL 条件 [{}], 跳过执行", config.beanName(), config.condition());
+      log.debug("扩展动作 [{}] 未满足条件表达式 [{}], 跳过执行", config.beanName(), config.condition());
     }
     return matched;
   }

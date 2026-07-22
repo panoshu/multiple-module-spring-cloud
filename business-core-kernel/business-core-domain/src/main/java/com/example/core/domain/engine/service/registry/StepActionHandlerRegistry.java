@@ -1,6 +1,6 @@
 package com.example.core.domain.engine.service.registry;
 
-import com.example.core.domain.engine.annotation.DomainService;
+import com.example.shared.domain.annotation.DomainService;
 import com.example.core.domain.engine.spi.StepActionHandler;
 
 import java.util.List;

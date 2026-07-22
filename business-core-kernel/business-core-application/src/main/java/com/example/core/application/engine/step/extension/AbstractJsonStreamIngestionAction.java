@@ -60,7 +60,7 @@ public abstract class AbstractJsonStreamIngestionAction<D, T> implements StepExt
     IngestionStats stats = new IngestionStats();
 
     // 资源管理：使用 try-with-resources 确保流与解析器安全关闭
-    try (InputStream inputStream = fileGateway.downloadStream(jsonFileId);
+    try (InputStream inputStream = fileGateway.downloadStream(jsonFileId, context);
          JsonParser jsonParser = dtoReader.getFactory().createParser(inputStream)) {
 
       // 委托给内部引擎处理

@@ -11,6 +11,7 @@ import com.example.core.domain.engine.aggregate.valueobject.config.MaterialRuleC
 import com.example.core.domain.engine.service.step.MaterialRuleEngine;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -40,19 +41,12 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PlanMaterialPreparationHandler implements StepActionHandler {
 
   private final BusinessConfigGateway configGateway;
   private final MaterialRuleEngine materialRuleEngine;
   private final ConditionEvaluationGateway conditionEvaluator;
-
-  public PlanMaterialPreparationHandler(BusinessConfigGateway configGateway,
-                                        MaterialRuleEngine materialRuleEngine,
-                                        ConditionEvaluationGateway conditionEvaluator) {
-    this.configGateway = configGateway;
-    this.materialRuleEngine = materialRuleEngine;
-    this.conditionEvaluator = conditionEvaluator;
-  }
 
   @Override
   public String handlerName() {
