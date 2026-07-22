@@ -83,7 +83,7 @@ public interface ApplicationDataConverter {
     aDo.setParsedJsonFileId(parsedJsonFileId != null ? parsedJsonFileId.value() : null);
     aDo.setExpectedDetailCount(KernelAggregateReflector.readExpectedDetailCount(app));
 
-    BusinessExtension ext = KernelAggregateReflector.readBusinessExtension(app);
+    BusinessExtension ext = app.businessExtension();
     aDo.setBusinessExtension(extensionToJson(ext));
 
     aDo.setStatus(KernelAggregateReflector.enumName(KernelAggregateReflector.readStatus(app)));

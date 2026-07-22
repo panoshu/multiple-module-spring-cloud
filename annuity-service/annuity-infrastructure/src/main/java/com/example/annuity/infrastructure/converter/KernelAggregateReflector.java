@@ -64,10 +64,6 @@ final class KernelAggregateReflector {
     return readField(app, "operatorInfo", OperatorInfo.class);
   }
 
-  static BusinessExtension readBusinessExtension(BusinessApplication app) {
-    return readField(app, "businessExtension", BusinessExtension.class);
-  }
-
   static FileId readParsedJsonFileId(BusinessApplication app) {
     return readField(app, "parsedJsonFileId", FileId.class);
   }
