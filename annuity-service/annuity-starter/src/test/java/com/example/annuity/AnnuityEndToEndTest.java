@@ -6,19 +6,19 @@ import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.approval.api.ApprovalFlowApi;
 import com.example.approval.api.ApprovalInstanceApi;
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
-import com.example.core.application.listener.StepAutoAdvanceListener;
-import com.example.core.application.service.BusinessOrchestrationAppService;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.aggregate.valueobject.business.AnnuityChannel;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.aggregate.valueobject.business.OperationModel;
-import com.example.core.domain.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
-import com.example.core.domain.repository.ApplicationRepository;
-import com.example.core.infrastructure.event.IntegrationEventSimulator;
+import com.example.core.application.engine.listener.StepAutoAdvanceListener;
+import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
+import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.event.FileParsedEventDTO;
@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 演示完整业务链路：
  * <ol>
  *   <li>创建 BusinessApplication（FORM_DETAIL_INGESTION）→ 持久化</li>
- *   <li>调用 {@code BusinessOrchestrationAppService.advanceStep} 推进流程</li>
+ *   <li>调用 {@code FlowOrchestrationService.advanceStep} 推进流程</li>
  *   <li>验证流程经过 DATA_VERIFICATION → MATERIAL_PREPARATION → APPROVAL → COMPLETED</li>
  *   <li>验证 {@link IntegrationEventSimulator} 发布集成事件后，监听器能推进流程</li>
  * </ol>
@@ -71,7 +71,7 @@ class AnnuityEndToEndTest {
   private static final String STATUS_SUCCESS = "SUCCESS";
 
   @Autowired
-  private BusinessOrchestrationAppService orchestrationService;
+  private FlowOrchestrationService orchestrationService;
 
   @Autowired
   private ApplicationRepository applicationRepository;

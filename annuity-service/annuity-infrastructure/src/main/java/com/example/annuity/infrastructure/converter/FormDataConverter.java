@@ -1,14 +1,14 @@
 package com.example.annuity.infrastructure.converter;
 
 import com.example.annuity.infrastructure.entity.FormDO;
-import com.example.core.domain.aggregate.root.BusinessForm;
-import com.example.core.domain.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.aggregate.valueobject.business.AnnuityChannel;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.aggregate.valueobject.business.OperationModel;
-import com.example.core.domain.aggregate.valueobject.enums.status.FormStatus;
+import com.example.core.domain.business.aggregate.root.BusinessForm;
+import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
+import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FileId;

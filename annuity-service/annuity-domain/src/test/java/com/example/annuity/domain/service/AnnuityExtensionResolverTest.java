@@ -1,13 +1,13 @@
 package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.aggregate.valueobject.business.AnnuityChannel;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.aggregate.valueobject.business.OperationModel;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
+import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.CustomerNo;

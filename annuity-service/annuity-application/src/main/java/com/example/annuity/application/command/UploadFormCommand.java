@@ -1,7 +1,7 @@
 package com.example.annuity.application.command;
 
-import com.example.core.domain.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 
 /**
  * 年金表单上传命令（应用层 CQE 对象）

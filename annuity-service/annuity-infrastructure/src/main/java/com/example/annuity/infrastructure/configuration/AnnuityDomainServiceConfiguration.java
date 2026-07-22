@@ -1,6 +1,6 @@
 package com.example.annuity.infrastructure.configuration;
 
-import com.example.core.domain.annotation.DomainService;
+import com.example.core.domain.engine.annotation.DomainService;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
  * <p>
  * 注意：kernel 存在两个同名 {@code @DomainService} 注解
  * （{@code com.example.shared.domain.annotation.DomainService} 与
- *  {@code com.example.core.domain.annotation.DomainService}），
+ *  {@code com.example.core.domain.engine.annotation.DomainService}），
  * annuity-domain 的 {@code AnnuityFactExtractor} 使用 core 版本，此处必须与之保持一致。
  *
  * @author annuity-service

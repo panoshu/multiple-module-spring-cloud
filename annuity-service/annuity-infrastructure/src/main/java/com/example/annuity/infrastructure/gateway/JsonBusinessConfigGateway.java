@@ -1,12 +1,12 @@
 package com.example.annuity.infrastructure.gateway;
 
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.config.ExtractorConfig;
-import com.example.core.domain.aggregate.valueobject.config.FormParsingConfig;
-import com.example.core.domain.aggregate.valueobject.config.MaterialRuleConfig;
-import com.example.core.domain.aggregate.valueobject.config.StepRouteConfig;
-import com.example.core.domain.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
-import com.example.core.domain.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.config.ExtractorConfig;
+import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
+import com.example.core.domain.engine.aggregate.valueobject.config.MaterialRuleConfig;
+import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
+import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

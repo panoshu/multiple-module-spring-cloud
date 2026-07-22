@@ -2,9 +2,9 @@ package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.annotation.DomainService;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.domain.engine.annotation.DomainService;
 import com.example.shared.exception.DomainException;
 
 /**

@@ -13,7 +13,7 @@
   <dependencies>
     <dependency><groupId>com.example</groupId><artifactId>annuity-api</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>annuity-domain</artifactId></dependency>
-    <!-- 依赖 kernel 应用层以复用 BusinessFormAppService、BusinessOrchestrationAppService -->
+    <!-- 依赖 kernel 应用层以复用 BusinessFormAppService、FlowOrchestrationService -->
     <dependency><groupId>com.example</groupId><artifactId>business-core-application</artifactId></dependency>
     <dependency>
       <groupId>org.springframework</groupId>

@@ -1,7 +1,7 @@
 package com.example.annuity.domain.extension;
 
-import com.example.core.domain.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 
 /**
  * 年金业务申请扩展字段

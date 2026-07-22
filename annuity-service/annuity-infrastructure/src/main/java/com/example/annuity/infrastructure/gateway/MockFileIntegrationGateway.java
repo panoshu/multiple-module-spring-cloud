@@ -1,9 +1,9 @@
 package com.example.annuity.infrastructure.gateway;
 
-import com.example.core.domain.aggregate.root.BusinessForm;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.gateway.FileIntegrationGateway;
-import com.example.core.infrastructure.event.IntegrationEventSimulator;
+import com.example.core.domain.business.aggregate.root.BusinessForm;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.gateway.FileIntegrationGateway;
+import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.event.FileParsedEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

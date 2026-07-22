@@ -6,14 +6,14 @@ import com.example.annuity.application.result.BatchQueryResult;
 import com.example.annuity.application.result.UploadFormResult;
 import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
-import com.example.core.application.service.BusinessOrchestrationAppService;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.root.BusinessBatch;
-import com.example.core.domain.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.repository.ApplicationRepository;
-import com.example.core.domain.repository.BatchRepository;
-import com.example.core.domain.repository.FormRepository;
+import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessBatch;
+import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.business.repository.BatchRepository;
+import com.example.core.domain.business.repository.FormRepository;
 import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.BatchId;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * 年金服务应用编排服务
  * <p>
- * 编排 kernel 的 {@link BusinessOrchestrationAppService} 与 annuity-domain 的扩展能力，
+ * 编排 kernel 的 {@link FlowOrchestrationService} 与 annuity-domain 的扩展能力，
  * 对 Adapter 层暴露年金业务的入口方法。本服务不包含复杂业务规则，仅做参数校验、
  * 结果转换和流程委派。
  *
@@ -39,7 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AnnuityAppService {
 
-  private final BusinessOrchestrationAppService orchestrationService;
+  private final FlowOrchestrationService orchestrationService;
   private final ApplicationRepository applicationRepository;
   private final BatchRepository batchRepository;
   private final FormRepository formRepository;

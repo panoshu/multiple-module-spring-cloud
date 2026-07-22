@@ -2,10 +2,10 @@ package com.example.annuity.domain.extractor;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.annotation.DomainService;
-import com.example.core.domain.spi.BusinessFactExtractor;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.annotation.DomainService;
+import com.example.core.domain.engine.spi.BusinessFactExtractor;
 
 import java.util.HashMap;
 import java.util.Map;

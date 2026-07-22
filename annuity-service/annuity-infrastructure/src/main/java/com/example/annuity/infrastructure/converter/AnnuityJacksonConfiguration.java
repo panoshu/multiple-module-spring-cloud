@@ -1,9 +1,9 @@
 package com.example.annuity.infrastructure.converter;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
-import com.example.core.domain.aggregate.valueobject.BusinessExtension;
-import com.example.core.infrastructure.configuration.LibJacksonModule;
-import com.example.core.infrastructure.json.BusinessExtensionMixIn;
+import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.infrastructure.engine.configuration.LibJacksonModule;
+import com.example.core.infrastructure.engine.json.BusinessExtensionMixIn;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;

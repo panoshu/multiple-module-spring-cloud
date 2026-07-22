@@ -2,8 +2,8 @@ package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.annotation.DomainService;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;

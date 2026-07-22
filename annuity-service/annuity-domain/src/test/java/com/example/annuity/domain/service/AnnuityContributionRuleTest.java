@@ -1,7 +1,7 @@
 package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

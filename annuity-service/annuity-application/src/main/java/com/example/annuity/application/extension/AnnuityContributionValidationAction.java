@@ -2,10 +2,10 @@ package com.example.annuity.application.extension;
 
 import com.example.annuity.domain.service.AnnuityContributionRule;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.core.domain.spi.StepExtensionAction;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
+import com.example.core.domain.engine.spi.StepExtensionAction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

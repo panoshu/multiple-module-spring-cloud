@@ -1,7 +1,7 @@
 package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
-import com.example.core.domain.annotation.DomainService;
+import com.example.core.domain.engine.annotation.DomainService;
 
 import java.util.Optional;
 import java.util.regex.Pattern;

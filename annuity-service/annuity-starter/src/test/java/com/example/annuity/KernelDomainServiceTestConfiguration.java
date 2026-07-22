@@ -1,12 +1,12 @@
 package com.example.annuity;
 
-import com.example.core.domain.service.engine.MaterialRuleEngine;
-import com.example.core.domain.service.registry.BusinessFactExtractorRegistry;
-import com.example.core.domain.service.registry.ExtensionActionRegistry;
-import com.example.core.domain.service.registry.StepActionHandlerRegistry;
-import com.example.core.domain.spi.BusinessFactExtractor;
-import com.example.core.domain.spi.StepActionHandler;
-import com.example.core.domain.spi.StepExtensionAction;
+import com.example.core.domain.engine.service.step.MaterialRuleEngine;
+import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegistry;
+import com.example.core.domain.engine.service.registry.ExtensionActionRegistry;
+import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
+import com.example.core.domain.engine.spi.BusinessFactExtractor;
+import com.example.core.domain.engine.spi.StepActionHandler;
+import com.example.core.domain.engine.spi.StepExtensionAction;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * <b>【存在原因】</b>kernel 内部存在两个 {@code @DomainService} 注解：
  * <ul>
  *   <li>{@code com.example.shared.domain.annotation.DomainService} - shared-domain 模块定义</li>
- *   <li>{@code com.example.core.domain.annotation.DomainService} - business-core-domain 模块定义</li>
+ *   <li>{@code com.example.core.domain.engine.annotation.DomainService} - business-core-domain 模块定义</li>
  * </ul>
  * 但 {@code DomainServiceConfiguration} 与 {@code AnnuityDomainServiceConfiguration} 的
  * {@code @ComponentScan.Filter} 仅过滤 shared 版本，导致 kernel 的
