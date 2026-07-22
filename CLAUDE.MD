@@ -156,7 +156,7 @@ business-core-types / -domain / -api / -application
 
 #### 阶段 2：申请单流程编排（核心引擎）
 
-由 [BusinessOrchestrationAppService.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/business-core-kernel/business-core-application/src/main/java/com/example/core/application/service/BusinessOrchestrationAppService.java#L48) 的 `advanceStep(appId)` 方法驱动：
+由 [FlowOrchestrationService.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/business-core-kernel/business-core-application/src/main/java/com/example/core/application/engine/service/FlowOrchestrationService.java) 的 `advanceStep(appId)` 方法驱动：
 
 ```
 1. 加载聚合根 + 构建配置查询上下文（两阶段：基础上下文 → 执行提取器获取业务事实 → 完整上下文）
