@@ -1,4 +1,4 @@
-package com.example.core.application.errorcode;
+package com.example.core.application.engine.errorcode;
 
 import com.example.shared.exception.ErrorDefinition;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class ApplicationSpawnedListener {
 
-  private final BusinessOrchestrationAppService orchestrationService;
+  private final FlowOrchestrationService orchestrationService;
 
   /**
    * 监听申请单裂变孵化事件。

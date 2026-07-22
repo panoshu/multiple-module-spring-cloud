@@ -1,6 +1,6 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.engine.event.StepEnteredEvent;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
@@ -25,7 +25,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class StepAutoAdvanceListener {
 
-  private final BusinessOrchestrationAppService orchestrationService;
+  private final FlowOrchestrationService orchestrationService;
   private final BusinessConfigGateway configQueryGateway;
 
   /**

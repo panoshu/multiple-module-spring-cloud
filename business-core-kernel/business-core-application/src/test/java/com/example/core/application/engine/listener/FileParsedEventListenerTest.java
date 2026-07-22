@@ -1,6 +1,6 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.file.api.event.FileParsedEventDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ class FileParsedEventListenerTest {
   private static final LocalDateTime OCCURRED_ON = LocalDateTime.now();
 
   @Mock
-  private BusinessOrchestrationAppService orchestrationService;
+  private FlowOrchestrationService orchestrationService;
 
   @InjectMocks
   private FileParsedEventListener listener;

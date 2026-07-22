@@ -1,6 +1,6 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.file.api.event.FileParsedEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class FileParsedEventListener {
   private static final String STATUS_SUCCESS = "SUCCESS";
   private static final String STATUS_PARTIAL = "PARTIAL";
 
-  private final BusinessOrchestrationAppService orchestrationService;
+  private final FlowOrchestrationService orchestrationService;
 
   /**
    * Spring 事件入口：接收 {@link FileParsedEventDTO} 并委托给处理方法。

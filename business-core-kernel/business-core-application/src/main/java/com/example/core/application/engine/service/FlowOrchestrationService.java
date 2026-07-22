@@ -1,6 +1,6 @@
-package com.example.core.application.service;
+package com.example.core.application.engine.service;
 
-import com.example.core.application.pipeline.StepPipelineExecutor;
+import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
@@ -36,7 +36,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BusinessOrchestrationAppService {
+public class FlowOrchestrationService {
 
   private static final String APPROVAL_RESULT_APPROVED = "APPROVED";
   private static final String APPROVAL_RESULT_REJECTED = "REJECTED";

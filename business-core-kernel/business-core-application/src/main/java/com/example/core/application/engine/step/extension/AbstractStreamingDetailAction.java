@@ -1,4 +1,4 @@
-package com.example.core.application.extension;
+package com.example.core.application.engine.step.extension;
 
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;

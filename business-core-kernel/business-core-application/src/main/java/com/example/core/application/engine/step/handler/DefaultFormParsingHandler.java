@@ -1,6 +1,6 @@
-package com.example.core.application.handler;
+package com.example.core.application.engine.step.handler;
 
-import com.example.core.application.errorcode.CoreAppErrorCode;
+import com.example.core.application.engine.errorcode.CoreAppErrorCode;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * <p>1. <b>无需编写任何代码</b>：请直接在您的流程 JSON 配置中，将本步骤的 `mainProcessor` 配置为 "defaultFormParsingHandler"。
  * <p>2. <b>配置解析规则</b>：在配置中心的 `FormParsingConfig` 中，为您的业务类型配置好对应的 `parseTemplateId`（底层文档中心需要这个模板来识别如何拆分表格）。
  * <p>3. <b>在哪里落库明细？</b>：本节点只负责“发出指令”并“挂起等待”。当底层解析完毕并回调唤醒引擎进入【下一个步骤 (如 FORM_DETAIL_INGESTION)】时，
- * 请在下一个步骤的 `detailProcessors` 中，挂载您自己实现的 {@link com.example.core.application.extension.AbstractJsonStreamIngestionAction} 子类，
+ * 请在下一个步骤的 `detailProcessors` 中，挂载您自己实现的 {@link com.example.core.application.engine.step.extension.AbstractJsonStreamIngestionAction} 子类，
  * 去完成 JSON 到具体业务实体 (如 EmployeeDetail) 的映射与落库。
  *
  * @author <a href="mailto: admin@panoshu.top">panoshu</a>

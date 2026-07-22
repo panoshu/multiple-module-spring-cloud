@@ -1,9 +1,9 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -34,7 +34,7 @@ public class ApprovalResultEventListener {
   private static final String APPROVAL_RESULT_REJECTED = "REJECTED";
   private static final String APPROVAL_RESULT_WITHDRAWN = "WITHDRAWN";
 
-  private final BusinessOrchestrationAppService orchestrationService;
+  private final FlowOrchestrationService orchestrationService;
 
   /**
    * Spring 事件入口：接收审批通过事件。

@@ -1,9 +1,9 @@
-package com.example.core.application.listener;
+package com.example.core.application.engine.listener;
 
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
-import com.example.core.application.service.BusinessOrchestrationAppService;
+import com.example.core.application.engine.service.FlowOrchestrationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +39,7 @@ class ApprovalResultEventListenerTest {
   private static final LocalDateTime OCCURRED_ON = LocalDateTime.now();
 
   @Mock
-  private BusinessOrchestrationAppService orchestrationService;
+  private FlowOrchestrationService orchestrationService;
 
   @InjectMocks
   private ApprovalResultEventListener listener;
