@@ -2,7 +2,7 @@ package com.example.core.application.pipeline;
 
 import com.example.core.application.errorcode.CoreAppErrorCode;
 import com.example.core.domain.gateway.ConditionEvaluationGateway;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.domain.aggregate.valueobject.PipelineExecutionResult;

@@ -6,7 +6,7 @@ import com.example.approval.api.dto.ApprovalFlowDTO;
 import com.example.approval.api.request.MatchApprovalFlowRequest;
 import com.example.approval.api.request.StartApprovalRequest;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.spi.StepActionHandler;

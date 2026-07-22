@@ -2,15 +2,15 @@ package com.example.core.application.handler;
 
 import com.example.core.domain.gateway.BusinessConfigGateway;
 import com.example.core.domain.gateway.ConditionEvaluationGateway;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.MaterialConditionContext;
-import com.example.core.domain.aggregate.valueobject.MaterialItem;
+import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
+import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.aggregate.valueobject.config.MaterialRuleConfig;
 import com.example.core.domain.service.engine.MaterialRuleEngine;
 import com.example.core.domain.spi.StepActionHandler;
-import com.example.core.domain.aggregate.valueobject.business.BusinessLevel;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

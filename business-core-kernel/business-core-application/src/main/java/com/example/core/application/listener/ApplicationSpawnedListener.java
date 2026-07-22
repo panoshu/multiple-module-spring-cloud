@@ -1,7 +1,7 @@
 package com.example.core.application.listener;
 
 import com.example.core.application.service.BusinessOrchestrationAppService;
-import com.example.core.domain.event.ApplicationSpawnedEvent;
+import com.example.core.domain.business.event.ApplicationSpawnedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

@@ -1,7 +1,7 @@
 package com.example.core.infrastructure.gateway;
 
-import com.example.core.domain.aggregate.root.BusinessForm;
-import com.example.core.domain.aggregate.valueobject.BusinessFile;
+import com.example.core.domain.business.aggregate.root.BusinessForm;
+import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.gateway.FileIntegrationGateway;
 import com.example.file.api.FileAccessApi;

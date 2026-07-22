@@ -1,8 +1,8 @@
 package com.example.core.domain.service.engine;
 
 import com.example.core.domain.annotation.DomainService;
-import com.example.core.domain.aggregate.valueobject.MaterialConditionContext;
-import com.example.core.domain.aggregate.valueobject.MaterialItem;
+import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
+import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.aggregate.valueobject.config.MaterialRuleConfig;
 
 import java.util.ArrayList;

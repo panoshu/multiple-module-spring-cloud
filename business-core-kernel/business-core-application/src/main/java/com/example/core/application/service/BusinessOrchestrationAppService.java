@@ -2,13 +2,13 @@ package com.example.core.application.service;
 
 import com.example.core.application.pipeline.StepPipelineExecutor;
 import com.example.core.domain.gateway.BusinessConfigGateway;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.aggregate.valueobject.PipelineExecutionResult;
 import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.aggregate.valueobject.config.ExtractorConfig;
 import com.example.core.domain.aggregate.valueobject.config.StepRouteConfig;
-import com.example.core.domain.repository.ApplicationRepository;
+import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.service.registry.StepActionHandlerRegistry;
 import com.example.core.domain.spi.BusinessFactExtractor;

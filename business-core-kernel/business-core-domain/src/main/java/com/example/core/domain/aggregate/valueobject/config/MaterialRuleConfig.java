@@ -1,7 +1,7 @@
 package com.example.core.domain.aggregate.valueobject.config;
 
-import com.example.core.domain.aggregate.valueobject.enums.material.RequirementType;
-import com.example.core.domain.aggregate.valueobject.business.BusinessLevel;
+import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 
 /**
  * 材料规则配置

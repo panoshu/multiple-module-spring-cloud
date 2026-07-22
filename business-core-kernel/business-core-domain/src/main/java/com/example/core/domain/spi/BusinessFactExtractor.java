@@ -1,6 +1,6 @@
 package com.example.core.domain.spi;
 
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 
 import java.util.Map;
 

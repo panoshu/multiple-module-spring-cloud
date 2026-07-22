@@ -9,7 +9,7 @@ import com.example.approval.api.request.MatchApprovalFlowRequest;
 import com.example.approval.api.request.StartApprovalRequest;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
 import com.example.approval.types.ApprovalInstanceId;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.gateway.ApprovalIntegrationGateway;
 import com.example.shared.web.core.api.ApiResult;

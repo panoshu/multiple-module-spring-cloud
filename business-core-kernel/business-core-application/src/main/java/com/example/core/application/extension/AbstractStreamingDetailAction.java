@@ -1,7 +1,7 @@
 package com.example.core.application.extension;
 
 import com.example.core.domain.gateway.ConditionEvaluationGateway;
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.domain.spi.StepExtensionAction;

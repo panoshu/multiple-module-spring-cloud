@@ -1,8 +1,9 @@
 package com.example.core.domain.aggregate.valueobject;
 
-import com.example.core.domain.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.aggregate.valueobject.business.OperationModel;
+import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.primitives.identity.CustomerNo;
 import com.example.shared.primitives.identity.PlanNo;
 import com.example.shared.primitives.identity.ProductNo;

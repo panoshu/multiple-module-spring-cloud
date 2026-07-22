@@ -1,8 +1,8 @@
 package com.example.core.application.service;
 
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.repository.ApplicationRepository;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
+import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.shared.primitives.identity.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

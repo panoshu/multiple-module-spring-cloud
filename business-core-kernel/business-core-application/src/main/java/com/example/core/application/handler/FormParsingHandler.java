@@ -1,11 +1,11 @@
 package com.example.core.application.handler;
 
 import com.example.core.domain.gateway.FileIntegrationGateway;
-import com.example.core.domain.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.root.BusinessForm;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
-import com.example.core.domain.repository.FormRepository;
+import com.example.core.domain.business.repository.FormRepository;
 import com.example.core.domain.spi.StepActionHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

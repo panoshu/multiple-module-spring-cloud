@@ -1,6 +1,6 @@
 package com.example.core.domain.gateway;
 
-import com.example.core.domain.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessApplication;
 
 /**
  * 审批集成网关 SPI (防腐层)
