@@ -100,8 +100,12 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    */
   public void markDetailProcessed(AnnuityEmployeeDetailId detailId, UserNo operator) {
     AnnuityEmployeeDetail detail = findDetailOrThrow(detailId);
+    if (detail.status() != AnnuityEmployeeDetailStatus.PENDING) {
+      throw new IllegalStateException("明细非 PENDING 状态,不可重复处理: " + detailId);
+    }
     detail.verify(operator);
     this.processedCount++;
+    this.markUpdated(operator);
   }
 
   /**
@@ -109,6 +113,9 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    */
   public void markDetailAnomaly(AnnuityEmployeeDetailId detailId, String reason) {
     AnnuityEmployeeDetail detail = findDetailOrThrow(detailId);
+    if (detail.status() == AnnuityEmployeeDetailStatus.ANOMALY) {
+      throw new IllegalStateException("明细已标记为异常,不可重复标记: " + detailId);
+    }
     detail.markAnomaly(reason);
     this.anomalyCount++;
   }

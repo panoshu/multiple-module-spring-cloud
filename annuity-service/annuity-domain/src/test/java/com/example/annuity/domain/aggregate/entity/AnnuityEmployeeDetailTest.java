@@ -37,6 +37,16 @@ class AnnuityEmployeeDetailTest {
   }
 
   @Test
+  @DisplayName("markAnomaly 在已标记异常时抛出异常")
+  void markAnomaly_throwsWhenAlreadyAnomaly() {
+    AnnuityEmployeeDetail detail = createDetail();
+    detail.markAnomaly("身份证格式错误");
+    assertThatThrownBy(() -> detail.markAnomaly("再次异常"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("不可重复标记");
+  }
+
+  @Test
   @DisplayName("assignMaterials 为明细挂载材料清单")
   void assignMaterials_attachesMaterialList() {
     AnnuityEmployeeDetail detail = createDetail();

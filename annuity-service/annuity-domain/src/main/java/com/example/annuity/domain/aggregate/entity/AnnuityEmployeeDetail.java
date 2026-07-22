@@ -94,6 +94,9 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
    * 标记明细异常
    */
   public void markAnomaly(String reason) {
+    if (this.status == AnnuityEmployeeDetailStatus.ANOMALY) {
+      throw new IllegalStateException("明细已标记为异常,不可重复标记: " + this.id());
+    }
     this.status = AnnuityEmployeeDetailStatus.ANOMALY;
     this.anomalyReason = reason;
   }

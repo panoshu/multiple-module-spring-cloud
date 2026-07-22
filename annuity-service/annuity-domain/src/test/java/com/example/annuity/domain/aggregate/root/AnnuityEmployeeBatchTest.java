@@ -97,9 +97,33 @@ class AnnuityEmployeeBatchTest {
     batch.addDetail(createDetail("D-002", "李四"));
     batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-002"), "异常");
     batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR);
-    // markDetailProcessed 仅递增计数,明细本身状态需单独变更(此处通过聚合根内部逻辑)
-    // 验证 verifiedDetails 只返回非异常的已处理明细
+    // markDetailProcessed 内部调用 detail.verify(operator),将明细状态变更为 VERIFIED
+    assertThat(batch.verifiedDetails()).hasSize(1);
+    assertThat(batch.verifiedDetails().get(0).id()).isEqualTo(AnnuityEmployeeDetailId.of("D-001"));
+    assertThat(batch.pendingDetails()).isEmpty();
     assertThat(batch.anomalyCount()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("markDetailProcessed 在明细已处理时抛出异常")
+  void markDetailProcessed_throwsWhenAlreadyProcessed() {
+    AnnuityEmployeeBatch batch = createBatch(1);
+    batch.addDetail(createDetail("D-001", "张三"));
+    batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR);
+    assertThatThrownBy(() -> batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("不可重复处理");
+  }
+
+  @Test
+  @DisplayName("markDetailAnomaly 在明细已标记异常时抛出异常")
+  void markDetailAnomaly_throwsWhenAlreadyAnomaly() {
+    AnnuityEmployeeBatch batch = createBatch(1);
+    batch.addDetail(createDetail("D-001", "张三"));
+    batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "异常");
+    assertThatThrownBy(() -> batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "再次异常"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("不可重复标记");
   }
 
   private AnnuityEmployeeBatch createBatch(int total) {
