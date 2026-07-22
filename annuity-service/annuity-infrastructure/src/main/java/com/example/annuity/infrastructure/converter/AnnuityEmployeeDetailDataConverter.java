@@ -3,10 +3,12 @@ package com.example.annuity.infrastructure.converter;
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeDetailStatus;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
+import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
 import com.example.annuity.infrastructure.entity.AnnuityEmployeeDetailDO;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.SystemException;
 import com.example.shared.primitives.identity.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -94,7 +96,8 @@ public interface AnnuityEmployeeDetailDataConverter {
     try {
       return OBJECT_MAPPER.writeValueAsString(materials);
     } catch (JsonProcessingException e) {
-      throw new IllegalStateException("序列化材料清单失败", e);
+      throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
+          .withLogDetail("序列化材料清单失败: " + e.getMessage());
     }
   }
 
@@ -105,7 +108,8 @@ public interface AnnuityEmployeeDetailDataConverter {
     try {
       return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
     } catch (JsonProcessingException e) {
-      throw new IllegalStateException("反序列化材料清单失败: " + json, e);
+      throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
+          .withLogDetail("反序列化材料清单失败: " + e.getMessage());
     }
   }
 }

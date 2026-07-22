@@ -9,8 +9,6 @@ import com.example.shared.primitives.identity.UserNo;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import org.mapstruct.Mapper;
 
-import java.time.LocalDateTime;
-
 /**
  * 年金员工批次 DO ↔ 领域对象转换器
  * <p>
