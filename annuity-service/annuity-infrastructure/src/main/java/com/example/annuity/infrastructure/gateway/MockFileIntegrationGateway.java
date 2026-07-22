@@ -77,7 +77,26 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
 
   @Override
   public InputStream downloadStream(FileId fileId) {
-    throw new UnsupportedOperationException("演示环境不支持文件流下载");
+    log.info("[Mock] 返回模拟员工明细 JSON 流, fileId={}", fileId.value());
+    String mockJson = """
+        [
+          {
+            "employeeName": "张三",
+            "idCardNo": "110101199001011234",
+            "age": 35,
+            "monthlySalary": 100000,
+            "monthlyContribution": 12000
+          },
+          {
+            "employeeName": "李四",
+            "idCardNo": "110101198505056789",
+            "age": 40,
+            "monthlySalary": 150000,
+            "monthlyContribution": 18000
+          }
+        ]
+        """;
+    return new java.io.ByteArrayInputStream(mockJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
 
   @Override

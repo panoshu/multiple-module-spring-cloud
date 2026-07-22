@@ -5,6 +5,7 @@ import com.example.core.domain.aggregate.valueobject.BusinessExtension;
 import com.example.core.infrastructure.configuration.LibJacksonModule;
 import com.example.core.infrastructure.json.BusinessExtensionMixIn;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +49,17 @@ public class AnnuityJacksonConfiguration {
    * <p>
    * {@code businessType} 字段的枚举值（{@code ACC_PLAN_CREATE/MODIFY/DELETE}）作为
    * 多态类型标识符，与 {@link AnnuityApplicationExtension#businessType()} 的取值一一对应。
+   * <p>
+   * <b>【为何重复声明 @JsonTypeInfo】</b>Jackson 的 mix-in 注解解析不会从父接口继承
+   * {@code @JsonTypeInfo}，必须在本接口上直接声明，否则反序列化时无法根据
+   * {@code businessType} 属性定位具体子类型。
    */
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.EXISTING_PROPERTY,
+      property = "businessType",
+      visible = true
+  )
   @JsonSubTypes({
       @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_CREATE"),
       @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_MODIFY"),

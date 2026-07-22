@@ -80,19 +80,27 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       throw new IllegalArgumentException("AnnuityEmployeeBatch cannot be null");
     }
     AnnuityEmployeeBatchDO batchDO = batchConverter.toDO(batch);
-    if (batchMapper.selectOneById(batchDO.getId()) == null) {
+    AnnuityEmployeeBatchDO existingBatch = batchMapper.selectOneById(batchDO.getId());
+    if (existingBatch == null) {
       batchMapper.insert(batchDO);
       log.debug("新增年金员工批次: batchId={}", batch.id());
     } else {
+      // 领域层 Entity.markUpdated() 每次调用都递增 version（一个事务内可能多次），
+      // 但 MyBatis-Flex @Column(version=true) 期望 DO 持有 DB 当前版本用于 WHERE 匹配且仅 +1。
+      // 若直接用领域版本，WHERE version=N 不匹配 DB 的旧版本，导致 Updates:0 静默失败。
+      batchDO.setVersion(existingBatch.getVersion());
       batchMapper.update(batchDO);
       log.debug("更新年金员工批次: batchId={}, version={}", batch.id(), batch.version());
     }
 
     for (AnnuityEmployeeDetail detail : batch.details()) {
       AnnuityEmployeeDetailDO detailDO = detailConverter.toDO(detail);
-      if (detailMapper.selectOneById(detailDO.getId()) == null) {
+      AnnuityEmployeeDetailDO existingDetail = detailMapper.selectOneById(detailDO.getId());
+      if (existingDetail == null) {
         detailMapper.insert(detailDO);
       } else {
+        // 同 batch：重置为 DB 当前版本，确保乐观锁 WHERE 子句匹配。
+        detailDO.setVersion(existingDetail.getVersion());
         detailMapper.update(detailDO);
       }
     }

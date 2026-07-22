@@ -1,5 +1,8 @@
 package com.example.annuity;
 
+import com.example.annuity.domain.aggregate.root.AnnuityEmployeeBatch;
+import com.example.annuity.domain.extension.AnnuityApplicationExtension;
+import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.approval.api.ApprovalFlowApi;
 import com.example.approval.api.ApprovalInstanceApi;
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
@@ -7,6 +10,7 @@ import com.example.core.application.listener.StepAutoAdvanceListener;
 import com.example.core.application.service.BusinessOrchestrationAppService;
 import com.example.core.domain.aggregate.root.BusinessApplication;
 import com.example.core.domain.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.aggregate.valueobject.business.AnnuityChannel;
@@ -32,8 +36,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +78,9 @@ class AnnuityEndToEndTest {
 
   @Autowired
   private IntegrationEventSimulator eventSimulator;
+
+  @Autowired
+  private AnnuityEmployeeBatchRepository batchRepository;
 
   @MockBean
   private FileTaskApi fileTaskApi;
@@ -206,6 +215,40 @@ class AnnuityEndToEndTest {
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
   }
 
+  @Test
+  @DisplayName("明细摄入:FORM_DETAIL_INGESTION 后员工批次已创建并包含 2 条明细")
+  void detailIngestionAction_createsEmployeeBatchWithDetails() {
+    ApplicationId appId = createAndSaveApplication();
+
+    // 推进 FORM_DETAIL_INGESTION → DATA_VERIFICATION
+    // detailProcessors 中的 annuityDetailIngestionAction 从 Mock JSON 流摄入明细
+    orchestrationService.advanceStep(appId);
+
+    // 验证员工批次已创建
+    Optional<AnnuityEmployeeBatch> batch = batchRepository.findByApplicationId(appId);
+    assertThat(batch).isPresent();
+    assertThat(batch.get().details()).hasSize(2);
+    assertThat(batch.get().details())
+        .extracting("employeeName")
+        .containsExactlyInAnyOrder("张三", "李四");
+  }
+
+  @Test
+  @DisplayName("数据核查:DATA_VERIFICATION 后明细状态变为 VERIFIED,批次状态为 COMPLETED")
+  void dataVerificationHandler_marksDetailsAsVerified() {
+    ApplicationId appId = createAndSaveApplication();
+
+    // 推进到 DATA_VERIFICATION 并执行核查
+    orchestrationService.advanceStep(appId); // FORM_DETAIL_INGESTION → DATA_VERIFICATION
+    orchestrationService.advanceStep(appId); // DATA_VERIFICATION → MATERIAL_PREPARATION
+
+    // 验证明细已核查 (AnnuityEmployeeDetailStatus 枚举: PENDING/VERIFIED/ANOMALY/MATERIAL_READY)
+    AnnuityEmployeeBatch batch = batchRepository.findByApplicationId(appId).orElseThrow();
+    assertThat(batch.processedCount()).isEqualTo(2);
+    assertThat(batch.details())
+        .allMatch(detail -> "VERIFIED".equals(detail.status().name()));
+  }
+
   // ====================================================
   // 私有辅助方法
   // ====================================================
@@ -241,7 +284,58 @@ class AnnuityEndToEndTest {
     FileId jsonFileId = new FileId("FILE-TEST-" + UUID.randomUUID());
 
     BusinessApplication app = BusinessApplication.createFromForm(appId, context, operator, jsonFileId);
+    // 设置年金业务扩展字段（通过反射，因 BusinessApplication 无公开 setter）
+    AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
+        BusinessType.ACC_PLAN_CREATE,
+        AnnuityApplicationExtension.PLAN_TYPE_NEW,
+        20000L,  // 200 元（单位:分），大于 MIN_INITIAL_CONTRIBUTION_FOR_NEW=10000
+        false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
+    );
+    setBusinessExtension(app, annuityExt);
+    // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
+    // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
+    // markUpdated(null) 会抛 IllegalArgumentException
+    setUpdatedBy(app, operator.operatorId());
     applicationRepository.save(app);
     return appId;
+  }
+
+  /**
+   * 通过反射设置 BusinessApplication 的 businessExtension 私有字段。
+   * <p>
+   * BusinessApplication 只暴露了 getter（businessExtension()），无公开 setter。
+   * 测试场景需设置扩展字段以通过 DATA_VERIFICATION 步骤的校验 Action。
+   *
+   * @param app       业务申请单
+   * @param extension 年金扩展字段
+   */
+  private void setBusinessExtension(BusinessApplication app, BusinessExtension extension) {
+    try {
+      Field field = BusinessApplication.class.getDeclaredField("businessExtension");
+      field.setAccessible(true);
+      field.set(app, extension);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException("设置 businessExtension 失败", e);
+    }
+  }
+
+  /**
+   * 通过反射设置 BusinessApplication 的 updatedBy 私有字段。
+   * <p>
+   * Entity.markUpdated(UserNo) 是 protected 方法，测试无法直接调用。
+   * AnnuityDataVerificationHandler 使用 app.updatedBy() 作为操作人调用
+   * batch.markDetailProcessed()，若为 null 会抛 IllegalArgumentException。
+   *
+   * @param app      业务申请单
+   * @param operator 操作人
+   */
+  private void setUpdatedBy(BusinessApplication app, UserNo operator) {
+    try {
+      Field field = com.example.shared.domain.aggregate.entity.Entity.class.getDeclaredField("updatedBy");
+      field.setAccessible(true);
+      field.set(app, operator);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException("设置 updatedBy 失败", e);
+    }
   }
 }

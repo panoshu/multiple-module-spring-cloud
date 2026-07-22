@@ -3,33 +3,150 @@
     "currentStep": "FORM_DETAIL_INGESTION",
     "nextStep": "DATA_VERIFICATION",
     "taskType": "SYSTEM_TASK",
-    "preValidations": [],
+    "preValidations": [
+      {
+        "beanName": "annuityAuditLogAction",
+        "order": 1,
+        "type": "AUDIT",
+        "isCritical": false,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
     "mainProcessor": null,
-    "detailProcessors": [],
-    "sideEffects": []
+    "detailProcessors": [
+      {
+        "beanName": "annuityDetailIngestionAction",
+        "order": 1,
+        "type": "ENRICHMENT",
+        "isCritical": true,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
+    "sideEffects": [
+      {
+        "beanName": "annuityEmployeeCountValidationAction",
+        "order": 1,
+        "type": "VALIDATION",
+        "isCritical": true,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ]
   },
   {
     "currentStep": "DATA_VERIFICATION",
     "nextStep": "MATERIAL_PREPARATION",
     "taskType": "SYSTEM_TASK",
-    "preValidations": [],
-    "mainProcessor": null,
-    "detailProcessors": [],
+    "preValidations": [
+      {
+        "beanName": "annuityAuditLogAction",
+        "order": 1,
+        "type": "AUDIT",
+        "isCritical": false,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      },
+      {
+        "beanName": "annuityContributionValidationAction",
+        "order": 2,
+        "type": "VALIDATION",
+        "isCritical": true,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      },
+      {
+        "beanName": "annuityForeignInvestmentValidationAction",
+        "order": 3,
+        "type": "VALIDATION",
+        "isCritical": true,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
+    "mainProcessor": "annuityDataVerificationHandler",
+    "detailProcessors": [
+      {
+        "beanName": "annuityCustomerProfileEnrichmentAction",
+        "order": 1,
+        "type": "ENRICHMENT",
+        "isCritical": false,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
     "sideEffects": []
   },
   {
     "currentStep": "MATERIAL_PREPARATION",
     "nextStep": "APPROVAL",
     "taskType": "SYSTEM_TASK",
-    "preValidations": [],
+    "preValidations": [
+      {
+        "beanName": "annuityAuditLogAction",
+        "order": 1,
+        "type": "AUDIT",
+        "isCritical": false,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
     "mainProcessor": "planMaterialPreparationHandler",
-    "detailProcessors": [],
+    "detailProcessors": [
+      {
+        "beanName": "annuityEmployeeMaterialAction",
+        "order": 1,
+        "type": "ENRICHMENT",
+        "isCritical": true,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
     "sideEffects": []
   },
   {
     "currentStep": "APPROVAL",
     "nextStep": "COMPLETED",
     "taskType": "USER_TASK",
+    "preValidations": [
+      {
+        "beanName": "annuityAuditLogAction",
+        "order": 1,
+        "type": "AUDIT",
+        "isCritical": false,
+        "isAsync": false,
+        "condition": null,
+        "params": {}
+      }
+    ],
+    "mainProcessor": null,
+    "detailProcessors": [],
+    "sideEffects": [
+      {
+        "beanName": "annuityMaterialPreparedNotificationAction",
+        "order": 1,
+        "type": "NOTIFICATION",
+        "isCritical": false,
+        "isAsync": true,
+        "condition": null,
+        "params": {}
+      }
+    ]
+  },
+  {
+    "currentStep": "COMPLETED",
+    "nextStep": "COMPLETED",
+    "taskType": "SYSTEM_TASK",
     "preValidations": [],
     "mainProcessor": null,
     "detailProcessors": [],
