@@ -1,15 +1,15 @@
 package com.example.core.application.handler;
 
-import com.example.core.domain.gateway.BusinessConfigGateway;
-import com.example.core.domain.gateway.ConditionEvaluationGateway;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
-import com.example.core.domain.aggregate.valueobject.enums.status.StepExecutionStatus;
-import com.example.core.domain.aggregate.valueobject.config.MaterialRuleConfig;
-import com.example.core.domain.service.engine.MaterialRuleEngine;
-import com.example.core.domain.spi.StepActionHandler;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.engine.aggregate.valueobject.config.MaterialRuleConfig;
+import com.example.core.domain.engine.service.step.MaterialRuleEngine;
+import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ import java.util.List;
  * <b>【各业务线同学请注意：如何支持您业务专属的明细层材料逻辑？】</b>
  * <p>如果您当前的业务步骤不仅需要生成总体材料，还需要为底下的千万条明细（如员工、资产明细）生成人头材料：
  * <p>1. <b>不要修改本类代码</b>。
- * <p>2. 请在您<b>自己的业务模块</b>中，实现核心域提供的 SPI 接口 {@link com.example.core.domain.spi.StepExtensionAction}。
+ * <p>2. 请在您<b>自己的业务模块</b>中，实现核心域提供的 SPI 接口 {@link com.example.core.domain.engine.spi.StepExtensionAction}。
  * <p>3. 在您的实现类中：
  * <p>   a. 注入您业务特有的明细层 Repository（如 EmployeeDetailRepository）。
  * <p>   b. 通过 app.id() 捞出您的明细数据。

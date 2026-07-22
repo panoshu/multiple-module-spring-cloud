@@ -1,14 +1,14 @@
 package com.example.core.application.pipeline;
 
 import com.example.core.application.errorcode.CoreAppErrorCode;
-import com.example.core.domain.gateway.ConditionEvaluationGateway;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.core.domain.aggregate.valueobject.PipelineExecutionResult;
-import com.example.core.domain.aggregate.valueobject.config.StepExtensionConfig;
-import com.example.core.domain.service.registry.ExtensionActionRegistry;
-import com.example.core.domain.spi.StepExtensionAction;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.config.StepExtensionConfig;
+import com.example.core.domain.engine.service.registry.ExtensionActionRegistry;
+import com.example.core.domain.engine.spi.StepExtensionAction;
 import com.example.shared.exception.SystemException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

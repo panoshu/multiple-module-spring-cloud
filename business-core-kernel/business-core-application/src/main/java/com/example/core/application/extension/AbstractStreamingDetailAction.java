@@ -1,10 +1,10 @@
 package com.example.core.application.extension;
 
-import com.example.core.domain.gateway.ConditionEvaluationGateway;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.core.domain.spi.StepExtensionAction;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
+import com.example.core.domain.engine.spi.StepExtensionAction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;

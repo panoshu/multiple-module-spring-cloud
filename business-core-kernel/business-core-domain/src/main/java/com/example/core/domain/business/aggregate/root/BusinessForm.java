@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.root;
 
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;

@@ -1,7 +1,7 @@
 package com.example.core.infrastructure.evaluation;
 
-import com.example.core.domain.gateway.ConditionEvaluationGateway;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;

@@ -1,0 +1,21 @@
+package com.example.core.domain.engine.aggregate.valueobject.config;
+
+import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
+
+/**
+ * 材料规则配置
+ *
+ * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
+ * @version 1.0
+ * @since 2026/5/14 16:12
+ */
+public record MaterialRuleConfig(
+  String materialCode,
+  String materialName,
+  BusinessLevel businessLevel,
+  RequirementType requirementType,
+  String activationCondition, // 激活条件 (配置中心专有)
+  String materialCondition    // 必传条件 (传入 MaterialItem)
+) {
+}

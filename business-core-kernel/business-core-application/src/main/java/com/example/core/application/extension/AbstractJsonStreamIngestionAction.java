@@ -1,10 +1,10 @@
 package com.example.core.application.extension;
 
-import com.example.core.domain.gateway.FileIntegrationGateway;
+import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.core.domain.spi.StepExtensionAction;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
+import com.example.core.domain.engine.spi.StepExtensionAction;
 import com.example.shared.primitives.identity.ApplicationId;
 import com.example.shared.primitives.identity.FileId;
 import com.fasterxml.jackson.core.JsonParser;
