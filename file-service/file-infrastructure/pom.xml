@@ -16,7 +16,11 @@
     <dependency><groupId>com.mybatis-flex</groupId><artifactId>mybatis-flex-spring-boot3-starter</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.apache.fesod</groupId><artifactId>fesod-sheet</artifactId></dependency>
-    <dependency><groupId>com.googlecode.aviator</groupId><artifactId>aviator</artifactId></dependency>
+    <dependency><groupId>io.github.aviatorscript</groupId><artifactId>aviator</artifactId></dependency>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>qlexpress4</artifactId>
+    </dependency>
     <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId></dependency>
     <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
     <dependency>

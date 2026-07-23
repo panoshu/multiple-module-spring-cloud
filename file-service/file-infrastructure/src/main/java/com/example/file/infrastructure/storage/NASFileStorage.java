@@ -35,7 +35,7 @@ public class NASFileStorage implements FileStorageBackend {
             Files.createDirectories(fullPath.getParent());
             // 临时文件 + atomic move 保证 NAS 多节点并发安全
             Path tempPath = fullPath.resolveSibling(
-                fullPath.getFileName() + ".tmp." + Thread.currentThread().getId());
+                fullPath.getFileName() + ".tmp." + Thread.currentThread().threadId());
             try (OutputStream out = Files.newOutputStream(tempPath,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 content.transferTo(out);

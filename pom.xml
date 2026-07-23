@@ -54,8 +54,9 @@
     <bcprov-jdk18on.version>1.84</bcprov-jdk18on.version>
     <bytebuddy.version>1.17.8</bytebuddy.version>
     <fesod.version>2.0.2-incubating</fesod.version>
-    <aviator.version>5.4.3</aviator.version>
-    <rocketmq.version>2.3.0</rocketmq.version>
+    <aviator.version>5.9.0</aviator.version>
+    <qlexpress4.version>4.1.2</qlexpress4.version>
+    <rocketmq.version>2.3.6</rocketmq.version>
   </properties>
 
   <dependencyManagement>
@@ -326,9 +327,14 @@
 
       <!-- Aviator (表达式引擎) -->
       <dependency>
-        <groupId>com.googlecode.aviator</groupId>
+        <groupId>io.github.aviatorscript</groupId>
         <artifactId>aviator</artifactId>
         <version>${aviator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>qlexpress4</artifactId>
+        <version>${qlexpress4.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
