@@ -13,12 +13,12 @@ import org.zalando.logbook.okhttp.LogbookInterceptor;
 import java.io.IOException;
 
 @Configuration
-@ConditionalOnClass(NetworkInterceptor.class)
+@ConditionalOnClass({NetworkInterceptor.class, LogbookInterceptor.class})
 public class RetrofitLoggingConfig {
 
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnClass(Logbook.class)
+  @ConditionalOnClass({Logbook.class, LogbookInterceptor.class})
   public LogBookNetworkInterceptor logBookNetworkInterceptor(Logbook logbook) {
     return new LogBookNetworkInterceptor(logbook);
   }

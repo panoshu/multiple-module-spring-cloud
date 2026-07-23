@@ -6,7 +6,6 @@ import com.example.shared.web.core.dto.PageData;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
@@ -16,10 +15,8 @@ import java.util.List;
  * @author <a href="mailto: admin@panoshu.top">panoshu</a>
  * @since 2026/5/20 23:01
  */
-@Mapper
+@Mapper(componentModel = "spring")
 public interface PortfolioBalanceConverter {
-
-  PortfolioBalanceConverter INSTANCE = Mappers.getMapper(PortfolioBalanceConverter.class);
 
   /**
    * 1. 核心入口

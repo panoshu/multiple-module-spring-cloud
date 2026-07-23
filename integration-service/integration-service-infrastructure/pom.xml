@@ -33,10 +33,6 @@
       <groupId>com.example</groupId>
       <artifactId>shared-logging-starter</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-jdbc</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -55,6 +51,10 @@
     <dependency>
       <groupId>com.mybatis-flex</groupId>
       <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
     </dependency>
 
     <dependency>

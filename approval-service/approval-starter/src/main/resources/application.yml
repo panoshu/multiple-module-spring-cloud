@@ -3,7 +3,7 @@ server:
     threads:
       max: 200
       min-spare: 20
-  port: 18082
+  port: 18081
 
 spring:
   application:
@@ -24,11 +24,6 @@ spring:
         connection-time-to-live: 30s
   profiles:
     include: local
-  datasource:
-    url: jdbc:mysql://localhost:3306/approval?useUnicode=true&characterEncoding=UTF-8
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
 
 mybatis-flex:
   mapper-locations: classpath*:/mapper/**/*.xml

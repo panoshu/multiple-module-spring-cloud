@@ -13,6 +13,14 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    com.example.shared.web.trace: INFO
+    com.alibaba.nacos: ERROR
+    com.alibaba.cloud.nacos: ERROR
+
 # shared-logging-starter 脱敏配置（最小化满足 SanitizationProperties @NotNull/@NotEmpty 校验）
 shared:
   logging:
@@ -26,10 +34,3 @@ shared:
           aliases:
             - $.password
           strategy: FULL
-
-logging:
-  level:
-    com.example.approval: DEBUG
-    org.springframework.web: DEBUG
-    com.alibaba.nacos: ERROR
-    com.alibaba.cloud.nacos: ERROR

@@ -1,5 +1,6 @@
 package com.example.annuity;
 
+import io.github.danielliu1123.httpexchange.EnableExchangeClients;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,12 +16,16 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * <p>
  * {@code @MapperScan} 显式扫描 annuity-infrastructure 的 BaseMapper 接口，
  * 使 MyBatis-Flex 注册 FormMapper / BatchMapper / ApplicationMapper 为 Bean。
+ * <p>
+ * {@code @EnableExchangeClients} 注册 kernel 集成网关所需的远程 API 客户端代理
+ * （approval-api / file-api），通过 LoadBalancer 解析服务名调用 approval-service / file-service。
  *
  * @author annuity-service
  * @since 2026/7/21
  */
 @EnableAsync
 @EnableDiscoveryClient
+@EnableExchangeClients(basePackages = {"com.example.approval.api", "com.example.file.api", "com.example.integration.api"})
 @SpringBootApplication(scanBasePackages = {"com.example.annuity", "com.example.core"})
 @MapperScan("com.example.annuity.infrastructure.mapper")
 public class AnnuityApplication {

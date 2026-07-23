@@ -11,6 +11,7 @@ import com.alibaba.qlexpress4.runtime.context.MapExpressContext;
 import com.example.file.domain.gateway.ExpressionEvaluator;
 import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "file.expression.engine", havingValue = "qlexpress")
 public class QLExpressExpressionEvaluator implements ExpressionEvaluator {
   // Express4Runner 是线程安全的，强烈建议作为单例复用
   private final Express4Runner runner;

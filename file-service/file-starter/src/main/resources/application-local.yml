@@ -12,6 +12,26 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 56379
+      database: 0
+      password: redis
+
+# shared-logging-starter 脱敏配置（最小化满足 SanitizationProperties @NotNull/@NotEmpty 校验）
+shared:
+  logging:
+    obfuscate:
+      global:
+        enable: false
+        replacement: "***"
+        enable-wildcard-paths: false
+      fields:
+        password:
+          aliases:
+            - $.password
+          strategy: FULL
 
 logging:
   level:

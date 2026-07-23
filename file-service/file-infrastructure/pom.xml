@@ -14,6 +14,7 @@
     <dependency><groupId>com.example</groupId><artifactId>shared-id-starter</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>shared-cache-starter</artifactId></dependency>
     <dependency><groupId>com.mybatis-flex</groupId><artifactId>mybatis-flex-spring-boot3-starter</artifactId></dependency>
+    <dependency><groupId>com.zaxxer</groupId><artifactId>HikariCP</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.apache.fesod</groupId><artifactId>fesod-sheet</artifactId></dependency>
     <dependency><groupId>io.github.aviatorscript</groupId><artifactId>aviator</artifactId></dependency>
@@ -74,13 +75,11 @@
     </dependency>
     <!--
       StorageTargetProperties 使用 @Validated + JSR-303 约束，需要 Bean Validation
-      provider 才能在 Spring 上下文中加载（StorageIntegrationTest 依赖）。
-      生产环境由上层 starter 传递引入，file-infrastructure 隔离测试需自行提供。
+      provider 才能在 Spring 上下文中加载（运行时 + 测试均依赖）。
     -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
   </dependencies>

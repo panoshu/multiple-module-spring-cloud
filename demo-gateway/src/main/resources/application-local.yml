@@ -20,6 +20,24 @@ spring:
             - Path=/integration/**
           filters:
             - StripPrefix=1
+        - id: approval-service-route
+          uri: lb://approval-service
+          predicates:
+            - Path=/approval/**
+          filters:
+            - StripPrefix=1
+        - id: file-service-route
+          uri: lb://file-service
+          predicates:
+            - Path=/file/**
+          filters:
+            - StripPrefix=1
+        - id: annuity-service-route
+          uri: lb://annuity-service
+          predicates:
+            - Path=/annuity/**
+          filters:
+            - StripPrefix=1
 
 gateway:
   exclude-routes:

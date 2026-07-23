@@ -4,7 +4,6 @@ import com.example.integration.api.core.trade.dto.PortfolioQueryDTO;
 import com.example.integration.domain.trade.model.TradePortfolioQuery;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 /**
  * PortfolioConverter
@@ -12,10 +11,8 @@ import org.mapstruct.factory.Mappers;
  * @author <a href="mailto: admin@panoshu.top">panoshu</a>
  * @since 2026/5/20 22:59
  */
-@Mapper(uses = CommonConverter.class) // 引入通用转换器
+@Mapper(componentModel = "spring", uses = CommonConverter.class) // 引入通用转换器
 public interface PortfolioConverter {
-
-  PortfolioConverter INSTANCE = Mappers.getMapper(PortfolioConverter.class);
 
   /**
    * 从 API 查询 DTO 映射到领域查询模型

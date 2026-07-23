@@ -3,7 +3,7 @@ server:
     threads:
       max: 200
       min-spare: 20
-  port: 18090
+  port: 18083
 
 spring:
   application:
