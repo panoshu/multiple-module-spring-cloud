@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>demo-shared</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>shared-starter</artifactId>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>shared-crypto-starter</module>
+    <module>shared-cache-starter</module>
+    <module>shared-id-starter</module>
+    <module>shared-event-starter</module>
+    <module>shared-logging-starter</module>
+    <module>shared-web-starter</module>
+    <module>shared-client-starter</module>
+    <module>shared-pdf-starter</module>
+  </modules>
+</project>

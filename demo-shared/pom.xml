@@ -13,18 +13,9 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>shared-event-starter</module>
-    <module>shared-logging-starter</module>
-    <module>shared-domain</module>
-    <module>shared-id-starter</module>
-    <module>shared-cache-starter</module>
-    <module>shared-web-starter</module>
-    <module>shared-client-starter</module>
-    <module>shared-pdf-starter</module>
-    <module>shared-types</module>
-    <module>shared-api</module>
-    <module>shared-utils</module>
-    <module>shared-exception</module>
+    <module>shared-lib</module>
+    <module>shared-core</module>
+    <module>shared-starter</module>
   </modules>
 
 </project>

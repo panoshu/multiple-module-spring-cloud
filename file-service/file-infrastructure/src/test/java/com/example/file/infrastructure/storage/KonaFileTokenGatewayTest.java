@@ -2,6 +2,7 @@ package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.shared.crypto.Sm4Encryptor;
 import com.example.shared.primitives.identity.CustomerNo;
 import com.example.shared.primitives.identity.FileId;
 import com.example.shared.primitives.identity.ProductNo;
@@ -35,12 +36,11 @@ class KonaFileTokenGatewayTest {
 
     @BeforeEach
     void setUp() {
-        FileTokenProperties props = new FileTokenProperties();
         // 测试密钥：16 字节 "0123456789abcdef" 的 Base64
-        props.setSecretKey("MDEyMzQ1Njc4OWFiY2RlZg==");
+        Sm4Encryptor encryptor = new Sm4Encryptor("MDEyMzQ1Njc4OWFiY2RlZg==");
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        gateway = new KonaFileTokenGateway(objectMapper, props);
+        gateway = new KonaFileTokenGateway(objectMapper, encryptor);
     }
 
     @Test

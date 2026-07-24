@@ -1,6 +1,7 @@
 package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.gateway.FileTokenGateway;
+import com.example.shared.crypto.Sm4Encryptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tencent.kona.crypto.KonaCryptoProvider;
 import jakarta.annotation.PostConstruct;
@@ -15,6 +16,15 @@ import org.springframework.context.annotation.Bean;
 
 import java.security.Security;
 
+/**
+ * 文件令牌加解密自动配置。
+ *
+ * <p>注册 KonaCrypto Provider（兜底，若 shared-crypto-starter 已注册则跳过），
+ * 构造 {@link Sm4Encryptor} 并注入 {@link KonaFileTokenGateway}。
+ *
+ * @author trae
+ * @since 1.0
+ */
 @Slf4j
 @AutoConfiguration
 @RequiredArgsConstructor
@@ -25,23 +35,23 @@ public class KonaAutoConfiguration {
 
     private final FileTokenProperties properties;
 
+    /**
+     * 兜底注册 KonaCrypto Provider。
+     *
+     * <p>若 shared-crypto-starter 已注册 Provider，则此处跳过。
+     */
     @PostConstruct
     public void registerProvider() {
-        try {
-            if (Security.getProvider("KonaCrypto") == null) {
-                Security.addProvider(new KonaCryptoProvider());
-                log.info("KonaCrypto Provider 已注册");
-            } else {
-                log.info("KonaCrypto Provider 已存在，跳过注册");
-            }
-        } catch (Exception e) {
-            log.warn("KonaCrypto Provider 注册失败: {}", e.getMessage());
+        if (Security.getProvider("KonaCrypto") == null) {
+            Security.addProvider(new KonaCryptoProvider());
+            log.info("KonaCrypto Provider 已注册（file-infrastructure 兜底）");
         }
     }
 
     @Bean
     @ConditionalOnMissingBean(FileTokenGateway.class)
     public FileTokenGateway fileTokenGateway(ObjectMapper objectMapper) {
-        return new KonaFileTokenGateway(objectMapper, properties);
+        Sm4Encryptor encryptor = new Sm4Encryptor(properties.getSecretKey());
+        return new KonaFileTokenGateway(objectMapper, encryptor);
     }
 }

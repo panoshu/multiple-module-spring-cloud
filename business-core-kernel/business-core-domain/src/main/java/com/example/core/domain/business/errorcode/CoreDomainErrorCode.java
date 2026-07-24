@@ -5,9 +5,9 @@ import com.example.shared.exception.ErrorDefinition;
 /**
  * business-core-domain 模块错误码定义。
  * <p>
- * 错误码区间 {@code 20001-20099}，遵循 {@code 08-错误码规范.md}：
+ * 错误码区间 {@code CORE.DOMAIN.0001-CORE.DOMAIN.0099}，遵循 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字，首位 2 表示业务核心模块，2-3 位 00 表示 business-core-domain</li>
+ *   <li>层级字符串格式：CORE.DOMAIN.XXXX（业务核心模块 - business-core-domain）</li>
  *   <li>消息使用纯文本，禁止 {} 占位符和方括号前缀</li>
  *   <li>动态上下文通过 {@code BaseException.withUserDetail()/withContext()} 附加</li>
  * </ul>
@@ -18,9 +18,9 @@ import com.example.shared.exception.ErrorDefinition;
  */
 public enum CoreDomainErrorCode implements ErrorDefinition {
 
-  INVALID_STATUS("20001", "状态有误"),
-  INVALID_DATA("20002", "数据有误"),
-  INVALID_OPERATION("20003", "操作有误"),
+  INVALID_STATUS("CORE.DOMAIN.0001", "状态有误"),
+  INVALID_DATA("CORE.DOMAIN.0002", "数据有误"),
+  INVALID_OPERATION("CORE.DOMAIN.0003", "操作有误"),
 
   ;
 

@@ -57,6 +57,7 @@
     <aviator.version>5.9.0</aviator.version>
     <qlexpress4.version>4.1.2</qlexpress4.version>
     <rocketmq.version>2.3.6</rocketmq.version>
+    <kona-crypto.version>1.0.15</kona-crypto.version>
   </properties>
 
   <dependencyManagement>
@@ -187,12 +188,52 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>shared-lock</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-cache-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>shared-cache-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-id-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-id-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-event-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-client-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-web-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-logging-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-pdf-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -219,6 +260,39 @@
         <groupId>com.example</groupId>
         <artifactId>shared-pdf-starter</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-crypto</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-json</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-crypto-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-lib</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-core</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-starter</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
       </dependency>
 
       <!-- Spring Dependency -->
@@ -335,6 +409,13 @@
         <groupId>com.alibaba</groupId>
         <artifactId>qlexpress4</artifactId>
         <version>${qlexpress4.version}</version>
+      </dependency>
+
+      <!-- Kona 国密加密套件 -->
+      <dependency>
+        <groupId>com.tencent.kona</groupId>
+        <artifactId>kona-crypto</artifactId>
+        <version>${kona-crypto.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

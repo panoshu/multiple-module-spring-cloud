@@ -13,8 +13,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  * <p>
  * 验证错误码符合 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字</li>
- *   <li>码段 33001-33099（annuity-service）</li>
+ *   <li>层级字符串格式 SERVICE.ANNUITY.XXXX</li>
+ *   <li>码段 SERVICE.ANNUITY.0001-SERVICE.ANNUITY.0099（annuity-service）</li>
  *   <li>消息禁止 {} 占位符和方括号前缀</li>
  *   <li>各枚举的 code 唯一</li>
  * </ul>
@@ -25,23 +25,22 @@ import org.junit.jupiter.params.provider.EnumSource;
 @DisplayName("AnnuityDomainErrorCode 错误码契约测试")
 class AnnuityDomainErrorCodeTest {
 
-  @ParameterizedTest(name = "{0} 的 code 必须为 5 位纯数字")
+  @ParameterizedTest(name = "{0} 的 code 必须匹配层级字符串格式 SERVICE.ANNUITY.XXXX")
   @EnumSource(AnnuityDomainErrorCode.class)
-  @DisplayName("所有错误码必须为 5 位纯数字")
+  @DisplayName("所有错误码必须匹配层级字符串格式 SERVICE.ANNUITY.XXXX")
   void codeShouldBeFiveDigits(AnnuityDomainErrorCode error) {
     assertThat(error.code())
-        .as("%s 的 code 必须为 5 位纯数字", error.name())
-        .matches("\\d{5}");
+        .as("%s 的 code 必须匹配层级字符串格式 SERVICE.ANNUITY.XXXX", error.name())
+        .matches("^SERVICE\\.ANNUITY\\.\\d{4}$");
   }
 
-  @ParameterizedTest(name = "{0} 的 code 应在 33001-33099 码段")
+  @ParameterizedTest(name = "{0} 的 code 应以 SERVICE.ANNUITY. 为前缀")
   @EnumSource(AnnuityDomainErrorCode.class)
-  @DisplayName("所有 code 应落在 annuity-service 码段 33001-33099")
+  @DisplayName("所有 code 应落在 annuity-service 码段 SERVICE.ANNUITY.XXXX")
   void codeShouldBeInAnnuitySegment(AnnuityDomainErrorCode error) {
-    int code = Integer.parseInt(error.code());
-    assertThat(code)
-        .as("%s 的 code 应在 33001-33099 区间", error.name())
-        .isBetween(33001, 33099);
+    assertThat(error.code())
+        .as("%s 的 code 应以 SERVICE.ANNUITY. 为前缀", error.name())
+        .startsWith("SERVICE.ANNUITY.");
   }
 
   @ParameterizedTest(name = "{0} 的 message 禁止使用占位符和方括号前缀")

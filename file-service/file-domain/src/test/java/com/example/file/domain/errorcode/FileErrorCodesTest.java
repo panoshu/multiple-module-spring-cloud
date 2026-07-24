@@ -13,8 +13,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  * <p>
  * 验证错误码符合 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字</li>
- *   <li>码段 31001-31099（file-service）</li>
+ *   <li>层级字符串格式 SERVICE.FILE.XXXX</li>
+ *   <li>码段 SERVICE.FILE.0001-SERVICE.FILE.0099（file-service）</li>
  *   <li>消息禁止 {} 占位符和方括号前缀</li>
  *   <li>各枚举的 code 唯一</li>
  * </ul>
@@ -25,23 +25,22 @@ import org.junit.jupiter.params.provider.EnumSource;
 @DisplayName("FileErrorCodes 错误码契约测试")
 class FileErrorCodesTest {
 
-  @ParameterizedTest(name = "{0} 的 code 必须为 5 位纯数字")
+  @ParameterizedTest(name = "{0} 的 code 必须匹配层级字符串格式 SERVICE.FILE.XXXX")
   @EnumSource(FileErrorCodes.class)
-  @DisplayName("所有错误码必须为 5 位纯数字")
+  @DisplayName("所有错误码必须匹配层级字符串格式 SERVICE.FILE.XXXX")
   void codeShouldBeFiveDigits(FileErrorCodes error) {
     assertThat(error.code())
-        .as("%s 的 code 必须为 5 位纯数字", error.name())
-        .matches("\\d{5}");
+        .as("%s 的 code 必须匹配层级字符串格式 SERVICE.FILE.XXXX", error.name())
+        .matches("^SERVICE\\.FILE\\.\\d{4}$");
   }
 
-  @ParameterizedTest(name = "{0} 的 code 应在 31001-31099 码段")
+  @ParameterizedTest(name = "{0} 的 code 应以 SERVICE.FILE. 为前缀")
   @EnumSource(FileErrorCodes.class)
-  @DisplayName("所有 code 应落在 file-service 码段 31001-31099")
+  @DisplayName("所有 code 应落在 file-service 码段 SERVICE.FILE.XXXX")
   void codeShouldBeInFileSegment(FileErrorCodes error) {
-    int code = Integer.parseInt(error.code());
-    assertThat(code)
-        .as("%s 的 code 应在 31001-31099 区间", error.name())
-        .isBetween(31001, 31099);
+    assertThat(error.code())
+        .as("%s 的 code 应以 SERVICE.FILE. 为前缀", error.name())
+        .startsWith("SERVICE.FILE.");
   }
 
   @ParameterizedTest(name = "{0} 的 message 禁止使用占位符和方括号前缀")
@@ -70,9 +69,9 @@ class FileErrorCodesTest {
   }
 
   @Test
-  @DisplayName("EXCEL_EXPORT_FAILED 应存在且码值为 31009")
+  @DisplayName("EXCEL_EXPORT_FAILED 应存在且码值为 SERVICE.FILE.0009")
   void excelExportFailedShouldExist() {
-    assertThat(FileErrorCodes.EXCEL_EXPORT_FAILED.code()).isEqualTo("31009");
+    assertThat(FileErrorCodes.EXCEL_EXPORT_FAILED.code()).isEqualTo("SERVICE.FILE.0009");
     assertThat(FileErrorCodes.EXCEL_EXPORT_FAILED.message()).isEqualTo("Excel 模板填充失败");
   }
 }

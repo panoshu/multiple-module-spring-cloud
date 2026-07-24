@@ -13,6 +13,9 @@ public enum GatewayFilterOrder {
   // 业务前置
   TENANT_RESOLVE(-50),
 
+  // 加密组
+  CRYPTO(-10),
+
   // 默认层
   REQUEST_LOG(0),
 

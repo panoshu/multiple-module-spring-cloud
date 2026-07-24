@@ -6,9 +6,9 @@ import lombok.AllArgsConstructor;
 /**
  * business-core-infrastructure 模块错误码定义。
  * <p>
- * 错误码区间 {@code 22001-22099}，遵循 {@code 08-错误码规范.md}：
+ * 错误码区间 {@code CORE.INFRA.0001-CORE.INFRA.0099}，遵循 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字，首位 2 表示业务核心模块，2-3 位 20 表示 business-core-infrastructure</li>
+ *   <li>层级字符串格式：CORE.INFRA.XXXX（业务核心模块 - business-core-infrastructure）</li>
  *   <li>消息使用纯文本，禁止 {} 占位符和方括号前缀</li>
  *   <li>动态上下文通过 {@code BaseException.withUserDetail()/withContext()} 附加</li>
  * </ul>
@@ -22,8 +22,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum CoreInfraErrorCode implements ErrorDefinition {
 
-  FILE_DOWNLOAD_FAILED("22001", "文件下载失败"),
-  FILE_TOKEN_APPLY_FAILED("22002", "文件下载令牌申请失败"),
+  FILE_DOWNLOAD_FAILED("CORE.INFRA.0001", "文件下载失败"),
+  FILE_TOKEN_APPLY_FAILED("CORE.INFRA.0002", "文件下载令牌申请失败"),
   ;
 
   final String code;

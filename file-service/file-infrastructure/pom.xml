@@ -52,11 +52,10 @@
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
-    <!-- 腾讯 Kona 国密加密套件 -->
+    <!-- shared-crypto: SM4 加解密核心库 -->
     <dependency>
-      <groupId>com.tencent.kona</groupId>
-      <artifactId>kona-crypto</artifactId>
-      <version>1.0.15</version>
+      <groupId>com.example</groupId>
+      <artifactId>shared-crypto</artifactId>
     </dependency>
     <!-- Redisson: RedisFileTokenStore 基于 RBucket.setIfAbsent 实现 SETNX + TTL -->
     <dependency>

@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>
  * 验证错误码符合 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字</li>
- *   <li>码段 20001-20099</li>
+ *   <li>层级字符串格式 CORE.DOMAIN.XXXX</li>
+ *   <li>码段 CORE.DOMAIN.0001-CORE.DOMAIN.0099</li>
  *   <li>消息禁止 {} 占位符和方括号前缀</li>
  *   <li>message() 返回实际消息而非空串</li>
  * </ul>
@@ -32,19 +32,19 @@ class CoreDomainErrorCodeTest {
     }
 
     @Test
-    @DisplayName("code() 应返回符合规范的 5 位数字编码")
+    @DisplayName("code() 应返回符合规范的层级字符串编码")
     void code_shouldReturnActualCode() {
-        assertEquals("20001", CoreDomainErrorCode.INVALID_STATUS.code());
-        assertEquals("20002", CoreDomainErrorCode.INVALID_DATA.code());
-        assertEquals("20003", CoreDomainErrorCode.INVALID_OPERATION.code());
+        assertEquals("CORE.DOMAIN.0001", CoreDomainErrorCode.INVALID_STATUS.code());
+        assertEquals("CORE.DOMAIN.0002", CoreDomainErrorCode.INVALID_DATA.code());
+        assertEquals("CORE.DOMAIN.0003", CoreDomainErrorCode.INVALID_OPERATION.code());
     }
 
-    @ParameterizedTest(name = "{0} 的 code 必须为 5 位纯数字")
+    @ParameterizedTest(name = "{0} 的 code 必须匹配层级字符串格式 CORE.DOMAIN.XXXX")
     @EnumSource(CoreDomainErrorCode.class)
-    @DisplayName("所有错误码必须为 5 位纯数字")
+    @DisplayName("所有错误码必须匹配层级字符串格式 CORE.DOMAIN.XXXX")
     void codeShouldBeFiveDigits(CoreDomainErrorCode errorCode) {
-        assertTrue(errorCode.code().matches("^\\d{5}$"),
-            "错误码 " + errorCode.name() + " 必须为 5 位纯数字");
+        assertTrue(errorCode.code().matches("^CORE\\.DOMAIN\\.\\d{4}$"),
+            "错误码 " + errorCode.name() + " 必须匹配层级字符串格式 CORE.DOMAIN.XXXX");
     }
 
     @ParameterizedTest(name = "{0} 的 message 禁止使用占位符和方括号前缀")

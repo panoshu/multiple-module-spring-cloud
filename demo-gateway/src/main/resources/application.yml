@@ -71,3 +71,18 @@ logging:
     rollingpolicy:
       total-size-cap: 1GB
       max-history: 30
+
+# 报文加密配置
+gateway:
+  crypto:
+    enabled: false
+    secret-key: ${SM4_SECRET_KEY:}
+    # exclude-paths:
+    #   - /api/public/**
+    # fields:
+    #   phone:
+    #     aliases: [mobile, phoneNumber, tel]
+    #   idCard:
+    #     aliases: [idNumber, id_card]
+    #   realName:
+    #     aliases: [name, userName]

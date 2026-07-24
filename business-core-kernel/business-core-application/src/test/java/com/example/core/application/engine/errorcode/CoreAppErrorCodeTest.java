@@ -13,8 +13,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  * <p>
  * 验证错误码符合 {@code 08-错误码规范.md}：
  * <ul>
- *   <li>5 位纯数字</li>
- *   <li>码段 21001-21099（business-core-application）</li>
+ *   <li>层级字符串格式 CORE.APP.XXXX</li>
+ *   <li>码段 CORE.APP.0001-CORE.APP.0099（business-core-application）</li>
  *   <li>消息禁止 {} 占位符和方括号前缀</li>
  *   <li>各枚举的 code 唯一</li>
  * </ul>
@@ -25,23 +25,22 @@ import org.junit.jupiter.params.provider.EnumSource;
 @DisplayName("CoreAppErrorCode 错误码契约测试")
 class CoreAppErrorCodeTest {
 
-  @ParameterizedTest(name = "{0} 的 code 必须为 5 位纯数字")
+  @ParameterizedTest(name = "{0} 的 code 必须匹配层级字符串格式 CORE.APP.XXXX")
   @EnumSource(CoreAppErrorCode.class)
-  @DisplayName("所有错误码必须为 5 位纯数字")
+  @DisplayName("所有错误码必须匹配层级字符串格式 CORE.APP.XXXX")
   void codeShouldBeFiveDigits(CoreAppErrorCode error) {
     assertThat(error.code())
-        .as("%s 的 code 必须为 5 位纯数字", error.name())
-        .matches("\\d{5}");
+        .as("%s 的 code 必须匹配层级字符串格式 CORE.APP.XXXX", error.name())
+        .matches("^CORE\\.APP\\.\\d{4}$");
   }
 
-  @ParameterizedTest(name = "{0} 的 code 应在 21001-21099 码段")
+  @ParameterizedTest(name = "{0} 的 code 应以 CORE.APP. 为前缀")
   @EnumSource(CoreAppErrorCode.class)
-  @DisplayName("所有 code 应落在 business-core-application 码段 21001-21099")
+  @DisplayName("所有 code 应落在 business-core-application 码段 CORE.APP.XXXX")
   void codeShouldBeInAppSegment(CoreAppErrorCode error) {
-    int code = Integer.parseInt(error.code());
-    assertThat(code)
-        .as("%s 的 code 应在 21001-21099 区间", error.name())
-        .isBetween(21001, 21099);
+    assertThat(error.code())
+        .as("%s 的 code 应以 CORE.APP. 为前缀", error.name())
+        .startsWith("CORE.APP.");
   }
 
   @ParameterizedTest(name = "{0} 的 message 禁止使用占位符和方括号前缀")
