@@ -40,8 +40,10 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.version = version;
-    // 重建对象同样必须满足不变性约束，避免从数据库加载的脏数据绕过校验
-    this.validateInvariants();
+    // 注意：不在此处调用 validateInvariants()。
+    // Java 继承机制下，父类构造函数执行时子类字段尚未初始化，
+    // 此时调用可被重写的 validateInvariants() 会导致子类校验必然失败（字段全为 null）。
+    // 子类必须在自己的构造函数末尾显式调用 this.validateInvariants()。
   }
 
   // 通常在更新操作时调用，更新updatedAt并增加版本

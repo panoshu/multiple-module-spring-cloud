@@ -97,6 +97,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
         this.currentNodeOrder = NodeOrder.first();
         this.status = InstanceStatus.PENDING;
         this.nodeExecutions = new ArrayList<>();
+        this.validateInvariants();
     }
 
     /**
@@ -116,6 +117,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
         this.initiatorPlan = initiatorPlan;
         this.currentPlan = currentPlan;
         this.nodeExecutions = nodeExecutions != null ? new ArrayList<>(nodeExecutions) : new ArrayList<>();
+        this.validateInvariants();
     }
 
     /**

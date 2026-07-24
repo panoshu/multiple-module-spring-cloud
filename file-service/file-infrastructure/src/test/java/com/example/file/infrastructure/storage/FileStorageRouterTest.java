@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Security;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -105,7 +106,7 @@ class FileStorageRouterTest {
             null, null, null,
             "local-1", StorageType.LOCAL, "annuity/" + datePartition + "/BATCH_001/01H8FILE002/test.txt",
             FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
-            FileStatus.UPLOADED, UserNo.of("u1"), null, null,
+            FileStatus.UPLOADED, UserNo.of("u1"), LocalDateTime.now(), null,
             UserNo.of("u1"), UserNo.of("u1"), null, null, null
         );
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
@@ -141,7 +142,7 @@ class FileStorageRouterTest {
             null, null, null,
             "local-1", StorageType.LOCAL, "test.txt",
             FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
-            FileStatus.UPLOADED, UserNo.of("u1"), null, null,
+            FileStatus.UPLOADED, UserNo.of("u1"), LocalDateTime.now(), null,
             UserNo.of("u1"), UserNo.of("u1"), null, null, null
         );
         when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);

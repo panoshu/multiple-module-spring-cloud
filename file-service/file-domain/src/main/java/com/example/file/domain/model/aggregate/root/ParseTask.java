@@ -45,6 +45,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     this.splitKeys = List.copyOf(splitKeys);
     this.status = TaskStatus.PENDING;
     this.startedAt = LocalDateTime.now();
+    this.validateInvariants();
   }
 
   // 数据库重建
@@ -70,6 +71,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     this.errors = new ArrayList<>(errors);
     this.startedAt = startedAt;
     this.finishedAt = finishedAt;
+    this.validateInvariants();
   }
 
   public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,

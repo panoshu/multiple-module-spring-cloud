@@ -80,6 +80,7 @@ public class ApprovalNode extends Entity<NodeId> {
         this.approverIds = approverIds != null ? List.copyOf(approverIds) : List.of();
         this.roleIds = roleIds != null ? List.copyOf(roleIds) : List.of();
         this.signMode = signMode;
+        this.validateInvariants();
     }
 
     /**
@@ -98,6 +99,7 @@ public class ApprovalNode extends Entity<NodeId> {
         this.approverIds = approverIds != null ? List.copyOf(approverIds) : List.of();
         this.roleIds = roleIds != null ? List.copyOf(roleIds) : List.of();
         this.signMode = signMode;
+        this.validateInvariants();
     }
 
     /**

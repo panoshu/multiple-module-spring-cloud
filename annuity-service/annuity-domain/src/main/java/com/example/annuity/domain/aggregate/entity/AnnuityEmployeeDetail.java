@@ -51,6 +51,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
     this.monthlyContribution = monthlyContribution;
     this.status = AnnuityEmployeeDetailStatus.PENDING;
     this.materials = new ArrayList<>();
+    this.validateInvariants();
   }
 
   /**
@@ -76,6 +77,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
     this.materials = materials == null ? new ArrayList<>() : new ArrayList<>(materials);
     this.verifiedAt = verifiedAt;
     this.materialPreparedAt = materialPreparedAt;
+    this.validateInvariants();
   }
 
   /**

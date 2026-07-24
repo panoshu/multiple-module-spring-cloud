@@ -49,6 +49,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
     this.sourceTemplates = new ArrayList<>(sourceTemplates);
     this.status = ConfigStatus.DRAFT;
     this.effectiveFrom = LocalDateTime.now();
+    this.validateInvariants();
   }
 
   // 数据库重建
@@ -73,6 +74,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
     this.status = status;
     this.effectiveFrom = effectiveFrom;
     this.effectiveTo = effectiveTo;
+    this.validateInvariants();
   }
 
   public static TemplateConfig create(TemplateConfigId id, BizType bizType, String version,

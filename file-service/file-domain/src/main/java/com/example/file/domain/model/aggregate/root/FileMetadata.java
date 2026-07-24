@@ -67,6 +67,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
         this.expiresAt = expiresAt;
         this.status = FileStatus.PENDING_UPLOAD;
         registerDomainEvent(FileMetadataCreatedEvent.of(this));
+        this.validateInvariants();
     }
 
     // ============ 新增 createForUpload（Token 路径）============
@@ -87,6 +88,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
         this.status = FileStatus.PENDING_UPLOAD;
         // originalName/size/contentType/storageKey/digest 留空，completeUpload 时填充
         registerDomainEvent(FileMetadataCreatedEvent.of(this));
+        this.validateInvariants();
     }
 
     public static FileMetadata createForUpload(FileId id, FileUsage usage, String bizType,
@@ -169,6 +171,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
         this.uploadedBy = uploadedBy;
         this.uploadedAt = uploadedAt;
         this.expiresAt = expiresAt;
+        this.validateInvariants();
     }
 
     public static FileMetadata reconstitute(FileId id, String originalName, Long size, String contentType, String md5,

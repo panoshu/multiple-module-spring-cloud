@@ -68,6 +68,7 @@ public class NodeExecution extends Entity<ExecutionId> {
         this.approvals = new ArrayList<>();
         this.startedAt = null;
         this.completedAt = null;
+        this.validateInvariants();
     }
 
     /**
@@ -83,6 +84,7 @@ public class NodeExecution extends Entity<ExecutionId> {
         this.approvals = approvals != null ? new ArrayList<>(approvals) : new ArrayList<>();
         this.startedAt = startedAt;
         this.completedAt = completedAt;
+        this.validateInvariants();
     }
 
     /**

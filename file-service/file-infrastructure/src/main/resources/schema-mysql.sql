@@ -68,3 +68,94 @@ CREATE TABLE IF NOT EXISTS `t_file_access_log` (
   KEY `idx_access_log_action_time` (`action`, `occur_at`),
   KEY `idx_access_log_customer_product` (`customer_no`, `product_no`, `occur_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件访问流水表（APPLY=申请token, ACCESS=实际访问）';
+
+-- 文件解析任务表
+CREATE TABLE IF NOT EXISTS `t_file_parse_task` (
+  `id`                  VARCHAR(64)   NOT NULL                          COMMENT '任务ID（FileTaskId）',
+  `biz_type`            VARCHAR(64)   NOT NULL                          COMMENT '业务类型',
+  `template_code`       VARCHAR(64)   DEFAULT NULL                      COMMENT '模板编码',
+  `source_file_name`    VARCHAR(512)  DEFAULT NULL                      COMMENT '源文件名',
+  `source_file_id`      VARCHAR(64)   DEFAULT NULL                      COMMENT '源文件ID（FileId）',
+  `status`              VARCHAR(32)   NOT NULL                          COMMENT '任务状态: PENDING/PROCESSING/SUCCESS/FAILED/CANCELLED',
+  `error_policy`        VARCHAR(32)   DEFAULT NULL                      COMMENT '错误处理策略: SKIP/ABORT/QUARANTINE',
+  `split_keys`          VARCHAR(255)  DEFAULT NULL                      COMMENT '拆分键列表（逗号分隔）',
+  `total_rows`          INT           DEFAULT 0                         COMMENT '总行数',
+  `sub_task_count`      INT           DEFAULT 0                         COMMENT '子任务数',
+  `valid_count`         INT           DEFAULT 0                         COMMENT '有效行数',
+  `invalid_count`       INT           DEFAULT 0                         COMMENT '无效行数',
+  `sub_task_summaries`  JSON          DEFAULT NULL                      COMMENT '子任务摘要（JSON 数组）',
+  `errors`              JSON          DEFAULT NULL                      COMMENT '错误列表（JSON 数组）',
+  `started_at`          TIMESTAMP     NULL DEFAULT NULL                 COMMENT '开始时间',
+  `finished_at`         TIMESTAMP     NULL DEFAULT NULL                 COMMENT '完成时间',
+
+  `created_by`          VARCHAR(64)   NOT NULL                          COMMENT '创建人',
+  `updated_by`          VARCHAR(64)   DEFAULT NULL                      COMMENT '更新人',
+  `create_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '创建时间',
+  `update_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`             BOOLEAN       DEFAULT FALSE                     COMMENT '逻辑删除标志',
+  `version`             INT           DEFAULT 0                         COMMENT '乐观锁版本号',
+
+  PRIMARY KEY (`id`),
+  KEY `idx_file_parse_task_biz_status`  (`biz_type`, `status`),
+  KEY `idx_file_parse_task_source_file` (`source_file_id`),
+  KEY `idx_file_parse_task_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件解析任务表';
+
+-- 文件子任务数据表（支持按拆分键分页查询）
+CREATE TABLE IF NOT EXISTS `t_file_sub_task_data` (
+  `id`                  VARCHAR(64)   NOT NULL                          COMMENT '子任务ID（SubTaskId）',
+  `file_task_id`        VARCHAR(64)   NOT NULL                          COMMENT '关联解析任务ID（FileTaskId）',
+  `biz_type`            VARCHAR(64)   NOT NULL                          COMMENT '业务类型',
+  `split_key_value`     VARCHAR(255)  DEFAULT NULL                      COMMENT '拆分键值',
+  `context`             JSON          DEFAULT NULL                      COMMENT '解析上下文（JSON）',
+  `properties`          JSON          DEFAULT NULL                      COMMENT '数据属性（JSON）',
+  `tables`              JSON          DEFAULT NULL                      COMMENT '表格数据（JSON）',
+  `row_count`           INT           DEFAULT 0                         COMMENT '行数',
+  `status`              VARCHAR(32)   NOT NULL                          COMMENT '子任务状态: PENDING/PROCESSING/SUCCESS/FAILED',
+  `validation_errors`   JSON          DEFAULT NULL                      COMMENT '校验错误（JSON 数组）',
+  `expires_at`          TIMESTAMP     NULL DEFAULT NULL                 COMMENT '过期时间',
+  `consumed_at`         TIMESTAMP     NULL DEFAULT NULL                 COMMENT '消费时间',
+
+  `created_by`          VARCHAR(64)   NOT NULL                          COMMENT '创建人',
+  `updated_by`          VARCHAR(64)   DEFAULT NULL                      COMMENT '更新人',
+  `create_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '创建时间',
+  `update_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`             BOOLEAN       DEFAULT FALSE                     COMMENT '逻辑删除标志',
+  `version`             INT           DEFAULT 0                         COMMENT '乐观锁版本号',
+
+  PRIMARY KEY (`id`),
+  KEY `idx_file_sub_task_data_task_id`     (`file_task_id`),
+  KEY `idx_file_sub_task_data_split_key`   (`file_task_id`, `split_key_value`),
+  KEY `idx_file_sub_task_data_status`      (`status`),
+  KEY `idx_file_sub_task_data_expires_at`  (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件子任务数据表（按拆分键存储）';
+
+-- 文件模板配置表
+CREATE TABLE IF NOT EXISTS `t_file_template_config` (
+  `id`                  VARCHAR(64)   NOT NULL                          COMMENT '模板配置ID（TemplateConfigId）',
+  `biz_type`            VARCHAR(64)   NOT NULL                          COMMENT '业务类型',
+  `template_version`    VARCHAR(64)   NOT NULL                          COMMENT '模板版本',
+  `error_policy`        VARCHAR(32)   DEFAULT NULL                      COMMENT '错误处理策略: SKIP/ABORT/QUARANTINE',
+  `canonical_model`     JSON          DEFAULT NULL                      COMMENT '规范化模型定义（JSON）',
+  `validation_rules`    JSON          DEFAULT NULL                      COMMENT '校验规则（JSON）',
+  `derivation_rules`    JSON          DEFAULT NULL                      COMMENT '派生规则（JSON）',
+  `split_config`        JSON          DEFAULT NULL                      COMMENT '拆分配置（JSON）',
+  `source_templates`    JSON          DEFAULT NULL                      COMMENT '源模板定义（JSON）',
+  `target_template_ref` VARCHAR(64)   DEFAULT NULL                      COMMENT '目标模板引用',
+  `target_mapping`      JSON          DEFAULT NULL                      COMMENT '目标映射（JSON）',
+  `status`              VARCHAR(32)   NOT NULL                          COMMENT '状态: DRAFT/ACTIVE/DEPRECATED',
+  `effective_from`      TIMESTAMP     NULL DEFAULT NULL                 COMMENT '生效开始时间',
+  `effective_to`        TIMESTAMP     NULL DEFAULT NULL                 COMMENT '生效结束时间',
+
+  `created_by`          VARCHAR(64)   NOT NULL                          COMMENT '创建人',
+  `updated_by`          VARCHAR(64)   DEFAULT NULL                      COMMENT '更新人',
+  `create_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '创建时间',
+  `update_time`         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`             BOOLEAN       DEFAULT FALSE                     COMMENT '逻辑删除标志',
+  `version`             INT           DEFAULT 0                         COMMENT '乐观锁版本号',
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_file_template_config_biz_version` (`biz_type`, `template_version`),
+  KEY `idx_file_template_config_biz_status`        (`biz_type`, `status`),
+  KEY `idx_file_template_config_effective`         (`biz_type`, `effective_from`, `effective_to`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件模板配置表';

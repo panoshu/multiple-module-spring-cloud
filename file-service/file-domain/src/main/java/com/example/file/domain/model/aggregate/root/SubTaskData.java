@@ -48,6 +48,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
     this.rowCount = rowCount;
     this.status = SubTaskStatus.PENDING;
     this.expiresAt = expiresAt != null ? expiresAt : LocalDateTime.now().plusDays(DEFAULT_TTL_DAYS);
+    this.validateInvariants();
   }
 
   // 数据库重建
@@ -68,6 +69,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
     this.validationErrors = new ArrayList<>(validationErrors);
     this.expiresAt = expiresAt;
     this.consumedAt = consumedAt;
+    this.validateInvariants();
   }
 
   public static SubTaskData create(SubTaskId id, FileTaskId fileTaskId, BizType bizType,

@@ -47,6 +47,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
     this.totalEmployeeCount = totalEmployeeCount;
     this.details = new ArrayList<>();
     this.status = AnnuityEmployeeBatchStatus.PENDING;
+    this.validateInvariants();
   }
 
   /**
@@ -64,6 +65,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
     this.totalEmployeeCount = totalEmployeeCount;
     this.processedCount = processedCount;
     this.anomalyCount = anomalyCount;
+    this.validateInvariants();
   }
 
   /**

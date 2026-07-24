@@ -27,6 +27,7 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
     this.identifyMode = mode;
     this.fingerprint = fingerprint == null ? List.of() : List.copyOf(fingerprint);
     this.regions = List.copyOf(regions);
+    this.validateInvariants();
   }
 
   // 数据库重建
@@ -38,6 +39,7 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
     this.identifyMode = identifyMode;
     this.fingerprint = fingerprint;
     this.regions = regions;
+    this.validateInvariants();
   }
 
   public IdentifyMode identifyMode() { return identifyMode; }

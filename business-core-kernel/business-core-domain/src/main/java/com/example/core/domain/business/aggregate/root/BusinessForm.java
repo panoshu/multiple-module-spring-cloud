@@ -33,10 +33,12 @@ public class BusinessForm extends AggregateRoot<FormId> {
 
   protected BusinessForm(FormId formId, UserNo userNo) {
     super(formId, userNo);
+    this.validateInvariants();
   }
 
   protected BusinessForm(FormId formId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(formId, createdBy, updatedBy, createdAt, updatedAt, version);
+    this.validateInvariants();
   }
 
   public BusinessFile getFormFile() {

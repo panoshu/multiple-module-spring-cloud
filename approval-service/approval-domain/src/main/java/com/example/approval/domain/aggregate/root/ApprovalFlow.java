@@ -67,6 +67,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
         this.flowVersion = FlowVersion.initial();
         this.status = FlowStatus.ACTIVE;
         validateNodesOrder();
+        this.validateInvariants();
     }
 
     /**
@@ -81,6 +82,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
         this.nodes = nodes != null ? new ArrayList<>(nodes) : new ArrayList<>();
         this.flowVersion = flowVersion;
         this.status = status;
+        this.validateInvariants();
     }
 
     /**

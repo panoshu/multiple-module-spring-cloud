@@ -35,10 +35,12 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
 
   protected BusinessBatch(BatchId batchId, UserNo userNo) {
     super(batchId, userNo);
+    this.validateInvariants();
   }
 
   protected BusinessBatch(BatchId batchId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
+    this.validateInvariants();
   }
 
   /**
@@ -117,7 +119,7 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   }
 
   private boolean isTerminalStatus(BatchStatus status) {
-    return status.isTerminal();
+    return status != null && status.isTerminal();
   }
 
 }

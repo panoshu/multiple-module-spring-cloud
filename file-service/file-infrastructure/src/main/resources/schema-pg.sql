@@ -118,3 +118,151 @@ COMMENT ON COLUMN t_file_access_log.fail_reason IS '失败原因（result != SUC
 COMMENT ON COLUMN t_file_access_log.occur_at IS '发生时间';
 COMMENT ON COLUMN t_file_access_log.deleted IS '逻辑删除标志';
 COMMENT ON COLUMN t_file_access_log.version IS '乐观锁版本号';
+
+-- =============================================================================
+-- 文件解析任务表
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS t_file_parse_task (
+    id                  VARCHAR(64)   NOT NULL,
+    biz_type            VARCHAR(64)   NOT NULL,
+    template_code       VARCHAR(64),
+    source_file_name    VARCHAR(512),
+    source_file_id      VARCHAR(64),
+    status              VARCHAR(32)   NOT NULL,
+    error_policy        VARCHAR(32),
+    split_keys          VARCHAR(255),
+    total_rows          INT           DEFAULT 0,
+    sub_task_count      INT           DEFAULT 0,
+    valid_count         INT           DEFAULT 0,
+    invalid_count       INT           DEFAULT 0,
+    sub_task_summaries  JSONB,
+    errors              JSONB,
+    started_at          TIMESTAMP,
+    finished_at         TIMESTAMP,
+
+    created_by          VARCHAR(64)   NOT NULL,
+    updated_by          VARCHAR(64),
+    create_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted             BOOLEAN       DEFAULT FALSE,
+    version             INT           DEFAULT 0,
+
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_parse_task_biz_status    ON t_file_parse_task(biz_type, status);
+CREATE INDEX IF NOT EXISTS idx_file_parse_task_source_file   ON t_file_parse_task(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_file_parse_task_create_time   ON t_file_parse_task(create_time);
+
+COMMENT ON TABLE  t_file_parse_task IS '文件解析任务表';
+COMMENT ON COLUMN t_file_parse_task.id IS '任务ID（FileTaskId）';
+COMMENT ON COLUMN t_file_parse_task.biz_type IS '业务类型';
+COMMENT ON COLUMN t_file_parse_task.template_code IS '模板编码';
+COMMENT ON COLUMN t_file_parse_task.source_file_name IS '源文件名';
+COMMENT ON COLUMN t_file_parse_task.source_file_id IS '源文件ID（FileId）';
+COMMENT ON COLUMN t_file_parse_task.status IS '任务状态: PENDING/PROCESSING/SUCCESS/FAILED/CANCELLED';
+COMMENT ON COLUMN t_file_parse_task.error_policy IS '错误处理策略: SKIP/ABORT/QUARANTINE';
+COMMENT ON COLUMN t_file_parse_task.split_keys IS '拆分键列表（逗号分隔）';
+COMMENT ON COLUMN t_file_parse_task.total_rows IS '总行数';
+COMMENT ON COLUMN t_file_parse_task.sub_task_count IS '子任务数';
+COMMENT ON COLUMN t_file_parse_task.valid_count IS '有效行数';
+COMMENT ON COLUMN t_file_parse_task.invalid_count IS '无效行数';
+COMMENT ON COLUMN t_file_parse_task.sub_task_summaries IS '子任务摘要（JSONB 数组）';
+COMMENT ON COLUMN t_file_parse_task.errors IS '错误列表（JSONB 数组）';
+COMMENT ON COLUMN t_file_parse_task.started_at IS '开始时间';
+COMMENT ON COLUMN t_file_parse_task.finished_at IS '完成时间';
+
+-- =============================================================================
+-- 文件子任务数据表（支持按拆分键分页查询）
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS t_file_sub_task_data (
+    id                  VARCHAR(64)   NOT NULL,
+    file_task_id        VARCHAR(64)   NOT NULL,
+    biz_type            VARCHAR(64)   NOT NULL,
+    split_key_value     VARCHAR(255),
+    context             JSONB,
+    properties          JSONB,
+    tables              JSONB,
+    row_count           INT           DEFAULT 0,
+    status              VARCHAR(32)   NOT NULL,
+    validation_errors   JSONB,
+    expires_at          TIMESTAMP,
+    consumed_at         TIMESTAMP,
+
+    created_by          VARCHAR(64)   NOT NULL,
+    updated_by          VARCHAR(64),
+    create_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted             BOOLEAN       DEFAULT FALSE,
+    version             INT           DEFAULT 0,
+
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_sub_task_data_task_id       ON t_file_sub_task_data(file_task_id);
+CREATE INDEX IF NOT EXISTS idx_file_sub_task_data_split_key     ON t_file_sub_task_data(file_task_id, split_key_value);
+CREATE INDEX IF NOT EXISTS idx_file_sub_task_data_status        ON t_file_sub_task_data(status);
+CREATE INDEX IF NOT EXISTS idx_file_sub_task_data_expires_at    ON t_file_sub_task_data(expires_at);
+
+COMMENT ON TABLE  t_file_sub_task_data IS '文件子任务数据表（按拆分键存储）';
+COMMENT ON COLUMN t_file_sub_task_data.id IS '子任务ID（SubTaskId）';
+COMMENT ON COLUMN t_file_sub_task_data.file_task_id IS '关联解析任务ID（FileTaskId）';
+COMMENT ON COLUMN t_file_sub_task_data.biz_type IS '业务类型';
+COMMENT ON COLUMN t_file_sub_task_data.split_key_value IS '拆分键值';
+COMMENT ON COLUMN t_file_sub_task_data.context IS '解析上下文（JSONB）';
+COMMENT ON COLUMN t_file_sub_task_data.properties IS '数据属性（JSONB）';
+COMMENT ON COLUMN t_file_sub_task_data.tables IS '表格数据（JSONB）';
+COMMENT ON COLUMN t_file_sub_task_data.row_count IS '行数';
+COMMENT ON COLUMN t_file_sub_task_data.status IS '子任务状态: PENDING/PROCESSING/SUCCESS/FAILED';
+COMMENT ON COLUMN t_file_sub_task_data.validation_errors IS '校验错误（JSONB 数组）';
+COMMENT ON COLUMN t_file_sub_task_data.expires_at IS '过期时间';
+COMMENT ON COLUMN t_file_sub_task_data.consumed_at IS '消费时间';
+
+-- =============================================================================
+-- 文件模板配置表
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS t_file_template_config (
+    id                  VARCHAR(64)   NOT NULL,
+    biz_type            VARCHAR(64)   NOT NULL,
+    template_version    VARCHAR(64)   NOT NULL,
+    error_policy        VARCHAR(32),
+    canonical_model     JSONB,
+    validation_rules    JSONB,
+    derivation_rules    JSONB,
+    split_config        JSONB,
+    source_templates    JSONB,
+    target_template_ref VARCHAR(64),
+    target_mapping      JSONB,
+    status              VARCHAR(32)   NOT NULL,
+    effective_from      TIMESTAMP,
+    effective_to        TIMESTAMP,
+
+    created_by          VARCHAR(64)   NOT NULL,
+    updated_by          VARCHAR(64),
+    create_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    update_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted             BOOLEAN       DEFAULT FALSE,
+    version             INT           DEFAULT 0,
+
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_file_template_config_biz_version ON t_file_template_config(biz_type, template_version);
+CREATE INDEX IF NOT EXISTS idx_file_template_config_biz_status        ON t_file_template_config(biz_type, status);
+CREATE INDEX IF NOT EXISTS idx_file_template_config_effective         ON t_file_template_config(biz_type, effective_from, effective_to);
+
+COMMENT ON TABLE  t_file_template_config IS '文件模板配置表';
+COMMENT ON COLUMN t_file_template_config.id IS '模板配置ID（TemplateConfigId）';
+COMMENT ON COLUMN t_file_template_config.biz_type IS '业务类型';
+COMMENT ON COLUMN t_file_template_config.template_version IS '模板版本';
+COMMENT ON COLUMN t_file_template_config.error_policy IS '错误处理策略: SKIP/ABORT/QUARANTINE';
+COMMENT ON COLUMN t_file_template_config.canonical_model IS '规范化模型定义（JSONB）';
+COMMENT ON COLUMN t_file_template_config.validation_rules IS '校验规则（JSONB）';
+COMMENT ON COLUMN t_file_template_config.derivation_rules IS '派生规则（JSONB）';
+COMMENT ON COLUMN t_file_template_config.split_config IS '拆分配置（JSONB）';
+COMMENT ON COLUMN t_file_template_config.source_templates IS '源模板定义（JSONB）';
+COMMENT ON COLUMN t_file_template_config.target_template_ref IS '目标模板引用';
+COMMENT ON COLUMN t_file_template_config.target_mapping IS '目标映射（JSONB）';
+COMMENT ON COLUMN t_file_template_config.status IS '状态: DRAFT/ACTIVE/DEPRECATED';
+COMMENT ON COLUMN t_file_template_config.effective_from IS '生效开始时间';
+COMMENT ON COLUMN t_file_template_config.effective_to IS '生效结束时间';

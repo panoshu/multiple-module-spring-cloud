@@ -35,11 +35,13 @@ class EntityTest {
     static class TestEntityA extends Entity<TestId> {
         TestEntityA(TestId id, UserNo createdBy) {
             super(id, createdBy);
+            this.validateInvariants();
         }
 
         TestEntityA(TestId id, UserNo createdBy, UserNo updatedBy,
                     LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
             super(id, createdBy, updatedBy, createdAt, updatedAt, version);
+            this.validateInvariants();
         }
 
         @Override
@@ -56,6 +58,7 @@ class EntityTest {
     static class TestEntityB extends Entity<TestId> {
         TestEntityB(TestId id, UserNo createdBy) {
             super(id, createdBy);
+            this.validateInvariants();
         }
 
         @Override
@@ -69,6 +72,7 @@ class EntityTest {
         StrictEntity(TestId id, UserNo createdBy, UserNo updatedBy,
                      LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
             super(id, createdBy, updatedBy, createdAt, updatedAt, version);
+            this.validateInvariants();
         }
 
         @Override

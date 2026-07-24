@@ -54,6 +54,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
         this.result = result;
         this.failReason = failReason;
         this.occurAt = occurAt;
+        this.validateInvariants();
     }
 
     // 数据库重建
@@ -75,6 +76,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
         this.result = result;
         this.failReason = failReason;
         this.occurAt = occurAt;
+        this.validateInvariants();
     }
 
     /**

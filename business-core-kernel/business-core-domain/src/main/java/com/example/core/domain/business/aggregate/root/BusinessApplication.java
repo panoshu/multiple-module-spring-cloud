@@ -59,10 +59,12 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   protected BusinessApplication(ApplicationId applicationId, UserNo userNo) {
     super(applicationId, userNo);
+    this.validateInvariants();
   }
 
   protected BusinessApplication(ApplicationId applicationId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(applicationId, createdBy, updatedBy, createdAt, updatedAt, version);
+    this.validateInvariants();
   }
 
   protected BusinessApplication(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {
@@ -70,6 +72,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     this.businessContext = businessContext;
     this.operatorInfo = operatorInfo;
     this.parsedJsonFileId = jsonFileId;
+    this.validateInvariants();
   }
 
   public static BusinessApplication createFromForm(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {

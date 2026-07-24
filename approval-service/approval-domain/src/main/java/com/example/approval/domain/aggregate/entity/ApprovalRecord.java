@@ -63,6 +63,7 @@ public class ApprovalRecord extends Entity<RecordId> {
         this.rejectTarget = null;
         this.transferTo = null;
         this.operatedAt = LocalDateTime.now();
+        this.validateInvariants();
     }
 
     /**
@@ -76,6 +77,7 @@ public class ApprovalRecord extends Entity<RecordId> {
         this.rejectTarget = rejectTarget;
         this.transferTo = null;
         this.operatedAt = LocalDateTime.now();
+        this.validateInvariants();
     }
 
     /**
@@ -89,6 +91,7 @@ public class ApprovalRecord extends Entity<RecordId> {
         this.rejectTarget = null;
         this.transferTo = transferTo;
         this.operatedAt = LocalDateTime.now();
+        this.validateInvariants();
     }
 
     /**
@@ -104,6 +107,7 @@ public class ApprovalRecord extends Entity<RecordId> {
         this.rejectTarget = rejectTarget;
         this.transferTo = transferTo;
         this.operatedAt = operatedAt;
+        this.validateInvariants();
     }
 
     /**
