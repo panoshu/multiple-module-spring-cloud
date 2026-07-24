@@ -12,7 +12,7 @@ public record PlanNo(String value) implements Identifier<String> {
 
   public PlanNo {
     if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("CustomerNo empty");
+      throw new IllegalArgumentException("PlanNo cannot be null or blank.");
     }
   }
 

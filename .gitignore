@@ -47,6 +47,7 @@ build/
 *.nar
 *.ear
 *.log
+*.log.*
 *.tmp
 log/
 
@@ -77,3 +78,4 @@ replay_pid*
 
 ### Superpowers SDD workspace ###
 .superpowers/sdd/
+docs/superpowers/reviews/

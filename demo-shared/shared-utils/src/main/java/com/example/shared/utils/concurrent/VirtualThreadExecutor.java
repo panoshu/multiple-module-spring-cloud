@@ -145,11 +145,11 @@ public class VirtualThreadExecutor {
 
       case InterruptedException ie -> {
         Thread.currentThread().interrupt();
-        yield new SystemException(CommonError.UNKNOW_ERROR, ie).withLogDetail("任务执行被中断");
+        yield new SystemException(CommonError.UNKNOWN_ERROR, ie).withLogDetail("任务执行被中断");
       }
       case TimeoutException te -> new SystemException(CommonError.TIMEOUT_ERROR, te).withLogDetail("并发任务执行超时");
       default ->
-        new SystemException(CommonError.UNKNOW_ERROR, e).withLogDetail("未知的并发错误: %s".formatted(e.getClass().getName()));
+        new SystemException(CommonError.UNKNOWN_ERROR, e).withLogDetail("未知的并发错误: %s".formatted(e.getClass().getName()));
     };
   }
 

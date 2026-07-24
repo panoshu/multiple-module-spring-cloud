@@ -9,4 +9,14 @@ package com.example.shared.primitives.identity;
  */
 @IdDefinition(type = IdType.ULID)
 public record SerialNo(String value) implements Identifier<String> {
+
+  public SerialNo {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("SerialNo cannot be null or blank.");
+    }
+  }
+
+  public static SerialNo of(String value) {
+    return new SerialNo(value);
+  }
 }

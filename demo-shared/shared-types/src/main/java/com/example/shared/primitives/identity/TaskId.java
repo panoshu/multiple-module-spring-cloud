@@ -8,4 +8,14 @@ package com.example.shared.primitives.identity;
  */
 @IdDefinition(name = "BIZ", format = "%p%d%s", seqKey = "%d_%n", dateFormat = "yyyyMMdd")
 public record TaskId(String value) implements Identifier<String> {
+
+  public TaskId {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("TaskId cannot be null or blank.");
+    }
+  }
+
+  public static TaskId of(String value) {
+    return new TaskId(value);
+  }
 }

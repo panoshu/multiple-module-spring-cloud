@@ -12,7 +12,7 @@ public record AcceptanceNo(String value) implements Identifier<String> {
 
   public AcceptanceNo {
     if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("CustomerNo empty");
+      throw new IllegalArgumentException("AcceptanceNo cannot be null or blank.");
     }
   }
 

@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
     // [防线3] 真正的未知系统异常
     log.error("Unexpected Error [URI: {}]: ", request.getRequestURI(), e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(ApiResult.failure(CommonError.UNKNOW_ERROR.code(), CommonError.UNKNOW_ERROR.message()));
+      .body(ApiResult.failure(CommonError.UNKNOWN_ERROR.code(), CommonError.UNKNOWN_ERROR.message()));
   }
 
   private boolean isClientDisconnected(Throwable t) {

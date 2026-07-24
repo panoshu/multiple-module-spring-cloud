@@ -12,7 +12,7 @@ public record ProductNo(String value) implements Identifier<String> {
 
   public ProductNo {
     if (value == null || value.isBlank()) {
-      throw new IllegalArgumentException("CustomerNo empty");
+      throw new IllegalArgumentException("ProductNo cannot be null or blank.");
     }
   }
 

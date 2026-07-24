@@ -6,7 +6,6 @@ import com.example.shared.primitives.identity.UserNo;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * 实体基类
@@ -41,6 +40,8 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.version = version;
+    // 重建对象同样必须满足不变性约束，避免从数据库加载的脏数据绕过校验
+    this.validateInvariants();
   }
 
   // 通常在更新操作时调用，更新updatedAt并增加版本
@@ -86,11 +87,19 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     if (this == o) {
       return true;
     }
-    return o instanceof Entity<?> that && Objects.equals(this.id, that.id());
+    // 必须校验具体类型：不同类型的实体即使 ID 相同也不应相等，
+    // 否则 OrderEntity(id=1) 与 ProductEntity(id=1) 会被误判为相等
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Entity<?> that = (Entity<?>) o;
+    return id != null && id.equals(that.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    // id 为 null 时（构造函数已拦截，此处为防御性编程）回退到对象身份哈希，
+    // 避免所有 null-id 实体共享同一 hashCode 导致哈希表退化
+    return id != null ? id.hashCode() : System.identityHashCode(this);
   }
 }

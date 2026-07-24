@@ -9,4 +9,14 @@ package com.example.shared.primitives.identity;
  */
 @IdDefinition(type = IdType.ULID)
 public record ApplicationId(String value) implements Identifier<String> {
+
+  public ApplicationId {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("ApplicationId cannot be null or blank.");
+    }
+  }
+
+  public static ApplicationId of(String value) {
+    return new ApplicationId(value);
+  }
 }

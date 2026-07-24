@@ -4,10 +4,17 @@ import com.example.shared.exception.ErrorDefinition;
 import lombok.AllArgsConstructor;
 
 /**
- * 核心编排域基础设施层错误码
+ * business-core-infrastructure 模块错误码定义。
  * <p>
- * 用于 {@code SystemException} 的错误码定义,描述与外部服务集成(文件下载/审批查询等)
- * 相关的系统级故障。编号区间 300xxx,与应用层(100xxx)、领域层(200xxx)区分。
+ * 错误码区间 {@code 22001-22099}，遵循 {@code 08-错误码规范.md}：
+ * <ul>
+ *   <li>5 位纯数字，首位 2 表示业务核心模块，2-3 位 20 表示 business-core-infrastructure</li>
+ *   <li>消息使用纯文本，禁止 {} 占位符和方括号前缀</li>
+ *   <li>动态上下文通过 {@code BaseException.withUserDetail()/withContext()} 附加</li>
+ * </ul>
+ * <p>
+ * 用于 {@code SystemException} 的错误码定义，描述与外部服务集成（文件下载/审批查询等）
+ * 相关的系统级故障。
  *
  * @author <a href="mailto: admin@panoshu.top">panoshu</a>
  * @since 2026/7/23
@@ -15,8 +22,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum CoreInfraErrorCode implements ErrorDefinition {
 
-  FILE_DOWNLOAD_FAILED("300001", "[文件下载失败]{}"),
-  FILE_TOKEN_APPLY_FAILED("300002", "[文件下载令牌申请失败]{}"),
+  FILE_DOWNLOAD_FAILED("22001", "文件下载失败"),
+  FILE_TOKEN_APPLY_FAILED("22002", "文件下载令牌申请失败"),
   ;
 
   final String code;

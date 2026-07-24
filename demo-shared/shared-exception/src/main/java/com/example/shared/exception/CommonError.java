@@ -1,27 +1,44 @@
 package com.example.shared.exception;
 
-
+/**
+ * 通用错误码定义。
+ * <p>
+ * 码段规则（参见 {@code 08-错误码规范.md}）：
+ * <ul>
+ *   <li>通用码段：0XXXX</li>
+ *   <li>00000：操作成功</li>
+ *   <li>00001-00049：4xx 类客户端错误（{@link BusinessException}）</li>
+ *   <li>00050-00099：5xx 类服务端错误（{@link SystemException}）</li>
+ * </ul>
+ * 消息内容使用纯文本，禁止使用 {@code {}} 占位符；动态上下文通过
+ * {@link BaseException#withUserDetail(String)} / {@link BaseException#withLogDetail(String)}
+ * / {@link BaseException#withContext(String, Object)} 附加。
+ *
+ * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
+ * @version 1.0
+ * @since 2026/5/19 14:53
+ */
 public enum CommonError implements ErrorDefinition {
 
   // ==================== 通用成功（通常用于统一响应封装） ====================
   SUCCESS("00000", "操作成功"),
 
-  // ==================== 客户端请求错误 (4xx 系列) ====================
-  BAD_REQUEST("A0400", "请求参数错误"),
-  UNAUTHORIZED("A0401", "未登录或登录已过期"),
-  FORBIDDEN("A0403", "无权限访问"),
-  NOT_FOUND("A0404", "请求资源不存在"),
-  METHOD_NOT_ALLOWED("A0405", "请求方法不允许"),
-  TOO_MANY_REQUESTS("A0429", "请求过于频繁，请稍后再试"),
+  // ==================== 客户端请求错误 4xx 系列（00001-00049） ====================
+  BAD_REQUEST("00001", "请求参数错误"),
+  UNAUTHORIZED("00002", "未登录或登录已过期"),
+  FORBIDDEN("00003", "无权限访问"),
+  NOT_FOUND("00004", "请求资源不存在"),
+  METHOD_NOT_ALLOWED("00005", "请求方法不允许"),
+  TOO_MANY_REQUESTS("00006", "请求过于频繁，请稍后再试"),
 
-  // ==================== 系统执行错误 (5xx 系列) ====================
-  INTERNAL_SERVER_ERROR("B0001", "系统开小差了，请稍后再试"),
-  SERVICE_DEGRADATION("B0002", "系统负载过高，服务降级"),
-  REMOTE_SERVICE_ERROR("B0003", "第三方服务调用失败"),
-  NETWORK_ERROR("B0004", "网络异常，请稍后再试"),
-  CONCURRENCY_ERROR("B0005", "并发错误"),
-  TIMEOUT_ERROR("B0006", "请求超时"),
-  UNKNOW_ERROR("B9999", "系统开小差了，请联系管理员");
+  // ==================== 系统执行错误 5xx 系列（00050-00099） ====================
+  INTERNAL_SERVER_ERROR("00050", "系统开小差了，请稍后再试"),
+  SERVICE_DEGRADATION("00051", "系统负载过高，服务降级"),
+  REMOTE_SERVICE_ERROR("00052", "第三方服务调用失败"),
+  NETWORK_ERROR("00053", "网络异常，请稍后再试"),
+  CONCURRENCY_ERROR("00054", "并发错误"),
+  TIMEOUT_ERROR("00055", "请求超时"),
+  UNKNOWN_ERROR("00099", "系统开小差了，请联系管理员");
 
   private final String code;
   private final String message;

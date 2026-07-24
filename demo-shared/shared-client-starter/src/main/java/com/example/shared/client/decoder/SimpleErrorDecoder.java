@@ -39,7 +39,7 @@ public class SimpleErrorDecoder implements ErrorDecoder {
   @Override
   public RuntimeException exceptionDecode(Request request, Exception cause) {
     // 4. 其他未知异常
-    return new SystemException(CommonError.UNKNOW_ERROR, cause)
+    return new SystemException(CommonError.UNKNOWN_ERROR, cause)
       .withLogDetail("Host: %s".formatted(request.url()));
   }
 

@@ -22,11 +22,21 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 import java.util.List;
 
+/**
+ * 事件模块自动配置。
+ * <p>
+ * 标注 {@link EnableScheduling} 以激活 {@code EventRecoveryJob} 的 {@code @Scheduled} 补偿任务，
+ * 确保未投递的领域事件能被定时重试。
+ *
+ * @author panoshu
+ */
 @AutoConfiguration
+@EnableScheduling
 public class EventAutoConfiguration {
 
   @Bean

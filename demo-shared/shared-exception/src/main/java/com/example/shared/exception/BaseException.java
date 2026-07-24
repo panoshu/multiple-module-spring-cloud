@@ -5,17 +5,23 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 基础异常类
- * 1. 身份与动态分离：ErrorCode 只提供静态身份和标准话术，动态信息通过 withDetail 和 with 传入。
- * 2. 面向用户与面向运维分离：detail 仅供前端展示补充说明，logContext 专供日志/ELK做结构化检索。
- * 3. 纯粹无依赖：不包含任何日志框架依赖和字符串格式化逻辑，只做纯粹的载体。
- * 4. 线程安全防御：对外暴露的上下文为只读视图，防止在全局异常处理器等外部环境中被意外修改。
+ * 基础异常类（抽象）。
+ * <p>
+ * 设计要点：
+ * <ol>
+ *   <li>身份与动态分离：ErrorDefinition 只提供静态身份和标准话术，动态信息通过 withXxx 传入。</li>
+ *   <li>面向用户与面向运维分离：userDetail 仅供前端展示补充说明，logContext 专供日志/ELK 做结构化检索。</li>
+ *   <li>纯粹无依赖：不包含任何日志框架依赖和字符串格式化逻辑，只做纯粹的载体。</li>
+ *   <li>线程安全防御：对外暴露的上下文为只读视图，防止在全局异常处理器等外部环境中被意外修改。</li>
+ *   <li>抽象强制：本类为抽象类，业务方只能实例化其子类（{@link DomainException}、
+ *       {@link BusinessException}、{@link SystemException}），避免抛出语义不明的"裸"基础异常。</li>
+ * </ol>
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0
  * @since 2026/5/19 14:52
  */
-public class BaseException extends RuntimeException {
+public abstract class BaseException extends RuntimeException {
 
   /**
    * 错误码枚举，定义异常的静态身份和标准用户提示
@@ -37,12 +43,23 @@ public class BaseException extends RuntimeException {
    */
   private String logDetail;
 
-  public BaseException(ErrorDefinition errorDefinition) {
+  /**
+   * 受保护构造函数，仅供子类调用。
+   *
+   * @param errorDefinition 错误码定义，不能为 null
+   */
+  protected BaseException(ErrorDefinition errorDefinition) {
     super(errorDefinition.errorInfo());
     this.errorDefinition = errorDefinition;
   }
 
-  public BaseException(ErrorDefinition errorDefinition, Throwable cause) {
+  /**
+   * 受保护构造函数，仅供子类调用。
+   *
+   * @param errorDefinition 错误码定义，不能为 null
+   * @param cause           原始异常
+   */
+  protected BaseException(ErrorDefinition errorDefinition, Throwable cause) {
     super(errorDefinition.errorInfo(), cause);
     this.errorDefinition = errorDefinition;
   }

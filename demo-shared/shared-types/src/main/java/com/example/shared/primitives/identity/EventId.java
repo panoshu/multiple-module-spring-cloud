@@ -12,6 +12,12 @@ import java.util.Random;
 @IdDefinition(type = IdType.ULID)
 public record EventId(String value) implements Identifier<String> {
 
+  public EventId {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("EventId cannot be null or blank.");
+    }
+  }
+
   private static final char[] ENCODING = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".toCharArray();
   private static final int ULID_LENGTH = 26;
   private static final int TIME_PART_LENGTH = 10;

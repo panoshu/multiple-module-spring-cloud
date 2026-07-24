@@ -6,8 +6,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * ID 生成器配置属性。
+ * <p>
+ * 配置前缀为 {@code shared.id}，与 application.yml 中的 {@code shared.id.rules} 保持一致。
+ * 路由规则 {@code rules} 用于将业务类型映射到物理数据库序列 Key。
+ *
+ * @author panoshu
+ */
 @Data
-@ConfigurationProperties(prefix = "shared.identity")
+@ConfigurationProperties(prefix = "shared.id")
 public class IdProperties {
   // 路由规则
   private Map<String, String> rules;
