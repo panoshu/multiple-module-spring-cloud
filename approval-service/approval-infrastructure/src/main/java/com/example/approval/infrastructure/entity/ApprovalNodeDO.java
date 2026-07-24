@@ -79,15 +79,13 @@ public class ApprovalNodeDO {
     private String updatedBy;
 
     /**
-     * 创建时间
+     * 创建时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
      */
-    @Column(onInsertValue = "now()")
     private LocalDateTime createTime;
 
     /**
-     * 更新时间
+     * 更新时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
      */
-    @Column(onInsertValue = "now()", onUpdateValue = "now()")
     private LocalDateTime updateTime;
 
     /**

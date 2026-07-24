@@ -56,6 +56,11 @@ public interface ApprovalInstanceConverter {
     @Mapping(target = "businessType", expression = "java(instance.businessType())")
     @Mapping(target = "currentNodeOrder", expression = "java(instance.currentNodeOrder() != null ? instance.currentNodeOrder().value() : null)")
     @Mapping(target = "status", expression = "java(instanceStatusToString(instance.status()))")
+    @Mapping(target = "initiatorPlan", expression = "java(instance.initiatorPlan())")
+    @Mapping(target = "currentPlan", expression = "java(instance.currentPlan())")
+    // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
+    @Mapping(target = "createTime", expression = "java(instance.createdAt())")
+    @Mapping(target = "updateTime", expression = "java(instance.updatedAt())")
     @Mapping(target = "createdBy", expression = "java(instance.createdBy() != null ? instance.createdBy().value() : null)")
     @Mapping(target = "updatedBy", expression = "java(instance.updatedBy() != null ? instance.updatedBy().value() : null)")
     @Mapping(target = "version", expression = "java(instance.version() != null ? (int) instance.version().value() : null)")
@@ -98,11 +103,16 @@ public interface ApprovalInstanceConverter {
      * @return 节点执行记录DO对象
      */
     @Mapping(target = "id", expression = "java(execution.id() != null ? String.valueOf(execution.id().value()) : null)")
+    // instanceId 由 RepositoryImpl 在保存时从聚合根上下文设置，领域对象不持有此关联字段
+    @Mapping(target = "instanceId", ignore = true)
     @Mapping(target = "nodeId", expression = "java(execution.nodeId() != null ? String.valueOf(execution.nodeId().value()) : null)")
     @Mapping(target = "nodeOrder", expression = "java(execution.nodeOrder() != null ? execution.nodeOrder().value() : null)")
     @Mapping(target = "status", expression = "java(executionStatusToString(execution.status()))")
     @Mapping(target = "startedAt", expression = "java(execution.startedAt())")
     @Mapping(target = "completedAt", expression = "java(execution.completedAt())")
+    // createTime/updateTime 由数据库自动管理
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "createdBy", expression = "java(execution.createdBy() != null ? execution.createdBy().value() : null)")
     @Mapping(target = "updatedBy", expression = "java(execution.updatedBy() != null ? execution.updatedBy().value() : null)")
     @Mapping(target = "version", expression = "java(execution.version() != null ? (int) execution.version().value() : null)")
@@ -142,12 +152,17 @@ public interface ApprovalInstanceConverter {
      * @return 审批记录DO对象
      */
     @Mapping(target = "id", expression = "java(record.id() != null ? String.valueOf(record.id().value()) : null)")
+    // executionId 由 RepositoryImpl 在保存时从聚合根上下文设置，领域对象不持有此关联字段
+    @Mapping(target = "executionId", ignore = true)
     @Mapping(target = "approverId", expression = "java(record.approverId() != null ? record.approverId().value() : null)")
     @Mapping(target = "action", expression = "java(approvalActionToString(record.action()))")
     @Mapping(target = "opinion", expression = "java(approvalOpinionToString(record.opinion()))")
     @Mapping(target = "rejectTarget", expression = "java(rejectTargetToJson(record.rejectTarget()))")
     @Mapping(target = "transferTo", expression = "java(record.transferTo() != null ? record.transferTo().value() : null)")
     @Mapping(target = "operatedAt", expression = "java(record.operatedAt())")
+    // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
+    @Mapping(target = "createTime", expression = "java(record.createdAt())")
+    @Mapping(target = "updateTime", expression = "java(record.updatedAt())")
     @Mapping(target = "createdBy", expression = "java(record.createdBy() != null ? record.createdBy().value() : null)")
     @Mapping(target = "updatedBy", expression = "java(record.updatedBy() != null ? record.updatedBy().value() : null)")
     @Mapping(target = "version", expression = "java(record.version() != null ? (int) record.version().value() : null)")

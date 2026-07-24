@@ -579,6 +579,8 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 DO实体是基础设施层与数据库的映射对象，使用MyBatis-Flex注解。
 
+> **时间戳管理约束**：`createTime`/`updateTime` 禁止使用 `@Column(onInsertValue/onUpdateValue)` 自动管理，必须由应用层通过 Converter 从领域对象 `createdAt()`/`updatedAt()` 映射。详见 `06-数据库规范.md` 第十节。
+
 ```java
 package com.example.order.infrastructure.entity;
 
@@ -601,10 +603,9 @@ public class OrderDO {
     private BigDecimal totalAmount;
     private String currency;
 
-    @Column(onInsertValue = "now()")
+    // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
     private LocalDateTime createTime;
 
-    @Column(onInsertValue = "now()", onUpdateValue = "now()")
     private LocalDateTime updateTime;
 
     private String createdBy;
@@ -776,3 +777,6 @@ public class ExternalPaymentGatewayImpl implements ExternalPaymentGateway {
 - [ ] DTOAssembler是否将领域对象正确转换为DTO？
 - [ ] Gateway实现是否将外部模型转换为内部领域模型？
 - [ ] DO实体是否包含通用字段（createTime/updateTime/deleted/version）？
+- [ ] DO 的 createTime/updateTime 是否**未使用** `@Column(onInsertValue/onUpdateValue)`？
+- [ ] Converter 的 toDO 方法是否从 `createdAt()`/`updatedAt()` 映射到 `createTime`/`updateTime`？
+- [ ] Converter 的 toDO 方法是否**未对** `createTime`/`updateTime` **使用** `@Mapping(ignore = true)`？

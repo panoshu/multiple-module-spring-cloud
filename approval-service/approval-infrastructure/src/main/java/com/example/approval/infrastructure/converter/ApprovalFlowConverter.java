@@ -44,9 +44,14 @@ public interface ApprovalFlowConverter {
      */
     @Mapping(target = "id", expression = "java(flow.id() != null ? String.valueOf(flow.id().value()) : null)")
     @Mapping(target = "flowName", expression = "java(flow.flowName() != null ? flow.flowName().value() : null)")
+    // businessType 在领域对象中不存在，DO 保留此字段供未来扩展，暂忽略
+    @Mapping(target = "businessType", ignore = true)
     @Mapping(target = "matchRules", expression = "java(matchRulesToJson(flow.matchRules()))")
     @Mapping(target = "flowVersion", expression = "java(flow.flowVersion() != null ? flow.flowVersion().value() : null)")
     @Mapping(target = "status", expression = "java(flowStatusToString(flow.status()))")
+    // createTime/updateTime 由数据库 @Column(onInsertValue/onUpdateValue) 自动管理
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
     @Mapping(target = "createdBy", expression = "java(flow.createdBy() != null ? flow.createdBy().value() : null)")
     @Mapping(target = "updatedBy", expression = "java(flow.updatedBy() != null ? flow.updatedBy().value() : null)")
     @Mapping(target = "version", expression = "java(flow.version() != null ? (int) flow.version().value() : null)")
@@ -94,6 +99,9 @@ public interface ApprovalFlowConverter {
     @Mapping(target = "approverIds", expression = "java(userNoListToJson(node.approverIds()))")
     @Mapping(target = "roleIds", expression = "java(stringListToJson(node.roleIds()))")
     @Mapping(target = "signMode", expression = "java(signModeToString(node.signMode()))")
+    // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
+    @Mapping(target = "createTime", expression = "java(node.createdAt())")
+    @Mapping(target = "updateTime", expression = "java(node.updatedAt())")
     @Mapping(target = "createdBy", expression = "java(node.createdBy() != null ? node.createdBy().value() : null)")
     @Mapping(target = "updatedBy", expression = "java(node.updatedBy() != null ? node.updatedBy().value() : null)")
     @Mapping(target = "version", expression = "java(node.version() != null ? (int) node.version().value() : null)")

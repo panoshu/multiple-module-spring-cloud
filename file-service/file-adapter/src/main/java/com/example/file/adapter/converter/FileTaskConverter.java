@@ -13,6 +13,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface FileTaskConverter {
 
+  @Mapping(target = "sourceFileName", source = "fileName")
+  // sourceFileId 由应用层在上传完成后设置，Request 阶段无此信息
+  @Mapping(target = "sourceFileId", ignore = true)
   UploadFileCommand toCommand(UploadFileRequest request);
 
   @Mapping(target = "fileTaskId", source = "fileTaskId")
@@ -33,10 +36,14 @@ public interface FileTaskConverter {
   FileTaskDTO toDTO(FileTaskDetailResult result);
 
   @Mapping(target = "subTaskId", source = "subTaskId")
+  // fileTaskId 可从父级 FileTaskDTO 上下文获取，SubTaskSummaryItem 无需重复
+  @Mapping(target = "fileTaskId", ignore = true)
   @Mapping(target = "splitKey", source = "splitKey")
   @Mapping(target = "totalRows", source = "totalRows")
   @Mapping(target = "validRows", source = "validRows")
   @Mapping(target = "invalidRows", source = "invalidRows")
   @Mapping(target = "status", source = "status")
+  // createdAt 暂未在 SubTaskSummaryItem 中提供，后续如需可扩展
+  @Mapping(target = "createdAt", ignore = true)
   SubTaskDTO toSubTaskDTO(FileTaskDetailResult.SubTaskSummaryItem item);
 }

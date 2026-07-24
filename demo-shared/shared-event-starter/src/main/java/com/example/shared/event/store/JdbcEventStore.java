@@ -2,6 +2,7 @@ package com.example.shared.event.store;
 
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventStore;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,7 +107,7 @@ public class JdbcEventStore implements EventStore {
             String payload = rs.getString("payload");
             String integrationType = rs.getString("event_type");
             // 直接用 Map 反序列化，不依赖具体类（避免 Class.forName）
-            Map<String, Object> integrationEvent = objectMapper.readValue(payload, Map.class);
+          Map<String, Object> integrationEvent = objectMapper.readValue(payload, new TypeReference<>() {});
             return new PendingEntry(logId, integrationEvent, channel, integrationType, retryCount);
           } catch (Exception e) {
             log.error("Failed to deserialize pending entry", e);

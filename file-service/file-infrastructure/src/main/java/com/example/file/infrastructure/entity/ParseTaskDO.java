@@ -34,10 +34,9 @@ public class ParseTaskDO {
     private String createdBy;
     private String updatedBy;
 
-    @Column(onInsertValue = "now()")
+    // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
     private LocalDateTime createTime;
 
-    @Column(onInsertValue = "now()", onUpdateValue = "now()")
     private LocalDateTime updateTime;
 
     @Column(isLogicDelete = true)
