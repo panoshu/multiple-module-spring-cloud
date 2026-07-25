@@ -19,6 +19,7 @@
     <module>approval-service</module>
     <module>file-service</module>
     <module>annuity-service</module>
+    <module>iam-service</module>
   </modules>
 
   <properties>
@@ -58,6 +59,8 @@
     <qlexpress4.version>4.1.2</qlexpress4.version>
     <rocketmq.version>2.3.6</rocketmq.version>
     <kona-crypto.version>1.0.15</kona-crypto.version>
+    <sa-token.version>1.45.0</sa-token.version>
+    <bcrypt.version>0.4</bcrypt.version>
   </properties>
 
   <dependencyManagement>
@@ -159,6 +162,42 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>annuity-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <!-- iam-service -->
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-adapter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-infrastructure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -416,6 +455,30 @@
         <groupId>com.tencent.kona</groupId>
         <artifactId>kona-crypto</artifactId>
         <version>${kona-crypto.version}</version>
+      </dependency>
+
+      <!-- Sa-Token 认证与权限框架 -->
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-spring-boot3-starter</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-redis-jackson</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+
+      <!-- BCrypt 密码哈希 -->
+      <dependency>
+        <groupId>org.mindrot</groupId>
+        <artifactId>jbcrypt</artifactId>
+        <version>${bcrypt.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
