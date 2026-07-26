@@ -19,6 +19,7 @@ class IdTypesTest {
     assertEquals(CredentialId.of(1L), CredentialId.of(1L));
     assertEquals(SecondaryAuthSessionId.of(1L), SecondaryAuthSessionId.of(1L));
     assertEquals(LoginLogId.of(1L), LoginLogId.of(1L));
+    assertEquals(LoginFailureRecordId.of(1L), LoginFailureRecordId.of(1L));
     assertEquals(PermissionRuleId.of(1L), PermissionRuleId.of(1L));
     assertEquals(PlanDelegationId.of(1L), PlanDelegationId.of(1L));
     assertEquals(BusinessDefinitionId.of(1L), BusinessDefinitionId.of(1L));
@@ -37,6 +38,7 @@ class IdTypesTest {
     assertThrows(NullPointerException.class, () -> CredentialId.of((Long) null));
     assertThrows(NullPointerException.class, () -> SecondaryAuthSessionId.of((Long) null));
     assertThrows(NullPointerException.class, () -> LoginLogId.of((Long) null));
+    assertThrows(NullPointerException.class, () -> LoginFailureRecordId.of((Long) null));
     assertThrows(NullPointerException.class, () -> PermissionRuleId.of((Long) null));
     assertThrows(NullPointerException.class, () -> PlanDelegationId.of((Long) null));
     assertThrows(NullPointerException.class, () -> BusinessDefinitionId.of((Long) null));
