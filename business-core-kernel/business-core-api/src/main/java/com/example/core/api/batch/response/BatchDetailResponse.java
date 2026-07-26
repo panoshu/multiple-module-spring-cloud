@@ -9,8 +9,7 @@ import java.util.List;
  * @author panoshu
  */
 public record BatchDetailResponse(
-    Long batchId,
-    String batchNo,
+    String batchId,
     String businessType,
     String planNo,
     String customerNo,
@@ -28,7 +27,7 @@ public record BatchDetailResponse(
      * 批次下表单摘要
      */
     public record FormSummary(
-        Long formId,
+        String formId,
         String fileName,
         String status,
         int applicationCount,

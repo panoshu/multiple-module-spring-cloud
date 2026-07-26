@@ -122,4 +122,68 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     return status != null && status.isTerminal();
   }
 
+  /**
+   * 工厂方法:创建新业务批次
+   *
+   * @param batchId 批次ID
+   * @param context 业务上下文
+   * @param operator 操作人信息
+   * @return 新创建的批次聚合根
+   */
+  public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
+    BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
+    batch.businessContext = context;
+    batch.operatorInfo = operator;
+    batch.status = BatchStatus.CREATED;
+    return batch;
+  }
+
+  /**
+   * 行为:取消批次
+   *
+   * <p>只有 CREATED 或 PROCESSING 状态的批次才能取消。
+   *
+   * @param reason 取消原因
+   * @throws DomainException 当批次状态不允许取消时
+   */
+  public void cancel(String reason) {
+    if (this.status == null || !this.status.isActive()) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("只有未完成/处理中的批次才能取消, BatchId: %s, status: %s".formatted(this.id().value(), this.status));
+    }
+    BatchStatus oldStatus = this.status;
+    this.status = BatchStatus.CANCELLED;
+    this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, BatchStatus.CANCELLED));
+  }
+
+  // ============ Getters ============
+
+  public BusinessContext getBusinessContext() {
+    return this.businessContext;
+  }
+
+  public OperatorInfo getOperatorInfo() {
+    return this.operatorInfo;
+  }
+
+  public BatchStatus getStatus() {
+    return this.status;
+  }
+
+  public int getTotalApplicationCount() {
+    return this.totalApplicationCount;
+  }
+
+  public int getSuccessCount() {
+    return this.successCount;
+  }
+
+  public int getFailedCount() {
+    return this.failedCount;
+  }
+
+  public List<BusinessFormRef> getBusinessFormRefs() {
+    return this.businessFormRefs;
+  }
+
 }

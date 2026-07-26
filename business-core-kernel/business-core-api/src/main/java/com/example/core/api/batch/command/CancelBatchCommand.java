@@ -1,7 +1,6 @@
 package com.example.core.api.batch.command;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * 取消业务批次命令
@@ -9,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
  * @author panoshu
  */
 public record CancelBatchCommand(
-    @NotNull(message = "批次ID不能为空") Long batchId,
+    @NotBlank(message = "批次ID不能为空") String batchId,
     String reason
 ) {
 }

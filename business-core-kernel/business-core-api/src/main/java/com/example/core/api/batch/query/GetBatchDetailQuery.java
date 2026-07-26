@@ -1,6 +1,6 @@
 package com.example.core.api.batch.query;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 查询批次详情
@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotNull;
  * @author panoshu
  */
 public record GetBatchDetailQuery(
-    @NotNull(message = "批次ID不能为空") Long batchId
+    @NotBlank(message = "批次ID不能为空") String batchId
 ) {
 }
