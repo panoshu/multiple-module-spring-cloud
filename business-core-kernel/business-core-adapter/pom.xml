@@ -38,6 +38,12 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- AOP 支持:BusinessPermissionAspect 拦截 @RequireBusinessPermission -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+
     <!-- 测试依赖:JUnit5 + AssertJ + Spring Test(MockHttpServletRequest) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
