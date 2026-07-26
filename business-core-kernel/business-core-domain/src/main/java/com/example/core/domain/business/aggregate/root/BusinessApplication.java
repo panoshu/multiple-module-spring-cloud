@@ -143,6 +143,22 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   }
 
   /**
+   * 移除某个材料项下指定的已上传文件
+   *
+   * @param materialCode 材料编码
+   * @param fileId       文件 ID
+   */
+  public void removeIndividualPlanMaterial(String materialCode, FileId fileId) {
+    if (this.packageFile != null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("Application: %s 已使用打包上传模式(%s)，不可逐个移除材料".formatted(this.id(), this.packageFile.fileName()));
+    }
+    this.planMaterials = this.planMaterials.stream()
+      .map(m -> m.materialCode().equals(materialCode) ? m.removeUpload(fileId) : m)
+      .toList();
+  }
+
+  /**
    * 打包上传
    */
   public void uploadPackage(BusinessFile zipFile) {
@@ -325,6 +341,17 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    */
   public BusinessFile getPackageFile() {
     return this.packageFile;
+  }
+
+  /**
+   * 获取计划层材料列表(只读)。
+   * <p>
+   * 供 MaterialConverter 转换 DTO 与 MaterialAppService 查询使用。
+   *
+   * @return 计划层材料列表
+   */
+  public List<MaterialItem> getPlanMaterials() {
+    return this.planMaterials;
   }
 
   /**
