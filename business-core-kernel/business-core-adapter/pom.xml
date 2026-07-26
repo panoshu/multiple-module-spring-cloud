@@ -30,6 +30,26 @@
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <!-- SessionContextResolver 依赖 HttpServletRequest(运行时由嵌入式 Tomcat 提供) -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- AOP 支持:BusinessPermissionAspect 拦截 @RequireBusinessPermission -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+
+    <!-- 测试依赖:JUnit5 + AssertJ + Spring Test(MockHttpServletRequest) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

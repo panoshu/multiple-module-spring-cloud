@@ -3,7 +3,9 @@ package com.example.core.domain.business.repository;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.shared.domain.repository.Repository;
 import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.primitives.identity.BatchId;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,5 +32,21 @@ public interface ApplicationRepository extends Repository<BusinessApplication, A
   default Optional<BusinessApplication> findByFileTaskId(String fileTaskId) {
     throw new UnsupportedOperationException(
       "ApplicationRepository.findByFileTaskId 尚未实现，具体业务服务需覆写本方法");
+  }
+
+  /**
+   * 通过批次 ID 查询该批次下所有业务申请单。
+   * <p>
+   * 用于 {@code BusinessApplicationApi.list} 接口按批次聚合查询申请单列表。
+   * <p>
+   * <b>注意:</b>本方法为 {@code default} 实现,抛出 {@link UnsupportedOperationException},
+   * 具体业务服务需按需覆写本方法以提供真实的查询能力。
+   *
+   * @param batchId 批次 ID
+   * @return 该批次下的所有业务申请单列表;若未覆写则抛出异常
+   */
+  default List<BusinessApplication> findByBatchId(BatchId batchId) {
+    throw new UnsupportedOperationException(
+      "ApplicationRepository.findByBatchId 尚未实现,具体业务服务需覆写本方法");
   }
 }

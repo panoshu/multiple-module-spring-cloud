@@ -44,6 +44,13 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Spring Boot AutoConfigure (提供 @ConditionalOnMissingBean 等条件注解) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Spring Web (提供 @HttpExchange 等注解支持) -->
     <dependency>
       <groupId>org.springframework</groupId>

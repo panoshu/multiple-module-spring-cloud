@@ -103,4 +103,46 @@ public class BusinessFormAppService {
 
     log.info("表单解析回调处理完成，共创建 {} 个申请单", parsedResults.size());
   }
+
+  /**
+   * 申请文件上传临时凭证。
+   *
+   * <p>调用底层文件集成网关,获取直传 token,前端使用该 token 直接上传文件到文件服务。
+   *
+   * @param clientIp 客户端 IP
+   * @param userId 用户 ID
+   * @param fileSize 文件大小(字节)
+   * @return 上传 token 字符串
+   */
+  public String applyUploadToken(String clientIp, String userId, long fileSize) {
+    String token = fileIntegrationGateway.applyUploadToken(clientIp, userId, fileSize);
+    log.info("申请上传 token 成功: userId={}, fileSize={}", userId, fileSize);
+    return token;
+  }
+
+  /**
+   * 删除表单。
+   *
+   * @param formId 表单 ID
+   */
+  @Transactional
+  public void deleteForm(FormId formId) {
+    BusinessForm form = formRepository.loadOrThrow(formId);
+    form.markAsDeleted();
+    formRepository.save(form);
+    form.getDomainEvents().forEach(eventBus::publish);
+    form.clearDomainEvents();
+    log.info("删除表单: formId={}", formId.value());
+  }
+
+  /**
+   * 查询表单状态。
+   *
+   * @param formId 表单 ID
+   * @return 表单聚合根
+   */
+  @Transactional(readOnly = true)
+  public BusinessForm getFormStatus(FormId formId) {
+    return formRepository.loadOrThrow(formId);
+  }
 }

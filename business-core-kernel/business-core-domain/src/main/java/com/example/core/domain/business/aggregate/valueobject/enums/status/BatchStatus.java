@@ -1,14 +1,14 @@
 package com.example.core.domain.business.aggregate.valueobject.enums.status;
 
 /**
- * description
+ * 业务批次状态
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0
  * @since 2026/5/12 12:59
  */
 public enum BatchStatus {
-  CREATED, PROCESSING, PARTIAL_FAILED, FAILED, COMPLETED;
+  CREATED, PROCESSING, PARTIAL_FAILED, FAILED, COMPLETED, CANCELLED;
 
   public static BatchStatus determine(int failedCount, int totalCount) {
 
@@ -26,6 +26,10 @@ public enum BatchStatus {
   }
 
   public boolean isTerminal() {
-    return this == COMPLETED || this == FAILED || this == PARTIAL_FAILED;
+    return this == COMPLETED || this == FAILED || this == PARTIAL_FAILED || this == CANCELLED;
+  }
+
+  public boolean isActive() {
+    return this == CREATED || this == PROCESSING;
   }
 }
