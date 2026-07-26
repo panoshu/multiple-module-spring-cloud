@@ -9,16 +9,19 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>iam-adapter</artifactId>
-  <description>IAM 服务 - 适配器层（Controller、Adapter Converter）</description>
+  <description>iam-service 适配器层(Controller + sa-token 集成)</description>
   <dependencies>
     <dependency><groupId>com.example</groupId><artifactId>iam-api</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>iam-application</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>shared-web-starter</artifactId></dependency>
+    <!-- sa-token:仅在 adapter 层引入,api 层禁止依赖 sa-token -->
+    <dependency><groupId>cn.dev33</groupId><artifactId>sa-token-spring-boot3-starter</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
     <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
-    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
   </dependencies>
 </project>

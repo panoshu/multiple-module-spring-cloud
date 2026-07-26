@@ -9,21 +9,16 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>iam-api</artifactId>
-  <description>IAM 服务 - API 层（sa-token 工具类、@HttpExchange 接口、DTO）</description>
+  <description>iam-service API 接口层(@HttpExchange 定义 + DTO/Command/Query)</description>
   <dependencies>
     <dependency><groupId>com.example</groupId><artifactId>shared-api</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>shared-types</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>iam-types</artifactId></dependency>
-    <!-- sa-token 核心 -->
-    <dependency><groupId>cn.dev33</groupId><artifactId>sa-token-spring-boot3-starter</artifactId></dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>jakarta.validation</groupId>
-      <artifactId>jakarta.validation-api</artifactId>
-    </dependency>
+    <dependency><groupId>jakarta.validation</groupId><artifactId>jakarta.validation-api</artifactId></dependency>
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

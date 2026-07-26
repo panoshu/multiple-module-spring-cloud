@@ -60,7 +60,6 @@
     <rocketmq.version>2.3.6</rocketmq.version>
     <kona-crypto.version>1.0.15</kona-crypto.version>
     <sa-token.version>1.45.0</sa-token.version>
-    <bcrypt.version>0.4</bcrypt.version>
   </properties>
 
   <dependencyManagement>
@@ -164,7 +163,7 @@
         <artifactId>annuity-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <!-- iam-service -->
+      <!-- iam-service 模块 -->
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>iam-types</artifactId>
@@ -457,7 +456,7 @@
         <version>${kona-crypto.version}</version>
       </dependency>
 
-      <!-- Sa-Token 认证与权限框架 -->
+      <!-- sa-token:iam-service 用户与权限服务 -->
       <dependency>
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-spring-boot3-starter</artifactId>
@@ -472,13 +471,6 @@
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-redis-jackson</artifactId>
         <version>${sa-token.version}</version>
-      </dependency>
-
-      <!-- BCrypt 密码哈希 -->
-      <dependency>
-        <groupId>org.mindrot</groupId>
-        <artifactId>jbcrypt</artifactId>
-        <version>${bcrypt.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

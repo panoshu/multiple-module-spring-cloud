@@ -11,7 +11,7 @@
 
   <artifactId>iam-service</artifactId>
   <packaging>pom</packaging>
-  <description>用户与权限服务 - 基于 sa-token 实现多渠道用户认证与三层权限（RBAC + PBAC + 数据权限）</description>
+  <description>Identity and Access Management Service (sa-token based)</description>
 
   <modules>
     <module>iam-types</module>
