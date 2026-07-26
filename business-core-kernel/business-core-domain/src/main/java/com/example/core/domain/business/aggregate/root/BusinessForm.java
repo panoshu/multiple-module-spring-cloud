@@ -6,11 +6,13 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
+import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
+import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
 import com.example.shared.primitives.identity.BatchId;
 import com.example.shared.primitives.identity.FormId;
 import com.example.shared.primitives.identity.UserNo;
-import com.example.shared.domain.aggregate.valueobject.Version;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,6 +64,35 @@ public class BusinessForm extends AggregateRoot<FormId> {
   public void markAsParsed() {
     this.formStatus = FormStatus.PARSED;
     // TODO 创建领域事件
+  }
+
+  /**
+   * 行为:标记表单为已删除
+   *
+   * <p>只有 UPLOADED/PARSED/WAITING_UPLOAD 状态的表单才能删除。
+   * 已是 DELETED 状态直接返回(幂等)。
+   *
+   * @throws DomainException 当表单状态不允许删除时
+   */
+  public void markAsDeleted() {
+    if (this.formStatus == FormStatus.DELETED) {
+      return;
+    }
+    if (this.formStatus != FormStatus.UPLOADED
+        && this.formStatus != FormStatus.PARSED
+        && this.formStatus != FormStatus.WAITING_UPLOAD) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("只有已上传/已解析/待上传的表单才能删除, FormId: %s, status: %s"
+          .formatted(this.id().value(), this.formStatus));
+    }
+    this.formStatus = FormStatus.DELETED;
+  }
+
+  /**
+   * 获取表单状态
+   */
+  public FormStatus getFormStatus() {
+    return this.formStatus;
   }
 
   public BusinessContext getBusinessContext() {
