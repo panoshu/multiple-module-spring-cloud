@@ -44,7 +44,7 @@ SessionContext 作为 sa-token `Token-Session` 的一部分,与 token 同生命�
 | 身份 | `userNo` / `userType` / `loginName` / `displayName` | 登录 | 全部 | USER / PARTNER / SYSTEM |
 | 渠道 | `channelType` / `clientId` / `clientIp` | 登录 | 全部 | INTERNET / HQ / BRANCH |
 | 客户 | `customerNo` / `customerName` | 选计划时确定 | 全部 | |
-| 计划 | `planNo` / `planName` / `productNo` / `productName` / `operationModel` | 选计划时写入 | 全部 | |
+| 计划 | `planNo` / `planName` / `productNo` / `productName` / `operationModel` / `accountManager` | 选计划时写入 | 全部 | `accountManager` 为账管人枚举(CJP/CMB/BOC 等) |
 | 代办 | `isProxy` / `onBehalfOfUserNo` / `onBehalfOfLoginName` | 发起代办时 | **仅 INTERNET** | 网上渠道代办办理,代办人代实际用户办理业务 |
 | 二次授权 | `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId` | 二次授权完成时 | **仅 BRANCH** | 网点渠道借用企业授权人身份办理 |
 | 权限 | `permissionCodes: Set<String>` | 选计划 / 权限变更时 | 全部 | 功能权限码 + 业务类型办理权限码 |
@@ -78,36 +78,73 @@ gateway 在请求转发前,从 sa-token `Token-Session` 读取 SessionContext,�
 
 ### 3.1 定位
 
-前端发起业务办理意图时携带的"业务基础信息超集",用于 `createBatch` 等需要强类型元数据的公共接口。
+`BusinessMetaContext` 是 kernel 内部使用的**强类型业务元数据超集**,用于 `createBatch` 等公共接口的应用层编排。它是**后端组装的**,不是前端直传的——前端只传必要的"办理意图",其余元数据由 kernel 从 `SessionContext` 取出组装,避免前端伪造客户/产品/账管人等敏感字段。
 
-### 3.2 字段
+### 3.2 字段与来源划分
+
+| 字段 | 来源 | 说明 |
+|---|---|---|
+| `businessType` | **前端传**(Command) | 用户本次要办理的业务类型,如 `ANNUITY_OPEN` |
+| `planNo` | **前端传**(Command) | 用户本次办理所针对的计划编号,用于与 SessionContext 校验一致性 |
+| `customerNo` / `customerName` | **后端组装**(SessionContext) | 选计划时已确定,前端无需传 |
+| `productNo` / `productName` | **后端组装**(SessionContext) | 选计划时已确定 |
+| `operationModel` | **后端组装**(SessionContext) | 选计划时已确定 |
+| `accountManager` | **后端组装**(SessionContext) | 账管人枚举,选计划时已确定 |
+| `planName` | **后端组装**(SessionContext) | 选计划时已确定 |
+
+**完整 record(kernel 内部使用)**:
 
 ```java
 public record BusinessMetaContext(
-    String businessType,        // 业务类型枚举名(必填)
-    String customerNo,          // 客户编号(必填)
-    String customerName,
-    String productNo,           // 产品编号(必填)
-    String productName,
-    String planNo,              // 计划编号(必填)
-    String planName,
-    String operationModel,      // 运作模式(必填)
-    String accountManagerNo     // 客户经理(可空)
+    String businessType,        // 来自 Command
+    String planNo,              // 来自 Command,用于校验
+    String customerNo,          // 来自 SessionContext
+    String customerName,        // 来自 SessionContext
+    String productNo,           // 来自 SessionContext
+    String productName,         // 来自 SessionContext
+    String planName,            // 来自 SessionContext
+    String operationModel,      // 来自 SessionContext
+    String accountManager       // 来自 SessionContext,账管人枚举值
 ) {}
 ```
 
-### 3.3 与 SessionContext 的关系
+### 3.3 前端 Command 入参(精简版)
 
-- `BusinessMetaContext` = 前端声明"我要办什么业务"(意图)
-- `SessionContext` = gateway 透传"当前用户是谁"(身份)
-- kernel 在 `createBatch` 时**校验两者一致**:
-  - `meta.planNo` 必须等于 `session.planNo`(防止跨计划办理)
-  - `meta.customerNo` 必须等于 `session.customerNo`(防止跨客户办理)
-  - `meta.businessType` 是否在用户办理权限范围内由 `BusinessAccessGuard.checkCanHandle` 统一校验(见 §4.2),不通过功能权限码 `permissionCodes` 表达
+前端调用公共接口时,Command 只包含**前端必须传递的字段**:
 
-### 3.4 为什么用强类型超集而不是 Map
+```java
+public record CreateBatchCommand(
+    String businessType,        // 业务类型(必填)
+    String planNo,              // 计划编号(必填,用于与 SessionContext 校验)
+    String operatorRemark       // 操作备注(可选)
+) {}
+```
 
-- 编译期校验、IDE 提示、`@Valid` 注解可用
+其他公共接口(如 `applyUploadToken`/`advanceStep`)的入参只需要 `batchId`/`formId`/`applicationId` 等标识符,无需传递业务元数据。
+
+### 3.4 后端组装流程
+
+kernel 在 Controller 入口完成以下步骤:
+
+1. 从 `X-Session-Context` header 解析 `SessionContext`
+2. 接收前端 Command(只含 `businessType`/`planNo` 等)
+3. **校验 `command.planNo` 等于 `session.planNo`**(防止跨计划办理)
+4. **从 SessionContext 取客户/产品/账管人等字段,与 Command 中的 `businessType`/`planNo` 组装成完整的 `BusinessMetaContext`**
+5. 将组装好的 `BusinessMetaContext` 传入应用层
+
+### 3.5 与 SessionContext 的关系
+
+- `BusinessMetaContext` = kernel 内部组装的"完整业务上下文"(意图 + 身份)
+- `SessionContext` = gateway 透传的"当前用户身份与会话状态"(信任源)
+- `Command` = 前端声明的"办理意图"(最小化传参)
+- 校验逻辑:
+  - `command.planNo` 必须等于 `session.planNo`(防止跨计划办理)
+  - `command.businessType` 是否在用户办理权限范围内由 `BusinessAccessGuard.checkCanHandle` 统一校验(见 §4.2),不通过功能权限码 `permissionCodes` 表达
+  - 客户/产品/运作模式/账管人等字段**完全来自 SessionContext**,不接受前端传值,杜绝伪造风险
+
+### 3.6 为什么用强类型超集而不是 Map
+
+- 编译期校验、IDE 提示、`@Valid` 注解可用(对前端 Command 部分)
 - 各业务类型的差异主要在"明细数据"(走 FormUpload),不在"基础元数据"
 - 业务服务如果有特殊字段,用 `BusinessExtension`(已有)承载,不污染超集
 
@@ -162,7 +199,14 @@ public interface BusinessAccessGuard {
 public ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody CreateBatchCommand command) {
     SupportedBusinessTypeValidator.validate(command.businessType());    // 本服务支持?
     SessionContext session = sessionContextResolver.require();          // 取会话
-    accessGuard.checkCanHandle(session, command.metaContext());         // 功能+数据权限
+    // 校验 command.planNo 与 session.planNo 一致(防止跨计划办理)
+    if (!command.planNo().equals(session.planNo())) {
+        throw new BusinessException(CommonError.BAD_REQUEST)
+            .withUserDetail("所选计划与会话中的计划不一致");
+    }
+    // 从 SessionContext 组装完整 BusinessMetaContext(不接受前端传客户/产品/账管人等敏感字段)
+    BusinessMetaContext meta = BusinessMetaContextAssembler.assemble(command, session);
+    accessGuard.checkCanHandle(session, meta);                          // 功能+数据权限
     // ... 调用 appService
 }
 ```
@@ -178,7 +222,7 @@ public ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody CreateBat
 | 方法 | 路径 | 入参 | 返回 | 说明 |
 |---|---|---|---|---|
 | findActive | `/active` | `FindActiveBatchQuery{planNo, businessType}` | `BatchSummaryResponse` | 查询未完成 / 处理中批次 |
-| create | `/create` | `CreateBatchCommand{metaContext, operatorRemark}` | `BatchCreatedResponse` | 创建新批次 |
+| create | `/create` | `CreateBatchCommand{businessType, planNo, operatorRemark}` | `BatchCreatedResponse` | 创建新批次(前端只传意图,后端从 SessionContext 组装完整元数据) |
 | detail | `/detail` | `GetBatchDetailQuery{batchId}` | `BatchDetailResponse` | 批次详情(含表单 / 申请单摘要) |
 | cancel | `/cancel` | `CancelBatchCommand{batchId, reason}` | `Void` | 取消未提交批次 |
 
@@ -276,7 +320,8 @@ public class AnnuitySpecialController implements AnnuitySpecialApi {
 - `business-core-api` 的 5 类公共 API 接口定义与请求 / 响应 DTO
 - `business-core-adapter` 的 Controller 实现骨架(含鉴权调用)
 - `SessionContext` / `SessionContextResolver` / `BusinessAccessGuard` / `SupportedBusinessTypeValidator` / `BusinessTypeRegistrar` 基础设施
-- `BusinessMetaContext` 强类型超集定义
+- `BusinessMetaContext` 强类型超集定义(kernel 内部使用,后端组装)
+- `BusinessMetaContextAssembler` 组装器(从 Command + SessionContext 组装完整 MetaContext)
 - `business-core-starter` 自动装配
 
 ### 7.2 不在本 spec 覆盖
