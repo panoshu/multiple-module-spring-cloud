@@ -304,4 +304,44 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   public BatchId getBatchId() {
     return batchId;
   }
+
+  /**
+   * 获取申请单宏观状态(只读)。
+   * <p>
+   * 供 ApplicationConverter 转换 DTO 使用。
+   *
+   * @return 申请单状态
+   */
+  public ApplicationStatus getStatus() {
+    return this.status;
+  }
+
+  /**
+   * 获取打包上传文件(只读)。
+   * <p>
+   * 供 ApplicationConverter 转换 DTO 使用。
+   *
+   * @return 打包文件,未打包上传时为 null
+   */
+  public BusinessFile getPackageFile() {
+    return this.packageFile;
+  }
+
+  /**
+   * 获取申请时间(只读)。
+   *
+   * @return 申请时间
+   */
+  public LocalDateTime getApplyTime() {
+    return this.applyTime;
+  }
+
+  /**
+   * 获取完成时间(只读)。
+   *
+   * @return 完成时间
+   */
+  public LocalDateTime getCompleteTime() {
+    return this.completeTime;
+  }
 }
