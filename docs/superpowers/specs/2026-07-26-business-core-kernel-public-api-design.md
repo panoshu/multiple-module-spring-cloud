@@ -39,23 +39,29 @@ SessionContext 作为 sa-token `Token-Session` 的一部分,与 token 同生命�
 
 ### 2.2 字段(超集,各渠道按需填充)
 
-| 分组 | 字段 | 来源 | 说明 |
-|---|---|---|---|
-| 身份 | `userNo` / `userType` / `loginName` / `displayName` | 登录 | USER / PARTNER / SYSTEM |
-| 渠道 | `channelType` / `clientId` / `clientIp` | 登录 | INTERNET / HQ / BRANCH |
-| 客户 | `customerNo` / `customerName` | 选计划时确定 | |
-| 计划 | `planNo` / `planName` / `productNo` / `productName` / `operationModel` | 选计划时写入 | |
-| 代办 | `isProxy` / `onBehalfOfUserNo` / `onBehalfOfLoginName` | 发起代办时 | BRANCH 渠道常见 |
-| 二次授权 | `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId` | 二次授权完成时 | BRANCH 渠道 |
-| 权限 | `permissionCodes: Set<String>` / `delegatedPlanNos: Set<String>` | 选计划 / 权限变更时 | 功能权限码 + 数据权限范围 |
+| 分组 | 字段 | 来源 | 适用渠道 | 说明 |
+|---|---|---|---|---|
+| 身份 | `userNo` / `userType` / `loginName` / `displayName` | 登录 | 全部 | USER / PARTNER / SYSTEM |
+| 渠道 | `channelType` / `clientId` / `clientIp` | 登录 | 全部 | INTERNET / HQ / BRANCH |
+| 客户 | `customerNo` / `customerName` | 选计划时确定 | 全部 | |
+| 计划 | `planNo` / `planName` / `productNo` / `productName` / `operationModel` | 选计划时写入 | 全部 | |
+| 代办 | `isProxy` / `onBehalfOfUserNo` / `onBehalfOfLoginName` | 发起代办时 | **仅 INTERNET** | 网上渠道代办办理,代办人代实际用户办理业务 |
+| 二次授权 | `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId` | 二次授权完成时 | **仅 BRANCH** | 网点渠道借用企业授权人身份办理 |
+| 权限 | `permissionCodes: Set<String>` | 选计划 / 权限变更时 | 全部 | 功能权限码 + 业务类型办理权限码 |
+| 代办范围 | `delegatedPlanNos: Set<String>` | 选计划时写入 | **仅 INTERNET** | 当前用户可代办的计划列表 |
+
+> **渠道办理语义**:
+> - **INTERNET(网上渠道)**:可代办办理,`isProxy=true` 时表示代办,需校验 `planNo` 在 `delegatedPlanNos` 内
+> - **HQ(总部渠道)**:选计划直接办理,无代办无二次授权
+> - **BRANCH(网点渠道)**:二次授权模式,通过 `borrowedApproverId` 借用企业授权人身份办理,不属于代办
 
 ### 2.3 写入时机(iam-service 负责)
 
 1. 登录成功 → 写入身份 + 渠道字段
-2. 选择计划 → 写入客户 + 计划 + 权限快照
+2. 选择计划 → 写入客户 + 计划 + 权限快照(INTERNET 渠道同时写入 `delegatedPlanNos`)
 3. 清除计划 → 清空客户 / 计划 / 权限字段
-4. 二次授权完成 → 写入二次授权字段
-5. 二次授权撤销 / 权限规则变更 → 同步刷新
+4. 二次授权完成(仅 BRANCH)→ 写入 `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId`
+5. 二次授权撤销 / 权限规则变更 / 代办委托变更 → 同步刷新
 
 ### 2.4 透传方式
 
@@ -119,23 +125,29 @@ public record BusinessMetaContext(
 ### 4.2 数据权限(水平越权防护)
 
 - 校验"当前用户能否办理 `session.planNo` + `meta.businessType`"(业务类型办理权限)
-- 校验"如果是代办,`session.onBehalfOfUserNo` 是否在 `session.delegatedPlanNos` 委托范围内"
+- **代办校验(仅 INTERNET 渠道)**:若 `session.channelType=INTERNET` 且 `session.isProxy=true`,校验 `session.planNo` 在 `session.delegatedPlanNos` 委托范围内
+- **二次授权校验(仅 BRANCH 渠道)**:若 `session.channelType=BRANCH`,校验 `session.hasSecondaryAuth=true`(已完成二次授权);HQ 渠道无需此校验
 - kernel 提供 SPI 接口:
 
 ```java
 public interface BusinessAccessGuard {
     /**
-     * 校验当前会话用户对指定业务类型的办理权限(含代办校验)
+     * 校验当前会话用户对指定业务类型的办理权限(含渠道差异化校验:代办 / 二次授权)
      */
     void checkCanHandle(SessionContext session, BusinessMetaContext meta);
 }
 ```
 
-- kernel 提供默认实现 `DefaultBusinessAccessGuard`:
-  - 校验 `meta.planNo` 等于 `session.planNo`
-  - 校验 `meta.customerNo` 等于 `session.customerNo`
-  - 校验 `meta.businessType` 在 `session.permissionCodes` 中(权限码采用 `BUSINESS_{TYPE}_HANDLE` 命名约定,如 `BUSINESS_ANNUITY_OPEN_HANDLE`)
-  - 若 `session.isProxy` 为 true,校验 `session.planNo` 在 `session.delegatedPlanNos` 内
+- kernel 提供默认实现 `DefaultBusinessAccessGuard`,按渠道分支校验:
+  - **通用校验**(所有渠道):
+    - `meta.planNo` 等于 `session.planNo`(防止跨计划办理)
+    - `meta.customerNo` 等于 `session.customerNo`(防止跨客户办理)
+    - `meta.businessType` 在 `session.permissionCodes` 中(权限码采用 `BUSINESS_{TYPE}_HANDLE` 命名约定,如 `BUSINESS_ANNUITY_OPEN_HANDLE`)
+  - **INTERNET 渠道额外校验**:
+    - 若 `isProxy=true`,校验 `session.planNo` 在 `session.delegatedPlanNos` 内
+  - **BRANCH 渠道额外校验**:
+    - `session.hasSecondaryAuth=true`(必须完成二次授权才能办理)
+  - **HQ 渠道**:无额外校验
 - 业务服务可提供自定义实现覆盖(如年金服务需要额外校验外资业务准入),通过 `@ConditionalOnMissingBean` 兜底
 
 ### 4.3 SupportedBusinessTypeValidator
