@@ -275,6 +275,8 @@ Expected: FAIL (SessionContextResolver 不存在)
 
 - [ ] **Step 5: 编写 SessionContextResolver 实现**
 
+> **设计决策**:为保持 API 接口契约纯净(`BusinessBatchApi` 等接口的方法签名不含 `HttpServletRequest`),`SessionContextResolver` 不接受 `HttpServletRequest` 参数,而是通过 Spring 的 `RequestContextHolder` 获取当前请求上下文。Controller 方法签名与 API 接口完全一致。
+
 ```java
 package com.example.core.adapter.context;
 
@@ -287,6 +289,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -298,6 +303,9 @@ import java.util.Optional;
  * header 内容为 Base64 编码的 JSON,由 gateway 从 sa-token Token-Session 读取后写入。
  *
  * <p>kernel 不直接依赖 sa-token,通过本组件与 sa-token 解耦,保持可独立测试。
+ *
+ * <p>通过 {@link RequestContextHolder} 获取当前请求,避免在 Controller 方法签名中
+ * 暴露 {@link HttpServletRequest},保持 API 接口契约纯净。
  *
  * @author panoshu
  */
@@ -313,7 +321,11 @@ public class SessionContextResolver {
     /**
      * 解析会话上下文,header 缺失时返回 empty。
      */
-    public Optional<SessionContext> optional(HttpServletRequest request) {
+    public Optional<SessionContext> optional() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            return Optional.empty();
+        }
         String header = request.getHeader(SESSION_HEADER);
         if (header == null || header.isBlank()) {
             return Optional.empty();
@@ -331,11 +343,49 @@ public class SessionContextResolver {
     /**
      * 解析会话上下文,header 缺失时抛 BusinessException。
      */
+    public SessionContext require() {
+        return optional()
+            .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
+                .withUserDetail("会话上下文缺失,请重新登录")
+                .withLogDetail("X-Session-Context header 缺失或解析失败"));
+    }
+
+    /**
+     * 测试专用:从指定请求解析会话上下文。
+     */
+    public Optional<SessionContext> optional(HttpServletRequest request) {
+        if (request == null) {
+            return Optional.empty();
+        }
+        String header = request.getHeader(SESSION_HEADER);
+        if (header == null || header.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            byte[] decoded = Base64.getDecoder().decode(header);
+            return Optional.of(objectMapper.readValue(decoded, SessionContext.class));
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            log.warn("解析 X-Session-Context header 失败: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * 测试专用:从指定请求解析,缺失时抛异常。
+     */
     public SessionContext require(HttpServletRequest request) {
         return optional(request)
             .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
                 .withUserDetail("会话上下文缺失,请重新登录")
                 .withLogDetail("X-Session-Context header 缺失或解析失败"));
+    }
+
+    private HttpServletRequest currentRequest() {
+        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+        if (attrs instanceof ServletRequestAttributes servletAttrs) {
+            return servletAttrs.getRequest();
+        }
+        return null;
     }
 }
 ```
@@ -524,7 +574,7 @@ git commit -m "feat(core-api): 新增会话上下文与业务元数据组装基�
 ## Task 2: 权限校验 SPI 与业务类型注册
 
 **Files:**
-- Create: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/gateway/BusinessAccessGuard.java`
+- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/BusinessAccessGuard.java`
 - Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/DefaultBusinessAccessGuard.java`
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/registrar/BusinessTypeRegistrar.java`
 - Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/validator/SupportedBusinessTypeValidator.java`
@@ -534,7 +584,7 @@ git commit -m "feat(core-api): 新增会话上下文与业务元数据组装基�
 
 **Interfaces:**
 - Consumes: `SessionContext`, `BusinessMetaContext` (api 层), `BusinessException`, `CommonError`
-- Produces: `BusinessAccessGuard` SPI (domain 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean, `SupportedBusinessTypeValidator` bean
+- Produces: `BusinessAccessGuard` SPI (application 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean, `SupportedBusinessTypeValidator` bean
 
 - [ ] **Step 1: 扩展 CoreDomainErrorCode 新增 UNSUPPORTED_BUSINESS_TYPE**
 
@@ -547,50 +597,9 @@ PROXY_FORBIDDEN("CORE.DOMAIN.0006", "无代办权限"),
 SECONDARY_AUTH_REQUIRED("CORE.DOMAIN.0007", "需要二次授权"),
 ```
 
-- [ ] **Step 2: 编写 BusinessAccessGuard SPI 接口(domain 层)**
+- [ ] **Step 2: 编写 BusinessAccessGuard SPI 接口(application 层)**
 
-```java
-package com.example.core.domain.business.gateway;
-
-import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
-
-/**
- * 业务访问守门人 SPI
- *
- * <p>定义业务办理的统一权限校验契约,由 {@code DefaultBusinessAccessGuard} 提供默认实现,
- * 业务服务可覆盖以扩展自定义校验(如年金服务的外资业务准入)。
- *
- * <p>校验范围(按渠道差异化):
- * <ul>
- *   <li>通用:计划一致性 + 客户一致性 + 业务类型办理权限</li>
- *   <li>INTERNET:代办时校验 planNo 在 delegatedPlanNos 内</li>
- *   <li>BRANCH:必须 hasSecondaryAuth=true</li>
- *   <li>HQ:无额外校验</li>
- * </ul>
- *
- * @author panoshu
- */
-public interface BusinessAccessGuard {
-
-    /**
-     * 校验当前会话用户对指定业务类型的办理权限(含渠道差异化校验:代办 / 二次授权)。
-     *
-     * @param session 会话上下文
-     * @param meta 业务元数据上下文
-     * @throws com.example.shared.exception.BusinessException 校验不通过时
-     */
-    void checkCanHandle(SessionContext session, BusinessMetaContext meta);
-}
-```
-
-> 注意:domain 层的 gateway 接口依赖 api 层的 `SessionContext` / `BusinessMetaContext`。这违反了"domain 层不依赖 application/infrastructure"但不违反"domain 层不依赖 api 层"——按项目规则 `domain → shared-domain + xxx-types`,api 层依赖 domain 的反向。这里需要调整:将 `BusinessAccessGuard` 放在 application 层,或者将 `SessionContext`/`BusinessMetaContext` 放在 domain 层。
->
-> **修正决策**:由于 `SessionContext` 和 `BusinessMetaContext` 是 API 协议的一部分(从 header 解析),且 kernel 的 domain 层已有 `BusinessContext` 值对象,我们让 `BusinessAccessGuard` 接受 domain 层的强类型参数。但 Controller 持有的是 api 层的 `SessionContext`,需要先转换为 domain 层类型再调用。
->
-> **更简方案**:将 `BusinessAccessGuard` 接口放在 `business-core-application` 层(因为它依赖 api 层的 DTO),`DefaultBusinessAccessGuard` 也在 application 层。这样不违反依赖规则。
-
-- [ ] **Step 3: 调整 BusinessAccessGuard 到 application 层**
+> **设计决策**:`BusinessAccessGuard` 放在 application 层(而非 domain 层 gateway),因为它依赖 api 层的 `SessionContext` / `BusinessMetaContext` DTO,符合依赖规则 `application → api + domain`。
 
 ```java
 package com.example.core.application.business.guard;
@@ -627,7 +636,7 @@ public interface BusinessAccessGuard {
 }
 ```
 
-- [ ] **Step 4: 编写 DefaultBusinessAccessGuard 失败测试**
+- [ ] **Step 3: 编写 DefaultBusinessAccessGuard 失败测试**
 
 ```java
 package com.example.core.application.business.guard;
@@ -1073,17 +1082,21 @@ public @interface RequireBusinessPermission {
 
 - [ ] **Step 2: 编写 BusinessPermissionAspect 失败测试**
 
+> **设计决策**:Aspect 不再从方法参数找 `HttpServletRequest`,而是直接调用 `sessionContextResolver.require()`(内部通过 `RequestContextHolder` 获取当前请求)。测试时通过 `RequestContextHolder.setRequestAttributes(...)` 设置模拟请求。
+
 ```java
 package com.example.core.adapter.security;
 
 import com.example.core.api.context.SessionContext;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.shared.exception.BusinessException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Set;
 
@@ -1105,13 +1118,21 @@ class BusinessPermissionAspectTest {
     void setUp() {
         resolver = mock(SessionContextResolver.class);
         aspect = new BusinessPermissionAspect(resolver);
+        // 设置 RequestContextHolder,模拟 Web 请求上下文
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        ServletRequestAttributes attrs = new ServletRequestAttributes(request);
+        RequestContextHolder.setRequestAttributes(attrs);
+    }
+
+    @AfterEach
+    void tearDown() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
     void should_pass_when_permission_present() throws Throwable {
-        HttpServletRequest request = new MockHttpServletRequest();
-        when(resolver.require(request)).thenReturn(sessionWithPerms(Set.of("BATCH_CREATE")));
-        ProceedingJoinPoint pjp = mockJoinPoint(request);
+        when(resolver.require()).thenReturn(sessionWithPerms(Set.of("BATCH_CREATE")));
+        ProceedingJoinPoint pjp = mockJoinPoint();
 
         Object result = aspect.checkPermission(pjp, "BATCH_CREATE");
 
@@ -1121,9 +1142,8 @@ class BusinessPermissionAspectTest {
 
     @Test
     void should_fail_when_permission_missing() {
-        HttpServletRequest request = new MockHttpServletRequest();
-        when(resolver.require(request)).thenReturn(sessionWithPerms(Set.of()));
-        ProceedingJoinPoint pjp = mockJoinPoint(request);
+        when(resolver.require()).thenReturn(sessionWithPerms(Set.of()));
+        ProceedingJoinPoint pjp = mockJoinPoint();
 
         assertThatThrownBy(() -> aspect.checkPermission(pjp, "BATCH_CREATE"))
             .isInstanceOf(BusinessException.class)
@@ -1141,9 +1161,9 @@ class BusinessPermissionAspectTest {
         );
     }
 
-    private ProceedingJoinPoint mockJoinPoint(HttpServletRequest request) {
+    private ProceedingJoinPoint mockJoinPoint() {
         ProceedingJoinPoint pjp = mock(ProceedingJoinPoint.class);
-        when(pjp.getArgs()).thenReturn(new Object[]{request});
+        when(pjp.getArgs()).thenReturn(new Object[]{});
         try {
             when(pjp.proceed()).thenReturn("ok");
         } catch (Throwable e) {
@@ -1168,7 +1188,6 @@ import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.api.context.SessionContext;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.CommonError;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -1176,14 +1195,12 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-
 /**
  * 业务功能权限校验切面
  *
- * <p>拦截标注了 {@link RequireBusinessPermission} 的方法,从方法参数中找到
- * {@link HttpServletRequest},解析会话上下文,校验 {@code permissionCodes} 是否包含
- * 注解声明的权限码。
+ * <p>拦截标注了 {@link RequireBusinessPermission} 的方法,通过 {@link SessionContextResolver}
+ * 解析当前会话上下文(内部使用 {@code RequestContextHolder} 获取当前请求),
+ * 校验 {@code permissionCodes} 是否包含注解声明的权限码。
  *
  * @author panoshu
  */
@@ -1201,24 +1218,13 @@ public class BusinessPermissionAspect {
     @Around("@annotation(requirePermission)")
     public Object checkPermission(ProceedingJoinPoint joinPoint, RequireBusinessPermission requirePermission) throws Throwable {
         String requiredCode = requirePermission.value();
-        HttpServletRequest request = extractRequest(joinPoint);
-        SessionContext session = sessionContextResolver.require(request);
+        SessionContext session = sessionContextResolver.require();
         if (session.permissionCodes() == null || !session.permissionCodes().contains(requiredCode)) {
             throw new BusinessException(CommonError.FORBIDDEN)
                 .withUserDetail("无功能权限")
                 .withLogDetail("requiredPermission=%s, owned=%s".formatted(requiredCode, session.permissionCodes()));
         }
         return joinPoint.proceed();
-    }
-
-    private HttpServletRequest extractRequest(ProceedingJoinPoint joinPoint) {
-        return Arrays.stream(joinPoint.getArgs())
-            .filter(HttpServletRequest.class::isInstance)
-            .map(HttpServletRequest.class::cast)
-            .findFirst()
-            .orElseThrow(() -> new BusinessException(CommonError.INTERNAL_SERVER_ERROR)
-                .withUserDetail("请求上下文缺失")
-                .withLogDetail("HttpServletRequest not found in method args"));
     }
 }
 ```
@@ -1752,6 +1758,8 @@ public interface BatchConverter {
 
 - [ ] **Step 7: 编写 BusinessBatchController**
 
+> **设计决策**:Controller 方法签名与 `BusinessBatchApi` 接口完全一致(无 `HttpServletRequest` 参数)。会话通过 `SessionContextResolver.require()` 内部使用 `RequestContextHolder` 获取当前请求解析。
+
 ```java
 package com.example.core.adapter.batch;
 
@@ -1780,7 +1788,6 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.primitives.identity.*;
 import com.example.shared.web.core.api.ApiResult;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1794,6 +1801,9 @@ import java.util.Optional;
  *
  * <p>实现 {@link BusinessBatchApi},入口完成:
  * 业务类型校验 → 会话解析 → BusinessMetaContext 组装 → 权限校验 → 调用 AppService。
+ *
+ * <p>方法签名与 API 接口完全一致,会话通过 {@link SessionContextResolver} 内部
+ * 使用 {@code RequestContextHolder} 获取当前请求解析。
  *
  * @author panoshu
  */
@@ -1811,10 +1821,9 @@ public class BusinessBatchController implements BusinessBatchApi {
 
     @Override
     @RequireBusinessPermission("BATCH_CREATE")
-    public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query,
-                                                                 HttpServletRequest request) {
+    public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
         typeValidator.validate(query.businessType());
-        SessionContext session = sessionResolver.require(request);
+        SessionContext session = sessionResolver.require();
         log.info("查询未完成批次: planNo={}, businessType={}, userNo={}",
             query.planNo(), query.businessType(), session.userNo());
         // TODO: 调用 batchAppService.findActive(planNo, businessType) 并转换响应
@@ -1823,10 +1832,9 @@ public class BusinessBatchController implements BusinessBatchApi {
 
     @Override
     @RequireBusinessPermission("BATCH_CREATE")
-    public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command,
-                                                   HttpServletRequest request) {
+    public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
         typeValidator.validate(command.businessType());
-        SessionContext session = sessionResolver.require(request);
+        SessionContext session = sessionResolver.require();
         BusinessMetaContext meta = metaAssembler.assemble(command.businessType(), command.planNo(), session);
         accessGuard.checkCanHandle(session, meta);
 
@@ -1840,9 +1848,8 @@ public class BusinessBatchController implements BusinessBatchApi {
     }
 
     @Override
-    public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query,
-                                                   HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query) {
+        SessionContext session = sessionResolver.require();
         log.info("查询批次详情: batchId={}, userNo={}", query.batchId(), session.userNo());
         BusinessBatch batch = batchAppService.loadOrThrow(new BatchId(query.batchId()));
         return ApiResult.success(converter.toDetailResponse(batch));
@@ -1850,9 +1857,8 @@ public class BusinessBatchController implements BusinessBatchApi {
 
     @Override
     @RequireBusinessPermission("BATCH_CANCEL")
-    public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command,
-                                   HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command) {
+        SessionContext session = sessionResolver.require();
         log.info("取消批次: batchId={}, userNo={}", command.batchId(), session.userNo());
         // TODO: 调用 batchAppService.cancel(batchId, reason) 并发布事件
         return ApiResult.success();
@@ -1961,7 +1967,7 @@ public interface BusinessFormApi {
 
 - [ ] **Step 2: 编写 FormConverter 与 BusinessFormController**
 
-Controller 实现 `BusinessFormApi`,入口调用 `SupportedBusinessTypeValidator`(从 batchId 反查业务类型)→ `SessionContextResolver` → `BusinessAccessGuard` → 已有的 `BusinessFormAppService`。
+Controller 实现 `BusinessFormApi`,方法签名与接口完全一致(无 `HttpServletRequest` 参数),入口调用 `SupportedBusinessTypeValidator`(从 batchId 反查业务类型)→ `SessionContextResolver.require()` → `BusinessAccessGuard` → 已有的 `BusinessFormAppService`。
 
 由于 `BusinessFormAppService.confirmUpload` 已存在,Controller 直接调用即可:
 
@@ -1977,9 +1983,8 @@ public class BusinessFormController implements BusinessFormApi {
 
     @Override
     @RequireBusinessPermission("FORM_UPLOAD")
-    public ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command,
-                                                             HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command) {
+        SessionContext session = sessionResolver.require();
         log.info("申请上传 token: batchId={}, userNo={}", command.batchId(), session.userNo());
         // TODO: 调用 fileIntegrationGateway 申请 token
         return ApiResult.success(new UploadTokenResponse("dummy-token", null, null));
@@ -1987,9 +1992,8 @@ public class BusinessFormController implements BusinessFormApi {
 
     @Override
     @RequireBusinessPermission("FORM_UPLOAD")
-    public ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command,
-                                          HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command) {
+        SessionContext session = sessionResolver.require();
         log.info("确认上传: batchId={}, formId={}, userNo={}",
             command.batchId(), command.formId(), session.userNo());
         // TODO: 调用 formAppService.confirmUpload(formId, uploadedFile)
@@ -1998,9 +2002,8 @@ public class BusinessFormController implements BusinessFormApi {
 
     @Override
     @RequireBusinessPermission("FORM_DELETE")
-    public ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command,
-                                   HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command) {
+        SessionContext session = sessionResolver.require();
         log.info("删除表单: batchId={}, formId={}, userNo={}",
             command.batchId(), command.formId(), session.userNo());
         // TODO: 调用 formAppService.deleteForm(formId)
@@ -2008,9 +2011,8 @@ public class BusinessFormController implements BusinessFormApi {
     }
 
     @Override
-    public ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query,
-                                                  HttpServletRequest request) {
-        SessionContext session = sessionResolver.require(request);
+    public ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query) {
+        SessionContext session = sessionResolver.require();
         log.info("查询表单状态: formId={}, userNo={}", query.formId(), session.userNo());
         // TODO: 调用 formAppService.getFormStatus(formId) 并转换
         return ApiResult.success(new FormStatusResponse(query.formId(), "UNKNOWN", 0, 0, null));
