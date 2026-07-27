@@ -1,0 +1,79 @@
+# iam-infrastructure 集成测试配置 (H2 内存数据库 + PostgreSQL 兼容模式)
+# 仅加载 infrastructure 层 Bean(Repository/Mapper/Converter),不依赖 Nacos/Redis/sa-token
+spring:
+  autoconfigure:
+    exclude:
+      # 禁用 Nacos 服务发现自动配置(测试环境无需注册中心)
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosServiceRegistryAutoConfiguration
+      - com.alibaba.cloud.nacos.NacosAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryClientConfiguration
+      # 禁用 Retrofit 日志自动配置(测试环境无 logbook-okhttp 依赖)
+      - com.example.shared.client.autoconfigure.ClientAutoConfiguration
+      # 禁用 Logbook 自动配置(测试环境无 spring-web 依赖,ClientHttpRequestInterceptor 缺失)
+      - org.zalando.logbook.autoconfigure.LogbookAutoConfiguration
+      - org.zalando.logbook.ecs.autoconfigure.LogbookEcsAutoConfiguration
+      # 禁用 Redisson 自动配置(测试环境无需 Redis)
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.redisson.spring.starter.RedissonAutoConfigurationV1
+      # 禁用 Spring Data Redis 自动配置(避免 RedisTemplate 触发 Redisson 连接)
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      # 禁用 sa-token Redis DAO 自动配置
+      - cn.dev33.satoken.dao.SaTokenDaoForRedisTemplate
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    discovery:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:iam_infra_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql
+
+mybatis-flex:
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# shared-logging-starter 脱敏配置
+# 注意:logbook.obfuscate.global.enable 控制 LogSanitizationConfiguration 加载(matchIfMissing=true)
+# shared.logging.obfuscate 绑定到 SanitizationProperties,需要提供 @NotNull global + @NotEmpty fields
+# LogCoreConfiguration.logProcessor 依赖 SanitizationEngine,必须保留 LogSanitizationConfiguration
+logbook:
+  obfuscate:
+    global:
+      enable: true
+
+shared:
+  # 测试环境禁用 L2 缓存(Redis),仅使用 L1 本地缓存(Caffeine)
+  cache:
+    mode: L1_ONLY
+  # shared-logging-starter 脱敏配置(必须提供 global + 至少一个 field)
+  logging:
+    obfuscate:
+      global:
+        enable: false
+        replacement: "***"
+        enable-wildcard-paths: false
+      fields:
+        password:
+          aliases:
+            - $.password
+            - $.secretHash
+          strategy: FULL
+
+logging:
+  level:
+    root: WARN
+    com.example: INFO
+    com.example.iam: DEBUG
+    org.springframework: WARN
+    com.alibaba.nacos: OFF
+    com.alibaba.cloud.nacos: OFF

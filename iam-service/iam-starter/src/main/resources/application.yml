@@ -1,0 +1,96 @@
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+  port: 18070
+
+spring:
+  application:
+    name: iam-service
+  threads:
+    virtual:
+      enabled: true
+  http:
+    client:
+      factory: http-components
+      pool:
+        max-total: 100
+        max-per-route: 20
+        validate-after-inactivity: 5s
+      settings:
+        connect-timeout: 3s
+        read-timeout: 30s
+        connection-time-to-live: 30s
+  profiles:
+    include: local
+
+mybatis-flex:
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# sa-token 配置(对应设计文档 4.2.1 节,渠道级配置通过 StpLogic.setConfig 覆盖)
+sa-token:
+  token-name: satoken
+  # Token 有效期(秒):30 天(默认,渠道级可覆盖)
+  timeout: 2592000
+  # Token 最低活跃频率(秒):30 分钟
+  active-timeout: 1800
+  # 是否允许同一账号多地同时登录(全局,渠道级可覆盖)
+  is-concurrent: true
+  # 多人登录同一账号时是否共用一个 token
+  is-share: false
+  # Token 风格:tik(推荐)
+  token-style: tik
+  # 是否输出操作日志
+  is-log: false
+  # 前后台分离:从 Header 读取
+  is-read-header: true
+  # 关闭 Cookie 读取以避免 CSRF 风险
+  is-read-cookie: false
+
+# IAM 渠道配置(对应设计文档 4.2.1 节渠道级配置)
+iam:
+  security:
+    channels:
+      internet:
+        # 网上渠道:30 天有效期,同端互斥(防止账号被盗用)
+        timeout: 2592000
+        active-timeout: 1800
+        is-concurrent: false
+      hq:
+        # 总部渠道:8 小时有效期,允许同账号多端
+        timeout: 28800
+        active-timeout: 1800
+        is-concurrent: true
+      branch:
+        # 网点渠道:8 小时有效期,同端互斥
+        timeout: 28800
+        active-timeout: 1800
+        is-concurrent: false
+    secondary-auth:
+      session-timeout: 7200
+      pending-timeout: 300
+      max-pending-per-teller: 1
+    permission:
+      combination-strategy: priorityOverrideStrategy
+      subject-priority:
+        - ACCOUNT_MANAGER
+        - PLAN
+        - PRODUCT
+        - OPERATION_MODE
+        - CUSTOMER
+      cache-timeout: 1800
+      cache-null: true
+
+shared:
+  cache:
+    mode: L1_ONLY
+
+logging:
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30

@@ -7,6 +7,51 @@ spring:
         enabled: true
         lower-case-service-id: true
       routes:
+        # ============ iam-service(三渠道认证授权) ============
+        # 网上渠道认证授权
+        - id: iam-service-internet-route
+          uri: lb://iam-service
+          predicates:
+            - Path=/internet/auth/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Source, demo-gateway
+        # 总部渠道认证授权
+        - id: iam-service-hq-route
+          uri: lb://iam-service
+          predicates:
+            - Path=/hq/auth/**
+          filters:
+            - StripPrefix=0
+        # 网点渠道认证授权
+        - id: iam-service-branch-route
+          uri: lb://iam-service
+          predicates:
+            - Path=/branch/auth/**
+          filters:
+            - StripPrefix=0
+        # iam-service 通用路由(管理接口)
+        - id: iam-service-admin-route
+          uri: lb://iam-service
+          predicates:
+            - Path=/iam/**
+          filters:
+            - StripPrefix=1
+        # ============ business-core-kernel(核心业务服务) ============
+        - id: business-core-route
+          uri: lb://business-core-kernel
+          predicates:
+            - Path=/business/**
+          filters:
+            - StripPrefix=1
+        # ============ customer-service(客户服务) ============
+        - id: customer-service-route
+          uri: lb://customer-service
+          predicates:
+            - Path=/customer/**
+          filters:
+            - StripPrefix=1
+        # ============ 其他业务服务 ============
         - id: consumer-service-route
           uri: lb://consumer
           predicates:

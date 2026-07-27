@@ -3,6 +3,9 @@ package com.example.iam.domain.authentication.aggregate.root;
 import com.example.iam.domain.authentication.aggregate.valueobject.CredentialStatus;
 import com.example.iam.domain.authentication.aggregate.valueobject.CredentialType;
 import com.example.iam.domain.authentication.errorcode.IamAuthErrorCode;
+import com.example.iam.domain.authentication.event.CredentialChangedEvent;
+import com.example.iam.domain.authentication.event.CredentialCreatedEvent;
+import com.example.iam.domain.authentication.event.CredentialExpiredEvent;
 import com.example.iam.domain.authentication.strategy.CredentialValidator;
 import com.example.iam.types.CredentialId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
@@ -97,10 +100,13 @@ public class Credential extends AggregateRoot<CredentialId> {
           .withUserDetail("凭据密文不能为空");
     }
     LocalDateTime now = LocalDateTime.now();
-    return new Credential(id, ownerType, ownerId, credentialType,
+    Credential credential = new Credential(id, ownerType, ownerId, credentialType,
         secretHash, salt, auxData,
         CredentialStatus.ACTIVE, expireTime,
         createdBy, createdBy, now, now, Version.initial());
+    credential.registerDomainEvent(CredentialCreatedEvent.of(
+        id, ownerId, ownerType, credentialType));
+    return credential;
   }
 
   /**
@@ -162,6 +168,8 @@ public class Credential extends AggregateRoot<CredentialId> {
    *
    * <p>仅 REVOKED 终态禁止更新。EXPIRED 状态下允许更新(用于密钥轮换场景)。
    *
+   * <p>注册 {@link CredentialChangedEvent},触发后踢人下线 + 清缓存(由事件监听器执行)。
+   *
    * @param newSecretHash 新密文
    * @param newSalt       新盐值(可空)
    * @param newAuxData    新辅助数据(可空,空时清空)
@@ -182,6 +190,7 @@ public class Credential extends AggregateRoot<CredentialId> {
     this.salt = newSalt;
     this.auxData = copyAux(newAuxData);
     markUpdated(operator);
+    registerDomainEvent(CredentialChangedEvent.of(id(), ownerId, credentialType, operator));
   }
 
   /**
@@ -189,6 +198,8 @@ public class Credential extends AggregateRoot<CredentialId> {
    *
    * <p>仅 ACTIVE 状态可标记过期。EXPIRED 状态再次标记属于幂等(直接返回,不变更状态)。
    * REVOKED 终态禁止此操作。
+   *
+   * <p>注册 {@link CredentialExpiredEvent},触发后记录审计日志。
    */
   public void markExpired() {
     if (status.isExpired()) {
@@ -202,6 +213,7 @@ public class Credential extends AggregateRoot<CredentialId> {
           .withContext("targetStatus", CredentialStatus.EXPIRED);
     }
     this.status = CredentialStatus.EXPIRED;
+    registerDomainEvent(CredentialExpiredEvent.of(id(), ownerId, credentialType));
   }
 
   /**

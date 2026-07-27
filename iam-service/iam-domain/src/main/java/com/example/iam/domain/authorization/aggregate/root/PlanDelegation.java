@@ -6,6 +6,9 @@ import com.example.iam.domain.authorization.aggregate.valueobject.DelegationPerm
 import com.example.iam.domain.authorization.aggregate.valueobject.DelegationStatus;
 import com.example.iam.domain.authorization.aggregate.valueobject.DelegationType;
 import com.example.iam.domain.authorization.aggregate.valueobject.PermissionCode;
+import com.example.iam.domain.authorization.event.PlanDelegationActivatedEvent;
+import com.example.iam.domain.authorization.event.PlanDelegationCreatedEvent;
+import com.example.iam.domain.authorization.event.PlanDelegationRevokedEvent;
 import com.example.iam.domain.authorization.errorcode.IamAuthzErrorCode;
 import com.example.iam.types.PlanDelegationId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
@@ -120,10 +123,16 @@ public class PlanDelegation extends AggregateRoot<PlanDelegationId> {
     Set<Long> operators = delegationType == DelegationType.ALL_OPERATORS
         ? Set.of()
         : copyOperators(designatedOperators);
-    return new PlanDelegation(id, delegationCode, delegatorPlanNo, delegateePlanNo,
+    PlanDelegation delegation = new PlanDelegation(id, delegationCode, delegatorPlanNo, delegateePlanNo,
         delegationType, operators, delegatedPermissions,
         DelegationStatus.ACTIVE, effective, expireAt,
         createdBy, createdBy, now, now, Version.initial());
+    delegation.registerDomainEvent(PlanDelegationCreatedEvent.of(
+        id, delegationCode, delegatorPlanNo, delegateePlanNo, delegationType, createdBy));
+    // create 直接进入 ACTIVE 状态,同步触发 Activated 事件
+    delegation.registerDomainEvent(PlanDelegationActivatedEvent.of(
+        id, delegationCode, delegateePlanNo, createdBy));
+    return delegation;
   }
 
   /**
@@ -161,6 +170,8 @@ public class PlanDelegation extends AggregateRoot<PlanDelegationId> {
     }
     this.status = DelegationStatus.REVOKED;
     markUpdated(operator);
+    registerDomainEvent(PlanDelegationRevokedEvent.of(
+        id(), delegationCode, delegateePlanNo, reason, operator));
   }
 
   /**

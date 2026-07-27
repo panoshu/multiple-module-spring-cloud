@@ -3,8 +3,11 @@ package com.example.iam.domain.authentication.aggregate.root;
 import com.example.iam.domain.authentication.aggregate.entity.LoginFailureRecord;
 import com.example.iam.domain.authentication.aggregate.valueobject.ChannelType;
 import com.example.iam.domain.authentication.errorcode.IamAuthErrorCode;
+import com.example.iam.domain.authentication.event.UserLoginFailedEvent;
+import com.example.iam.domain.authentication.event.UserLoginSucceededEvent;
 import com.example.iam.types.LoginFailureRecordId;
 import com.example.iam.types.LoginLogId;
+import com.example.iam.types.UserId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
@@ -74,10 +77,16 @@ public class LoginLog extends AggregateRoot<LoginLogId> {
                                         String loginIp, String userAgent, UserNo operator) {
     validateCommon(userId, loginName, channelType, loginTime);
     LocalDateTime now = LocalDateTime.now();
-    return new LoginLog(id, userId, loginName, channelType,
+    LoginLog loginLog = new LoginLog(id, userId, loginName, channelType,
         true, loginTime, loginIp, userAgent,
         List.of(),
         operator, operator, now, now, Version.initial());
+    // 登录成功事件需要 UserId,仅在 userId 非空时注册
+    if (userId != null) {
+      loginLog.registerDomainEvent(UserLoginSucceededEvent.of(
+          id, UserId.of(userId), channelType, loginIp, loginTime));
+    }
+    return loginLog;
   }
 
   /**
@@ -108,10 +117,13 @@ public class LoginLog extends AggregateRoot<LoginLogId> {
     }
     LocalDateTime now = LocalDateTime.now();
     LoginFailureRecord record = new LoginFailureRecord(recordId, reason, detail, loginTime);
-    return new LoginLog(id, userId, loginName, channelType,
+    LoginLog loginLog = new LoginLog(id, userId, loginName, channelType,
         false, loginTime, loginIp, userAgent,
         List.of(record),
         operator, operator, now, now, Version.initial());
+    loginLog.registerDomainEvent(UserLoginFailedEvent.of(
+        id, userId, loginName, channelType, loginIp, reason));
+    return loginLog;
   }
 
   /**

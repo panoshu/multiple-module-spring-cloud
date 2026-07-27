@@ -1885,10 +1885,17 @@ SERVICE.IAM.0200-0299   系统层(system)
             <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
             <version>${sa-token.version}</version>
         </dependency>
+        <!-- sa-token 整合 RedisTemplate (官方推荐,见 https://sa-token.cc/doc.html#/up/integ-redis) -->
         <dependency>
             <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-redis-jackson</artifactId>
+            <artifactId>sa-token-redis-template</artifactId>
             <version>${sa-token.version}</version>
+        </dependency>
+        <!-- Redis 连接池 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>${commons-pool2.version}</version>
         </dependency>
     </dependencies>
 </dependencyManagement>
@@ -1903,7 +1910,7 @@ iam-api         → shared-api + iam-types
 iam-application → iam-api + iam-domain + shared-*starter
 iam-adapter     → iam-api + iam-application + sa-token-spring-boot3-starter
 iam-infrastructure → iam-domain + shared-*starter
-iam-starter     → iam-adapter + iam-infrastructure + sa-token-redis-jackson
+iam-starter     → iam-adapter + iam-infrastructure + sa-token-redis-template + commons-pool2
 ```
 
 ---

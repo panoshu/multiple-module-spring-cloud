@@ -1368,10 +1368,10 @@ public class FeignTokenInterceptor implements RequestInterceptor {
 ### 25.1 方案一：共享 Redis（推荐）
 
 ```xml
-<!-- 添加 Redis 集成依赖 -->
+<!-- 添加 Redis 集成依赖 (官方推荐 sa-token-redis-template,见 https://sa-token.cc/doc.html#/up/integ-redis) -->
 <dependency>
     <groupId>cn.dev33</groupId>
-    <artifactId>sa-token-redis-jackson</artifactId>
+    <artifactId>sa-token-redis-template</artifactId>
     <version>1.45.0</version>
 </dependency>
 <!-- 连接池 -->
@@ -1420,11 +1420,16 @@ sa-token:
 ### 26.1 添加依赖
 
 ```xml
-<!-- Sa-Token 整合 Redis（使用 Jackson 序列化） -->
+<!-- Sa-Token 整合 Redis (官方推荐 sa-token-redis-template,见 https://sa-token.cc/doc.html#/up/integ-redis) -->
 <dependency>
     <groupId>cn.dev33</groupId>
-    <artifactId>sa-token-redis-jackson</artifactId>
+    <artifactId>sa-token-redis-template</artifactId>
     <version>1.45.0</version>
+</dependency>
+<!-- 提供 Redis 连接池 -->
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-pool2</artifactId>
 </dependency>
 ```
 
@@ -1624,7 +1629,8 @@ sa-token:
 |------|------|------|
 | 网关（demo-gateway） | `sa-token-reactor-spring-boot3-starter` | WebFlux 环境 |
 | 业务服务 | `sa-token-spring-boot3-starter` | Servlet 环境 |
-| Redis 持久化 | `sa-token-redis-jackson` | 分布式会话 |
+| Redis 持久化 | `sa-token-redis-template` | 分布式会话（官方推荐） |
+| Redis 连接池 | `commons-pool2` | Lettuce 连接池支持 |
 
 ### A.2 架构建议
 

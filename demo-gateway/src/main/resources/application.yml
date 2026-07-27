@@ -10,6 +10,20 @@ spring:
   profiles:
     include: local
 
+  # Redis 连接配置(sa-token 分布式会话使用,详见 https://sa-token.cc/doc.html#/up/integ-redis)
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
+
   cloud:
     gateway.server.webflux:
       httpclient:
@@ -29,12 +43,15 @@ spring:
               - GET
               - POST
               - OPTIONS
-            # 允许的请求头
+            # 允许的请求头(包含 sa-token 三渠道 Header)
             allowed-headers:
               - "Content-Type"
               - "Authorization"
               - "X-Tenant-Id"
               - "X-Requested-With"
+              - "satoken-internet"
+              - "satoken-hq"
+              - "satoken-branch"
             # 前端可读取的响应头
             exposed-headers:
               - "X-Trace-Id"
@@ -86,3 +103,43 @@ gateway:
     #     aliases: [idNumber, id_card]
     #   realName:
     #     aliases: [name, userName]
+
+## sa-token 配置(网关层 Reactive WebFlux,详见 https://sa-token.cc/doc.html#/micro/gateway-auth)
+## 各渠道专属配置(如 token-name / timeout / is-concurrent)在 iam-service 的 SaTokenConfiguration 中通过 StpLogic.setConfig 覆盖
+sa-token:
+  # Token 名称(默认值,实际每渠道独立 Header 通过 StpLogic.config 覆盖)
+  token-name: satoken
+  # Token 有效期(秒),30 天(由 iam-service 渠道级配置覆盖)
+  timeout: 2592000
+  # Token 临时活跃超时(秒),30 分钟(超出时间未操作则失效)
+  active-timeout: 1800
+  # 是否允许同一账号并发登录(由 iam-service 渠道级配置覆盖)
+  is-concurrent: true
+  # 在多人登录同一账号时,是否共用一个 Token
+  is-share: false
+  # Token 风格:tik(推荐,与 iam-service 保持一致)
+  token-style: tik
+  # 是否从 Header 中读取 Token(默认 true,显式声明避免歧义)
+  is-read-header: true
+  # 是否从 Cookie 中读取 Token(关闭以避免 CSRF 风险)
+  is-read-cookie: false
+  # 是否输出操作日志
+  is-log: false
+
+## 网关层 IAM 配置(路由规则加载、白名单等)
+iam:
+  gateway:
+    # 路由规则缓存刷新间隔(秒),默认 5 分钟
+    route-rule-cache-timeout: 300
+    # 单页加载最大条数
+    route-rule-page-size: 100
+    # 公共白名单路径(无需登录校验)
+    public-paths:
+      - /actuator/**
+      - /internet/auth/login
+      - /hq/auth/login
+      - /branch/auth/login
+      - /branch/auth/secondary-auth/initiate
+      - /branch/auth/secondary-auth/confirm
+      - /branch/auth/secondary-auth/status/**
+

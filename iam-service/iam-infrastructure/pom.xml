@@ -14,6 +14,10 @@
     <dependency><groupId>com.example</groupId><artifactId>iam-domain</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>shared-id-starter</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>shared-cache-starter</artifactId></dependency>
+    <!-- shared-event-starter: 提供 EventBus 实现 (JdbcEventStore + SpringEventDispatcher) -->
+    <dependency><groupId>com.example</groupId><artifactId>shared-event-starter</artifactId></dependency>
+    <!-- shared-logging-starter: 提供脱敏配置 SanitizationProperties 校验 -->
+    <dependency><groupId>com.example</groupId><artifactId>shared-logging-starter</artifactId></dependency>
     <dependency><groupId>com.mybatis-flex</groupId><artifactId>mybatis-flex-spring-boot3-starter</artifactId></dependency>
     <dependency><groupId>com.zaxxer</groupId><artifactId>HikariCP</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
@@ -29,11 +33,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-    </dependency>
-    <!-- HttpExchange:用于防腐层外部 API 接口定义 -->
-    <dependency>
-      <groupId>io.github.danielliu1123</groupId>
-      <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
     <dependency>

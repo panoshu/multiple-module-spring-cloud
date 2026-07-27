@@ -4,6 +4,9 @@ import com.example.iam.domain.authentication.aggregate.entity.UserProfile;
 import com.example.iam.domain.authentication.aggregate.valueobject.ChannelType;
 import com.example.iam.domain.authentication.aggregate.valueobject.UserStatus;
 import com.example.iam.domain.authentication.errorcode.IamAuthErrorCode;
+import com.example.iam.domain.authentication.event.UserCreatedEvent;
+import com.example.iam.domain.authentication.event.UserDisabledEvent;
+import com.example.iam.domain.authentication.event.UserEnabledEvent;
 import com.example.iam.types.UserId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
@@ -29,7 +32,8 @@ import java.util.Objects;
  *   <li>LOCKED → DISABLED(锁定状态下也可禁用)</li>
  * </ul>
  *
- * <p>注:本聚合暂不注册领域事件,事件在 Task 9 中补齐。
+ * <p>状态变更方法通过 {@link #registerDomainEvent(DomainEvent)} 注册领域事件,
+ * 由 {@code IamDomainEventListener} 在事务提交后异步处理跨聚合/跨上下文的后续操作。
  *
  * @author iam-service
  * @since 2026/7/26
@@ -49,7 +53,7 @@ public class User extends AggregateRoot<UserId> {
     super(id, createdBy);
     this.channelType = Objects.requireNonNull(channelType, "channelType cannot be null");
     if (loginName == null || loginName.isBlank()) {
-      throw new DomainException(IamAuthErrorCode.LOGIN_NAME_DUPLICATE)
+      throw new DomainException(IamAuthErrorCode.USER_PROFILE_INCOMPLETE)
           .withUserDetail("登录名不能为空");
     }
     this.loginName = loginName;
@@ -80,16 +84,20 @@ public class User extends AggregateRoot<UserId> {
    */
   public static User create(UserId id, ChannelType channelType,
                              String loginName, String displayName, UserNo createdBy) {
-    return new User(id, channelType, loginName, displayName, null, createdBy);
+    return create(id, channelType, loginName, displayName, null, createdBy);
   }
 
   /**
    * 工厂方法:创建新用户(带档案)。
+   *
+   * <p>注册 {@link UserCreatedEvent},应用层监听后可创建默认凭据(初始密码)或通知外部系统。
    */
   public static User create(UserId id, ChannelType channelType,
                              String loginName, String displayName,
                              UserProfile profile, UserNo createdBy) {
-    return new User(id, channelType, loginName, displayName, profile, createdBy);
+    User user = new User(id, channelType, loginName, displayName, profile, createdBy);
+    user.registerDomainEvent(UserCreatedEvent.of(id, channelType, loginName, displayName));
+    return user;
   }
 
   /**
@@ -110,6 +118,8 @@ public class User extends AggregateRoot<UserId> {
    *
    * <p>合法源状态:ACTIVE、LOCKED。终态 DISABLED 不允许重复禁用。
    *
+   * <p>注册 {@link UserDisabledEvent},触发后:撤销凭据 + 撤销二次授权会话 + 踢人下线 + 清缓存。
+   *
    * @param operator 操作人
    * @param reason   禁用原因(不能为空)
    */
@@ -126,12 +136,15 @@ public class User extends AggregateRoot<UserId> {
     }
     this.status = UserStatus.DISABLED;
     markUpdated(operator);
+    registerDomainEvent(UserDisabledEvent.of(this.id(), reason, operator));
   }
 
   /**
    * 启用用户。
    *
    * <p>合法源状态:DISABLED、LOCKED。
+   *
+   * <p>注册 {@link UserEnabledEvent},允许该用户重新登录。
    *
    * @param operator 操作人
    */
@@ -144,6 +157,7 @@ public class User extends AggregateRoot<UserId> {
     }
     this.status = UserStatus.ACTIVE;
     markUpdated(operator);
+    registerDomainEvent(UserEnabledEvent.of(this.id(), operator));
   }
 
   /**

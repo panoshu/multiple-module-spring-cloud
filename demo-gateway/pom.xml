@@ -38,6 +38,36 @@
       <artifactId>shared-json</artifactId>
     </dependency>
 
+    <!-- sa-token 网关层集成 (Reactive WebFlux) -->
+    <dependency>
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
+    </dependency>
+    <!-- sa-token 整合 RedisTemplate (官方推荐) + 连接池 -->
+    <dependency>
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-redis-template</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+    </dependency>
+
+    <!-- iam-api: 网关调用 iam-service 的 RouteRuleApi 加载动态路由规则 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>iam-api</artifactId>
+    </dependency>
+    <!-- httpexchange: 注册 @HttpExchange 标注的 iam-api 接口为远程客户端 -->
+    <dependency>
+      <groupId>io.github.danielliu1123</groupId>
+      <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

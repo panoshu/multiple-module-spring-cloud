@@ -2,6 +2,10 @@ package com.example.iam.domain.authentication.aggregate.root;
 
 import com.example.iam.domain.authentication.aggregate.valueobject.SecondaryAuthStatus;
 import com.example.iam.domain.authentication.errorcode.IamAuthErrorCode;
+import com.example.iam.domain.authentication.event.SecondaryAuthCompletedEvent;
+import com.example.iam.domain.authentication.event.SecondaryAuthExpiredEvent;
+import com.example.iam.domain.authentication.event.SecondaryAuthInitiatedEvent;
+import com.example.iam.domain.authentication.event.SecondaryAuthRevokedEvent;
 import com.example.iam.domain.authorization.aggregate.valueobject.PermissionCode;
 import com.example.iam.domain.authorization.aggregate.valueobject.PermissionSnapshot;
 import com.example.iam.types.SecondaryAuthSessionId;
@@ -99,10 +103,13 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
           .withUserDetail("计划编号不能为空");
     }
     LocalDateTime now = LocalDateTime.now();
-    return new SecondaryAuthSession(id, tellerId, approverId, customerNo, planId,
+    SecondaryAuthSession session = new SecondaryAuthSession(id, tellerId, approverId, customerNo, planId,
         null, SecondaryAuthStatus.PENDING,
         now, null, null, null,
         operator, operator, now, now, Version.initial());
+    session.registerDomainEvent(SecondaryAuthInitiatedEvent.of(
+        id, tellerId, approverId, customerNo, planId));
+    return session;
   }
 
   /**
@@ -145,6 +152,8 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     this.expireAt = expireAt;
     this.status = SecondaryAuthStatus.AUTHORIZED;
     markUpdated(approver);
+    registerDomainEvent(SecondaryAuthCompletedEvent.of(
+        id(), tellerId, approverId, planId, authorizedAt, expireAt));
   }
 
   /**
@@ -191,12 +200,15 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     this.status = SecondaryAuthStatus.REVOKED;
     this.revokeReason = reason;
     markUpdated(operator);
+    registerDomainEvent(SecondaryAuthRevokedEvent.of(id(), tellerId, reason, operator));
   }
 
   /**
    * 标记会话过期(AUTHORIZED → EXPIRED)。
    *
    * <p>由系统定时任务或登录前校验触发。
+   *
+   * <p>注册 {@link SecondaryAuthExpiredEvent},触发后踢出柜员会话。
    */
   public void markExpired() {
     if (!status.canExpire()) {
@@ -207,6 +219,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
           .withContext("targetStatus", SecondaryAuthStatus.EXPIRED);
     }
     this.status = SecondaryAuthStatus.EXPIRED;
+    registerDomainEvent(SecondaryAuthExpiredEvent.of(id(), tellerId));
   }
 
   /**

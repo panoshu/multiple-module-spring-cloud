@@ -13,7 +13,9 @@
   <dependencies>
     <dependency><groupId>com.example</groupId><artifactId>iam-adapter</artifactId></dependency>
     <dependency><groupId>com.example</groupId><artifactId>iam-infrastructure</artifactId></dependency>
-    <dependency><groupId>cn.dev33</groupId><artifactId>sa-token-redis-jackson</artifactId></dependency>
+    <!-- sa-token 整合 RedisTemplate (官方推荐) + 连接池 -->
+    <dependency><groupId>cn.dev33</groupId><artifactId>sa-token-redis-template</artifactId></dependency>
+    <dependency><groupId>org.apache.commons</groupId><artifactId>commons-pool2</artifactId></dependency>
     <dependency>
       <groupId>org.redisson</groupId>
       <artifactId>redisson-spring-boot-starter</artifactId>
@@ -25,6 +27,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

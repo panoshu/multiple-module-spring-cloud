@@ -7,6 +7,9 @@ import com.example.iam.domain.authorization.aggregate.valueobject.PermissionCode
 import com.example.iam.domain.authorization.aggregate.valueobject.PermissionMatchContext;
 import com.example.iam.domain.authorization.aggregate.valueobject.RuleStatus;
 import com.example.iam.domain.authorization.aggregate.valueobject.SubjectType;
+import com.example.iam.domain.authorization.event.PermissionRuleCreatedEvent;
+import com.example.iam.domain.authorization.event.PermissionRuleDisabledEvent;
+import com.example.iam.domain.authorization.event.PermissionRuleEnabledEvent;
 import com.example.iam.domain.authorization.errorcode.IamAuthzErrorCode;
 import com.example.iam.types.PermissionRuleId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
@@ -122,10 +125,13 @@ public class PermissionRule extends AggregateRoot<PermissionRuleId> {
         allowedActions, overrideMode, effectiveAt, expireAt);
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime effective = effectiveAt != null ? effectiveAt : now;
-    return new PermissionRule(id, ruleCode, ruleName, subjectType, subjectId,
+    PermissionRule rule = new PermissionRule(id, ruleCode, ruleName, subjectType, subjectId,
         businessCode, allowedActions, inheritToChildren, overrideMode, priority,
         RuleStatus.ACTIVE, effective, expireAt,
         createdBy, createdBy, now, now, Version.initial());
+    rule.registerDomainEvent(PermissionRuleCreatedEvent.of(
+        id, ruleCode, subjectType, subjectId, businessCode, overrideMode, priority, createdBy));
+    return rule;
   }
 
   /**
@@ -162,6 +168,7 @@ public class PermissionRule extends AggregateRoot<PermissionRuleId> {
     }
     this.status = RuleStatus.DISABLED;
     markUpdated(operator);
+    registerDomainEvent(PermissionRuleDisabledEvent.of(id(), ruleCode, operator));
   }
 
   /**
@@ -180,6 +187,7 @@ public class PermissionRule extends AggregateRoot<PermissionRuleId> {
     }
     this.status = RuleStatus.ACTIVE;
     markUpdated(operator);
+    registerDomainEvent(PermissionRuleEnabledEvent.of(id(), ruleCode, operator));
   }
 
   /**

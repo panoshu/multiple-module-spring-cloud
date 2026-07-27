@@ -79,3 +79,5 @@ replay_pid*
 ### Superpowers SDD workspace ###
 .superpowers/sdd/
 docs/superpowers/reviews/
+*.diff
+effective-settings
