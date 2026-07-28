@@ -50,7 +50,7 @@ auth-service/
 
 1. **客户/产品/计划数据零维护**：外部系统维护，auth-service 只查询使用
 2. **权限判定服务化**：其他服务通过 `auth-api` 调用权限判定接口
-3. **Sa-Token 仅认证**：登录、Token、Session 由 Sa-Token 管理；权限判定由自定义 `PermissionEngine` 处理
+3. **JWT + Redis 认证**：Access Token (JWT) 做无状态认证，微服务本地验证签名零网络调用；Refresh Token + Redis 管理会话；权限判定由自定义 `PermissionEngine` 处理
 4. **凭据策略可扩展**：密码、UKEY 等凭据类型通过策略模式抽象，新增凭据类型不改现有代码（OCP）
 5. **渠道策略可扩展**：新增渠道不改现有代码（OCP）
 
@@ -210,20 +210,39 @@ public class SecondaryAuth extends AggregateRoot<AuthId> {
 
 ## 三、权限判定引擎
 
-### 3.1 架构
+### 3.1 认证体系：JWT + Redis
 
-Sa-Token 负责认证（登录、Token、Session），权限判定由自定义 `PermissionEngine` 处理。
+认证层采用 **Access Token (JWT) + Refresh Token (Redis)** 双 Token 模型，权限判定由自定义 `PermissionEngine` 处理。
 
-**Sa-Token 职责：**
-- `StpUtil.login()` / `StpUtil.logout()` — 登录/登出
-- `StpUtil.checkLogin()` — 登录校验
-- `StpUtil.getLoginId()` — 获取当前用户
-- `SaSession` — 会话管理
-- `StpUtil.kickout()` / `StpUtil.disable()` — 踢人下线/账号封禁
+**为什么不用 Sa-Token：**
+Sa-Token 的权限模型是扁平 `List<String>`，无法表达「用户×计划×业务×操作」的多维权限，权限能力被完全架空。剩余的认证基础设施（Token 生成、会话存储、踢人下线）用 JWT + Redis 实现更轻量，且微服务可本地验证 JWT 签名，无需网络调用。
 
-**Sa-Token 不使用：**
-- `StpUtil.checkPermission()` / `StpUtil.checkRole()` — 权限校验由自定义引擎处理
-- `StpInterface.getPermissionList()` — 权限是多维上下文相关的，不适合扁平列表
+**Access Token (JWT)：**
+- 短有效期（30分钟），HS256 签名
+- Payload 包含：`userId`, `channel`, `customerNo`, `impersonatedUserId`（网点二次授权场景）, `jti`（Token唯一ID）
+- 微服务本地验证签名，零网络调用
+- 网关层解析 Payload 后通过 Header 透传用户信息给下游服务
+
+**Refresh Token (Redis)：**
+- 长有效期（7天），UUID 格式
+- Redis Key: `refresh:{userId}:{deviceId}` → Value: refreshToken
+- 用于刷新 Access Token，过期后需重新登录
+- 踢人下线 = 删除 Refresh Token + 将 Access Token 的 jti 加入 Redis 黑名单
+
+**Redis 会话管理：**
+- Key: `session:{userId}` → Redis Hash，包含 channel, customerNo, loginTime, secondaryAuthId 等
+- 网点二次授权信息存储在会话中
+- 账号封禁：Key `disabled:{userId}` → 标记，网关层检查
+
+**踢人下线 / 账号封禁：**
+- 踢人下线：删除 `refresh:{userId}:*`（所有设备），将当前 Access Token 的 jti 加入 `blacklist:{jti}`（TTL = Access Token 剩余有效期）
+- 账号封禁：设置 `disabled:{userId}`，网关层检查拦截
+
+**与权限引擎的关系：**
+```
+请求 → 网关(验证JWT签名 + 检查黑名单/封禁) → 业务服务(从Header获取用户信息)
+  → 业务服务(调auth-api → PermissionEngine.check())
+```
 
 ### 3.2 判定流水线
 
@@ -270,7 +289,7 @@ public interface PermissionEngine {
 
 | 层级 | 存储 | 内容 | TTL |
 |------|------|------|-----|
-| L1 | SaSession (Redis) | 用户基本信息、权限快照 | 随会话有效期 |
+| L1 | Redis Session | 用户基本信息、权限快照、二次授权状态 | 随会话有效期 |
 | L2 | Redis (共享) | BusinessScope配置、Delegation关系、PlanRoleAssignment | 5~15分钟 + 主动失效 |
 | L3 | 数据库 | 所有权限配置数据 | 持久化 |
 
@@ -303,12 +322,12 @@ public interface ChannelStrategy {
 
 ### 4.3 网点渠道二次授权流程
 
-1. 柜员登录（账号+密码）→ 获得 Token（仅能访问公开接口）
+1. 柜员登录（账号+密码）→ 获得 Access Token + Refresh Token（仅能访问公开接口）
 2. 柜员输入经办人账号 → 通知经办人
 3. 经办人输入凭据（密码/UKEY）→ 校验通过
-4. 创建 SecondaryAuth，更新 SaSession（写入 impersonatedUserId）
-5. 柜员办理业务时，PermissionContext.userId = 经办人userId，channel = BANK_BRANCH
-6. 授权过期或柜员主动退出 → 清除 SecondaryAuth
+4. 创建 SecondaryAuth，更新 Redis Session（写入 impersonatedUserId），签发新的 Access Token（包含 impersonatedUserId）
+5. 柜员办理业务时，PermissionContext.userId = 经办人userId（从 JWT payload 的 impersonatedUserId 解析），channel = BANK_BRANCH
+6. 授权过期或柜员主动退出 → 清除 SecondaryAuth，签发不含 impersonatedUserId 的新 Access Token
 
 ---
 
