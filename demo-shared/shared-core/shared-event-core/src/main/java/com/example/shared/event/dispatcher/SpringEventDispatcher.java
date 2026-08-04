@@ -16,8 +16,12 @@ public class SpringEventDispatcher implements EventDispatcher {
   }
 
   @Override
-  public String getChannelName() { return "spring-local"; }
+  public String getChannelName() {
+    return "spring-local";
+  }
 
   @Override
-  public boolean isRemote() { return false; }
+  public boolean isRemote() {
+    return false;
+  }
 }

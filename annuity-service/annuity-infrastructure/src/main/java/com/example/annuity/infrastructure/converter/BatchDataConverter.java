@@ -9,8 +9,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import org.mapstruct.Mapper;
 
 /**
@@ -78,37 +77,37 @@ public interface BatchDataConverter {
     }
 
     BusinessContext businessContext = new BusinessContext(
-        aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
-        aDo.getCustomerNo() != null ? com.example.shared.primitives.identity.CustomerNo.of(aDo.getCustomerNo()) : null,
-        aDo.getCustomerName(),
-        aDo.getProductNo() != null ? com.example.shared.primitives.identity.ProductNo.of(aDo.getProductNo()) : null,
-        aDo.getProductName(),
-        aDo.getPlanNo() != null ? com.example.shared.primitives.identity.PlanNo.of(aDo.getPlanNo()) : null,
-        aDo.getPlanName(),
-        aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-        KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
+      aDo.getCustomerNo() != null ? CustomerNo.of(aDo.getCustomerNo()) : null,
+      aDo.getCustomerName(),
+      aDo.getProductNo() != null ? ProductNo.of(aDo.getProductNo()) : null,
+      aDo.getProductName(),
+      aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
+      aDo.getPlanName(),
+      aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
+      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
     );
 
     OperatorInfo operatorInfo = new OperatorInfo(
-        aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
-        aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
-        aDo.getOperatorName(),
-        aDo.getIsProxy() != null && aDo.getIsProxy()
+      aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
+      aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
+      aDo.getOperatorName(),
+      aDo.getIsProxy() != null && aDo.getIsProxy()
     );
 
     return KernelAggregateReflector.reconstituteBatch(
-        BatchId.of(aDo.getId()),
-        aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-        aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
-        aDo.getCreateTime(),
-        aDo.getUpdateTime(),
-        aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
-        businessContext,
-        operatorInfo,
-        aDo.getStatus() != null ? BatchStatus.valueOf(aDo.getStatus()) : null,
-        aDo.getTotalApplicationCount() != null ? aDo.getTotalApplicationCount() : 0,
-        aDo.getSuccessCount() != null ? aDo.getSuccessCount() : 0,
-        aDo.getFailedCount() != null ? aDo.getFailedCount() : 0
+      BatchId.of(aDo.getId()),
+      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
+      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreateTime(),
+      aDo.getUpdateTime(),
+      aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
+      businessContext,
+      operatorInfo,
+      aDo.getStatus() != null ? BatchStatus.valueOf(aDo.getStatus()) : null,
+      aDo.getTotalApplicationCount() != null ? aDo.getTotalApplicationCount() : 0,
+      aDo.getSuccessCount() != null ? aDo.getSuccessCount() : 0,
+      aDo.getFailedCount() != null ? aDo.getFailedCount() : 0
     );
   }
 }

@@ -4,7 +4,7 @@ import com.example.file.domain.model.enums.IdentifyMode;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.entity.Entity;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,9 +42,17 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
     this.validateInvariants();
   }
 
-  public IdentifyMode identifyMode() { return identifyMode; }
-  public List<String> fingerprint() { return fingerprint; }
-  public List<RegionDef> regions() { return regions; }
+  public IdentifyMode identifyMode() {
+    return identifyMode;
+  }
+
+  public List<String> fingerprint() {
+    return fingerprint;
+  }
+
+  public List<RegionDef> regions() {
+    return regions;
+  }
 
   @Override
   protected void validateInvariants() {

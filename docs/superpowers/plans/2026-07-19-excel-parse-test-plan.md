@@ -1,10 +1,12 @@
 # 基于 Excel 的解析测试与遗留项完善 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 基于 `docs/excel/示例表单.xlsx` 创建测试案例，完善 ExcelParserImpl 和 YamlConfigLoader 遗留项，验证解析→校验→拆分完整流程。
 
-**Architecture:** TDD 驱动，分 4 个任务：TableStrategy 增加 headerNameRow + TableRegionParser 完善 DataEndRule → ExcelParserImpl 修复列索引 + 完善 parse 方法 → YamlConfigLoader 完善完整映射 → 端到端集成测试。
+**Architecture:** TDD 驱动，分 4 个任务：TableStrategy 增加 headerNameRow + TableRegionParser 完善 DataEndRule →
+ExcelParserImpl 修复列索引 + 完善 parse 方法 → YamlConfigLoader 完善完整映射 → 端到端集成测试。
 
 **Tech Stack:** JDK 25, fesod-sheet (Excel), SnakeYAML, JUnit 5, AssertJ
 
@@ -12,7 +14,7 @@
 
 - PowerShell 环境，mvn 的 -D 参数用引号：`"-Dmaven.legacyLocalRepo=true"`
 - Git commit 用 `--no-gpg-sign` + 临时文件 commit message
-- RawRow.cells() 列索引统一为 **0-based**
+- RawRow.cells () 列索引统一为 **0-based**
 - 领域对象用 record + 非 JavaBean getter
 - 测试用 AssertJ 断言
 
@@ -20,65 +22,65 @@
 
 ## 值对象签名速查表（实施时参照，防止签名错误）
 
-| 类 | 构造函数签名 |
-|----|-------------|
-| `PropertyFieldDef` | `(String code, FieldType type, boolean required, String pattern)` |
-| `FieldDef` | `(String code, FieldType type, boolean required, Integer scale)` |
-| `TableDef` | `(String code, List<FieldDef> fields)` |
-| `CanonicalModelDef` | `(List<PropertyFieldDef> properties, List<TableDef> tables)` |
-| `ValidationRule` | `(String field, ValidationScope scope, String expr, String message, FieldType type)` |
-| `DerivationRule` | `(String field, String expr, FieldType type, String description)` |
-| `SplitKeyDef` | `(String targetField, String sourcePath, SplitKeyType type)` — sourcePath 格式 `"regionName.field"` |
-| `SplitConfig` | `(List<String> keys, SplitKeyDef splitKey, SplitMissPolicy onMiss, String defaultOnMissValue, String fileNamingTemplate, boolean promoteToContext, int maxRowsPerSubTask)` |
-| `RegionDef` | `(String name, RegionType type, String bindTo, RegionTrigger trigger, RegionStrategy strategy)` |
-| `RegionTrigger` | `(TriggerMatchType matchType, int minMatchCount)` |
-| `KvStrategy` | `(KvValuePosition valuePosition, Map<String, List<String>> labelAliases, int maxBlankRows)` |
-| `TableStrategy` | `(int headerRows, int headerNameRow, TableMatchBy matchBy, Map<String, List<String>> headerAliases, HeaderMatching headerMatching, int maxRows, DataEndRule dataEnd)` — Task 1 后 |
-| `DataEndRule` | `(List<String> markers, int blankRowCount)` |
-| `SourceTemplateDef` | `Entity<TemplateCode>` 构造 `(TemplateCode, IdentifyMode, List<String>, List<RegionDef>, UserNo)` |
-| `TemplateConfig.create` | `(TemplateConfigId, BizType, String, ErrorPolicy, CanonicalModelDef, List<ValidationRule>, List<DerivationRule>, SplitConfig, List<SourceTemplateDef>, UserNo)` |
+| 类                      | 构造函数签名                                                                                                                                                                      |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PropertyFieldDef`      | `(String code, FieldType type, boolean required, String pattern)`                                                                                                                 |
+| `FieldDef`              | `(String code, FieldType type, boolean required, Integer scale)`                                                                                                                  |
+| `TableDef`              | `(String code, List<FieldDef> fields)`                                                                                                                                            |
+| `CanonicalModelDef`     | `(List<PropertyFieldDef> properties, List<TableDef> tables)`                                                                                                                      |
+| `ValidationRule`        | `(String field, ValidationScope scope, String expr, String message, FieldType type)`                                                                                              |
+| `DerivationRule`        | `(String field, String expr, FieldType type, String description)`                                                                                                                 |
+| `SplitKeyDef`           | `(String targetField, String sourcePath, SplitKeyType type)` — sourcePath 格式 `"regionName.field"`                                                                               |
+| `SplitConfig`           | `(List<String> keys, SplitKeyDef splitKey, SplitMissPolicy onMiss, String defaultOnMissValue, String fileNamingTemplate, boolean promoteToContext, int maxRowsPerSubTask)`        |
+| `RegionDef`             | `(String name, RegionType type, String bindTo, RegionTrigger trigger, RegionStrategy strategy)`                                                                                   |
+| `RegionTrigger`         | `(TriggerMatchType matchType, int minMatchCount)`                                                                                                                                 |
+| `KvStrategy`            | `(KvValuePosition valuePosition, Map<String, List<String>> labelAliases, int maxBlankRows)`                                                                                       |
+| `TableStrategy`         | `(int headerRows, int headerNameRow, TableMatchBy matchBy, Map<String, List<String>> headerAliases, HeaderMatching headerMatching, int maxRows, DataEndRule dataEnd)` — Task 1 后 |
+| `DataEndRule`           | `(List<String> markers, int blankRowCount)`                                                                                                                                       |
+| `SourceTemplateDef`     | `Entity<TemplateCode>` 构造 `(TemplateCode, IdentifyMode, List<String>, List<RegionDef>, UserNo)`                                                                                 |
+| `TemplateConfig.create` | `(TemplateConfigId, BizType, String, ErrorPolicy, CanonicalModelDef, List<ValidationRule>, List<DerivationRule>, SplitConfig, List<SourceTemplateDef>, UserNo)`                   |
 
 ### 枚举值
 
-| 枚举 | 值 |
-|------|----|
-| `FieldType` | STRING, DECIMAL, INTEGER, DATE, BOOLEAN |
-| `ValidationScope` | ROW, GLOBAL |
-| `SplitKeyType` | FIELD_VALUE, CONSTANT |
-| `SplitMissPolicy` | ERROR, IGNORE, DEFAULT |
-| `ErrorPolicy` | FAIL_FAST, COLLECT_ALL, SKIP_ERROR_ROWS |
-| `IdentifyMode` | AUTO, MANUAL |
-| `RegionType` | KEY_VALUE, TABLE |
-| `KvValuePosition` | RIGHT, BELOW |
-| `TableMatchBy` | HEADER_NAME |
-| `HeaderMatching` | STRICT, LOOSE |
-| `TriggerMatchType` | HEADER_SNIFF, REGEX |
+| 枚举               | 值                                      |
+|--------------------|-----------------------------------------|
+| `FieldType`        | STRING, DECIMAL, INTEGER, DATE, BOOLEAN |
+| `ValidationScope`  | ROW, GLOBAL                             |
+| `SplitKeyType`     | FIELD_VALUE, CONSTANT                   |
+| `SplitMissPolicy`  | ERROR, IGNORE, DEFAULT                  |
+| `ErrorPolicy`      | FAIL_FAST, COLLECT_ALL, SKIP_ERROR_ROWS |
+| `IdentifyMode`     | AUTO, MANUAL                            |
+| `RegionType`       | KEY_VALUE, TABLE                        |
+| `KvValuePosition`  | RIGHT, BELOW                            |
+| `TableMatchBy`     | HEADER_NAME                             |
+| `HeaderMatching`   | STRICT, LOOSE                           |
+| `TriggerMatchType` | HEADER_SNIFF, REGEX                     |
 
 ### 类型工厂方法
 
-| 类型 | 工厂 |
-|------|------|
-| `BizType` | `BizType.of("ENTERPRISE_PLAN")` |
-| `TemplateCode` | `TemplateCode.of("STANDARD_TEMPLATE")` |
-| `TemplateConfigId` | `TemplateConfigId.of("...")` |
-| `UserNo` | `UserNo.of("test-user")` |
+| 类型               | 工厂                                   |
+|--------------------|----------------------------------------|
+| `BizType`          | `BizType.of("ENTERPRISE_PLAN")`        |
+| `TemplateCode`     | `TemplateCode.of("STANDARD_TEMPLATE")` |
+| `TemplateConfigId` | `TemplateConfigId.of("...")`           |
+| `UserNo`           | `UserNo.of("test-user")`               |
 
 ### 服务方法签名
 
-| 服务 | 方法 |
-|------|------|
-| `DataValidator.validate` | `(Map<String, Object> data, List<ValidationRule> rules, ErrorPolicy policy, ExpressionEvaluator evaluator) → ValidationResult` |
-| `TaskSplitter.split` | `(Map<String, Object> data, SplitConfig config) → List<SplitUnit>` |
-| `RegionStateMachine.drive` | `(RawRowStream stream, List<RegionDef> regions, ParseContext ctx) → List<RegionParseResult>` |
-| `CanonicalModelBuilder.build` | `(List<RegionParseResult> regions, List<RegionDef> regionDefs) → CanonicalData` |
+| 服务                          | 方法                                                                                                                           |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `DataValidator.validate`      | `(Map<String, Object> data, List<ValidationRule> rules, ErrorPolicy policy, ExpressionEvaluator evaluator) → ValidationResult` |
+| `TaskSplitter.split`          | `(Map<String, Object> data, SplitConfig config) → List<SplitUnit>`                                                             |
+| `RegionStateMachine.drive`    | `(RawRowStream stream, List<RegionDef> regions, ParseContext ctx) → List<RegionParseResult>`                                   |
+| `CanonicalModelBuilder.build` | `(List<RegionParseResult> regions, List<RegionDef> regionDefs) → CanonicalData`                                                |
 
 ### 关键接口
 
-| 接口 | 方法 |
-|------|------|
-| `ExpressionEvaluator` | `Object evaluate(String expr, Map<String, Object> context)` |
-| `ExcelParser` | `RawRowStream openStream(InputStream)` + `List<RegionParseResult> parse(InputStream, List<RegionDef>)` |
-| `ConfigLoader` | `TemplateConfig loadFromYaml(BizType, String, List<String>, String, UserNo)` |
+| 接口                  | 方法                                                                                                   |
+|-----------------------|--------------------------------------------------------------------------------------------------------|
+| `ExpressionEvaluator` | `Object evaluate(String expr, Map<String, Object> context)`                                            |
+| `ExcelParser`         | `RawRowStream openStream(InputStream)` + `List<RegionParseResult> parse(InputStream, List<RegionDef>)` |
+| `ConfigLoader`        | `TemplateConfig loadFromYaml(BizType, String, List<String>, String, UserNo)`                           |
 
 ### CanonicalData 结构
 
@@ -118,13 +120,14 @@ public record SplitUnit(String splitKey, Map<String, Object> data);
 
 ### KeyValueRegionParser 已支持多组 KV
 
-`matchLabels` 遍历 labelAliases 在所有 cells 中查找，**已天然支持每行多组 KV**，只需配置 labelAliases。
+`matchLabels` 遍历 labelAliases 在所有 cells 中查找， **已天然支持每行多组 KV**，只需配置 labelAliases。
 
 ### DataValidator 需要 ExpressionEvaluator
 
 ValidationRule 用 `expr`（表达式字符串），不是 `type: NOT_NULL` 枚举。端到端测试需要提供 ExpressionEvaluator 实现。
 
 **简单 ExpressionEvaluator 实现**（测试用）：
+
 ```java
 ExpressionEvaluator evaluator = (expr, ctx) -> {
   // 简化：支持 "field != null" 表达式
@@ -139,7 +142,8 @@ ExpressionEvaluator evaluator = (expr, ctx) -> {
 
 ### TaskSplitter 的 sourcePath 格式
 
-`SplitKeyDef.sourcePath` 格式是 `"regionName.field"`，如 `"employees.customerNo"`。TaskSplitter 会从 `data.get(regionName)` 取 List<Map>，按 field 分组。
+`SplitKeyDef.sourcePath` 格式是 `"regionName.field"`，如 `"employees.customerNo"`。TaskSplitter 会从
+`data.get(regionName)` 取 List<Map>，按 field 分组。
 
 ### 端到端测试数据流
 
@@ -154,6 +158,7 @@ Excel → ExcelParser.openStream → RawRowStream
 ```
 
 CanonicalData → Map 转换：
+
 ```java
 Map<String, Object> dataMap = new LinkedHashMap<>();
 dataMap.putAll(canonicalData.properties());
@@ -164,23 +169,24 @@ dataMap.putAll(canonicalData.tables());  // tables 的 key 是 regionName，valu
 
 ## File Structure
 
-| 文件 | 操作 | 职责 |
-|------|------|------|
-| `file-domain/.../config/TableStrategy.java` | 修改 | 增加 headerNameRow 字段 |
-| `file-domain/.../service/TableRegionParser.java` | 修改 | 支持 headerNameRow + DataEndRule.markers |
-| `file-domain/.../service/TableRegionParserTest.java` | 修改 | 适配新构造函数 + 新增测试 |
-| `file-domain/.../service/CanonicalModelBuilderTest.java` | 修改 | 适配新构造函数 |
-| `file-infrastructure/.../gateway/ExcelParserImpl.java` | 修改 | 修复列索引 + 完善 parse 方法 |
-| `file-infrastructure/.../gateway/ExcelParserImplTest.java` | 新建 | 解析层单元测试 |
-| `file-infrastructure/.../gateway/YamlConfigLoader.java` | 修改 | 完善完整 YAML → TemplateConfig 映射 |
-| `file-infrastructure/.../gateway/YamlConfigLoaderTest.java` | 新建 | ConfigLoader 单元测试 |
-| `file-infrastructure/.../ParseFlowIntegrationTest.java` | 新建 | 端到端集成测试 |
+| 文件                                                        | 操作 | 职责                                     |
+|-------------------------------------------------------------|------|------------------------------------------|
+| `file-domain/.../config/TableStrategy.java`                 | 修改 | 增加 headerNameRow 字段                  |
+| `file-domain/.../service/TableRegionParser.java`            | 修改 | 支持 headerNameRow + DataEndRule.markers |
+| `file-domain/.../service/TableRegionParserTest.java`        | 修改 | 适配新构造函数 + 新增测试                |
+| `file-domain/.../service/CanonicalModelBuilderTest.java`    | 修改 | 适配新构造函数                           |
+| `file-infrastructure/.../gateway/ExcelParserImpl.java`      | 修改 | 修复列索引 + 完善 parse 方法             |
+| `file-infrastructure/.../gateway/ExcelParserImplTest.java`  | 新建 | 解析层单元测试                           |
+| `file-infrastructure/.../gateway/YamlConfigLoader.java`     | 修改 | 完善完整 YAML → TemplateConfig 映射      |
+| `file-infrastructure/.../gateway/YamlConfigLoaderTest.java` | 新建 | ConfigLoader 单元测试                    |
+| `file-infrastructure/.../ParseFlowIntegrationTest.java`     | 新建 | 端到端集成测试                           |
 
 ---
 
 ### Task 1: TableStrategy 增加 headerNameRow + TableRegionParser 完善
 
 **Files:**
+
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/TableStrategy.java`
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/service/TableRegionParser.java`
 - Modify: `file-service/file-domain/src/test/java/com/example/file/domain/service/TableRegionParserTest.java`
@@ -428,6 +434,7 @@ class TableRegionParserTest {
 修改 `file-service/file-domain/src/test/java/com/example/file/domain/service/CanonicalModelBuilderTest.java`：
 
 第 27 行（items 表格的 TableStrategy）改为：
+
 ```java
 new TableStrategy(1, 0, null, Map.of(), null, 0, null)
 ```
@@ -458,8 +465,10 @@ Remove-Item $msgPath
 ### Task 2: ExcelParserImpl 修复列索引 + 完善 parse 方法
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/ExcelParserImpl.java`
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/ExcelParserImplTest.java`
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/ExcelParserImplTest.java`
 
 - [ ] **Step 1: 写 ExcelParserImplTest 失败测试**
 
@@ -916,8 +925,10 @@ Remove-Item $msgPath
 ### Task 3: YamlConfigLoader 完善 + 测试
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/YamlConfigLoader.java`
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/YamlConfigLoaderTest.java`
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/YamlConfigLoaderTest.java`
 
 - [ ] **Step 1: 写 YamlConfigLoaderTest 失败测试**
 
@@ -947,23 +958,23 @@ class YamlConfigLoaderTest {
 
       canonicalModel:
         properties:
-          - { code: planNo, type: STRING, required: true }
-          - { code: planName, type: STRING, required: true }
-          - { code: customerNo, type: STRING, required: true }
-          - { code: customerName, type: STRING, required: true }
-          - { code: filler, type: STRING }
-          - { code: reviewer, type: STRING }
+          - { code: planNo, IdentityType: STRING, required: true }
+          - { code: planName, IdentityType: STRING, required: true }
+          - { code: customerNo, IdentityType: STRING, required: true }
+          - { code: customerName, IdentityType: STRING, required: true }
+          - { code: filler, IdentityType: STRING }
+          - { code: reviewer, IdentityType: STRING }
         tables:
           - code: employees
             fields:
-              - { code: seq, type: INTEGER, required: true }
-              - { code: name, type: STRING, required: true }
-              - { code: idType, type: STRING, required: true }
-              - { code: idNo, type: STRING, required: true }
+              - { code: seq, IdentityType: INTEGER, required: true }
+              - { code: name, IdentityType: STRING, required: true }
+              - { code: idType, IdentityType: STRING, required: true }
+              - { code: idNo, IdentityType: STRING, required: true }
 
       validationRules:
-        - { field: idNo, scope: ROW, expr: "idNo != null", message: "证件编号不能为空", type: STRING }
-        - { field: name, scope: ROW, expr: "name != null", message: "姓名不能为空", type: STRING }
+        - { field: idNo, scope: ROW, expr: "idNo != null", message: "证件编号不能为空", IdentityType: STRING }
+        - { field: name, scope: ROW, expr: "name != null", message: "姓名不能为空", IdentityType: STRING }
 
       derivationRules: []
 
@@ -972,7 +983,7 @@ class YamlConfigLoaderTest {
         splitKey:
           targetField: customerNo
           sourcePath: employees.customerNo
-          type: FIELD_VALUE
+          IdentityType: FIELD_VALUE
         onMiss: ERROR
         maxRowsPerSubTask: 1000
       """;
@@ -984,7 +995,7 @@ class YamlConfigLoaderTest {
       fingerprint: ["企业计划编号：", "企业客户号：", "序号*"]
       regions:
         - name: basic_info
-          type: KEY_VALUE
+          IdentityType: KEY_VALUE
           bindTo: properties
           trigger: { matchType: HEADER_SNIFF, minMatchCount: 2 }
           strategy:
@@ -996,7 +1007,7 @@ class YamlConfigLoaderTest {
               customerName: ["企业客户名称："]
             maxBlankRows: 2
         - name: employee_list
-          type: TABLE
+          IdentityType: TABLE
           bindTo: employees
           trigger: { matchType: HEADER_SNIFF, minMatchCount: 5 }
           strategy:
@@ -1009,7 +1020,7 @@ class YamlConfigLoaderTest {
               idNo: [ZJHM]
             dataEnd: { markers: ["结束"], blankRowCount: 1 }
         - name: filler_info
-          type: KEY_VALUE
+          IdentityType: KEY_VALUE
           bindTo: properties
           trigger: { matchType: HEADER_SNIFF, minMatchCount: 1 }
           strategy:
@@ -1368,6 +1379,7 @@ Remove-Item $msgPath
 ### Task 4: ParseFlowIntegrationTest 端到端集成测试
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ParseFlowIntegrationTest.java`
 
 - [ ] **Step 1: 写端到端测试**
@@ -1550,6 +1562,7 @@ Run: `mvn "-Dmaven.legacyLocalRepo=true" -pl file-service/file-infrastructure te
 Expected: BUILD SUCCESS, 3 tests pass
 
 **注意**：如果测试失败，检查：
+
 1. `RegionStateMachine.shouldEnterRegion`：第一个区域无 trigger 时立即进入
 2. `ParseContext.isNextRegionTrigger`：非空行匹配 count >= minMatchCount
 3. `KeyValueRegionParser.matchLabels`：labelAliases 中的值与 Excel 中的值完全匹配（包括"："）

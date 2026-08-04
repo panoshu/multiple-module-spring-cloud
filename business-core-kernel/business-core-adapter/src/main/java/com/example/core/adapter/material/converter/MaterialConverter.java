@@ -24,37 +24,37 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface MaterialConverter {
 
-    /**
-     * 材料项 → 响应 DTO
-     */
-    default MaterialItemResponse toResponse(MaterialItem item) {
-        if (item == null) {
-            return null;
-        }
-        return new MaterialItemResponse(
-            item.materialCode(),
-            item.materialName(),
-            item.level() != null ? item.level().name() : null,
-            item.requirement() != null ? item.requirement().name() : null,
-            item.conditionRule(),
-            item.uploadInfo().map(info -> info.uploadedAt()).orElse(null),
-            item.uploadInfo()
-                .map(info -> info.files().stream()
-                    .map(f -> f.fileId().value())
-                    .toList())
-                .orElse(List.of())
-        );
+  /**
+   * 材料项 → 响应 DTO
+   */
+  default MaterialItemResponse toResponse(MaterialItem item) {
+    if (item == null) {
+      return null;
     }
+    return new MaterialItemResponse(
+      item.materialCode(),
+      item.materialName(),
+      item.level() != null ? item.level().name() : null,
+      item.requirement() != null ? item.requirement().name() : null,
+      item.conditionRule(),
+      item.uploadInfo().map(info -> info.uploadedAt()).orElse(null),
+      item.uploadInfo()
+        .map(info -> info.files().stream()
+          .map(f -> f.fileId().value())
+          .toList())
+        .orElse(List.of())
+    );
+  }
 
-    /**
-     * 材料项列表 → 响应 DTO 列表
-     */
-    default List<MaterialItemResponse> toResponseList(List<MaterialItem> items) {
-        if (items == null) {
-            return List.of();
-        }
-        return items.stream()
-            .map(this::toResponse)
-            .toList();
+  /**
+   * 材料项列表 → 响应 DTO 列表
+   */
+  default List<MaterialItemResponse> toResponseList(List<MaterialItem> items) {
+    if (items == null) {
+      return List.of();
     }
+    return items.stream()
+      .map(this::toResponse)
+      .toList();
+  }
 }

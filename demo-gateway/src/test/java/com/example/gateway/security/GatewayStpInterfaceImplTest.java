@@ -52,28 +52,28 @@ class GatewayStpInterfaceImplTest {
     @DisplayName("internet 返回 [operator]")
     void internetReturnsOperator() {
       assertThat(stpInterface.getRoleList("user-1", "internet"))
-          .containsExactly("operator");
+        .containsExactly("operator");
     }
 
     @Test
     @DisplayName("hq 返回 [staff]")
     void hqReturnsStaff() {
       assertThat(stpInterface.getRoleList("user-2", "hq"))
-          .containsExactly("staff");
+        .containsExactly("staff");
     }
 
     @Test
     @DisplayName("branch 返回 [teller]")
     void branchReturnsTeller() {
       assertThat(stpInterface.getRoleList("user-3", "branch"))
-          .containsExactly("teller");
+        .containsExactly("teller");
     }
 
     @Test
     @DisplayName("未知 loginType 返回空列表")
     void unknownLoginTypeReturnsEmpty() {
       assertThat(stpInterface.getRoleList("user-4", "unknown"))
-          .isEmpty();
+        .isEmpty();
     }
   }
 
@@ -132,7 +132,7 @@ class GatewayStpInterfaceImplTest {
       when(stpLogic.getTokenSessionByToken("token-1")).thenReturn(session);
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PLAN_ID)).thenReturn("plan-1");
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PERMISSIONS))
-          .thenReturn(Set.of("biz:handle", "biz:query"));
+        .thenReturn(Set.of("biz:handle", "biz:query"));
 
       List<String> permissions = stpInterface.getPermissionList("user-1", "internet");
 
@@ -148,7 +148,7 @@ class GatewayStpInterfaceImplTest {
       when(stpLogic.getTokenSessionByToken("token-2")).thenReturn(session);
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PLAN_ID)).thenReturn("plan-2");
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PERMISSIONS))
-          .thenReturn(List.of("hq:admin", "hq:read"));
+        .thenReturn(List.of("hq:admin", "hq:read"));
 
       List<String> permissions = stpInterface.getPermissionList("user-2", "hq");
 
@@ -164,7 +164,7 @@ class GatewayStpInterfaceImplTest {
       when(stpLogic.getTokenSessionByToken("token-1")).thenReturn(session);
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PLAN_ID)).thenReturn("plan-1");
       when(session.get(GatewayStpInterfaceImpl.SESSION_KEY_CURRENT_PERMISSIONS))
-          .thenReturn("not-a-collection");
+        .thenReturn("not-a-collection");
 
       assertThat(stpInterface.getPermissionList("user-1", "internet")).isEmpty();
     }
@@ -186,7 +186,7 @@ class GatewayStpInterfaceImplTest {
     @DisplayName("异常情况: 捕获并返回空列表,保证安全")
     void exceptionReturnsEmpty() {
       when(channelAwareSaRouter.getChannelByLoginType("internet"))
-          .thenThrow(new RuntimeException("redis down"));
+        .thenThrow(new RuntimeException("redis down"));
 
       assertThat(stpInterface.getPermissionList("user-1", "internet")).isEmpty();
     }

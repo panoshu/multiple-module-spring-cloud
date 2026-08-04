@@ -23,6 +23,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "shared.crypto")
 public class CryptoProperties {
 
-  /** Base64 编码的 SM4 密钥（16 字节），建议通过环境变量注入 */
+  /**
+   * Base64 编码的 SM4 密钥（16 字节），建议通过环境变量注入
+   */
   private String secretKey;
 }

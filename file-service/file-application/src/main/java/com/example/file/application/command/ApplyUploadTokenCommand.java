@@ -1,8 +1,8 @@
 package com.example.file.application.command;
 
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.BatchId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,13 +25,14 @@ import java.util.List;
  * @param ttl                 token 有效期（必传，调用方从 FileTokenProperties 读取后传入）
  */
 public record ApplyUploadTokenCommand(
-    String bizType,
-    String sourceApp,
-    BatchId businessBatchId,
-    FileAccessScope accessScope,
-    UserNo uploader,
-    LocalDateTime expiresAt,
-    List<String> allowedContentTypes,
-    Long allowedMaxSize,
-    Duration ttl
-) {}
+  String bizType,
+  String sourceApp,
+  BatchId businessBatchId,
+  FileAccessScope accessScope,
+  UserNo uploader,
+  LocalDateTime expiresAt,
+  List<String> allowedContentTypes,
+  Long allowedMaxSize,
+  Duration ttl
+) {
+}

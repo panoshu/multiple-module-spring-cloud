@@ -1,8 +1,8 @@
 package com.example.file.types;
 
-import com.example.shared.primitives.identity.IdDefinition;
-import com.example.shared.primitives.identity.IdType;
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.IdDefinition;
+import com.example.shared.identifier.contract.IdType;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.security.SecureRandom;
 import java.util.Random;

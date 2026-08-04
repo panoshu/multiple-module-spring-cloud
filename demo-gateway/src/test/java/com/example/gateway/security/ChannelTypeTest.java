@@ -75,7 +75,7 @@ class ChannelTypeTest {
     @DisplayName("/internet/business/handle 前缀匹配返回 INTERNET")
     void internetWithSubPath() {
       assertThat(ChannelType.fromPath("/internet/business/handle"))
-          .isEqualTo(ChannelType.INTERNET);
+        .isEqualTo(ChannelType.INTERNET);
     }
 
     @Test

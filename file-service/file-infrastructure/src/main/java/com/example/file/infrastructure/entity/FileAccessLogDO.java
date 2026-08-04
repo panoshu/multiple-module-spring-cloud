@@ -17,34 +17,34 @@ import java.time.LocalDateTime;
 @Table("t_file_access_log")
 public class FileAccessLogDO {
 
-    @Id(keyType = KeyType.None)
-    private String id;
+  @Id(keyType = KeyType.None)
+  private String id;
 
-    private String fileId;
-    private String action;
-    private String usage;
-    private String customerNo;
-    private String productNo;
-    private String operator;
-    private String sourceApp;
-    private String sourceIp;
-    private String tokenHash;
-    private String result;
-    private String failReason;
-    private LocalDateTime occurAt;
+  private String fileId;
+  private String action;
+  private String usage;
+  private String customerNo;
+  private String productNo;
+  private String operator;
+  private String sourceApp;
+  private String sourceIp;
+  private String tokenHash;
+  private String result;
+  private String failReason;
+  private LocalDateTime occurAt;
 
-    private String createdBy;
-    private String updatedBy;
+  private String createdBy;
+  private String updatedBy;
 
-    // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
-    // FileAccessLog 为流水类，同样统一由应用层管理时间以保持一致性
-    private LocalDateTime createTime;
+  // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
+  // FileAccessLog 为流水类，同样统一由应用层管理时间以保持一致性
+  private LocalDateTime createTime;
 
-    private LocalDateTime updateTime;
+  private LocalDateTime updateTime;
 
-    @Column(isLogicDelete = true)
-    private Boolean deleted;
+  @Column(isLogicDelete = true)
+  private Boolean deleted;
 
-    @Column(version = true)
-    private Integer version;
+  @Column(version = true)
+  private Integer version;
 }

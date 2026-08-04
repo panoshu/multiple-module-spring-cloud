@@ -1,20 +1,20 @@
 package com.example.core.application.engine.service;
 
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
-import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
-import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.config.ExtractorConfig;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
-import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.shared.domain.event.EventBus;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.identifier.id.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,7 +91,7 @@ public class FlowOrchestrationService {
 
     transactionTemplate.executeWithoutResult(status -> {
       applicationRepository.save(app);
-      app.getDomainEvents().forEach(eventBus::publish);
+      app.domainEvents().forEach(eventBus::publish);
       app.clearDomainEvents();
     });
   }
@@ -153,7 +153,7 @@ public class FlowOrchestrationService {
 
   private void saveAndPublishEvents(BusinessApplication app) {
     applicationRepository.save(app);
-    app.getDomainEvents().forEach(eventBus::publish);
+    app.domainEvents().forEach(eventBus::publish);
     app.clearDomainEvents();
   }
 

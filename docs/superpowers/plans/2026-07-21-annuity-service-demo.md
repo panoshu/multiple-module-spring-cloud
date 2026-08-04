@@ -1,17 +1,22 @@
 # Annuity Service 演示服务 + Kernel 架构升级 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 新建 annuity-service 演示服务，全方位演示如何基于 business-core-kernel 实现业务功能，同时升级 kernel 集成 file-service 和 approval-service 的通用步骤处理器，并补齐 approval-service 的集成事件缺口。
+**Goal:** 新建 annuity-service 演示服务，全方位演示如何基于 business-core-kernel 实现业务功能，同时升级 kernel 集成
+file-service 和 approval-service 的通用步骤处理器，并补齐 approval-service 的集成事件缺口。
 
 **Architecture:**
+
 - Phase 1: 补齐 approval-service 集成事件（8 个领域事件 → 4 个关键集成事件 DTO + Converter + 领域事件业务字段补齐）
-- Phase 2: business-core-kernel 架构升级（新增 ApprovalIntegrationGateway SPI + 4 个通用 Handler + 2 个 Gateway 实现 + Retrofit 客户端）
+- Phase 2: business-core-kernel 架构升级（新增 ApprovalIntegrationGateway SPI + 4 个通用 Handler + 2 个 Gateway 实现 +
+  Retrofit 客户端）
 - Phase 3: kernel 事件监听器（FileParsedEvent + ApprovalResultEvent，演示用 Spring ApplicationEvent 模拟）
 - Phase 4: annuity-service 演示服务（7 层骨架 + BusinessExtension + BusinessFactExtractor + Repository 实现）
 - Phase 5: 配置 JSON + schema + 端到端集成测试
 
-**Tech Stack:** Java 25, Spring Boot 3.5.14, MyBatis-Flex 1.11.5, MapStruct 1.6.3, Retrofit 3.3.0, H2（测试）, PostgreSQL（生产）
+**Tech Stack:** Java 25, Spring Boot 3.5.14, MyBatis-Flex 1.11.5, MapStruct 1.6.3, Retrofit 3.3.0, H2（测试）,
+PostgreSQL（生产）
 
 ## Global Constraints
 
@@ -33,15 +38,19 @@
 **问题**：`SpringEventDispatcher` 只发布领域事件，不发布集成事件 DTO。演示环境无法依赖 RocketMQ。
 
 **解决方案**：
-- **演示环境**：新增 `IntegrationEventSimulator` 组件，直接通过 `ApplicationEventPublisher` 发布集成事件 DTO（如 `FileParsedEventDTO`、`ApprovalInstanceApprovedEventDTO`）。监听器用 `@EventListener` 监听 DTO 类型。
+
+- **演示环境**：新增 `IntegrationEventSimulator` 组件，直接通过 `ApplicationEventPublisher` 发布集成事件 DTO（如
+  `FileParsedEventDTO`、`ApprovalInstanceApprovedEventDTO`）。监听器用 `@EventListener` 监听 DTO 类型。
 - **生产环境**：RocketMQ 消费者接收同样的 DTO 类型，调用同样的处理方法。
-- **监听器设计**：核心处理逻辑抽取到 `handleXxx(DTO)` 方法，`@EventListener` 和 RocketMQ `@RocketMQMessageListener` 都调用该方法。
+- **监听器设计**：核心处理逻辑抽取到 `handleXxx(DTO)` 方法，`@EventListener` 和 RocketMQ `@RocketMQMessageListener`
+  都调用该方法。
 
 ### 领域事件业务字段补齐
 
 **问题**：`ApprovalInstanceApproved/Rejected/Withdrawn` 只含 `instanceId`，消费方无法知道是哪个业务单。
 
-**解决方案**：在 3 个领域事件中增加 `businessNo`、`businessType` 字段，从 `ApprovalInstance` 聚合根获取。同步更新 `of()` 工厂方法签名。
+**解决方案**：在 3 个领域事件中增加 `businessNo`、`businessType` 字段，从 `ApprovalInstance` 聚合根获取。同步更新 `of()`
+工厂方法签名。
 
 ---
 
@@ -50,14 +59,23 @@
 ### Task 1.1: 补齐 approval-domain 领域事件业务字段
 
 **Files:**
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceCreated.java`
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceApproved.java`
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceRejected.java`
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceWithdrawn.java`
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java`（更新事件派发处）
-- Test: `approval-service/approval-domain/src/test/java/com/example/approval/domain/event/ApprovalInstanceEventTest.java`
+
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceCreated.java`
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceApproved.java`
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceRejected.java`
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/event/ApprovalInstanceWithdrawn.java`
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java`
+  （更新事件派发处）
+- Test:
+  `approval-service/approval-domain/src/test/java/com/example/approval/domain/event/ApprovalInstanceEventTest.java`
 
 **Interfaces:**
+
 - Produces: 4 个领域事件新增 `String businessNo`、`String businessType` 字段
 
 **设计**：
@@ -86,11 +104,16 @@ public record ApprovalInstanceApproved(
 ### Task 1.2: 新增 approval-api 集成事件 DTO
 
 **Files:**
+
 - Create: `approval-service/approval-api/src/main/java/com/example/approval/api/event/IntegrationEventTypes.java`
-- Create: `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceCreatedEventDTO.java`
-- Create: `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceApprovedEventDTO.java`
-- Create: `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceRejectedEventDTO.java`
-- Create: `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceWithdrawnEventDTO.java`
+- Create:
+  `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceCreatedEventDTO.java`
+- Create:
+  `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceApprovedEventDTO.java`
+- Create:
+  `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceRejectedEventDTO.java`
+- Create:
+  `approval-service/approval-api/src/main/java/com/example/approval/api/event/ApprovalInstanceWithdrawnEventDTO.java`
 
 **设计**：
 
@@ -122,11 +145,16 @@ public record ApprovalInstanceApprovedEventDTO(
 ### Task 1.3: 新增 approval-infrastructure 集成事件 Converter
 
 **Files:**
+
 - Modify: `approval-service/approval-infrastructure/pom.xml`（新增 shared-event-starter 依赖）
-- Create: `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceCreatedEventConverter.java`
-- Create: `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceApprovedEventConverter.java`
-- Create: `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceRejectedEventConverter.java`
-- Create: `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceWithdrawnEventConverter.java`
+- Create:
+  `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceCreatedEventConverter.java`
+- Create:
+  `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceApprovedEventConverter.java`
+- Create:
+  `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceRejectedEventConverter.java`
+- Create:
+  `approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/event/ApprovalInstanceWithdrawnEventConverter.java`
 
 **设计**：
 
@@ -171,7 +199,9 @@ public class ApprovalInstanceApprovedEventConverter
 ### Task 1.4: approval-service 集成测试验证
 
 **Files:**
-- Test: `approval-service/approval-infrastructure/src/test/java/com/example/approval/infrastructure/event/ApprovalEventConverterTest.java`
+
+- Test:
+  `approval-service/approval-infrastructure/src/test/java/com/example/approval/infrastructure/event/ApprovalEventConverterTest.java`
 
 验证 4 个 Converter 正确转换领域事件为集成事件 DTO。
 
@@ -182,7 +212,9 @@ public class ApprovalInstanceApprovedEventConverter
 ### Task 2.1: 新增 ApprovalIntegrationGateway SPI
 
 **Files:**
-- Create: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/gateway/ApprovalIntegrationGateway.java`
+
+- Create:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/gateway/ApprovalIntegrationGateway.java`
 
 **设计**：
 
@@ -215,8 +247,10 @@ public interface ApprovalIntegrationGateway {
 ### Task 2.2: kernel pom 依赖调整
 
 **Files:**
+
 - Modify: `business-core-kernel/business-core-application/pom.xml`（新增 file-api、approval-api 依赖）
-- Modify: `business-core-kernel/business-core-infrastructure/pom.xml`（新增 file-api、approval-api、shared-client-starter 已有）
+- Modify: `business-core-kernel/business-core-infrastructure/pom.xml`（新增 file-api、approval-api、shared-client-starter
+  已有）
 - Modify: `business-core-kernel/pom.xml`（dependencyManagement 新增 file-api、approval-api、approval-service-api 引用）
 
 **business-core-application/pom.xml 新增**：
@@ -239,7 +273,9 @@ public interface ApprovalIntegrationGateway {
 ### Task 2.3: 新增通用步骤处理器 - FileServiceParseHandler
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/handler/FileServiceParseHandler.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/handler/FileServiceParseHandler.java`
 
 **设计**：
 
@@ -303,7 +339,9 @@ public class FileServiceParseHandler implements StepActionHandler {
 ### Task 2.4: 新增通用步骤处理器 - ApprovalSubmissionHandler
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/handler/ApprovalSubmissionHandler.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/handler/ApprovalSubmissionHandler.java`
 
 **设计**：
 
@@ -373,7 +411,9 @@ public class ApprovalSubmissionHandler implements StepActionHandler {
 ### Task 2.5: 新增 FileServiceIntegrationGateway 默认实现
 
 **Files:**
-- Create: `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/gateway/FileServiceIntegrationGateway.java`
+
+- Create:
+  `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/gateway/FileServiceIntegrationGateway.java`
 
 **设计**：
 
@@ -447,7 +487,9 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 ### Task 2.6: 新增 ApprovalServiceIntegrationGateway 默认实现
 
 **Files:**
-- Create: `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/gateway/ApprovalServiceIntegrationGateway.java`
+
+- Create:
+  `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/gateway/ApprovalServiceIntegrationGateway.java`
 
 **设计**：
 
@@ -516,8 +558,11 @@ public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGat
 ### Task 2.7: kernel 单元测试
 
 **Files:**
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/handler/FileServiceParseHandlerTest.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/handler/ApprovalSubmissionHandlerTest.java`
+
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/handler/FileServiceParseHandlerTest.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/handler/ApprovalSubmissionHandlerTest.java`
 
 使用 Mockito mock FileTaskApi、ApprovalFlowApi、ApprovalInstanceApi，验证 Handler 逻辑。
 
@@ -528,7 +573,9 @@ public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGat
 ### Task 3.1: 新增 IntegrationEventSimulator（演示用事件模拟器）
 
 **Files:**
-- Create: `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/event/IntegrationEventSimulator.java`
+
+- Create:
+  `business-core-kernel/business-core-infrastructure/src/main/java/com/example/core/infrastructure/event/IntegrationEventSimulator.java`
 
 **设计**：
 
@@ -558,7 +605,9 @@ public class IntegrationEventSimulator {
 ### Task 3.2: 新增 FileParsedEventListener
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/listener/FileParsedEventListener.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/listener/FileParsedEventListener.java`
 
 **设计**：
 
@@ -608,7 +657,9 @@ public class FileParsedEventListener {
 ### Task 3.3: 新增 ApprovalResultEventListener
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/listener/ApprovalResultEventListener.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/listener/ApprovalResultEventListener.java`
 
 **设计**：
 
@@ -666,17 +717,23 @@ public class ApprovalResultEventListener {
 ### Task 3.4: BusinessOrchestrationAppService 扩展方法
 
 **Files:**
-- Modify: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/service/BusinessOrchestrationAppService.java`
+
+- Modify:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/service/BusinessOrchestrationAppService.java`
 
 新增方法：
+
 - `advanceByFileTaskId(String fileTaskId)` — 根据 fileTaskId 反查业务申请单并推进
 - `advanceByApprovalResult(String businessNo, String result)` — 根据审批结果推进或终止业务申请单
 
 ### Task 3.5: kernel 事件监听器单元测试
 
 **Files:**
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/listener/FileParsedEventListenerTest.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/listener/ApprovalResultEventListenerTest.java`
+
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/listener/FileParsedEventListenerTest.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/listener/ApprovalResultEventListenerTest.java`
 
 ---
 
@@ -685,6 +742,7 @@ public class ApprovalResultEventListener {
 ### Task 4.1: 创建 annuity-service 骨架（父 pom + 7 个子模块）
 
 **Files:**
+
 - Modify: `pom.xml`（根 pom 新增 annuity-service 模块）
 - Modify: `pom.xml`（根 pom dependencyManagement 新增 annuity-api）
 - Create: `annuity-service/pom.xml`（父 pom）
@@ -699,8 +757,11 @@ public class ApprovalResultEventListener {
 ### Task 4.2: annuity-domain - BusinessExtension 实现
 
 **Files:**
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extension/AnnuityApplicationExtension.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/errorcode/AnnuityDomainErrorCode.java`
+
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extension/AnnuityApplicationExtension.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/errorcode/AnnuityDomainErrorCode.java`
 
 **设计**：
 
@@ -730,6 +791,7 @@ public record AnnuityApplicationExtension(
 ### Task 4.3: annuity-domain - BusinessFactExtractor 实现
 
 **Files:**
+
 - Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extractor/AnnuityFactExtractor.java`
 
 **设计**：
@@ -767,6 +829,7 @@ public class AnnuityFactExtractor implements BusinessFactExtractor {
 ### Task 4.4: annuity-api - REST API 接口
 
 **Files:**
+
 - Create: `annuity-service/annuity-api/src/main/java/com/example/annuity/api/AnnuityApi.java`
 - Create: `annuity-service/annuity-api/src/main/java/com/example/annuity/api/dto/UploadFormRequest.java`
 - Create: `annuity-service/annuity-api/src/main/java/com/example/annuity/api/dto/ApplicationResponse.java`
@@ -802,8 +865,11 @@ public interface AnnuityApi {
 ### Task 4.5: annuity-application - 应用服务
 
 **Files:**
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/service/AnnuityAppService.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/command/UploadFormCommand.java`
+
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/service/AnnuityAppService.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/command/UploadFormCommand.java`
 
 **设计**：
 
@@ -840,15 +906,20 @@ public class AnnuityAppService {
 ### Task 4.6: annuity-adapter - Controller + Converter
 
 **Files:**
+
 - Create: `annuity-service/annuity-adapter/src/main/java/com/example/annuity/adapter/controller/AnnuityController.java`
 - Create: `annuity-service/annuity-adapter/src/main/java/com/example/annuity/adapter/converter/AnnuityApiConverter.java`
 
 ### Task 4.7: annuity-infrastructure - Repository 实现
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/ApplicationRepositoryImpl.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/BatchRepositoryImpl.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/FormRepositoryImpl.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/ApplicationRepositoryImpl.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/BatchRepositoryImpl.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/FormRepositoryImpl.java`
 
 **设计**（以 ApplicationRepositoryImpl 为例）：
 
@@ -898,20 +969,30 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
 ### Task 4.8: annuity-infrastructure - DO + Mapper + Converter
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/ApplicationDO.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/ApplicationDO.java`
 - Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/BatchDO.java`
 - Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/FormDO.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/ApplicationMapper.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/BatchMapper.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/FormMapper.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/ApplicationDataConverter.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/BatchDataConverter.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/FormDataConverter.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/configuration/JacksonConfiguration.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/ApplicationMapper.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/BatchMapper.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/FormMapper.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/ApplicationDataConverter.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/BatchDataConverter.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/FormDataConverter.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/configuration/JacksonConfiguration.java`
 
 ### Task 4.9: annuity-infrastructure - schema DDL
 
 **Files:**
+
 - Create: `annuity-service/annuity-infrastructure/src/main/resources/schema-pg.sql`
 - Create: `annuity-service/annuity-infrastructure/src/main/resources/schema-mysql.sql`
 
@@ -954,6 +1035,7 @@ CREATE INDEX idx_annuity_application_status ON t_annuity_application(application
 ### Task 4.10: annuity-starter - 启动类 + 配置
 
 **Files:**
+
 - Create: `annuity-service/annuity-starter/src/main/java/com/example/annuity/AnnuityApplication.java`
 - Create: `annuity-service/annuity-starter/src/main/resources/application.yml`
 - Create: `annuity-service/annuity-starter/src/main/resources/application-local.yml`
@@ -985,6 +1067,7 @@ public class AnnuityApplication {
 ### Task 5.1: 配置 JSON 文件
 
 **Files:**
+
 - Create: `annuity-service/annuity-infrastructure/src/main/resources/config/step-routes.json`
 - Create: `annuity-service/annuity-infrastructure/src/main/resources/config/material-rules.json`
 - Create: `annuity-service/annuity-infrastructure/src/main/resources/config/extractor-config.json`
@@ -1031,14 +1114,18 @@ public class AnnuityApplication {
 ### Task 5.2: annuity-infrastructure - BusinessConfigGateway 实现
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/JsonBusinessConfigGateway.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/JsonBusinessConfigGateway.java`
 
 从 classpath:config/*.json 读取配置。
 
 ### Task 5.3: annuity-infrastructure - FileIntegrationGateway 演示实现
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockFileIntegrationGateway.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockFileIntegrationGateway.java`
 
 **设计**：演示用 mock 实现，触发解析后直接通过 `IntegrationEventSimulator` 发布 `FileParsedEventDTO` 模拟回调。
 
@@ -1073,9 +1160,11 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
 ### Task 5.4: 端到端集成测试
 
 **Files:**
+
 - Test: `annuity-service/annuity-starter/src/test/java/com/example/annuity/AnnuityEndToEndTest.java`
 
 **测试场景**：
+
 1. 上传表单 → 创建 Batch + Form
 2. 触发 FORM_DETAIL_INGESTION → MockFileIntegrationGateway 模拟解析完成事件
 3. FileParsedEventListener 接收事件 → 推进到 DATA_VERIFICATION
@@ -1089,6 +1178,7 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
 ### Task 5.5: 全量构建验证
 
 **Files:**
+
 - 验证 `mvn clean compile -DskipTests` 全项目编译通过
 - 验证 `mvn test` 全项目测试通过
 - 验证 `mvn -pl annuity-service/annuity-starter -am package -DskipTests` 可打包
@@ -1097,14 +1187,14 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
 
 ## 文件清单汇总
 
-| Phase | 模块 | 文件数 | 说明 |
-|-------|------|--------|------|
-| Phase 1 | approval-domain + approval-api + approval-infrastructure | 12 | 领域事件业务字段 + 4 个集成事件 DTO + 4 个 Converter + 测试 |
-| Phase 2 | business-core-domain + business-core-application + business-core-infrastructure | 10 | SPI + 4 个通用 Handler + 2 个 Gateway 实现 + pom 调整 + 测试 |
-| Phase 3 | business-core-application + business-core-infrastructure | 5 | 事件模拟器 + 2 个监听器 + AppService 扩展 + 测试 |
-| Phase 4 | annuity-service 全 7 层 | 20 | 骨架 + Extension + Extractor + API + AppService + Controller + Repository + DO + Mapper + Converter + schema |
-| Phase 5 | annuity-infrastructure + annuity-starter | 8 | 配置 JSON + ConfigGateway + MockGateway + 端到端测试 |
-| **合计** | | **55** | |
+| Phase    | 模块                                                                            | 文件数 | 说明                                                                                                         |
+|----------|---------------------------------------------------------------------------------|--------|--------------------------------------------------------------------------------------------------------------|
+| Phase 1  | approval-domain + approval-api + approval-infrastructure                        | 12     | 领域事件业务字段 + 4 个集成事件 DTO + 4 个 Converter + 测试                                                  |
+| Phase 2  | business-core-domain + business-core-application + business-core-infrastructure | 10     | SPI + 4 个通用 Handler + 2 个 Gateway 实现 + pom 调整 + 测试                                                 |
+| Phase 3  | business-core-application + business-core-infrastructure                        | 5      | 事件模拟器 + 2 个监听器 + AppService 扩展 + 测试                                                             |
+| Phase 4  | annuity-service 全 7 层                                                         | 20     | 骨架 + Extension + Extractor + API + AppService + Controller + Repository + DO + Mapper + Converter + schema |
+| Phase 5  | annuity-infrastructure + annuity-starter                                        | 8      | 配置 JSON + ConfigGateway + MockGateway + 端到端测试                                                         |
+| **合计** |                                                                                 | **55** |                                                                                                              |
 
 ---
 

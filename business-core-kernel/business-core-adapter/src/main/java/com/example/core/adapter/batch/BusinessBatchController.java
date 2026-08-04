@@ -24,11 +24,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,115 +63,115 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BusinessBatchController implements BusinessBatchApi {
 
-    private final BusinessBatchAppService batchAppService;
-    private final BatchConverter converter;
-    private final SupportedBusinessTypeValidator typeValidator;
-    private final SessionContextResolver sessionResolver;
-    private final BusinessMetaContextAssembler metaAssembler;
-    private final BusinessAccessGuard accessGuard;
+  private final BusinessBatchAppService batchAppService;
+  private final BatchConverter converter;
+  private final SupportedBusinessTypeValidator typeValidator;
+  private final SessionContextResolver sessionResolver;
+  private final BusinessMetaContextAssembler metaAssembler;
+  private final BusinessAccessGuard accessGuard;
 
-    @Override
-    @RequireBusinessPermission("BATCH_VIEW")
-    public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
-        typeValidator.validate(query.businessType());
-        SessionContext session = sessionResolver.require();
-        log.info("查询未完成批次: planNo={}, businessType={}, userNo={}",
-            query.planNo(), query.businessType(), session.userNo());
+  @Override
+  @RequireBusinessPermission("BATCH_VIEW")
+  public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
+    typeValidator.validate(query.businessType());
+    SessionContext session = sessionResolver.require();
+    log.info("查询未完成批次: planNo={}, businessType={}, userNo={}",
+      query.planNo(), query.businessType(), session.userNo());
 
-        Optional<BusinessBatch> batch = batchAppService.findActive(
-            new PlanNo(query.planNo()),
-            BusinessType.valueOf(query.businessType())
-        );
-        return ApiResult.success(batch.map(converter::toSummaryResponse));
+    Optional<BusinessBatch> batch = batchAppService.findActive(
+      new PlanNo(query.planNo()),
+      BusinessType.valueOf(query.businessType())
+    );
+    return ApiResult.success(batch.map(converter::toSummaryResponse));
+  }
+
+  @Override
+  @RequireBusinessPermission("BATCH_CREATE")
+  public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
+    typeValidator.validate(command.businessType());
+    SessionContext session = sessionResolver.require();
+    BusinessMetaContext meta = metaAssembler.assemble(command.businessType(), command.planNo(), session);
+    accessGuard.checkCanHandle(session, meta);
+
+    log.info("创建业务批次: businessType={}, planNo={}, userNo={}",
+      command.businessType(), command.planNo(), session.userNo());
+
+    BusinessContext domainContext = toDomainContext(meta, session);
+    OperatorInfo operator = toOperatorInfo(session);
+    BusinessBatch batch = batchAppService.createBatch(domainContext, operator);
+    return ApiResult.success(converter.toCreatedResponse(batch));
+  }
+
+  @Override
+  @RequireBusinessPermission("BATCH_VIEW")
+  public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query) {
+    SessionContext session = sessionResolver.require();
+    log.info("查询批次详情: batchId={}, userNo={}", query.batchId(), session.userNo());
+    BusinessBatch batch = batchAppService.loadOrThrow(new BatchId(query.batchId()));
+    return ApiResult.success(converter.toDetailResponse(batch));
+  }
+
+  @Override
+  @RequireBusinessPermission("BATCH_CANCEL")
+  public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command) {
+    SessionContext session = sessionResolver.require();
+    log.info("取消批次: batchId={}, userNo={}", command.batchId(), session.userNo());
+    batchAppService.cancel(new BatchId(command.batchId()), command.reason());
+    return ApiResult.success();
+  }
+
+  /**
+   * 将 BusinessMetaContext + SessionContext 转换为领域 BusinessContext。
+   */
+  private BusinessContext toDomainContext(BusinessMetaContext meta, SessionContext session) {
+    return new BusinessContext(
+      BusinessType.valueOf(meta.businessType()),
+      new CustomerNo(meta.customerNo()),
+      meta.customerName(),
+      new ProductNo(meta.productNo()),
+      meta.productName(),
+      new PlanNo(meta.planNo()),
+      meta.planName(),
+      OperationModel.valueOf(meta.operationModel()),
+      AccountManager.valueOf(meta.accountManager())
+    );
+  }
+
+  /**
+   * 从 SessionContext 组装 OperatorInfo。
+   *
+   * <p>渠道映射:SessionContext.channelType(String) → AnnuityChannel 枚举。
+   * isProxy 直接取自 SessionContext(仅 INTERNET 渠道为 true)。
+   */
+  private OperatorInfo toOperatorInfo(SessionContext session) {
+    AnnuityChannel channel = mapChannel(session.channelType());
+    return new OperatorInfo(
+      channel,
+      new UserNo(session.userNo()),
+      session.loginName(),
+      session.isProxy()
+    );
+  }
+
+  /**
+   * 渠道字符串映射为 AnnuityChannel 枚举。
+   *
+   * <p>映射规则:
+   * <ul>
+   *   <li>INTERNET → NETAPP(网上渠道,含代办)</li>
+   *   <li>BRANCH → CJ_TELLER(网点渠道,需二次授权)</li>
+   *   <li>HQ → REGIONAL_CENTER(总部渠道)</li>
+   * </ul>
+   */
+  private AnnuityChannel mapChannel(String channelType) {
+    if (channelType == null) {
+      return AnnuityChannel.NETAPP;
     }
-
-    @Override
-    @RequireBusinessPermission("BATCH_CREATE")
-    public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
-        typeValidator.validate(command.businessType());
-        SessionContext session = sessionResolver.require();
-        BusinessMetaContext meta = metaAssembler.assemble(command.businessType(), command.planNo(), session);
-        accessGuard.checkCanHandle(session, meta);
-
-        log.info("创建业务批次: businessType={}, planNo={}, userNo={}",
-            command.businessType(), command.planNo(), session.userNo());
-
-        BusinessContext domainContext = toDomainContext(meta, session);
-        OperatorInfo operator = toOperatorInfo(session);
-        BusinessBatch batch = batchAppService.createBatch(domainContext, operator);
-        return ApiResult.success(converter.toCreatedResponse(batch));
-    }
-
-    @Override
-    @RequireBusinessPermission("BATCH_VIEW")
-    public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query) {
-        SessionContext session = sessionResolver.require();
-        log.info("查询批次详情: batchId={}, userNo={}", query.batchId(), session.userNo());
-        BusinessBatch batch = batchAppService.loadOrThrow(new BatchId(query.batchId()));
-        return ApiResult.success(converter.toDetailResponse(batch));
-    }
-
-    @Override
-    @RequireBusinessPermission("BATCH_CANCEL")
-    public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command) {
-        SessionContext session = sessionResolver.require();
-        log.info("取消批次: batchId={}, userNo={}", command.batchId(), session.userNo());
-        batchAppService.cancel(new BatchId(command.batchId()), command.reason());
-        return ApiResult.success();
-    }
-
-    /**
-     * 将 BusinessMetaContext + SessionContext 转换为领域 BusinessContext。
-     */
-    private BusinessContext toDomainContext(BusinessMetaContext meta, SessionContext session) {
-        return new BusinessContext(
-            BusinessType.valueOf(meta.businessType()),
-            new CustomerNo(meta.customerNo()),
-            meta.customerName(),
-            new ProductNo(meta.productNo()),
-            meta.productName(),
-            new PlanNo(meta.planNo()),
-            meta.planName(),
-            OperationModel.valueOf(meta.operationModel()),
-            AccountManager.valueOf(meta.accountManager())
-        );
-    }
-
-    /**
-     * 从 SessionContext 组装 OperatorInfo。
-     *
-     * <p>渠道映射:SessionContext.channelType(String) → AnnuityChannel 枚举。
-     * isProxy 直接取自 SessionContext(仅 INTERNET 渠道为 true)。
-     */
-    private OperatorInfo toOperatorInfo(SessionContext session) {
-        AnnuityChannel channel = mapChannel(session.channelType());
-        return new OperatorInfo(
-            channel,
-            new UserNo(session.userNo()),
-            session.loginName(),
-            session.isProxy()
-        );
-    }
-
-    /**
-     * 渠道字符串映射为 AnnuityChannel 枚举。
-     *
-     * <p>映射规则:
-     * <ul>
-     *   <li>INTERNET → NETAPP(网上渠道,含代办)</li>
-     *   <li>BRANCH → CJ_TELLER(网点渠道,需二次授权)</li>
-     *   <li>HQ → REGIONAL_CENTER(总部渠道)</li>
-     * </ul>
-     */
-    private AnnuityChannel mapChannel(String channelType) {
-        if (channelType == null) {
-            return AnnuityChannel.NETAPP;
-        }
-        return switch (channelType) {
-            case "INTERNET" -> AnnuityChannel.NETAPP;
-            case "BRANCH" -> AnnuityChannel.CJ_TELLER;
-            case "HQ" -> AnnuityChannel.REGIONAL_CENTER;
-            default -> AnnuityChannel.NETAPP;
-        };
-    }
+    return switch (channelType) {
+      case "INTERNET" -> AnnuityChannel.NETAPP;
+      case "BRANCH" -> AnnuityChannel.CJ_TELLER;
+      case "HQ" -> AnnuityChannel.REGIONAL_CENTER;
+      default -> AnnuityChannel.NETAPP;
+    };
+  }
 }

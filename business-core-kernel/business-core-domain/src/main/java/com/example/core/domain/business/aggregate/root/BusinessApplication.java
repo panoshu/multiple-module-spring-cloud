@@ -1,23 +1,18 @@
 package com.example.core.domain.business.aggregate.root;
 
-import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
-import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
-import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.business.aggregate.valueobject.*;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.domain.engine.event.PipelineExecutedEvent;
 import com.example.core.domain.engine.event.StepEnteredEvent;
-import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
-import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
-import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.*;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
+import com.example.shared.identifier.id.*;
 
 import java.time.LocalDateTime;
 import java.util.List;

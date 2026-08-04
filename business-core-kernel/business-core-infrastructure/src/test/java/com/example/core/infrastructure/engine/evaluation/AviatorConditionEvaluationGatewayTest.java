@@ -4,9 +4,9 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.PlanNo;
+import com.example.shared.identifier.id.ProductNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

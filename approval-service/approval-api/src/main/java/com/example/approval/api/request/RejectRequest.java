@@ -10,20 +10,20 @@ import jakarta.validation.constraints.NotNull;
  * @author approval-service
  */
 public record RejectRequest(
-    /**
-     * 审批实例ID
-     */
-    @NotNull(message = "审批实例ID不能为空")
-    ApprovalInstanceId instanceId,
-    /**
-     * 审批人
-     */
-    @NotBlank(message = "审批人不能为空")
-    String approver,
-    /**
-     * 驳回原因
-     */
-    @NotBlank(message = "驳回原因不能为空")
-    String reason
+  /**
+   * 审批实例ID
+   */
+  @NotNull(message = "审批实例ID不能为空")
+  ApprovalInstanceId instanceId,
+  /**
+   * 审批人
+   */
+  @NotBlank(message = "审批人不能为空")
+  String approver,
+  /**
+   * 驳回原因
+   */
+  @NotBlank(message = "驳回原因不能为空")
+  String reason
 ) {
 }

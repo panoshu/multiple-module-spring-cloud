@@ -12,7 +12,7 @@ import com.example.file.domain.service.FileTokenService;
 import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,40 +35,41 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ApplyUploadTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final StorageTargetResolver targetResolver;
-    private final FileTokenService tokenService;
-    private final FileAccessLogRepository logRepository;
+  private final FileMetadataRepository metadataRepository;
+  private final StorageTargetResolver targetResolver;
+  private final FileTokenService tokenService;
+  private final FileAccessLogRepository logRepository;
 
-    @Transactional
-    public ApplyUploadTokenResult apply(ApplyUploadTokenCommand cmd) {
-        if (cmd.ttl() == null) {
-            throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
-                .withLogDetail("ttl 不能为空");
-        }
-
-        FileId fileId = new FileId(UlidAlgorithm.generate());
-        var target = targetResolver.resolveByUsage(FileUsage.SOURCE, cmd.bizType());
-        FileMetadata file = FileMetadata.createForUpload(
-            fileId, FileUsage.SOURCE, cmd.bizType(), cmd.sourceApp(),
-            cmd.businessBatchId(), cmd.accessScope(),
-            target.targetId(), target.type(), cmd.uploader(), cmd.expiresAt()
-        );
-        metadataRepository.save(file);
-
-        String token = tokenService.generateUploadToken(
-            file, cmd.allowedContentTypes(), cmd.allowedMaxSize(), cmd.ttl()
-        );
-
-        FileAccessLog accessLog = FileAccessLog.apply(
-            fileId, FileUsage.SOURCE, cmd.accessScope(), cmd.uploader(),
-            cmd.sourceApp(), TokenHashUtil.sha256(token)
-        );
-        logRepository.save(accessLog);
-
-        log.info("上传 Token 已申请: fileId={}, usage={}, bizType={}", fileId, FileUsage.SOURCE, cmd.bizType());
-        return new ApplyUploadTokenResult(token, fileId);
+  @Transactional
+  public ApplyUploadTokenResult apply(ApplyUploadTokenCommand cmd) {
+    if (cmd.ttl() == null) {
+      throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("ttl 不能为空");
     }
 
-    public record ApplyUploadTokenResult(String token, FileId fileId) {}
+    FileId fileId = new FileId(UlidAlgorithm.generate());
+    var target = targetResolver.resolveByUsage(FileUsage.SOURCE, cmd.bizType());
+    FileMetadata file = FileMetadata.createForUpload(
+      fileId, FileUsage.SOURCE, cmd.bizType(), cmd.sourceApp(),
+      cmd.businessBatchId(), cmd.accessScope(),
+      target.targetId(), target.type(), cmd.uploader(), cmd.expiresAt()
+    );
+    metadataRepository.save(file);
+
+    String token = tokenService.generateUploadToken(
+      file, cmd.allowedContentTypes(), cmd.allowedMaxSize(), cmd.ttl()
+    );
+
+    FileAccessLog accessLog = FileAccessLog.apply(
+      fileId, FileUsage.SOURCE, cmd.accessScope(), cmd.uploader(),
+      cmd.sourceApp(), TokenHashUtil.sha256(token)
+    );
+    logRepository.save(accessLog);
+
+    log.info("上传 Token 已申请: fileId={}, usage={}, bizType={}", fileId, FileUsage.SOURCE, cmd.bizType());
+    return new ApplyUploadTokenResult(token, fileId);
+  }
+
+  public record ApplyUploadTokenResult(String token, FileId fileId) {
+  }
 }

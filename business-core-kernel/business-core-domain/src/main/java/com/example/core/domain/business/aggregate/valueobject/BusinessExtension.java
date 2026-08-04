@@ -1,7 +1,7 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 /**
  * 业务扩展信息, 通过值对象多态支持各业务的扩展字段

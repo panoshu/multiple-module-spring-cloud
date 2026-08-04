@@ -10,7 +10,7 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,9 +28,9 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   private final Map<String, Object> properties;
   private final Map<String, List<Map<String, Object>>> tables;
   private final int rowCount;
+  private final LocalDateTime expiresAt;
   private SubTaskStatus status;
   private List<ValidationError> validationErrors = new ArrayList<>();
-  private final LocalDateTime expiresAt;
   private LocalDateTime consumedAt;
 
   // 业务创建
@@ -78,7 +78,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
                                    Map<String, List<Map<String, Object>>> tables, int rowCount,
                                    UserNo userNo, LocalDateTime expiresAt) {
     return new SubTaskData(id, fileTaskId, bizType, splitKeyValue, context, properties,
-        tables, rowCount, userNo, expiresAt);
+      tables, rowCount, userNo, expiresAt);
   }
 
   public void applyValidationResult(ValidationResult result) {
@@ -111,15 +111,47 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
     return new SubTaskSummary(id(), splitKeyValue, rowCount, valid, invalid, status);
   }
 
-  public FileTaskId fileTaskId() { return fileTaskId; }
-  public BizType bizType() { return bizType; }
-  public String splitKeyValue() { return splitKeyValue; }
-  public BusinessContext context() { return context; }
-  public Map<String, Object> properties() { return properties; }
-  public Map<String, List<Map<String, Object>>> tables() { return tables; }
-  public int rowCount() { return rowCount; }
-  public SubTaskStatus status() { return status; }
-  public List<ValidationError> validationErrors() { return List.copyOf(validationErrors); }
-  public LocalDateTime expiresAt() { return expiresAt; }
-  public LocalDateTime consumedAt() { return consumedAt; }
+  public FileTaskId fileTaskId() {
+    return fileTaskId;
+  }
+
+  public BizType bizType() {
+    return bizType;
+  }
+
+  public String splitKeyValue() {
+    return splitKeyValue;
+  }
+
+  public BusinessContext context() {
+    return context;
+  }
+
+  public Map<String, Object> properties() {
+    return properties;
+  }
+
+  public Map<String, List<Map<String, Object>>> tables() {
+    return tables;
+  }
+
+  public int rowCount() {
+    return rowCount;
+  }
+
+  public SubTaskStatus status() {
+    return status;
+  }
+
+  public List<ValidationError> validationErrors() {
+    return List.copyOf(validationErrors);
+  }
+
+  public LocalDateTime expiresAt() {
+    return expiresAt;
+  }
+
+  public LocalDateTime consumedAt() {
+    return consumedAt;
+  }
 }

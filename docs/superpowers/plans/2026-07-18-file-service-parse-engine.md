@@ -1,12 +1,17 @@
 # File Service 表单解析与转换引擎 实现计划（Phase 1）
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 实现 file-service 表单解析与转换引擎的入站管线完整闭环：上传 Excel → 配置驱动解析 → Aviator 校验/派生 → 按业务键拆分 → JSONB 持久化 → 领域事件通知 → 分页拉取 API。
+**Goal:** 实现 file-service 表单解析与转换引擎的入站管线完整闭环：上传 Excel → 配置驱动解析 → Aviator 校验/派生 →
+按业务键拆分 → JSONB 持久化 → 领域事件通知 → 分页拉取 API。
 
-**Architecture:** DDD 七层架构（types → domain → api → application → adapter → infrastructure → starter）+ 六边形端口适配器。领域层零外部依赖（SPI 模式），Fesod/Aviator/MyBatis-Flex 实现在 infrastructure。领域事件双轨制（domain + api），通过 `IntegrationEventConverter` SPI 在 infrastructure 转换。
+**Architecture:** DDD 七层架构（types → domain → api → application → adapter → infrastructure → starter）+
+六边形端口适配器。领域层零外部依赖（SPI 模式），Fesod/Aviator/MyBatis-Flex 实现在 infrastructure。领域事件双轨制（domain +
+api），通过 `IntegrationEventConverter` SPI 在 infrastructure 转换。
 
-**Tech Stack:** JDK 25（--enable-preview）/ Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL JSONB / Apache Fesod 2.0.2-incubating / Aviator 5.4.3 / H2（测试，PostgreSQL 兼容模式）/ MapStruct 1.6.3 / Lombok 1.18.46
+**Tech Stack:** JDK 25（--enable-preview）/ Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL JSONB / Apache Fesod
+2.0.2-incubating / Aviator 5.4.3 / H2（测试，PostgreSQL 兼容模式）/ MapStruct 1.6.3 / Lombok 1.18.46
 
 ## Global Constraints
 
@@ -62,16 +67,20 @@ shared-event-starter/（重构）
 
 ## Phase A：shared-event-starter 重构（前置任务）
 
-> **为什么先做**：file-service 的领域事件双轨制依赖 `IntegrationEventConverter` SPI；现有 `JdbcEventStore.findPendingLogs` 存在 `Class.forName` 反序列化 Bug 必须先修复。重构保持向后兼容（无转换器时降级为发送领域事件）。
+> **为什么先做**：file-service 的领域事件双轨制依赖 `IntegrationEventConverter` SPI；现有 `JdbcEventStore.findPendingLogs`
+> 存在 `Class.forName` 反序列化 Bug 必须先修复。重构保持向后兼容（无转换器时降级为发送领域事件）。
 
 ### Task A1: 新增 IntegrationEventConverter SPI 接口
 
 **Files:**
+
 - Create: `demo-shared/shared-domain/src/main/java/com/example/shared/domain/event/IntegrationEventConverter.java`
 - Test: `demo-shared/shared-domain/src/test/java/com/example/shared/domain/event/IntegrationEventConverterTest.java`
 
 **Interfaces:**
-- Produces: `IntegrationEventConverter<D extends DomainEvent>` 接口，方法 `supportedEventType()`、`toIntegrationEvent(D)`、`integrationEventType()`
+
+- Produces: `IntegrationEventConverter<D extends DomainEvent>` 接口，方法 `supportedEventType()`、`toIntegrationEvent(D)`、
+  `integrationEventType()`
 
 - [ ] **Step 1: 写失败测试**
 
@@ -175,13 +184,16 @@ git commit -m "feat(shared-domain): add IntegrationEventConverter SPI for dual-t
 ### Task A2: 改造 EventStore 接口和 JdbcEventStore（双 payload 落库）
 
 **Files:**
+
 - Modify: `demo-shared/shared-domain/src/main/java/com/example/shared/domain/event/EventStore.java`
 - Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/store/JdbcEventStore.java`
 - Test: `demo-shared/shared-event-starter/src/test/java/com/example/shared/event/store/JdbcEventStoreTest.java`
 
 **Interfaces:**
+
 - Consumes: `IntegrationEventConverter`（来自 A1）
-- Produces: `EventStore.save(DomainEvent, Object integrationEvent, String integrationType)`、`PendingEntry(long logId, Object integrationEvent, String channel, String integrationType, int retryCount)`
+- Produces: `EventStore.save(DomainEvent, Object integrationEvent, String integrationType)`、
+  `PendingEntry(long logId, Object integrationEvent, String channel, String integrationType, int retryCount)`
 
 - [ ] **Step 1: 写失败测试**
 
@@ -279,7 +291,7 @@ class JdbcEventStoreTest {
 - [ ] **Step 2: 运行测试验证失败**
 
 Run: `mvn -pl demo-shared/shared-event-starter test -Dtest=JdbcEventStoreTest`
-Expected: FAIL with "method save(DomainEvent, String, String) not found"
+Expected: FAIL with "method save (DomainEvent, String, String) not found"
 
 - [ ] **Step 3: 改造 EventStore 接口**
 
@@ -462,14 +474,19 @@ git commit -m "refactor(shared-event): dual payload storage + Map-based deserial
 ### Task A3: 改造 EventDispatcher 接口和三个实现
 
 **Files:**
+
 - Modify: `demo-shared/shared-domain/src/main/java/com/example/shared/domain/event/EventDispatcher.java`
-- Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/dispatcher/RocketMQEventDispatcher.java`
+- Modify:
+  `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/dispatcher/RocketMQEventDispatcher.java`
 - Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/dispatcher/RedisEventDispatcher.java`
-- Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/dispatcher/SpringEventDispatcher.java`
+- Modify:
+  `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/dispatcher/SpringEventDispatcher.java`
 
 **Interfaces:**
+
 - Consumes: `DomainEvent`（来自 shared-domain 已有）
-- Produces: `EventDispatcher.dispatch(DomainEvent domainEvent, Object integrationEvent)`、`dispatch(DomainEvent event)` 旧签名删除
+- Produces: `EventDispatcher.dispatch(DomainEvent domainEvent, Object integrationEvent)`、`dispatch(DomainEvent event)`
+  旧签名删除
 
 - [ ] **Step 1: 改造 EventDispatcher 接口**
 
@@ -617,11 +634,13 @@ git commit -m "refactor(shared-event): EventDispatcher signature accepts integra
 ### Task A4: 改造 EventDeliverer 和 EventBus
 
 **Files:**
+
 - Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/deliverer/EventDeliverer.java`
 - Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/bus/EventBus.java`
 - Test: `demo-shared/shared-event-starter/src/test/java/com/example/shared/event/bus/EventBusTest.java`
 
 **Interfaces:**
+
 - Consumes: `IntegrationEventConverter`（A1）、`EventStore`（A2）、`EventDispatcher`（A3）
 - Produces: `EventBus.publish(DomainEvent)` 内部完成转换 → 落库 → 分发
 
@@ -753,7 +772,7 @@ public class EventDeliverer {
                                 String integrationType, long logId) {
     String channel = dispatcher.getChannelName();
     try {
-      log.debug("Recovering event logId={} type={} to channel {}", logId, integrationType, channel);
+      log.debug("Recovering event logId={} IdentityType={} to channel {}", logId, integrationType, channel);
       dispatcher.dispatch(null, integrationEvent);
       eventStore.markSuccess(logId);
     } catch (Exception e) {
@@ -814,7 +833,7 @@ public class EventBus implements com.example.shared.domain.event.EventBus {
     try {
       eventStore.save(event, integrationEvent, integrationType);
     } catch (Exception e) {
-      log.error("EventBus: Failed to save event. EventId: {}", event.eventId(), e);
+      log.error("DefaultEventBus: Failed to save event. EventId: {}", event.eventId(), e);
       throw e;
     }
 
@@ -870,8 +889,8 @@ Expected: PASS
 
 ```bash
 git add demo-shared/shared-event-starter/src/main/java/com/example/shared/event/deliverer/EventDeliverer.java \
-        demo-shared/shared-event-starter/src/main/java/com/example/shared/event/bus/EventBus.java \
-        demo-shared/shared-event-starter/src/test/java/com/example/shared/event/bus/EventBusTest.java
+        demo-shared/shared-event-starter/src/main/java/com/example/shared/event/bus/DefaultEventBus.java \
+        demo-shared/shared-event-starter/src/test/java/com/example/shared/event/bus/DefaultEventBusTest.java
 git commit -m "refactor(shared-event): EventBus converts domain event to integration event before dispatch"
 ```
 
@@ -880,8 +899,10 @@ git commit -m "refactor(shared-event): EventBus converts domain event to integra
 ### Task A5: 改造 EventRecoveryJob + EventAutoConfiguration + schema SQL
 
 **Files:**
+
 - Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/job/EventRecoveryJob.java`
-- Modify: `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/autoconfiguration/EventAutoConfiguration.java`
+- Modify:
+  `demo-shared/shared-event-starter/src/main/java/com/example/shared/event/autoconfiguration/EventAutoConfiguration.java`
 - Modify: `demo-shared/shared-event-starter/src/main/resources/pg.sql`
 - Modify: `demo-shared/shared-event-starter/src/main/resources/mysql.sql`
 
@@ -953,7 +974,7 @@ import com.example.shared.cache.lock.DistributedLock;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.domain.event.IntegrationEventConverter;
-import com.example.shared.event.bus.EventBus;
+import com.example.shared.event.bus.DefaultEventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
 import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
 import com.example.shared.event.dispatcher.RedisEventDispatcher;
@@ -1138,6 +1159,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 ### Task B1: 创建 file-service 顶级 pom + 7 个子模块 pom
 
 **Files:**
+
 - Create: `file-service/pom.xml`
 - Create: `file-service/file-types/pom.xml`
 - Create: `file-service/file-domain/pom.xml`
@@ -1151,6 +1173,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 1: 创建顶级 pom**
 
 `file-service/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1193,6 +1216,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 2: 创建 file-types pom**
 
 `file-service/file-types/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1214,6 +1238,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 3: 创建 file-domain pom**
 
 `file-service/file-domain/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1242,6 +1267,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 4: 创建 file-api pom**
 
 `file-service/file-api/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1273,6 +1299,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 5: 创建 file-application pom**
 
 `file-service/file-application/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1306,6 +1333,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 6: 创建 file-adapter pom**
 
 `file-service/file-adapter/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1335,6 +1363,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 7: 创建 file-infrastructure pom**
 
 `file-service/file-infrastructure/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1376,6 +1405,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 8: 创建 file-starter pom**
 
 `file-service/file-starter/pom.xml`：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -1415,6 +1445,7 @@ git commit -m "refactor(shared-event): recovery job uses integration payload + a
 - [ ] **Step 9: 在根 pom.xml 新增 module**
 
 修改 `pom.xml`，在 `<modules>` 中追加：
+
 ```xml
     <module>file-service</module>
 ```
@@ -1444,6 +1475,7 @@ git commit -m "chore(file-service): scaffold 7-layer module structure"
 ### Task C1: 创建 5 个 ID 类型
 
 **Files:**
+
 - Create: `file-service/file-types/src/main/java/com/example/file/types/FileTaskId.java`
 - Create: `file-service/file-types/src/main/java/com/example/file/types/SubTaskId.java`
 - Create: `file-service/file-types/src/main/java/com/example/file/types/TemplateConfigId.java`
@@ -1580,6 +1612,7 @@ git commit -m "feat(file-types): add domain primitives (FileTaskId, SubTaskId, T
 ### Task D1: 枚举定义
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/enums/TaskStatus.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/enums/SubTaskStatus.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/enums/ErrorPolicy.java`
@@ -1598,6 +1631,7 @@ git commit -m "feat(file-types): add domain primitives (FileTaskId, SubTaskId, T
 - [ ] **Step 1: 创建 12 个枚举**
 
 `TaskStatus.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1607,6 +1641,7 @@ public enum TaskStatus {
 ```
 
 `SubTaskStatus.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1616,6 +1651,7 @@ public enum SubTaskStatus {
 ```
 
 `ErrorPolicy.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1625,6 +1661,7 @@ public enum ErrorPolicy {
 ```
 
 `FieldType.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1634,6 +1671,7 @@ public enum FieldType {
 ```
 
 `RegionType.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1643,6 +1681,7 @@ public enum RegionType {
 ```
 
 `IdentifyMode.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1652,6 +1691,7 @@ public enum IdentifyMode {
 ```
 
 `SplitMissPolicy.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1661,6 +1701,7 @@ public enum SplitMissPolicy {
 ```
 
 `ValidationScope.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1670,6 +1711,7 @@ public enum ValidationScope {
 ```
 
 `ConfigStatus.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1679,6 +1721,7 @@ public enum ConfigStatus {
 ```
 
 `KvValuePosition.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1688,6 +1731,7 @@ public enum KvValuePosition {
 ```
 
 `TableMatchBy.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1697,6 +1741,7 @@ public enum TableMatchBy {
 ```
 
 `TriggerMatchType.java`：
+
 ```java
 package com.example.file.domain.model.enums;
 
@@ -1722,8 +1767,11 @@ git commit -m "feat(file-domain): add 12 enums for parse engine"
 ### Task D2: 配置定义值对象（CanonicalModelDef 等 14 个 record）
 
 **Files:**
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/CanonicalModelDef.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/PropertyFieldDef.java`
+
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/CanonicalModelDef.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/PropertyFieldDef.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/TableDef.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/FieldDef.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/config/ValidationRule.java`
@@ -1740,6 +1788,7 @@ git commit -m "feat(file-domain): add 12 enums for parse engine"
 - [ ] **Step 1: 创建 RegionStrategy sealed 接口和实现**
 
 `RegionStrategy.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1749,6 +1798,7 @@ public sealed interface RegionStrategy permits KvStrategy, TableStrategy, ValueO
 ```
 
 `KvStrategy.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1770,6 +1820,7 @@ public record KvStrategy(
 ```
 
 `TableStrategy.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1793,6 +1844,7 @@ public record TableStrategy(
 ```
 
 `DataEndRule.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1812,6 +1864,7 @@ public record DataEndRule(
 ```
 
 `RegionTrigger.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1829,6 +1882,7 @@ public record RegionTrigger(
 ```
 
 `RegionDef.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1844,7 +1898,7 @@ public record RegionDef(
 ) implements ValueObject {
   public RegionDef {
     if (name == null || name.isBlank()) throw new IllegalArgumentException("RegionDef.name empty");
-    if (type == null) throw new IllegalArgumentException("RegionDef.type null");
+    if (type == null) throw new IllegalArgumentException("RegionDef.IdentityType null");
     if (strategy == null) throw new IllegalArgumentException("RegionDef.strategy null");
   }
 }
@@ -1853,6 +1907,7 @@ public record RegionDef(
 - [ ] **Step 2: 创建 canonical model 定义**
 
 `CanonicalModelDef.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1872,6 +1927,7 @@ public record CanonicalModelDef(
 ```
 
 `PropertyFieldDef.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1889,6 +1945,7 @@ public record PropertyFieldDef(
 ```
 
 `TableDef.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1905,6 +1962,7 @@ public record TableDef(String code, List<FieldDef> fields) implements ValueObjec
 ```
 
 `FieldDef.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1924,6 +1982,7 @@ public record FieldDef(
 - [ ] **Step 3: 创建校验和派生规则**
 
 `ValidationRule.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1941,6 +2000,7 @@ public record ValidationRule(
 ```
 
 `DerivationRule.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1957,6 +2017,7 @@ public record DerivationRule(String field, String expr) implements ValueObject {
 - [ ] **Step 4: 创建 SplitConfig 和 TargetMapping**
 
 `SplitConfig.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -1980,6 +2041,7 @@ public record SplitConfig(
 ```
 
 `TargetMapping.java`（Phase 2 用，先占位）：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -2014,10 +2076,13 @@ git commit -m "feat(file-domain): add 14 config value objects (CanonicalModelDef
 ### Task D3: 解析相关值对象和其他值对象
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/RawRow.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/RegionParseResult.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/RegionParseResult.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/KvRegionResult.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/TableRegionResult.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/TableRegionResult.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/parse/RegionSkip.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/RawRowStream.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/valueobject/SubTaskSummary.java`
@@ -2034,6 +2099,7 @@ git commit -m "feat(file-domain): add 14 config value objects (CanonicalModelDef
 - [ ] **Step 1: 创建解析相关 record**
 
 `RawRow.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.parse;
 
@@ -2051,6 +2117,7 @@ public record RawRow(
 ```
 
 `RegionParseResult.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.parse;
 
@@ -2060,6 +2127,7 @@ public sealed interface RegionParseResult permits KvRegionResult, TableRegionRes
 ```
 
 `KvRegionResult.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.parse;
 
@@ -2076,6 +2144,7 @@ public record KvRegionResult(
 ```
 
 `TableRegionResult.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.parse;
 
@@ -2093,6 +2162,7 @@ public record TableRegionResult(
 ```
 
 `RegionSkip.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.parse;
 
@@ -2103,6 +2173,7 @@ public record RegionSkip() implements RegionParseResult {
 ```
 
 `RawRowStream.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2122,6 +2193,7 @@ public interface RawRowStream {
 - [ ] **Step 2: 创建其他值对象**
 
 `SubTaskSummary.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2145,6 +2217,7 @@ public record SubTaskSummary(
 ```
 
 `TaskError.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2160,6 +2233,7 @@ public record TaskError(
 ```
 
 `RowError.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2171,6 +2245,7 @@ public record RowError(
 ```
 
 `BusinessContext.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2192,6 +2267,7 @@ public record BusinessContext(Map<String, Object> variables) implements ValueObj
 ```
 
 `CanonicalData.java`（可变，因派生阶段需要 put）：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2221,6 +2297,7 @@ public class CanonicalData {
 ```
 
 `FieldLocation.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2240,6 +2317,7 @@ public record FieldLocation(
 ```
 
 `ValidationResult.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2258,6 +2336,7 @@ public record ValidationResult(List<RowError> errors) implements ValueObject {
 ```
 
 `FetchPagination.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2280,6 +2359,7 @@ public record FetchPagination(
 ```
 
 `PageInfo.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2298,6 +2378,7 @@ public record PageInfo(
 ```
 
 `PagedRows.java`：
+
 ```java
 package com.example.file.domain.model.valueobject;
 
@@ -2333,6 +2414,7 @@ git commit -m "feat(file-domain): add parse-related and core value objects"
 ### Task D4: SourceTemplateDef 实体
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/entity/SourceTemplateDef.java`
 
 - [ ] **Step 1: 创建 SourceTemplateDef**
@@ -2394,6 +2476,7 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
 ```
 
 `IdentifyRule.java`：
+
 ```java
 package com.example.file.domain.model.valueobject.config;
 
@@ -2430,12 +2513,16 @@ git commit -m "feat(file-domain): add SourceTemplateDef entity + IdentifyRule"
 ### Task D5: ParseTask 聚合根 + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/ParseTask.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/ParseTaskTest.java`
 
 **Interfaces:**
-- Consumes: `FileTaskId`、`BizType`、`TemplateCode`、`TaskStatus`、`ErrorPolicy`、`SubTaskSummary`、`TaskError`、`AggregateRoot`
-- Produces: `ParseTask` 聚合根，方法 `markParsing/markSplitting/markValidating/recordSubTask/markSuccess/markPartialSuccess/markFailed`
+
+- Consumes: `FileTaskId`、`BizType`、`TemplateCode`、`TaskStatus`、`ErrorPolicy`、`SubTaskSummary`、`TaskError`、
+  `AggregateRoot`
+- Produces: `ParseTask` 聚合根，方法
+  `markParsing/markSplitting/markValidating/recordSubTask/markSuccess/markPartialSuccess/markFailed`
 
 - [ ] **Step 1: 写失败测试**
 
@@ -2696,6 +2783,7 @@ Run: `mvn -pl file-service/file-domain -am test -Dtest=ParseTaskTest`
 Expected: PASS（5/6 通过，`should_mark_partial_success_when_some_invalid` 中 `markSuccess()` 抛 IllegalStateException 是预期）
 
 修正测试 `should_mark_partial_success_when_some_invalid` 的预期（删除该测试，因为语义错误）：
+
 ```java
 @Test
 void should_throw_when_mark_success_without_subtasks() {
@@ -2722,6 +2810,7 @@ git commit -m "feat(file-domain): add ParseTask aggregate root with state machin
 ### Task D6: SubTaskData 聚合根 + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/SubTaskData.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/SubTaskDataTest.java`
 
@@ -2942,6 +3031,7 @@ git commit -m "feat(file-domain): add SubTaskData aggregate root"
 ### Task D7: TemplateConfig 聚合根 + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/TemplateConfig.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/TemplateConfigTest.java`
 
@@ -3160,6 +3250,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
 ```
 
 需要 import `IdentifyMode`：
+
 ```java
 import com.example.file.domain.model.enums.IdentifyMode;
 ```
@@ -3182,6 +3273,7 @@ git commit -m "feat(file-domain): add TemplateConfig aggregate root with auto-id
 ### Task D8: FileParsedEvent + Repository 接口 + Gateway SPI + FileErrorCodes
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/FileParsedEvent.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/repository/ParseTaskRepository.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/repository/SubTaskDataRepository.java`
@@ -3287,6 +3379,7 @@ public record FileParsedEvent(
 - [ ] **Step 4: 创建 Repository 接口**
 
 `ParseTaskRepository.java`：
+
 ```java
 package com.example.file.domain.repository;
 
@@ -3303,6 +3396,7 @@ public interface ParseTaskRepository extends Repository<ParseTask, FileTaskId> {
 ```
 
 `SubTaskDataRepository.java`：
+
 ```java
 package com.example.file.domain.repository;
 
@@ -3327,6 +3421,7 @@ public interface SubTaskDataRepository extends Repository<SubTaskData, SubTaskId
 ```
 
 `TemplateConfigRepository.java`：
+
 ```java
 package com.example.file.domain.repository;
 
@@ -3348,6 +3443,7 @@ public interface TemplateConfigRepository extends Repository<TemplateConfig, Tem
 - [ ] **Step 5: 创建 Gateway SPI 接口**
 
 `ExcelParser.java`：
+
 ```java
 package com.example.file.domain.gateway;
 
@@ -3363,6 +3459,7 @@ public interface ExcelParser {
 ```
 
 `ExpressionEvaluator.java`：
+
 ```java
 package com.example.file.domain.gateway;
 
@@ -3374,6 +3471,7 @@ public interface ExpressionEvaluator {
 ```
 
 `ConfigLoader.java`：
+
 ```java
 package com.example.file.domain.gateway;
 
@@ -3390,6 +3488,7 @@ public interface ConfigLoader {
 - [ ] **Step 6: 创建 FileErrorCodes**
 
 先看 shared-exception 中 ErrorDefinition 接口：检查后确认。创建：
+
 ```java
 package com.example.file.domain.errorcode;
 
@@ -3447,6 +3546,7 @@ git commit -m "feat(file-domain): add FileParsedEvent + Repository/Gateway SPI +
 ### Task D9: RegionStateMachine + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/RegionStateMachine.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/RegionParser.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/ParseContext.java`
@@ -3529,6 +3629,7 @@ Expected: FAIL
 - [ ] **Step 3: 实现 RegionParser 接口和 ParseContext**
 
 `RegionParser.java`：
+
 ```java
 package com.example.file.domain.service;
 
@@ -3544,6 +3645,7 @@ public interface RegionParser {
 ```
 
 `ParseContext.java`：
+
 ```java
 package com.example.file.domain.service;
 
@@ -3628,7 +3730,7 @@ public class RegionStateMachine {
         ctx.enterRegion(regionIdx);
         RegionParser parser = parsers.get(target.type());
         if (parser == null) {
-          throw new IllegalStateException("No parser for region type: " + target.type());
+          throw new IllegalStateException("No parser for region IdentityType: " + target.type());
         }
         RegionParseResult result = parser.parse(stream, target, ctx);
         results.add(result);
@@ -3667,6 +3769,7 @@ git commit -m "feat(file-domain): add RegionStateMachine with state machine driv
 ### Task D10: KeyValueRegionParser + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/KeyValueRegionParser.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/KeyValueRegionParserTest.java`
 
@@ -3834,10 +3937,12 @@ git commit -m "feat(file-domain): add KeyValueRegionParser"
 ### Task D11: TableRegionParser + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/TableRegionParser.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/TableRegionParserTest.java`
 
 **Interfaces:**
+
 - Consumes: `RegionParser`、`RawRowStream`、`RegionDef`、`TableStrategy`、`TableRegionResult`
 - Produces: `TableRegionParser` 实现，处理表头 + 数据行区域
 
@@ -3998,10 +4103,12 @@ git commit -m "feat(file-domain): add TableRegionParser"
 ### Task D12: CanonicalModelBuilder + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/CanonicalModelBuilder.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/CanonicalModelBuilderTest.java`
 
 **Interfaces:**
+
 - Consumes: `RegionParseResult`（KV/Table）、`CanonicalModelDef`、`FieldMapping`
 - Produces: `CanonicalModelBuilder.build(List<RegionParseResult>, CanonicalModelDef)` 返回 `Map<String, Object>`（标准数据模型）
 
@@ -4118,10 +4225,12 @@ git commit -m "feat(file-domain): add CanonicalModelBuilder"
 ### Task D13: SourceTemplateIdentifier + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/SourceTemplateIdentifier.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/SourceTemplateIdentifierTest.java`
 
 **Interfaces:**
+
 - Consumes: `TemplateConfig`、`SourceTemplateDef`、`RawRowStream`、`Anchor`
 - Produces: `SourceTemplateIdentifier.identify(TemplateConfig, RawRowStream)` 返回 `Optional<SourceTemplateDef>`
 
@@ -4248,13 +4357,16 @@ git commit -m "feat(file-domain): add SourceTemplateIdentifier"
 ### Task D14: DataDeriver + 测试（Aviator SPI 隔离）
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/ExpressionEvaluator.java`（SPI）
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/DataDeriver.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/DataDeriverTest.java`
 
 **Interfaces:**
+
 - Consumes: `DerivationRule`、`CanonicalModelDef`、`ExpressionEvaluator`（SPI）
-- Produces: `DataDeriver.derive(Map<String, Object>, List<DerivationRule>, ExpressionEvaluator)` 返回 `Map<String, Object>`（包含派生字段）
+- Produces: `DataDeriver.derive(Map<String, Object>, List<DerivationRule>, ExpressionEvaluator)` 返回
+  `Map<String, Object>`（包含派生字段）
 
 - [ ] **Step 1: 写 ExpressionEvaluator SPI**
 
@@ -4356,12 +4468,15 @@ git commit -m "feat(file-domain): add ExpressionEvaluator SPI and DataDeriver"
 ### Task D15: DataValidator + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/DataValidator.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/DataValidatorTest.java`
 
 **Interfaces:**
+
 - Consumes: `ValidationRule`、`ErrorPolicy`、`ExpressionEvaluator`（SPI）
-- Produces: `DataValidator.validate(Map<String, Object>, List<ValidationRule>, ErrorPolicy, ExpressionEvaluator)` 返回 `ValidationResult`
+- Produces: `DataValidator.validate(Map<String, Object>, List<ValidationRule>, ErrorPolicy, ExpressionEvaluator)` 返回
+  `ValidationResult`
 
 - [ ] **Step 1: 写失败测试**
 
@@ -4484,10 +4599,12 @@ git commit -m "feat(file-domain): add DataValidator with fail-fast and collect-a
 ### Task D16: TaskSplitter + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/TaskSplitter.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/TaskSplitterTest.java`
 
 **Interfaces:**
+
 - Consumes: `SplitConfig`、`SplitKeyDef`、`CanonicalModelDef`、`Map<String, Object>`（标准数据模型）
 - Produces: `TaskSplitter.split(Map<String, Object>, SplitConfig)` 返回 `List<SplitUnit>`
 
@@ -4607,16 +4724,21 @@ git commit -m "feat(file-domain): add TaskSplitter with business key grouping"
 
 ## Phase E：file-api（集成事件 DTO + API 接口定义）
 
-> **目标**：定义跨服务通信的集成事件 DTO（`FileParsedEventDTO`）和对外 REST API 接口（`@HttpExchange`）+ 请求/响应 DTO。所有 DTO 是纯 POJO（record），不依赖领域对象。
+> **目标**：定义跨服务通信的集成事件 DTO（`FileParsedEventDTO`）和对外 REST API 接口（`@HttpExchange`）+ 请求/响应 DTO。所有
+> DTO 是纯 POJO（record），不依赖领域对象。
 
 ### Task E1: 集成事件 DTO 与事件类型常量
 
 **Files:**
+
 - Create: `file-service/file-api/src/main/java/com/example/file/api/event/FileParsedEventDTO.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/event/IntegrationEventTypes.java`
 
 **Interfaces:**
-- Produces: `FileParsedEventDTO`（record，含 fileTaskId/subTaskId/bizType/templateCode/totalRows/validRows/invalidRows/parsedAt）、`IntegrationEventTypes.FILE_PARSED`
+
+- Produces: `FileParsedEventDTO`（record，含
+  fileTaskId/subTaskId/bizType/templateCode/totalRows/validRows/invalidRows/parsedAt）、
+  `IntegrationEventTypes.FILE_PARSED`
 
 - [ ] **Step 1: 写 FileParsedEventDTO**
 
@@ -4665,6 +4787,7 @@ git commit -m "feat(file-api): add FileParsedEventDTO and IntegrationEventTypes"
 ### Task E2: FileTaskApi 接口（@HttpExchange）
 
 **Files:**
+
 - Create: `file-service/file-api/src/main/java/com/example/file/api/FileTaskApi.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/UploadFileRequest.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/GetFileTaskRequest.java`
@@ -4675,6 +4798,7 @@ git commit -m "feat(file-api): add FileParsedEventDTO and IntegrationEventTypes"
 - Create: `file-service/file-api/src/main/java/com/example/file/api/response/SubTaskDTO.java`
 
 **Interfaces:**
+
 - Produces: `FileTaskApi` 接口（4 个方法：upload/get/listSubTasks/cancel）
 
 - [ ] **Step 1: 写请求/响应 DTO（record）**
@@ -4739,7 +4863,7 @@ import com.example.file.api.request.UploadFileRequest;
 import com.example.file.api.response.FileTaskDTO;
 import com.example.file.api.response.FileTaskIdResponse;
 import com.example.file.api.response.SubTaskDTO;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -4778,11 +4902,13 @@ git commit -m "feat(file-api): add FileTaskApi and request/response DTOs"
 ### Task E3: ParsedDataApi 接口（分页拉取）
 
 **Files:**
+
 - Create: `file-service/file-api/src/main/java/com/example/file/api/ParsedDataApi.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/FetchRowsRequest.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/response/ParsedRowDTO.java`
 
 **Interfaces:**
+
 - Produces: `ParsedDataApi.fetchRows(FetchRowsRequest)` 返回 `ApiResult<PageInfo<ParsedRowDTO>>`
 
 - [ ] **Step 1: 写 DTO 和接口**
@@ -4804,7 +4930,7 @@ package com.example.file.api;
 
 import com.example.file.api.request.FetchRowsRequest;
 import com.example.file.api.response.ParsedRowDTO;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -4833,6 +4959,7 @@ git commit -m "feat(file-api): add ParsedDataApi for paginated row retrieval"
 ### Task E4: TemplateConfigApi 接口（配置管理）
 
 **Files:**
+
 - Create: `file-service/file-api/src/main/java/com/example/file/api/TemplateConfigApi.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/SaveTemplateConfigRequest.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/GetTemplateConfigRequest.java`
@@ -4922,16 +5049,19 @@ git commit -m "feat(file-api): add TemplateConfigApi and configuration DTOs"
 
 ## Phase F：file-application（应用服务编排）
 
-> **目标**：实现应用层用例，协调领域服务、Repository、Gateway，不包含业务规则。所有应用服务使用 `@Service` + `@Transactional`，事务边界拆分（每个用例独立小事务）。
+> **目标**：实现应用层用例，协调领域服务、Repository、Gateway，不包含业务规则。所有应用服务使用 `@Service` + `@Transactional`
+> ，事务边界拆分（每个用例独立小事务）。
 
 ### Task F1: UploadFileUseCase
 
 **Files:**
+
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/UploadFileUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/command/UploadFileCommand.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/result/FileTaskResult.java`
 
 **Interfaces:**
+
 - Consumes: `FileTaskRepository`、`FileStorageGateway`、`UserNo`、`FileTaskId`
 - Produces: `UploadFileUseCase.execute(UploadFileCommand)` 返回 `FileTaskResult`
 
@@ -5011,11 +5141,14 @@ git commit -m "feat(file-application): add UploadFileUseCase"
 ### Task F2: ParseFileUseCase（核心编排）
 
 **Files:**
+
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/ParseFileUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/command/ParseFileCommand.java`
 
 **Interfaces:**
-- Consumes: `FileTaskRepository`、`SubTaskDataRepository`、`TemplateConfigRepository`、`FileStorageGateway`、`ExcelParserGateway`、`ExpressionEvaluator`、所有领域服务（Identifier/StateMachine/Parsers/Builder/Deriver/Validator/Splitter）
+
+- Consumes: `FileTaskRepository`、`SubTaskDataRepository`、`TemplateConfigRepository`、`FileStorageGateway`、
+  `ExcelParserGateway`、`ExpressionEvaluator`、所有领域服务（Identifier/StateMachine/Parsers/Builder/Deriver/Validator/Splitter）
 - Produces: `ParseFileUseCase.execute(ParseFileCommand)` 完成解析→派生→拆分→校验→持久化→注册 FileParsedEvent
 
 - [ ] **Step 1: 写 Command**
@@ -5155,11 +5288,14 @@ git commit -m "feat(file-application): add ParseFileUseCase orchestrating parse/
 ### Task F3: 其他 UseCases（查询/取消/配置管理）
 
 **Files:**
+
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/FetchRowsUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/CancelFileTaskUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/GetFileTaskUseCase.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/SaveTemplateConfigUseCase.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/ActivateTemplateConfigUseCase.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/SaveTemplateConfigUseCase.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/ActivateTemplateConfigUseCase.java`
 
 - [ ] **Step 1: 写 FetchRowsUseCase**
 
@@ -5169,7 +5305,7 @@ package com.example.file.application.usecase;
 import com.example.file.domain.model.aggregate.root.SubTaskData;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.primitives.id.SubTaskId;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import com.example.shared.primitives.page.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -5226,7 +5362,8 @@ public class CancelFileTaskUseCase {
 
 - [ ] **Step 3: 写 GetFileTaskUseCase + 配置管理 UseCases**（结构相似，参考 approval-service 模式）
 
-> SaveTemplateConfigUseCase 调用 `TemplateConfig.create(...)` 后通过 Repository 保存；ActivateTemplateConfigUseCase 加载后调用 `activate()`，并通过查询旧版本调用 `deprecate()`。
+> SaveTemplateConfigUseCase 调用 `TemplateConfig.create(...)` 后通过 Repository 保存；ActivateTemplateConfigUseCase 加载后调用
+> `activate()`，并通过查询旧版本调用 `deprecate()`。
 
 - [ ] **Step 4: Commit**
 
@@ -5244,6 +5381,7 @@ git commit -m "feat(file-application): add query/cancel/config use cases"
 ### Task G1: FileTaskAdapter + FileTaskConverter
 
 **Files:**
+
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/controllers/FileTaskAdapter.java`
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/converter/FileTaskConverter.java`
 
@@ -5298,7 +5436,7 @@ import com.example.file.api.response.SubTaskDTO;
 import com.example.file.application.usecase.CancelFileTaskUseCase;
 import com.example.file.application.usecase.GetFileTaskUseCase;
 import com.example.file.application.usecase.UploadFileUseCase;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -5353,6 +5491,7 @@ git commit -m "feat(file-adapter): add FileTaskAdapter and FileTaskConverter"
 ### Task G2: ParsedDataAdapter + TemplateConfigAdapter
 
 **Files:**
+
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/controllers/ParsedDataAdapter.java`
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/controllers/TemplateConfigAdapter.java`
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/converter/ParsedDataConverter.java`
@@ -5367,7 +5506,7 @@ import com.example.file.api.ParsedDataApi;
 import com.example.file.api.request.FetchRowsRequest;
 import com.example.file.api.response.ParsedRowDTO;
 import com.example.file.application.usecase.FetchRowsUseCase;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -5409,13 +5548,16 @@ git commit -m "feat(file-adapter): add ParsedDataAdapter and TemplateConfigAdapt
 ### Task H1: FesodExcelParser 实现 ExcelParserGateway
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/excel/FesodExcelParser.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/excel/FesodRawRowStream.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/excel/FesodRowListener.java`
 
 **Interfaces:**
+
 - Consumes: `ExcelParserGateway`、`InputStream`、Apache Fesod API
-- Produces: 流式 `RawRowStream`，使用 Fesod `EasyExcel.read(...)` + `ReadListener` 推模式，通过 `BlockingQueue` + 虚拟线程桥接到拉模式
+- Produces: 流式 `RawRowStream`，使用 Fesod `EasyExcel.read(...)` + `ReadListener` 推模式，通过 `BlockingQueue` +
+  虚拟线程桥接到拉模式
 
 - [ ] **Step 1: 实现 FesodExcelParser**
 
@@ -5444,7 +5586,8 @@ public class FesodExcelParser implements ExcelParserGateway {
 }
 ```
 
-- [ ] **Step 2: 写 FesodRowListener**（实现 `ReadListener<Map<Integer, String>>`，将每行封装为 `RawRow` 推入队列，结束时放入 EOF 标记）
+- [ ] **Step 2: 写 FesodRowListener**（实现 `ReadListener<Map<Integer, String>>`，将每行封装为 `RawRow` 推入队列，结束时放入
+  EOF 标记）
 
 - [ ] **Step 3: 写 FesodRawRowStream**（从 `BlockingQueue` 拉取行，转换为 `RawRow`，处理 EOF 与异常透传）
 
@@ -5462,7 +5605,9 @@ git commit -m "feat(file-infrastructure): add FesodExcelParser with streaming br
 ### Task H2: AviatorExpressionEvaluator 实现 ExpressionEvaluator
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/aviator/AviatorExpressionEvaluator.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/aviator/AviatorExpressionEvaluator.java`
 
 - [ ] **Step 1: 实现 AviatorExpressionEvaluator**
 
@@ -5500,7 +5645,9 @@ git commit -m "feat(file-infrastructure): add AviatorExpressionEvaluator"
 ### Task H3: FileParsedEventConverter 实现 IntegrationEventConverter
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/event/FileParsedEventConverter.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/event/FileParsedEventConverter.java`
 
 - [ ] **Step 1: 实现 FileParsedEventConverter**
 
@@ -5555,6 +5702,7 @@ git commit -m "feat(file-infrastructure): add FileParsedEventConverter"
 ### Task H4: Repository 实现（FileTaskRepository / SubTaskDataRepository / TemplateConfigRepository）
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/FileTaskDO.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/SubTaskDataDO.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/SubTaskRowDO.java`
@@ -5562,22 +5710,38 @@ git commit -m "feat(file-infrastructure): add FileParsedEventConverter"
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileTaskMapper.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/SubTaskDataMapper.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/SubTaskRowMapper.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/TemplateConfigMapper.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileTaskDOConverter.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/SubTaskDataDOConverter.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/TemplateConfigDOConverter.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileTaskRepositoryImpl.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/SubTaskDataRepositoryImpl.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/TemplateConfigRepositoryImpl.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/TemplateConfigMapper.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileTaskDOConverter.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/SubTaskDataDOConverter.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/TemplateConfigDOConverter.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileTaskRepositoryImpl.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/SubTaskDataRepositoryImpl.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/TemplateConfigRepositoryImpl.java`
 
-> **说明**：DO 实体参考 [ApprovalInstanceDO.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/entity/ApprovalInstanceDO.java)，使用 `@Table`/`@Id`/`@Column` 注解；Converter 参考 [ApprovalInstanceConverter.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/converter/ApprovalInstanceConverter.java)；Repository 实现包含领域对象 ↔ DO 转换 + 调用 Mapper。JSONB 字段使用自定义 `JsonTypeHandler` 处理。
+> **说明**：DO
+> 实体参考 [ApprovalInstanceDO.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/entity/ApprovalInstanceDO.java)
+> ，使用 `@Table`/`@Id`/`@Column` 注解；Converter
+> 参考 [ApprovalInstanceConverter.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/approval-service/approval-infrastructure/src/main/java/com/example/approval/infrastructure/converter/ApprovalInstanceConverter.java)
+> ；Repository 实现包含领域对象 ↔ DO 转换 + 调用 Mapper。JSONB 字段使用自定义 `JsonTypeHandler` 处理。
 
 - [ ] **Step 1: 写 4 个 DO 实体**
 
-> `FileTaskDO`：表 `t_file_task`，字段含 id/biz_type/template_code/file_name/file_size/status/total_rows/valid_rows/invalid_rows/error_code/error_message/client_request_no/created_by/...
-> `SubTaskDataDO`：表 `t_file_sub_task`，字段含 id/file_task_id/split_key/status/total_rows/valid_rows/invalid_rows/canonical_data(JSONB)/...
-> `SubTaskRowDO`：表 `t_file_sub_task_row`，字段含 id/sub_task_id/row_index/data(JSONB)/is_valid/error_message/...
-> `TemplateConfigDO`：表 `t_file_template_config`，字段含 id/biz_type/template_code/version/status/error_policy/canonical_model(JSONB)/validation_rules(JSONB)/derivation_rules(JSONB)/split_config(JSONB)/source_templates(JSONB)/target_mapping(JSONB)/effective_from/effective_to/...
+> `FileTaskDO`：表 `t_file_task`，字段含
+>
+id/biz_type/template_code/file_name/file_size/status/total_rows/valid_rows/invalid_rows/error_code/error_message/client_request_no/created_by/...
+> `SubTaskDataDO`：表 `t_file_sub_task`，字段含
+> id/file_task_id/split_key/status/total_rows/valid_rows/invalid_rows/canonical_data (JSONB)/...
+> `SubTaskRowDO`：表 `t_file_sub_task_row`，字段含 id/sub_task_id/row_index/data (JSONB)/is_valid/error_message/...
+> `TemplateConfigDO`：表 `t_file_template_config`，字段含
+> id/biz_type/template_code/version/status/error_policy/canonical_model (JSONB)/validation_rules (JSONB)/derivation_rules
+> (JSONB)/split_config (JSONB)/source_templates (JSONB)/target_mapping (JSONB)/effective_from/effective_to/...
 
 - [ ] **Step 2: 写 4 个 Mapper 接口**（继承 `BaseMapper<XXXDO>`）
 
@@ -5644,8 +5808,11 @@ git commit -m "feat(file-infrastructure): add DOs, Mappers, Converters, Reposito
 ### Task H5: LocalFileStorageGateway + TemplateConfigLoader
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/LocalFileStorageGateway.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/config/TemplateConfigLoader.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/LocalFileStorageGateway.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/config/TemplateConfigLoader.java`
 
 - [ ] **Step 1: 实现 LocalFileStorageGateway**（基于本地文件系统，参考 spec §7）
 - [ ] **Step 2: 实现 TemplateConfigLoader**（启动时从 YAML 加载初始配置到 DB，DB 已存在则跳过；实现 `ApplicationRunner`）
@@ -5664,6 +5831,7 @@ git commit -m "feat(file-infrastructure): add LocalFileStorageGateway and Templa
 ### Task I1: 启动类 + application.yml + schema SQL
 
 **Files:**
+
 - Create: `file-service/file-starter/src/main/java/com/example/file/FileServiceApplication.java`
 - Create: `file-service/file-starter/src/main/resources/application.yml`
 - Create: `file-service/file-starter/src/main/resources/schema/file-service-pg.sql`
@@ -5772,7 +5940,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_template_config_active
   ON t_file_template_config(biz_type, template_code) WHERE status = 'ACTIVE' AND deleted = FALSE;
 ```
 
-- [ ] **Step 4: 写 H2 测试 schema SQL**（与上面字段对应但使用 H2 语法，JSONB 替换为 `CLOB` 或 `TEXT`，部分唯一索引使用 `CASE WHEN` 表达式）
+- [ ] **Step 4: 写 H2 测试 schema SQL**（与上面字段对应但使用 H2 语法，JSONB 替换为 `CLOB` 或 `TEXT`，部分唯一索引使用
+  `CASE WHEN` 表达式）
 
 - [ ] **Step 5: Commit**
 
@@ -5788,9 +5957,11 @@ git commit -m "feat(file-starter): add bootstrap, configs, and schema SQL"
 ### Task J1: UploadAndParseIntegrationTest
 
 **Files:**
+
 - Test: `file-service/file-starter/src/test/java/com/example/file/integration/UploadAndParseIntegrationTest.java`
 
 **Interfaces:**
+
 - Consumes: 全栈启动 + 测试 Excel 文件 + 测试配置 YAML
 
 - [ ] **Step 1: 写集成测试**
@@ -5833,7 +6004,8 @@ class UploadAndParseIntegrationTest {
 
 - [ ] **Step 2: 准备测试数据文件**
 
-> 在 `file-service/file-starter/src/test/resources/test-data/客户模板示例.xlsx` 放置测试 Excel；在 `test-config/` 放置对应的 YAML 配置文件（参考 `docs/模板配置/`）。
+> 在 `file-service/file-starter/src/test/resources/test-data/客户模板示例.xlsx` 放置测试 Excel；在 `test-config/` 放置对应的
+> YAML 配置文件（参考 `docs/模板配置/`）。
 
 - [ ] **Step 3: 运行集成测试**
 
@@ -5853,7 +6025,8 @@ git commit -m "test(file-starter): add end-to-end integration test"
 
 ### Self-Review 已完成
 
-1. **Spec 覆盖**：所有 spec 章节（§1-§12 + 2 附录）均有对应任务，包括 §3 领域模型（3 聚合根 + 实体 + 值对象 + 事件）、§5 解析引擎（状态机 + 2 个 Parser + Builder）、§6 校验/派生/拆分、§7 持久化、§8 REST API + 双轨事件、§9 目录结构。
+1. **Spec 覆盖**：所有 spec 章节（§1-§12 + 2 附录）均有对应任务，包括 §3 领域模型（3 聚合根 + 实体 + 值对象 + 事件）、§5
+   解析引擎（状态机 + 2 个 Parser + Builder）、§6 校验/派生/拆分、§7 持久化、§8 REST API + 双轨事件、§9 目录结构。
 2. **占位符扫描**：所有任务均包含完整代码或具体说明，无 "TBD/TODO"。
 3. **类型一致性**：跨任务引用的方法签名、字段名经过检查，与 spec 一致。
 

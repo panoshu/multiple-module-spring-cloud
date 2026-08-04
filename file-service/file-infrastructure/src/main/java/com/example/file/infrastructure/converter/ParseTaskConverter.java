@@ -10,8 +10,8 @@ import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -145,7 +145,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<String>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<String>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化字符串列表失败", e);
     }
@@ -168,7 +169,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SubTaskSummary>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SubTaskSummary>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化子任务摘要列表失败", e);
     }
@@ -191,7 +193,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<TaskError>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<TaskError>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化任务错误列表失败", e);
     }

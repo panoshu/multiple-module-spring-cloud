@@ -1,11 +1,16 @@
 # Task 3: 功能权限注解与 AOP 拦截器
 
 **Files:**
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/RequireBusinessPermission.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/BusinessPermissionAspect.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/security/BusinessPermissionAspectTest.java`
+
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/RequireBusinessPermission.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/BusinessPermissionAspect.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/security/BusinessPermissionAspectTest.java`
 
 **Interfaces:**
+
 - Consumes: `SessionContextResolver`, `SessionContext`, `BusinessException`, `CommonError`
 - Produces: `@RequireBusinessPermission` 注解, `BusinessPermissionAspect` bean
 
@@ -50,7 +55,8 @@ public @interface RequireBusinessPermission {
 
 ## Step 2: 编写 BusinessPermissionAspect 失败测试
 
-> **设计决策**:Aspect 不再从方法参数找 `HttpServletRequest`,而是直接调用 `sessionContextResolver.require()`(内部通过 `RequestContextHolder` 获取当前请求)。测试时通过 `RequestContextHolder.setRequestAttributes(...)` 设置模拟请求。
+> **设计决策**:Aspect 不再从方法参数找 `HttpServletRequest`,而是直接调用 `sessionContextResolver.require()`(内部通过
+> `RequestContextHolder` 获取当前请求)。测试时通过 `RequestContextHolder.setRequestAttributes(...)` 设置模拟请求。
 
 ```java
 package com.example.core.adapter.security;

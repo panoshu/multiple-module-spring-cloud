@@ -27,8 +27,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireBusinessPermission {
 
-    /**
-     * 需要的功能权限码,如 "BATCH_CREATE"、"FORM_UPLOAD"、"APPLICATION_SUBMIT"。
-     */
-    String value();
+  /**
+   * 需要的功能权限码,如 "BATCH_CREATE"、"FORM_UPLOAD"、"APPLICATION_SUBMIT"。
+   */
+  String value();
 }

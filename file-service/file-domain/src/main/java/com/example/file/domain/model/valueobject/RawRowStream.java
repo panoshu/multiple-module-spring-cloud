@@ -7,7 +7,10 @@ import com.example.file.domain.model.valueobject.parse.RawRow;
  */
 public interface RawRowStream {
   boolean hasNext();
+
   RawRow next();
+
   RawRow peek();
+
   int currentRowIndex();
 }

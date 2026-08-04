@@ -59,7 +59,7 @@ public class JsonBodySanitizer implements LogSanitizer {
    * 属于基于索引的 O(1) + O(k) 查找（k 通常为 1），相比 JSON 流式解析开销可忽略。
    */
   private static FieldMatcher buildMatcher(
-      Map<String, List<PathMatcher.RulePathEntry<SanitizationRule>>> index) {
+    Map<String, List<PathMatcher.RulePathEntry<SanitizationRule>>> index) {
     return (fieldName, pathStack) -> PathMatcher.match(index, fieldName, pathStack) != null;
   }
 
@@ -112,9 +112,9 @@ public class JsonBodySanitizer implements LogSanitizer {
     int len = contentType.length();
     for (int i = 0; i < len - 3; i++) {
       if ((contentType.charAt(i) == 'j' || contentType.charAt(i) == 'J') &&
-          (contentType.charAt(i + 1) == 's' || contentType.charAt(i + 1) == 'S') &&
-          (contentType.charAt(i + 2) == 'o' || contentType.charAt(i + 2) == 'O') &&
-          (contentType.charAt(i + 3) == 'n' || contentType.charAt(i + 3) == 'N')) {
+        (contentType.charAt(i + 1) == 's' || contentType.charAt(i + 1) == 'S') &&
+        (contentType.charAt(i + 2) == 'o' || contentType.charAt(i + 2) == 'O') &&
+        (contentType.charAt(i + 3) == 'n' || contentType.charAt(i + 3) == 'N')) {
         return true;
       }
     }

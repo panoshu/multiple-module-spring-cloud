@@ -5,7 +5,7 @@ import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,8 +46,8 @@ class AnnuityEmployeeDetailTest {
     AnnuityEmployeeDetail detail = createDetail();
     detail.markAnomaly("身份证格式错误", OPERATOR);
     assertThatThrownBy(() -> detail.markAnomaly("再次异常", OPERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("不可重复标记");
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("不可重复标记");
   }
 
   @Test
@@ -57,7 +57,7 @@ class AnnuityEmployeeDetailTest {
     detail.verify(OPERATOR);
     Version initialVersion = detail.version();
     List<AnnuityEmployeeMaterial> materials = List.of(
-        new AnnuityEmployeeMaterial("ID_CARD", "身份证复印件", true, false, null)
+      new AnnuityEmployeeMaterial("ID_CARD", "身份证复印件", true, false, null)
     );
     detail.assignMaterials(materials, OPERATOR);
     assertThat(detail.materials()).hasSize(1);
@@ -71,8 +71,8 @@ class AnnuityEmployeeDetailTest {
   void assignMaterials_throwsWhenNotVerified() {
     AnnuityEmployeeDetail detail = createDetail();
     assertThatThrownBy(() -> detail.assignMaterials(List.of(), OPERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("未核查");
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("未核查");
   }
 
   @Test
@@ -81,9 +81,9 @@ class AnnuityEmployeeDetailTest {
     AnnuityEmployeeDetail detail = createDetail();
     detail.verify(OPERATOR);
     detail.assignMaterials(List.of(
-        new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, true, null),
-        new AnnuityEmployeeMaterial("SALARY", "收入证明", true, true, null),
-        new AnnuityEmployeeMaterial("EXTRA", "可选材料", false, false, null)
+      new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, true, null),
+      new AnnuityEmployeeMaterial("SALARY", "收入证明", true, true, null),
+      new AnnuityEmployeeMaterial("EXTRA", "可选材料", false, false, null)
     ), OPERATOR);
     assertThat(detail.isMaterialSatisfied()).isTrue();
   }
@@ -94,18 +94,18 @@ class AnnuityEmployeeDetailTest {
     AnnuityEmployeeDetail detail = createDetail();
     detail.verify(OPERATOR);
     detail.assignMaterials(List.of(
-        new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, true, null),
-        new AnnuityEmployeeMaterial("SALARY", "收入证明", true, false, null)
+      new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, true, null),
+      new AnnuityEmployeeMaterial("SALARY", "收入证明", true, false, null)
     ), OPERATOR);
     assertThat(detail.isMaterialSatisfied()).isFalse();
   }
 
   private AnnuityEmployeeDetail createDetail() {
     return new AnnuityEmployeeDetail(
-        AnnuityEmployeeDetailId.of("D-001"),
-        AnnuityEmployeeBatchId.of("B-001"),
-        "张三", "110101199001011234", 35, 10000L, 500L,
-        OPERATOR
+      AnnuityEmployeeDetailId.of("D-001"),
+      AnnuityEmployeeBatchId.of("B-001"),
+      "张三", "110101199001011234", 35, 10000L, 500L,
+      OPERATOR
     );
   }
 }

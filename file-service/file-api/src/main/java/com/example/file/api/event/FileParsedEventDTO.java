@@ -8,21 +8,22 @@ import java.util.List;
  * 对应 file-domain 的 FileParsedEvent 领域事件
  */
 public record FileParsedEventDTO(
-    String eventId,
-    String fileTaskId,
-    String bizType,
-    String status,
-    int totalSubTasks,
-    List<SubTaskSummaryDTO> subTasks,
-    String failureReason,
-    LocalDateTime occurredOn
+  String eventId,
+  String fileTaskId,
+  String bizType,
+  String status,
+  int totalSubTasks,
+  List<SubTaskSummaryDTO> subTasks,
+  String failureReason,
+  LocalDateTime occurredOn
 ) {
   public record SubTaskSummaryDTO(
-      String subTaskId,
-      String splitKey,
-      int totalRows,
-      int validRows,
-      int invalidRows,
-      String status
-  ) {}
+    String subTaskId,
+    String splitKey,
+    int totalRows,
+    int validRows,
+    int invalidRows,
+    String status
+  ) {
+  }
 }

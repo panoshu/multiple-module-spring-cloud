@@ -1,7 +1,7 @@
 package com.example.annuity.domain.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.CustomerProfile;
-import com.example.shared.primitives.identity.CustomerNo;
+import com.example.shared.identifier.id.CustomerNo;
 
 /**
  * 年金客户网关接口

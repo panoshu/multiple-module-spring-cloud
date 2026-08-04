@@ -9,7 +9,7 @@ import com.example.shared.id.metadata.IdMetadataResolver;
 import com.example.shared.id.properties.IdProperties;
 import com.example.shared.id.strategy.IdGenerationStrategy;
 import com.example.shared.id.validator.IdDefinitionStartupValidator;
-import com.example.shared.primitives.identity.IdService;
+import com.example.shared.identifier.contract.IdService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

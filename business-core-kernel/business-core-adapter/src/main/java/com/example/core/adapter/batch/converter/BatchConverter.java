@@ -29,65 +29,65 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface BatchConverter {
 
-    /**
-     * 聚合根 → 批次摘要响应
-     */
-    default BatchSummaryResponse toSummaryResponse(BusinessBatch batch) {
-        if (batch == null) {
-            return null;
-        }
-        BusinessContext ctx = batch.getBusinessContext();
-        return new BatchSummaryResponse(
-            batch.id().value(),
-            ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
-            ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
-            batch.getStatus() != null ? batch.getStatus().name() : null,
-            batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
-            batch.getTotalApplicationCount(),
-            batch.getSuccessCount(),
-            batch.getFailedCount(),
-            batch.createdAt()
-        );
+  /**
+   * 聚合根 → 批次摘要响应
+   */
+  default BatchSummaryResponse toSummaryResponse(BusinessBatch batch) {
+    if (batch == null) {
+      return null;
     }
+    BusinessContext ctx = batch.getBusinessContext();
+    return new BatchSummaryResponse(
+      batch.id().value(),
+      ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
+      ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
+      batch.getStatus() != null ? batch.getStatus().name() : null,
+      batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
+      batch.getTotalApplicationCount(),
+      batch.getSuccessCount(),
+      batch.getFailedCount(),
+      batch.createdAt()
+    );
+  }
 
-    /**
-     * 聚合根 → 批次创建响应
-     */
-    default BatchCreatedResponse toCreatedResponse(BusinessBatch batch) {
-        if (batch == null) {
-            return null;
-        }
-        return new BatchCreatedResponse(
-            batch.id().value(),
-            batch.getStatus() != null ? batch.getStatus().name() : null,
-            batch.createdAt()
-        );
+  /**
+   * 聚合根 → 批次创建响应
+   */
+  default BatchCreatedResponse toCreatedResponse(BusinessBatch batch) {
+    if (batch == null) {
+      return null;
     }
+    return new BatchCreatedResponse(
+      batch.id().value(),
+      batch.getStatus() != null ? batch.getStatus().name() : null,
+      batch.createdAt()
+    );
+  }
 
-    /**
-     * 聚合根 → 批次详情响应
-     *
-     * <p>{@code forms} 字段需由调用方另行填充(涉及表单聚合根的级联查询)。
-     */
-    default BatchDetailResponse toDetailResponse(BusinessBatch batch) {
-        if (batch == null) {
-            return null;
-        }
-        BusinessContext ctx = batch.getBusinessContext();
-        return new BatchDetailResponse(
-            batch.id().value(),
-            ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
-            ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
-            ctx != null && ctx.customerNo() != null ? ctx.customerNo().value() : null,
-            ctx != null ? ctx.customerName() : null,
-            batch.getStatus() != null ? batch.getStatus().name() : null,
-            batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
-            batch.getTotalApplicationCount(),
-            batch.getSuccessCount(),
-            batch.getFailedCount(),
-            batch.createdAt(),
-            batch.updatedAt(),
-            null
-        );
+  /**
+   * 聚合根 → 批次详情响应
+   *
+   * <p>{@code forms} 字段需由调用方另行填充(涉及表单聚合根的级联查询)。
+   */
+  default BatchDetailResponse toDetailResponse(BusinessBatch batch) {
+    if (batch == null) {
+      return null;
     }
+    BusinessContext ctx = batch.getBusinessContext();
+    return new BatchDetailResponse(
+      batch.id().value(),
+      ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
+      ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
+      ctx != null && ctx.customerNo() != null ? ctx.customerNo().value() : null,
+      ctx != null ? ctx.customerName() : null,
+      batch.getStatus() != null ? batch.getStatus().name() : null,
+      batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
+      batch.getTotalApplicationCount(),
+      batch.getSuccessCount(),
+      batch.getFailedCount(),
+      batch.createdAt(),
+      batch.updatedAt(),
+      null
+    );
+  }
 }

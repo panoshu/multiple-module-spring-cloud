@@ -3,10 +3,10 @@ package com.example.file.infrastructure.storage;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.crypto.Sm4Encryptor;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.ProductNo;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tencent.kona.crypto.KonaCryptoProvider;
@@ -25,59 +25,59 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("KonaFileTokenGateway SM4 加解密")
 class KonaFileTokenGatewayTest {
 
-    private KonaFileTokenGateway gateway;
+  private KonaFileTokenGateway gateway;
 
-    @BeforeAll
-    static void registerKonaProvider() {
-        if (Security.getProvider("KonaCrypto") == null) {
-            Security.addProvider(new KonaCryptoProvider());
-        }
+  @BeforeAll
+  static void registerKonaProvider() {
+    if (Security.getProvider("KonaCrypto") == null) {
+      Security.addProvider(new KonaCryptoProvider());
     }
+  }
 
-    @BeforeEach
-    void setUp() {
-        // 测试密钥：16 字节 "0123456789abcdef" 的 Base64
-        Sm4Encryptor encryptor = new Sm4Encryptor("MDEyMzQ1Njc4OWFiY2RlZg==");
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        gateway = new KonaFileTokenGateway(objectMapper, encryptor);
-    }
+  @BeforeEach
+  void setUp() {
+    // 测试密钥：16 字节 "0123456789abcdef" 的 Base64
+    Sm4Encryptor encryptor = new Sm4Encryptor("MDEyMzQ1Njc4OWFiY2RlZg==");
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    gateway = new KonaFileTokenGateway(objectMapper, encryptor);
+  }
 
-    @Test
-    @DisplayName("加解密 round-trip 成功")
-    void should_encrypt_and_decrypt() {
-        FileTokenPayload payload = new FileTokenPayload(
-            "tok-001", new FileId("f001"), FileUsage.SOURCE, "biz",
-            CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
-            List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(15)
-        );
+  @Test
+  @DisplayName("加解密 round-trip 成功")
+  void should_encrypt_and_decrypt() {
+    FileTokenPayload payload = new FileTokenPayload(
+      "tok-001", new FileId("f001"), FileUsage.SOURCE, "biz",
+      CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
+      List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(15)
+    );
 
-        String token = gateway.encrypt(payload);
-        assertThat(token).isNotBlank();
+    String token = gateway.encrypt(payload);
+    assertThat(token).isNotBlank();
 
-        FileTokenPayload decrypted = gateway.decrypt(token);
-        assertThat(decrypted.tokenId()).isEqualTo("tok-001");
-        assertThat(decrypted.fileId()).isEqualTo(new FileId("f001"));
-    }
+    FileTokenPayload decrypted = gateway.decrypt(token);
+    assertThat(decrypted.tokenId()).isEqualTo("tok-001");
+    assertThat(decrypted.fileId()).isEqualTo(new FileId("f001"));
+  }
 
-    @Test
-    @DisplayName("错误 token 解密抛异常")
-    void should_throw_when_decrypt_invalid_token() {
-        assertThatThrownBy(() -> gateway.decrypt("invalid-token-string"))
-            .isInstanceOf(Exception.class);
-    }
+  @Test
+  @DisplayName("错误 token 解密抛异常")
+  void should_throw_when_decrypt_invalid_token() {
+    assertThatThrownBy(() -> gateway.decrypt("invalid-token-string"))
+      .isInstanceOf(Exception.class);
+  }
 
-    @Test
-    @DisplayName("每次加密生成不同密文（随机 IV）")
-    void should_produce_different_ciphertext_each_time() {
-        FileTokenPayload payload = new FileTokenPayload(
-            "tok-001", new FileId("f001"), FileUsage.SOURCE, "biz",
-            CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
-            List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(15)
-        );
+  @Test
+  @DisplayName("每次加密生成不同密文（随机 IV）")
+  void should_produce_different_ciphertext_each_time() {
+    FileTokenPayload payload = new FileTokenPayload(
+      "tok-001", new FileId("f001"), FileUsage.SOURCE, "biz",
+      CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
+      List.of("application/xlsx"), 10L * 1024 * 1024, LocalDateTime.now().plusMinutes(15)
+    );
 
-        String token1 = gateway.encrypt(payload);
-        String token2 = gateway.encrypt(payload);
-        assertThat(token1).isNotEqualTo(token2);  // 因 IV 随机
-    }
+    String token1 = gateway.encrypt(payload);
+    String token2 = gateway.encrypt(payload);
+    assertThat(token1).isNotEqualTo(token2);  // 因 IV 随机
+  }
 }

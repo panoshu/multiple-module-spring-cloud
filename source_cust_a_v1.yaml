@@ -8,30 +8,30 @@ status: ACTIVE
 # 指纹识别：引擎扫描文件前10行，同时包含这两个词，即用本配置解析
 identify:
   mode: AUTO
-  fingerprint: ["客户A专用申报单", "单位名称"] 
+  fingerprint: [ "客户A专用申报单", "单位名称" ]
 
 headerRegion:
   rows: auto
   valuePosition: RIGHT
   labelAliases:
     # 冒号左边是基线 canonicalModel 中的 code，右边是表格里的文字
-    enterpriseName: ["单位名称", "公司名称"] 
-    declareDate:    ["申报日期"]
-    totalAmount:    ["总金额"]
+    enterpriseName: [ "单位名称", "公司名称" ]
+    declareDate: [ "申报日期" ]
+    totalAmount: [ "总金额" ]
 
 tableRegion:
   headerRows: 1
   matchBy: HEADER_NAME
   columnAliases:
-    itemNo:    ["货号", "商品编号"]
-    itemName:  ["品名", "商品名称"]
-    qty:       ["数量"]
-    unitPrice: ["单价"]
-    amount:    ["金额"]
+    itemNo: [ "货号", "商品编号" ]
+    itemName: [ "品名", "商品名称" ]
+    qty: [ "数量" ]
+    unitPrice: [ "单价" ]
+    amount: [ "金额" ]
   dataEnd:
-    markers: ["以下空白", "总计"] # 遇到这些词，明细表结束
+    markers: [ "以下空白", "总计" ] # 遇到这些词，明细表结束
 
 tailRegion:
   valuePosition: RIGHT
   labelAliases:
-    makerName: ["制单人", "填表人"]
+    makerName: [ "制单人", "填表人" ]

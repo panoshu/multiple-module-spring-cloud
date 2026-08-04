@@ -37,7 +37,7 @@ public class EventDeliverer {
    * 补偿流重载：使用预先反序列化的 integrationEvent
    */
   public void deliverRecovered(EventDispatcher dispatcher, Object integrationEvent,
-                                String integrationType, long logId) {
+                               String integrationType, long logId) {
     String channel = dispatcher.getChannelName();
     try {
       log.debug("Recovering event logId={} type={} to channel {}", logId, integrationType, channel);

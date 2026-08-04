@@ -20,10 +20,10 @@ import com.example.iam.api.dto.RouteRuleDTO;
  * @since 2026/7/26
  */
 public record RouteRule(
-    String routePattern,
-    String checkType,
-    String checkValue,
-    int priority
+  String routePattern,
+  String checkType,
+  String checkValue,
+  int priority
 ) {
 
   /**
@@ -36,10 +36,10 @@ public record RouteRule(
    */
   public static RouteRule from(RouteRuleDTO dto) {
     return new RouteRule(
-        dto.routePattern(),
-        dto.checkType(),
-        dto.checkValue(),
-        dto.priority()
+      dto.routePattern(),
+      dto.checkType(),
+      dto.checkValue(),
+      dto.priority()
     );
   }
 }

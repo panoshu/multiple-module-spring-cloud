@@ -1,8 +1,8 @@
 package com.example.shared.domain.aggregate.entity;
 
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.Identifier;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.contract.Identifier;
+import com.example.shared.identifier.id.UserNo;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

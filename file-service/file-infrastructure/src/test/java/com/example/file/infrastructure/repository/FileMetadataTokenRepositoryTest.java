@@ -7,11 +7,7 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.infrastructure.FileInfrastructureTestConfiguration;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,71 +35,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("FileMetadataRepository Token 字段读写")
 class FileMetadataTokenRepositoryTest {
 
-    @Autowired
-    private FileMetadataRepository repository;
+  @Autowired
+  private FileMetadataRepository repository;
 
-    @Test
-    @DisplayName("createForUpload 后保存并加载，accessScope 正确且 PENDING_UPLOAD 状态字段为 null")
-    void should_save_and_load_with_access_scope() {
-        FileId fileId = new FileId("f-token-test-001");
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileMetadata file = FileMetadata.createForUpload(
-            fileId, FileUsage.SOURCE, "biz", "test-app",
-            new BatchId("b001"), scope, "target-001", StorageType.LOCAL,
-            UserNo.of("u1"), LocalDateTime.now().plusDays(7)
-        );
-        repository.save(file);
+  @Test
+  @DisplayName("createForUpload 后保存并加载，accessScope 正确且 PENDING_UPLOAD 状态字段为 null")
+  void should_save_and_load_with_access_scope() {
+    FileId fileId = new FileId("f-token-test-001");
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileMetadata file = FileMetadata.createForUpload(
+      fileId, FileUsage.SOURCE, "biz", "test-app",
+      new BatchId("b001"), scope, "target-001", StorageType.LOCAL,
+      UserNo.of("u1"), LocalDateTime.now().plusDays(7)
+    );
+    repository.save(file);
 
-        Optional<FileMetadata> loaded = repository.load(fileId);
-        assertThat(loaded).isPresent();
-        FileMetadata got = loaded.get();
-        assertThat(got.accessScope()).isEqualTo(scope);
-        assertThat(got.status()).isEqualTo(FileStatus.PENDING_UPLOAD);
-        assertThat(got.originalName()).isNull();
-        assertThat(got.size()).isNull();
-        assertThat(got.storageKey()).isNull();
-        assertThat(got.digest()).isNull();
-        assertThat(got.digestAlgorithm()).isNull();
-        assertThat(got.usage()).isEqualTo(FileUsage.SOURCE);
-        assertThat(got.targetId()).isEqualTo("target-001");
-        assertThat(got.storageType()).isEqualTo(StorageType.LOCAL);
-        assertThat(got.businessBatchId()).isEqualTo(new BatchId("b001"));
-        assertThat(got.createdBy()).isEqualTo(UserNo.of("u1"));
-    }
+    Optional<FileMetadata> loaded = repository.load(fileId);
+    assertThat(loaded).isPresent();
+    FileMetadata got = loaded.get();
+    assertThat(got.accessScope()).isEqualTo(scope);
+    assertThat(got.status()).isEqualTo(FileStatus.PENDING_UPLOAD);
+    assertThat(got.originalName()).isNull();
+    assertThat(got.size()).isNull();
+    assertThat(got.storageKey()).isNull();
+    assertThat(got.digest()).isNull();
+    assertThat(got.digestAlgorithm()).isNull();
+    assertThat(got.usage()).isEqualTo(FileUsage.SOURCE);
+    assertThat(got.targetId()).isEqualTo("target-001");
+    assertThat(got.storageType()).isEqualTo(StorageType.LOCAL);
+    assertThat(got.businessBatchId()).isEqualTo(new BatchId("b001"));
+    assertThat(got.createdBy()).isEqualTo(UserNo.of("u1"));
+  }
 
-    @Test
-    @DisplayName("completeUpload 后保存，digest/digestAlgorithm/originalName/size 字段正确")
-    void should_save_with_digest_after_complete_upload() {
-        FileId fileId = new FileId("f-token-test-002");
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileMetadata file = FileMetadata.createForUpload(
-            fileId, FileUsage.SOURCE, "biz", "test-app",
-            new BatchId("b001"), scope, "target-001", StorageType.LOCAL,
-            UserNo.of("u1"), LocalDateTime.now().plusDays(7)
-        );
-        file.completeUpload("report.xlsx", 1024L, "application/xlsx",
-            "storage-key-001", "sm3-digest-001");
-        repository.save(file);
+  @Test
+  @DisplayName("completeUpload 后保存，digest/digestAlgorithm/originalName/size 字段正确")
+  void should_save_with_digest_after_complete_upload() {
+    FileId fileId = new FileId("f-token-test-002");
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileMetadata file = FileMetadata.createForUpload(
+      fileId, FileUsage.SOURCE, "biz", "test-app",
+      new BatchId("b001"), scope, "target-001", StorageType.LOCAL,
+      UserNo.of("u1"), LocalDateTime.now().plusDays(7)
+    );
+    file.completeUpload("report.xlsx", 1024L, "application/xlsx",
+      "storage-key-001", "sm3-digest-001");
+    repository.save(file);
 
-        Optional<FileMetadata> loaded = repository.load(fileId);
-        assertThat(loaded).isPresent();
-        FileMetadata got = loaded.get();
-        assertThat(got.digest()).isEqualTo("sm3-digest-001");
-        assertThat(got.digestAlgorithm()).isEqualTo("SM3");
-        assertThat(got.originalName()).isEqualTo("report.xlsx");
-        assertThat(got.size()).isEqualTo(1024L);
-        assertThat(got.storageKey()).isEqualTo("storage-key-001");
-        assertThat(got.contentType()).isEqualTo("application/xlsx");
-        assertThat(got.status()).isEqualTo(FileStatus.UPLOADED);
-        assertThat(got.uploadedAt()).isNotNull();
-        // accessScope 仍保留
-        assertThat(got.accessScope()).isEqualTo(scope);
-    }
+    Optional<FileMetadata> loaded = repository.load(fileId);
+    assertThat(loaded).isPresent();
+    FileMetadata got = loaded.get();
+    assertThat(got.digest()).isEqualTo("sm3-digest-001");
+    assertThat(got.digestAlgorithm()).isEqualTo("SM3");
+    assertThat(got.originalName()).isEqualTo("report.xlsx");
+    assertThat(got.size()).isEqualTo(1024L);
+    assertThat(got.storageKey()).isEqualTo("storage-key-001");
+    assertThat(got.contentType()).isEqualTo("application/xlsx");
+    assertThat(got.status()).isEqualTo(FileStatus.UPLOADED);
+    assertThat(got.uploadedAt()).isNotNull();
+    // accessScope 仍保留
+    assertThat(got.accessScope()).isEqualTo(scope);
+  }
 
-    @Test
-    @DisplayName("load 不存在的 fileId 应返回 empty")
-    void should_return_empty_when_load_non_existent() {
-        Optional<FileMetadata> loaded = repository.load(new FileId("non-existent-id"));
-        assertThat(loaded).isEmpty();
-    }
+  @Test
+  @DisplayName("load 不存在的 fileId 应返回 empty")
+  void should_return_empty_when_load_non_existent() {
+    Optional<FileMetadata> loaded = repository.load(new FileId("non-existent-id"));
+    assertThat(loaded).isEmpty();
+  }
 }

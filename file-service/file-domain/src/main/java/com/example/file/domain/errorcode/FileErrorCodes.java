@@ -76,8 +76,12 @@ public enum FileErrorCodes implements ErrorDefinition {
   }
 
   @Override
-  public String code() { return code; }
+  public String getCode() {
+    return code;
+  }
 
   @Override
-  public String message() { return message; }
+  public String getMessage() {
+    return message;
+  }
 }

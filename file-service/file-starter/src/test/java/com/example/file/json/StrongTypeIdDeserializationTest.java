@@ -3,10 +3,10 @@ package com.example.file.json;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
 import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.shared.event.jackson.DddJacksonModule;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.ProductNo;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,91 +36,91 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("强类型 ID 在 file-service ObjectMapper 配置下的反序列化（CV1 验证）")
 class StrongTypeIdDeserializationTest {
 
-    private ObjectMapper objectMapper;
+  private ObjectMapper objectMapper;
 
-    @BeforeEach
-    void setUp() {
-        // 模拟 Spring Boot 自动配置链路中 ObjectMapper 的最终状态：
-        // JacksonAutoConfiguration 自动注册所有 Module Bean（DddJacksonModule + JavaTimeModule）
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new DddJacksonModule());
-        objectMapper.registerModule(new JavaTimeModule());
-    }
+  @BeforeEach
+  void setUp() {
+    // 模拟 Spring Boot 自动配置链路中 ObjectMapper 的最终状态：
+    // JacksonAutoConfiguration 自动注册所有 Module Bean（DddJacksonModule + JavaTimeModule）
+    objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new DddJacksonModule());
+    objectMapper.registerModule(new JavaTimeModule());
+  }
 
-    @Test
-    @DisplayName("ApplyUploadTokenRequest 从 JSON 反序列化，强类型 ID 字段类型正确")
-    void should_deserialize_apply_upload_token_request_with_strong_typed_ids() throws Exception {
-        String json = """
-            {
-              "bizType": "annuity",
-              "sourceApp": "approval-service",
-              "businessBatchId": "BATCH_001",
-              "customerNo": "C001",
-              "productNo": "P001",
-              "uploader": "u1",
-              "expiresAt": "2026-12-31T23:59:59",
-              "allowedContentTypes": ["application/xlsx"],
-              "allowedMaxSize": 10485760,
-              "ttl": "PT15M"
-            }
-            """;
+  @Test
+  @DisplayName("ApplyUploadTokenRequest 从 JSON 反序列化，强类型 ID 字段类型正确")
+  void should_deserialize_apply_upload_token_request_with_strong_typed_ids() throws Exception {
+    String json = """
+      {
+        "bizType": "annuity",
+        "sourceApp": "approval-service",
+        "businessBatchId": "BATCH_001",
+        "customerNo": "C001",
+        "productNo": "P001",
+        "uploader": "u1",
+        "expiresAt": "2026-12-31T23:59:59",
+        "allowedContentTypes": ["application/xlsx"],
+        "allowedMaxSize": 10485760,
+        "ttl": "PT15M"
+      }
+      """;
 
-        ApplyUploadTokenRequest result = objectMapper.readValue(json, ApplyUploadTokenRequest.class);
+    ApplyUploadTokenRequest result = objectMapper.readValue(json, ApplyUploadTokenRequest.class);
 
-        assertThat(result.bizType()).isEqualTo("annuity");
-        assertThat(result.sourceApp()).isEqualTo("approval-service");
-        assertThat(result.businessBatchId()).isEqualTo("BATCH_001");
-        assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
-        assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
-        assertThat(result.uploader()).isEqualTo(UserNo.of("u1"));
-        assertThat(result.allowedContentTypes()).containsExactly("application/xlsx");
-        assertThat(result.allowedMaxSize()).isEqualTo(10L * 1024 * 1024);
-        assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(15));
-    }
+    assertThat(result.bizType()).isEqualTo("annuity");
+    assertThat(result.sourceApp()).isEqualTo("approval-service");
+    assertThat(result.businessBatchId()).isEqualTo("BATCH_001");
+    assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
+    assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
+    assertThat(result.uploader()).isEqualTo(UserNo.of("u1"));
+    assertThat(result.allowedContentTypes()).containsExactly("application/xlsx");
+    assertThat(result.allowedMaxSize()).isEqualTo(10L * 1024 * 1024);
+    assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(15));
+  }
 
-    @Test
-    @DisplayName("ApplyDownloadTokenRequest 从 JSON 反序列化，FileId 字段正确")
-    void should_deserialize_apply_download_token_request_with_file_id() throws Exception {
-        String json = """
-            {
-              "fileId": "01H8FILE001",
-              "sourceApp": "approval-service",
-              "customerNo": "C001",
-              "productNo": "P001",
-              "downloader": "u1",
-              "ttl": "PT10M"
-            }
-            """;
+  @Test
+  @DisplayName("ApplyDownloadTokenRequest 从 JSON 反序列化，FileId 字段正确")
+  void should_deserialize_apply_download_token_request_with_file_id() throws Exception {
+    String json = """
+      {
+        "fileId": "01H8FILE001",
+        "sourceApp": "approval-service",
+        "customerNo": "C001",
+        "productNo": "P001",
+        "downloader": "u1",
+        "ttl": "PT10M"
+      }
+      """;
 
-        ApplyDownloadTokenRequest result = objectMapper.readValue(json, ApplyDownloadTokenRequest.class);
+    ApplyDownloadTokenRequest result = objectMapper.readValue(json, ApplyDownloadTokenRequest.class);
 
-        assertThat(result.fileId()).isEqualTo(new FileId("01H8FILE001"));
-        assertThat(result.sourceApp()).isEqualTo("approval-service");
-        assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
-        assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
-        assertThat(result.downloader()).isEqualTo(UserNo.of("u1"));
-        assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(10));
-    }
+    assertThat(result.fileId()).isEqualTo(new FileId("01H8FILE001"));
+    assertThat(result.sourceApp()).isEqualTo("approval-service");
+    assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
+    assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
+    assertThat(result.downloader()).isEqualTo(UserNo.of("u1"));
+    assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(10));
+  }
 
-    @Test
-    @DisplayName("ApplyUploadTokenRequest round-trip: 序列化后反序列化保持一致")
-    void should_round_trip_apply_upload_token_request() throws Exception {
-        ApplyUploadTokenRequest original = new ApplyUploadTokenRequest(
-            "annuity",
-            "approval-service",
-            "BATCH_001",
-            CustomerNo.of("C001"),
-            ProductNo.of("P001"),
-            UserNo.of("u1"),
-            LocalDateTime.of(2026, 12, 31, 23, 59, 59),
-            List.of("application/xlsx"),
-            10L * 1024 * 1024,
-            Duration.ofMinutes(15)
-        );
+  @Test
+  @DisplayName("ApplyUploadTokenRequest round-trip: 序列化后反序列化保持一致")
+  void should_round_trip_apply_upload_token_request() throws Exception {
+    ApplyUploadTokenRequest original = new ApplyUploadTokenRequest(
+      "annuity",
+      "approval-service",
+      "BATCH_001",
+      CustomerNo.of("C001"),
+      ProductNo.of("P001"),
+      UserNo.of("u1"),
+      LocalDateTime.of(2026, 12, 31, 23, 59, 59),
+      List.of("application/xlsx"),
+      10L * 1024 * 1024,
+      Duration.ofMinutes(15)
+    );
 
-        String json = objectMapper.writeValueAsString(original);
-        ApplyUploadTokenRequest result = objectMapper.readValue(json, ApplyUploadTokenRequest.class);
+    String json = objectMapper.writeValueAsString(original);
+    ApplyUploadTokenRequest result = objectMapper.readValue(json, ApplyUploadTokenRequest.class);
 
-        assertThat(result).isEqualTo(original);
-    }
+    assertThat(result).isEqualTo(original);
+  }
 }

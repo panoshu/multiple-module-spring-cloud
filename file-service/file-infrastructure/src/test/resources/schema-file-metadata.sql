@@ -9,43 +9,44 @@
 
 DROP TABLE IF EXISTS t_file_metadata;
 
-CREATE TABLE t_file_metadata (
-    id                  VARCHAR(64)   NOT NULL,
-    original_name       VARCHAR(512),
-    size                BIGINT,
-    content_type        VARCHAR(128),
-    md5                 VARCHAR(64),
+CREATE TABLE t_file_metadata
+(
+  id                VARCHAR(64) NOT NULL,
+  original_name     VARCHAR(512),
+  size              BIGINT,
+  content_type      VARCHAR(128),
+  md5               VARCHAR(64),
 
-    target_id           VARCHAR(64)   NOT NULL,
-    storage_type        VARCHAR(20)   NOT NULL,
-    storage_key         VARCHAR(1024),
+  target_id         VARCHAR(64) NOT NULL,
+  storage_type      VARCHAR(20) NOT NULL,
+  storage_key       VARCHAR(1024),
 
-    usage               VARCHAR(20)   NOT NULL,
-    biz_type            VARCHAR(64),
-    source_app          VARCHAR(64),
-    business_batch_id   VARCHAR(64),
+  usage             VARCHAR(20) NOT NULL,
+  biz_type          VARCHAR(64),
+  source_app        VARCHAR(64),
+  business_batch_id VARCHAR(64),
 
-    status              VARCHAR(20)   NOT NULL,
-    uploaded_by         VARCHAR(64),
-    uploaded_at         TIMESTAMP,
-    expires_at          TIMESTAMP,
+  status            VARCHAR(20) NOT NULL,
+  uploaded_by       VARCHAR(64),
+  uploaded_at       TIMESTAMP,
+  expires_at        TIMESTAMP,
 
-    -- Token 访问机制扩展字段（Task 13）
-    access_scope        VARCHAR(2048),
-    digest              VARCHAR(128),
-    digest_algorithm    VARCHAR(20)   DEFAULT 'SM3',
+  -- Token 访问机制扩展字段（Task 13）
+  access_scope      VARCHAR(2048),
+  digest            VARCHAR(128),
+  digest_algorithm  VARCHAR(20) DEFAULT 'SM3',
 
-    created_by          VARCHAR(64)   NOT NULL,
-    updated_by          VARCHAR(64),
-    create_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    update_time         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    deleted             INT           DEFAULT 0,
-    version             INT           DEFAULT 0,
+  created_by        VARCHAR(64) NOT NULL,
+  updated_by        VARCHAR(64),
+  create_time       TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+  update_time       TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+  deleted           INT         DEFAULT 0,
+  version           INT         DEFAULT 0,
 
-    PRIMARY KEY (id)
+  PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_file_metadata_batch_id ON t_file_metadata(business_batch_id);
-CREATE INDEX idx_file_metadata_usage_biz_type ON t_file_metadata(usage, biz_type);
-CREATE INDEX idx_file_metadata_status_expires ON t_file_metadata(status, expires_at);
-CREATE INDEX idx_file_metadata_target_id ON t_file_metadata(target_id);
+CREATE INDEX idx_file_metadata_batch_id ON t_file_metadata (business_batch_id);
+CREATE INDEX idx_file_metadata_usage_biz_type ON t_file_metadata (usage, biz_type);
+CREATE INDEX idx_file_metadata_status_expires ON t_file_metadata (status, expires_at);
+CREATE INDEX idx_file_metadata_target_id ON t_file_metadata (target_id);

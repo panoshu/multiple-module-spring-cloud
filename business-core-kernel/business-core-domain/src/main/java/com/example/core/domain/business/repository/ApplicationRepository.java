@@ -2,8 +2,8 @@ package com.example.core.domain.business.repository;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.BatchId;
 
 import java.util.List;
 import java.util.Optional;

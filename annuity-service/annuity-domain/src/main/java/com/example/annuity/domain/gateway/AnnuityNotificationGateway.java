@@ -1,7 +1,7 @@
 package com.example.annuity.domain.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.NotificationType;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 /**
  * 年金通知网关接口

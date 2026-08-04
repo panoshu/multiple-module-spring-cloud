@@ -5,12 +5,10 @@ import com.example.annuity.domain.aggregate.root.AnnuityEmployeeBatch;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
 import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.annuity.domain.service.AnnuityEmployeeMaterialRule;
-import com.example.annuity.types.AnnuityEmployeeBatchId;
-import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,9 +26,12 @@ import static org.mockito.Mockito.*;
 @DisplayName("AnnuityEmployeeMaterialAction")
 class AnnuityEmployeeMaterialActionTest {
 
-  @Mock private AnnuityEmployeeMaterialRule materialRule;
-  @Mock private AnnuityEmployeeBatchRepository batchRepository;
-  @InjectMocks private AnnuityEmployeeMaterialAction action;
+  @Mock
+  private AnnuityEmployeeMaterialRule materialRule;
+  @Mock
+  private AnnuityEmployeeBatchRepository batchRepository;
+  @InjectMocks
+  private AnnuityEmployeeMaterialAction action;
 
   @Test
   @DisplayName("为已核查明细计算材料清单")
@@ -44,7 +45,7 @@ class AnnuityEmployeeMaterialActionTest {
     when(batch.verifiedDetails()).thenReturn(List.of(detail));
     when(batchRepository.findByApplicationId(appId)).thenReturn(Optional.of(batch));
     when(materialRule.calculate(detail, null)).thenReturn(List.of(
-        new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, false, null)
+      new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, false, null)
     ));
     when(app.updatedBy()).thenReturn(UserNo.of("U-TEST"));
 

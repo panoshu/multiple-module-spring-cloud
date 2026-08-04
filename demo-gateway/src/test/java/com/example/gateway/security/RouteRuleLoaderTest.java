@@ -20,9 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link RouteRuleLoader} 路由规则加载器单元测试。
@@ -78,7 +76,7 @@ class RouteRuleLoaderTest {
       RouteRuleDTO dto2 = new RouteRuleDTO(2L, "/b/**", "PERMISSION", "biz:handle", null, 100, true, null, null, 1L);
       RouteRuleDTO dto3 = new RouteRuleDTO(3L, "/c/**", "ROLE", "admin", null, 50, true, null, null, 1L);
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(successResult(List.of(dto1, dto2, dto3)));
+        .thenReturn(successResult(List.of(dto1, dto2, dto3)));
 
       List<RouteRule> rules = loader.loadRules();
 
@@ -97,7 +95,7 @@ class RouteRuleLoaderTest {
     void cacheHitDoesNotCallApi() {
       RouteRuleDTO dto = new RouteRuleDTO(1L, "/a/**", "LOGIN", "", null, 10, true, null, null, 1L);
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(successResult(List.of(dto)));
+        .thenReturn(successResult(List.of(dto)));
 
       List<RouteRule> firstCall = loader.loadRules();
       assertThat(firstCall).hasSize(1);
@@ -113,7 +111,7 @@ class RouteRuleLoaderTest {
     @DisplayName("ApiResult 失败: 返回空列表")
     void apiResultFailureReturnsEmpty() {
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(ApiResult.failure("SERVICE.IAM.0001", "iam 不可用"));
+        .thenReturn(ApiResult.failure("SERVICE.IAM.0001", "iam 不可用"));
 
       List<RouteRule> rules = loader.loadRules();
 
@@ -124,7 +122,7 @@ class RouteRuleLoaderTest {
     @DisplayName("ApiResult.data 为 null: 返回空列表")
     void apiResultDataNullReturnsEmpty() {
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(ApiResult.success(null));
+        .thenReturn(ApiResult.success(null));
 
       List<RouteRule> rules = loader.loadRules();
 
@@ -136,7 +134,7 @@ class RouteRuleLoaderTest {
     void pageDataItemsNullReturnsEmpty() {
       PageData<RouteRuleDTO> pageData = new PageData<>(0, 0, 0, false, null);
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(ApiResult.success(pageData));
+        .thenReturn(ApiResult.success(pageData));
 
       List<RouteRule> rules = loader.loadRules();
 
@@ -147,7 +145,7 @@ class RouteRuleLoaderTest {
     @DisplayName("远程调用异常且无缓存: 返回空列表(降级)")
     void remoteExceptionNoCacheReturnsEmpty() {
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenThrow(new RuntimeException("iam-service down"));
+        .thenThrow(new RuntimeException("iam-service down"));
 
       List<RouteRule> rules = loader.loadRules();
 
@@ -162,7 +160,7 @@ class RouteRuleLoaderTest {
       getCache().put(CACHE_KEY, cachedRules);
 
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenThrow(new RuntimeException("iam-service down"));
+        .thenThrow(new RuntimeException("iam-service down"));
 
       List<RouteRule> result = invokeLoadFromRemote();
 
@@ -179,7 +177,7 @@ class RouteRuleLoaderTest {
     void refreshTriggersRemoteReload() {
       RouteRuleDTO dto1 = new RouteRuleDTO(1L, "/a/**", "LOGIN", "", null, 10, true, null, null, 1L);
       when(routeRuleApi.list(any(ListRouteRulesQuery.class)))
-          .thenReturn(successResult(List.of(dto1)));
+        .thenReturn(successResult(List.of(dto1)));
 
       loader.loadRules();
       verify(routeRuleApi, times(1)).list(any(ListRouteRulesQuery.class));

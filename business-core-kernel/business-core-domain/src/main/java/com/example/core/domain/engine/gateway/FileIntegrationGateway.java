@@ -2,8 +2,8 @@ package com.example.core.domain.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.FormId;
 
 import java.io.InputStream;
 import java.util.Map;

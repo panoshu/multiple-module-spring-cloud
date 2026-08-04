@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record ListMaterialsQuery(
-    @NotBlank(message = "申请单ID不能为空") String applicationId
+  @NotBlank(message = "申请单ID不能为空") String applicationId
 ) {
 }

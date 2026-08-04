@@ -1,6 +1,6 @@
 package com.example.shared.id.metadata;
 
-import com.example.shared.primitives.identity.IdType;
+import com.example.shared.identifier.contract.IdType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;

@@ -18,5 +18,7 @@ public class RedisEventDispatcher implements EventDispatcher {
   }
 
   @Override
-  public String getChannelName() { return "redis-pubsub"; }
+  public String getChannelName() {
+    return "redis-pubsub";
+  }
 }

@@ -18,9 +18,9 @@ import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.ProductNo;
+import com.example.shared.identifier.id.UserNo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,134 +70,134 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class FileAccessAdapter implements FileAccessApi {
 
-    private final ApplyUploadTokenUseCase applyUploadTokenUseCase;
-    private final UploadFileWithTokenUseCase uploadFileWithTokenUseCase;
-    private final ApplyDownloadTokenUseCase applyDownloadTokenUseCase;
-    private final DownloadFileWithTokenUseCase downloadFileWithTokenUseCase;
-    private final FileAccessConverter converter;
-    private final FileTokenProperties tokenProperties;
+  private final ApplyUploadTokenUseCase applyUploadTokenUseCase;
+  private final UploadFileWithTokenUseCase uploadFileWithTokenUseCase;
+  private final ApplyDownloadTokenUseCase applyDownloadTokenUseCase;
+  private final DownloadFileWithTokenUseCase downloadFileWithTokenUseCase;
+  private final FileAccessConverter converter;
+  private final FileTokenProperties tokenProperties;
 
-    @Override
-    public ApplyUploadTokenResponse applyUploadToken(ApplyUploadTokenRequest request) {
-        log.info("申请上传 Token: bizType={}, sourceApp={}, uploader={}",
-            request.bizType(), request.sourceApp(), request.uploader());
-        var cmd = converter.toCommand(request, tokenProperties.getDefaultUploadTtl());
-        ApplyUploadTokenResult result = applyUploadTokenUseCase.apply(cmd);
-        return new ApplyUploadTokenResponse(result.token(), result.fileId());
-    }
+  /**
+   * 计算 token 的 SHA-256 短摘要（前 8 位）用于日志脱敏。
+   *
+   * <p>复用 {@link TokenHashUtil#sha256} 避免重复实现 SHA-256 逻辑；
+   * 截取前 8 位以满足日志脱敏的最小需要（M3 follow-up）。
+   * 失败时返回 8 位占位串 {@code "sha256-e"}（来源于 {@code TokenHashUtil} 的
+   * {@code "sha256-error"} 截断），仅用于日志，不影响主流程。
+   */
+  private static String sha256Short(String token) {
+    return TokenHashUtil.sha256(token).substring(0, 8);
+  }
 
-    @Override
-    public ApplyDownloadTokenResponse applyDownloadToken(ApplyDownloadTokenRequest request) {
-        log.info("申请下载 Token: fileId={}, downloader={}", request.fileId(), request.downloader());
-        var cmd = converter.toCommand(request, tokenProperties.getDefaultDownloadTtl());
-        String token = applyDownloadTokenUseCase.apply(cmd);
-        return new ApplyDownloadTokenResponse(token);
-    }
+  @Override
+  public ApplyUploadTokenResponse applyUploadToken(ApplyUploadTokenRequest request) {
+    log.info("申请上传 Token: bizType={}, sourceApp={}, uploader={}",
+      request.bizType(), request.sourceApp(), request.uploader());
+    var cmd = converter.toCommand(request, tokenProperties.getDefaultUploadTtl());
+    ApplyUploadTokenResult result = applyUploadTokenUseCase.apply(cmd);
+    return new ApplyUploadTokenResponse(result.token(), result.fileId());
+  }
 
-    @Override
-    public UploadFileResponse upload(String token, MultipartFile file) {
-        HttpServletRequest httpRequest = currentRequest();
-        SessionUser session = extractSession(httpRequest);
-        String clientIp = extractClientIp(httpRequest);
-        log.info("使用 Token 上传文件: tokenHash={}, fileName={}, size={}",
-            sha256Short(token), file.getOriginalFilename(), file.getSize());
+  @Override
+  public ApplyDownloadTokenResponse applyDownloadToken(ApplyDownloadTokenRequest request) {
+    log.info("申请下载 Token: fileId={}, downloader={}", request.fileId(), request.downloader());
+    var cmd = converter.toCommand(request, tokenProperties.getDefaultDownloadTtl());
+    String token = applyDownloadTokenUseCase.apply(cmd);
+    return new ApplyDownloadTokenResponse(token);
+  }
 
-        var fileId = uploadFileWithTokenUseCase.upload(token, session, file, clientIp);
-        // digest 当前 UseCase 未返回，传 null；后续若需返回可通过 UploadResult 扩展
-        return new UploadFileResponse(fileId, file.getOriginalFilename(), file.getSize(), null);
-    }
+  @Override
+  public UploadFileResponse upload(String token, MultipartFile file) {
+    HttpServletRequest httpRequest = currentRequest();
+    SessionUser session = extractSession(httpRequest);
+    String clientIp = extractClientIp(httpRequest);
+    log.info("使用 Token 上传文件: tokenHash={}, fileName={}, size={}",
+      sha256Short(token), file.getOriginalFilename(), file.getSize());
 
-    @Override
-    public ResponseEntity<StreamingResponseBody> download(String token) {
-        HttpServletRequest httpRequest = currentRequest();
-        SessionUser session = extractSession(httpRequest);
-        String clientIp = extractClientIp(httpRequest);
-        log.info("使用 Token 下载文件: tokenHash={}", sha256Short(token));
+    var fileId = uploadFileWithTokenUseCase.upload(token, session, file, clientIp);
+    // digest 当前 UseCase 未返回，传 null；后续若需返回可通过 UploadResult 扩展
+    return new UploadFileResponse(fileId, file.getOriginalFilename(), file.getSize(), null);
+  }
 
-        DownloadContext ctx = downloadFileWithTokenUseCase.prepareDownload(token, session, clientIp);
-        // openStream 在 prepareDownload 事务提交后调用，避免长事务持有 IO 流
-        InputStream stream = downloadFileWithTokenUseCase.openStream(ctx.fileId());
+  @Override
+  public ResponseEntity<StreamingResponseBody> download(String token) {
+    HttpServletRequest httpRequest = currentRequest();
+    SessionUser session = extractSession(httpRequest);
+    String clientIp = extractClientIp(httpRequest);
+    log.info("使用 Token 下载文件: tokenHash={}", sha256Short(token));
 
-        StreamingResponseBody body = outputStream -> {
-            try (InputStream in = stream) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = in.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                outputStream.flush();
-            }
-        };
+    DownloadContext ctx = downloadFileWithTokenUseCase.prepareDownload(token, session, clientIp);
+    // openStream 在 prepareDownload 事务提交后调用，避免长事务持有 IO 流
+    InputStream stream = downloadFileWithTokenUseCase.openStream(ctx.fileId());
 
-        String fileName = ctx.originalName() != null ? ctx.originalName() : "download";
-        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
-        String contentType = ctx.contentType() != null ? ctx.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        long contentLength = ctx.size() != null ? ctx.size() : -1L;
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(contentType))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
-            .contentLength(contentLength)
-            .body(body);
-    }
-
-    /**
-     * 从当前线程上下文获取 HttpServletRequest（@Override 方法签名不可变，无法直接注入）。
-     */
-    private HttpServletRequest currentRequest() {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-        return attrs.getRequest();
-    }
-
-    /**
-     * 从 HTTP Header 提取 SessionUser（X-User-No / X-Customer-No / X-Product-No）。
-     *
-     * <p>显式校验 header 存在性：{@link FileAccessApi} 接口仅声明 token + file，
-     * Spring MVC 不会强制这些 header 存在。缺失时若直接调用 {@link UserNo#of} 等方法
-     * 会抛 {@link IllegalArgumentException}，被 {@code GlobalExceptionHandler} 兜底为 500；
-     * 此处提前校验，缺失时抛 {@link BusinessException}，由 {@code handleBaseException}
-     * 返回业务错误码 + 明确错误信息（fix I1）。
-     */
-    private SessionUser extractSession(HttpServletRequest request) {
-        String userNo = request.getHeader("X-User-No");
-        String customerNo = request.getHeader("X-Customer-No");
-        String productNo = request.getHeader("X-Product-No");
-        if (userNo == null || userNo.isBlank()
-            || customerNo == null || customerNo.isBlank()
-            || productNo == null || productNo.isBlank()) {
-            throw new BusinessException(FileErrorCodes.FILE_SESSION_HEADER_MISSING)
-                .withUserDetail("X-User-No / X-Customer-No / X-Product-No Header 不能为空")
-                .withLogDetail("缺失的 Header: X-User-No=" + (userNo == null || userNo.isBlank())
-                    + ", X-Customer-No=" + (customerNo == null || customerNo.isBlank())
-                    + ", X-Product-No=" + (productNo == null || productNo.isBlank()));
+    StreamingResponseBody body = outputStream -> {
+      try (InputStream in = stream) {
+        byte[] buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = in.read(buffer)) != -1) {
+          outputStream.write(buffer, 0, bytesRead);
         }
-        return new SessionUser(
-            UserNo.of(userNo),
-            CustomerNo.of(customerNo),
-            ProductNo.of(productNo)
-        );
-    }
+        outputStream.flush();
+      }
+    };
 
-    /**
-     * 提取客户端 IP（优先 X-Forwarded-For 首段，回退 remoteAddr）。
-     */
-    private String extractClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
+    String fileName = ctx.originalName() != null ? ctx.originalName() : "download";
+    String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
+    String contentType = ctx.contentType() != null ? ctx.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+    long contentLength = ctx.size() != null ? ctx.size() : -1L;
 
-    /**
-     * 计算 token 的 SHA-256 短摘要（前 8 位）用于日志脱敏。
-     *
-     * <p>复用 {@link TokenHashUtil#sha256} 避免重复实现 SHA-256 逻辑；
-     * 截取前 8 位以满足日志脱敏的最小需要（M3 follow-up）。
-     * 失败时返回 8 位占位串 {@code "sha256-e"}（来源于 {@code TokenHashUtil} 的
-     * {@code "sha256-error"} 截断），仅用于日志，不影响主流程。
-     */
-    private static String sha256Short(String token) {
-        return TokenHashUtil.sha256(token).substring(0, 8);
+    return ResponseEntity.ok()
+      .contentType(MediaType.parseMediaType(contentType))
+      .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+      .contentLength(contentLength)
+      .body(body);
+  }
+
+  /**
+   * 从当前线程上下文获取 HttpServletRequest（@Override 方法签名不可变，无法直接注入）。
+   */
+  private HttpServletRequest currentRequest() {
+    ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+    return attrs.getRequest();
+  }
+
+  /**
+   * 从 HTTP Header 提取 SessionUser（X-User-No / X-Customer-No / X-Product-No）。
+   *
+   * <p>显式校验 header 存在性：{@link FileAccessApi} 接口仅声明 token + file，
+   * Spring MVC 不会强制这些 header 存在。缺失时若直接调用 {@link UserNo#of} 等方法
+   * 会抛 {@link IllegalArgumentException}，被 {@code GlobalExceptionHandler} 兜底为 500；
+   * 此处提前校验，缺失时抛 {@link BusinessException}，由 {@code handleBaseException}
+   * 返回业务错误码 + 明确错误信息（fix I1）。
+   */
+  private SessionUser extractSession(HttpServletRequest request) {
+    String userNo = request.getHeader("X-User-No");
+    String customerNo = request.getHeader("X-Customer-No");
+    String productNo = request.getHeader("X-Product-No");
+    if (userNo == null || userNo.isBlank()
+      || customerNo == null || customerNo.isBlank()
+      || productNo == null || productNo.isBlank()) {
+      throw new BusinessException(FileErrorCodes.FILE_SESSION_HEADER_MISSING)
+        .withUserDetail("X-User-No / X-Customer-No / X-Product-No Header 不能为空")
+        .withLogDetail("缺失的 Header: X-User-No=" + (userNo == null || userNo.isBlank())
+          + ", X-Customer-No=" + (customerNo == null || customerNo.isBlank())
+          + ", X-Product-No=" + (productNo == null || productNo.isBlank()));
     }
+    return new SessionUser(
+      UserNo.of(userNo),
+      CustomerNo.of(customerNo),
+      ProductNo.of(productNo)
+    );
+  }
+
+  /**
+   * 提取客户端 IP（优先 X-Forwarded-For 首段，回退 remoteAddr）。
+   */
+  private String extractClientIp(HttpServletRequest request) {
+    String xff = request.getHeader("X-Forwarded-For");
+    if (xff != null && !xff.isBlank()) {
+      return xff.split(",")[0].trim();
+    }
+    return request.getRemoteAddr();
+  }
 }

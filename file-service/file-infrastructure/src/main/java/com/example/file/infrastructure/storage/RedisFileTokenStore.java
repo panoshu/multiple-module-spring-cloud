@@ -18,25 +18,25 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RedisFileTokenStore implements FileTokenStore {
 
-    private static final String MARKER_VALUE = "1";
+  private static final String MARKER_VALUE = "1";
 
-    private final RedissonClient redissonClient;
-    private final FileTokenProperties properties;
+  private final RedissonClient redissonClient;
+  private final FileTokenProperties properties;
 
-    @Override
-    public boolean markUsed(String tokenId, Duration ttl) {
-        String key = properties.getRedis().getKeyPrefix() + tokenId;
-        RBucket<String> bucket = redissonClient.getBucket(key);
-        boolean success = bucket.setIfAbsent(MARKER_VALUE, ttl);
-        if (!success) {
-            log.warn("token 重复使用: tokenId={}", tokenId);
-        }
-        return success;
+  @Override
+  public boolean markUsed(String tokenId, Duration ttl) {
+    String key = properties.getRedis().getKeyPrefix() + tokenId;
+    RBucket<String> bucket = redissonClient.getBucket(key);
+    boolean success = bucket.setIfAbsent(MARKER_VALUE, ttl);
+    if (!success) {
+      log.warn("token 重复使用: tokenId={}", tokenId);
     }
+    return success;
+  }
 
-    @Override
-    public boolean isUsed(String tokenId) {
-        String key = properties.getRedis().getKeyPrefix() + tokenId;
-        return redissonClient.getBucket(key).isExists();
-    }
+  @Override
+  public boolean isUsed(String tokenId) {
+    String key = properties.getRedis().getKeyPrefix() + tokenId;
+    return redissonClient.getBucket(key).isExists();
+  }
 }

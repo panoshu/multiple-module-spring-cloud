@@ -38,13 +38,19 @@ import java.util.List;
 @Component
 public class RouteRuleLoader {
 
-  /** 缓存键(单例缓存,使用固定键) */
+  /**
+   * 缓存键(单例缓存,使用固定键)
+   */
   private static final String CACHE_KEY = "ENABLED_ROUTE_RULES";
 
-  /** 缓存 TTL */
+  /**
+   * 缓存 TTL
+   */
   private static final Duration CACHE_TTL = Duration.ofMinutes(5);
 
-  /** 单页最大条数(覆盖全部路由规则) */
+  /**
+   * 单页最大条数(覆盖全部路由规则)
+   */
   private static final int PAGE_SIZE = 100;
 
   private final RouteRuleApi routeRuleApi;
@@ -54,9 +60,9 @@ public class RouteRuleLoader {
   public RouteRuleLoader(RouteRuleApi routeRuleApi) {
     this.routeRuleApi = routeRuleApi;
     this.ruleCache = Caffeine.newBuilder()
-        .expireAfterWrite(CACHE_TTL)
-        .maximumSize(1)
-        .build();
+      .expireAfterWrite(CACHE_TTL)
+      .maximumSize(1)
+      .build();
   }
 
   /**
@@ -86,10 +92,10 @@ public class RouteRuleLoader {
   private List<RouteRule> loadFromRemote() {
     try {
       ListRouteRulesQuery query = new ListRouteRulesQuery(
-          null,  // routePattern 模糊匹配(空=全部)
-          null,  // checkType 过滤(空=全部)
-          Boolean.TRUE,  // 仅启用
-          PageQuery.firstPage(PAGE_SIZE)
+        null,  // routePattern 模糊匹配(空=全部)
+        null,  // checkType 过滤(空=全部)
+        Boolean.TRUE,  // 仅启用
+        PageQuery.firstPage(PAGE_SIZE)
       );
       ApiResult<PageData<com.example.iam.api.dto.RouteRuleDTO>> result = routeRuleApi.list(query);
 
@@ -106,7 +112,7 @@ public class RouteRuleLoader {
         int total = pageData.totalCount();
         if (pageData.hasMore() && total > loaded) {
           log.warn("[RouteRuleLoader] 路由规则总数 {} 超过单页 {},仅加载前 {} 条,建议扩大 PAGE_SIZE",
-              total, PAGE_SIZE, loaded);
+            total, PAGE_SIZE, loaded);
         }
       }
 

@@ -1,7 +1,7 @@
 package com.example.annuity.application.extension;
 
-import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
 import com.example.annuity.domain.aggregate.valueobject.CustomerProfile;
+import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.annuity.domain.service.AnnuityForeignInvestmentRule;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
@@ -36,7 +36,7 @@ public class AnnuityForeignInvestmentValidationAction implements StepExtensionAc
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
     CustomerProfile profile = customerGateway.queryCustomer(app.businessContext().customerNo());
     return foreignInvestmentRule.validate(extensionResolver.resolve(app), profile)
-        .map(msg -> ExtensionExecutionResult.failure("FOREIGN_INVESTMENT_BLOCKED", msg))
-        .orElseGet(ExtensionExecutionResult::success);
+      .map(msg -> ExtensionExecutionResult.failure("FOREIGN_INVESTMENT_BLOCKED", msg))
+      .orElseGet(ExtensionExecutionResult::success);
   }
 }

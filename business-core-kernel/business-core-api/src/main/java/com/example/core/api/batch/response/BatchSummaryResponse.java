@@ -8,14 +8,14 @@ import java.time.LocalDateTime;
  * @author panoshu
  */
 public record BatchSummaryResponse(
-    String batchId,
-    String businessType,
-    String planNo,
-    String status,
-    int totalFormCount,
-    int totalApplicationCount,
-    int successCount,
-    int failedCount,
-    LocalDateTime createTime
+  String batchId,
+  String businessType,
+  String planNo,
+  String status,
+  int totalFormCount,
+  int totalApplicationCount,
+  int successCount,
+  int failedCount,
+  LocalDateTime createTime
 ) {
 }

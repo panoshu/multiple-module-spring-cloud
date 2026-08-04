@@ -2,14 +2,14 @@
 
 ## 文档信息
 
-| 项 | 值 |
-|----|----|
-| 标题 | File Service 表单解析与转换引擎设计 |
-| 阶段 | Phase 1（入站管线完整闭环） |
-| 状态 | 待审阅 |
-| 作者 | Trae AI + 用户协作设计 |
-| 创建日期 | 2026-07-18 |
-| 技术栈 | JDK 25 / Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL / Apache Fesod 2.0.2 / Aviator 5.4.3 |
+| 项       | 值                                                                                                  |
+|----------|-----------------------------------------------------------------------------------------------------|
+| 标题     | File Service 表单解析与转换引擎设计                                                                 |
+| 阶段     | Phase 1（入站管线完整闭环）                                                                         |
+| 状态     | 待审阅                                                                                              |
+| 作者     | Trae AI + 用户协作设计                                                                              |
+| 创建日期 | 2026-07-18                                                                                          |
+| 技术栈   | JDK 25 / Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL / Apache Fesod 2.0.2 / Aviator 5.4.3 |
 
 ---
 
@@ -20,6 +20,7 @@
 系统业务办理过程需要客户上传 Excel 表单，系统解析表单进行数据校验和计算处理，完成后将数据转换为外部系统的表单格式并提交给外部系统。
 
 需求特点：
+
 - 客户上传的表单样式多样（多种源模板对应同一业务类型）
 - 外部系统的表单格式相对固定，偶尔会增加或修改字段
 - 单文件可能达到万行级数据量
@@ -27,7 +28,8 @@
 
 ### 1.2 设计目标
 
-构建一个**灵活的数据解析和转换引擎**，通过配置驱动支持：
+构建一个 **灵活的数据解析和转换引擎**，通过配置驱动支持：
+
 1. 多样化的源表单解析（区域状态机 + 配置化区域定义）
 2. 标准化的数据校验与派生计算（Aviator 表达式引擎）
 3. 按业务键拆分子任务（独立持久化 + 独立校验）
@@ -36,6 +38,7 @@
 ### 1.3 Phase 1 范围
 
 **包含**：
+
 - 模块脚手架（7 层 DDD 结构）
 - 配置管理（DB + YAML 加载）
 - 解析引擎（Fesod + 区域状态机）
@@ -46,6 +49,7 @@
 - 分页拉取 REST API
 
 **不包含**（Phase 2）：
+
 - 目标 Excel 生成（基于 Fesod 模板填充）
 - 配置管理 REST API（增删改查）
 - TTL 自动清理任务
@@ -63,12 +67,14 @@
 ```
 
 **关键设计**：引入"数据暂存区"，将解析任务从"数据推送"改为"凭证拉取"：
+
 1. 引擎解析、校验、计算、拆分完成后，将拆分出的 N 个标准数据模型分别持久化
 2. 引擎为每个拆分后的子任务生成唯一的 `subTaskId`
 3. 发送领域事件（仅携带凭证，消息体轻量）
 4. 业务服务收到事件后，根据 `subTaskId` 调用引擎 API 分页拉取
 
 **架构价值**：
+
 - **数据自治**：引擎是"临时工"，通过 TTL 机制自动清理过期数据
 - **避免分布式事务陷阱**：业务方何时落库、落库多少、失败如何重试完全自控
 - **流式处理可控性**：业务服务可保持极低内存占用，支持断点续传
@@ -87,6 +93,7 @@
 - **暂存与分发**：把拆分后的子任务持久化，发领域事件通知业务服务，提供分页拉取 API
 
 **边界外**（不在本上下文）：
+
 - 业务流程编排（由 business-core-kernel / customer-service 负责）
 - 与外部系统的实际提交动作（由 integration-service 负责）
 - 目标 Excel 生成（Phase 2）
@@ -115,14 +122,14 @@ file-service/
 
 ### 2.4 与现有基础设施的集成
 
-| 能力 | 复用模块 | 用途 |
-|------|---------|------|
-| ID 生成 | `shared-id-starter` | 生成 `FileTaskId`、`SubTaskId`（ULID） |
-| 事件发布 | `shared-event-starter`（重构后） | 事务后异步投递领域事件 |
-| 缓存 | `shared-cache-starter` | 配置缓存（Caffeine + Redisson 双层） |
-| 异常 | `shared-exception` | `BusinessException`/`DomainException`/`SystemException` |
-| Web | `shared-web-starter` | 全局异常处理、链路追踪 |
-| 日志 | `shared-logging-starter` | HTTP 请求日志 |
+| 能力     | 复用模块                         | 用途                                                    |
+|----------|----------------------------------|---------------------------------------------------------|
+| ID 生成  | `shared-id-starter`              | 生成 `FileTaskId`、`SubTaskId`（ULID）                  |
+| 事件发布 | `shared-event-starter`（重构后） | 事务后异步投递领域事件                                  |
+| 缓存     | `shared-cache-starter`           | 配置缓存（Caffeine + Redisson 双层）                    |
+| 异常     | `shared-exception`               | `BusinessException`/`DomainException`/`SystemException` |
+| Web      | `shared-web-starter`             | 全局异常处理、链路追踪                                  |
+| 日志     | `shared-logging-starter`         | HTTP 请求日志                                           |
 
 ### 2.5 新增顶级依赖
 
@@ -137,13 +144,14 @@ file-service/
 
 3 个聚合根，各自是独立的一致性边界：
 
-| 聚合根 | 职责 | 一致性边界 |
-|--------|------|-----------|
-| `ParseTask`（解析任务） | 一次 Excel 上传解析的全过程 | 主任务状态、拆分结果聚合点 |
-| `SubTaskData`（子任务数据） | 拆分后的一份标准数据 + 校验结果 | 子任务级状态、行数据 |
-| `TemplateConfig`（模板配置） | 业务基线 + 源模板配置 | 配置版本与生效 |
+| 聚合根                       | 职责                            | 一致性边界                 |
+|------------------------------|---------------------------------|----------------------------|
+| `ParseTask`（解析任务）      | 一次 Excel 上传解析的全过程     | 主任务状态、拆分结果聚合点 |
+| `SubTaskData`（子任务数据）  | 拆分后的一份标准数据 + 校验结果 | 子任务级状态、行数据       |
+| `TemplateConfig`（模板配置） | 业务基线 + 源模板配置           | 配置版本与生效             |
 
 **为什么是 3 个而不是 1 个大聚合**：
+
 - `SubTaskData` 数据量可能很大（万行级），若与 `ParseTask` 同聚合，加载主任务会拖死
 - `TemplateConfig` 是配置态，与运行态分离
 - 拆分后业务服务按 `subTaskId` 独立拉取，`SubTaskData` 必须可独立加载
@@ -191,6 +199,7 @@ ParseTask (AggregateRoot<FileTaskId>)
 ```
 
 **SubTaskSummary 值对象**：
+
 ```java
 public record SubTaskSummary(
     SubTaskId subTaskId,
@@ -224,6 +233,7 @@ SubTaskData (AggregateRoot<SubTaskId>)
 ```
 
 **BusinessContext 值对象**：
+
 ```java
 public record BusinessContext(Map<String, Object> variables) implements ValueObject {
     public static BusinessContext empty() { return new BusinessContext(Map.of()); }
@@ -232,6 +242,7 @@ public record BusinessContext(Map<String, Object> variables) implements ValueObj
 ```
 
 **RowError 值对象**：
+
 ```java
 public record RowError(
     int rowIndex,
@@ -264,7 +275,8 @@ TemplateConfig (AggregateRoot<TemplateConfigId>)
     └── validateInvariants()
 ```
 
-`TemplateConfig` 把"业务基线 + 关联的所有源模板"聚合为一个整体。`SourceTemplateDef` 是聚合内的实体（不是独立聚合根），因为它脱离了 `TemplateConfig` 没有独立含义。
+`TemplateConfig` 把"业务基线 + 关联的所有源模板"聚合为一个整体。`SourceTemplateDef` 是聚合内的实体（不是独立聚合根），因为它脱离了
+`TemplateConfig` 没有独立含义。
 
 ### 3.6 配置定义值对象集合
 
@@ -337,7 +349,8 @@ public record RegionTrigger(
 ) {}
 ```
 
-这些配置定义类放在 `file-domain`。它们是不可变的（record），不依赖任何外部框架，符合领域层约束。SnakeYAML/Jackson 反序列化在 `file-infrastructure` 完成，反序列化后传入领域层。
+这些配置定义类放在 `file-domain`。它们是不可变的（record），不依赖任何外部框架，符合领域层约束。SnakeYAML/Jackson 反序列化在
+`file-infrastructure` 完成，反序列化后传入领域层。
 
 ### 3.7 领域事件（file-domain）
 
@@ -354,7 +367,7 @@ public record FileParsedEvent(
     List<SubTaskSummary> subTasks,
     String failureReason
 ) implements DomainEvent {
-    
+
     public static FileParsedEvent of(ParseTask task) {
         return new FileParsedEvent(
             EventId.generate(),
@@ -370,7 +383,8 @@ public record FileParsedEvent(
 }
 ```
 
-**重要**：领域事件保留完整的领域语义，引用 `FileTaskId`、`BizType`、`SubTaskSummary` 等领域对象，**仅本服务可见**。跨服务通过集成事件 DTO 通信（见 §7.7）。
+**重要**：领域事件保留完整的领域语义，引用 `FileTaskId`、`BizType`、`SubTaskSummary` 等领域对象， **仅本服务可见**。跨服务通过集成事件
+DTO 通信（见 §7.7）。
 
 ### 3.8 枚举
 
@@ -391,19 +405,20 @@ public enum TriggerMatchType { HEADER_SNIFF, REGEX }
 
 ### 3.9 领域服务
 
-| 领域服务 | 职责 | 依赖 |
-|---------|------|------|
-| `ConfigRepository`(SPI) | 加载 `TemplateConfig` | 无（接口） |
-| `SourceTemplateIdentifier` | AUTO 模式下根据表头指纹识别 | 纯领域逻辑 |
-| `CanonicalModelBuilder` | 把区域解析结果组装为 canonical data | 纯领域逻辑 |
-| `DataValidator` | 执行 `ValidationRule` | SPI: `ExpressionEvaluator` |
-| `DataDeriver` | 执行 `DerivationRule` 派生字段 | SPI: `ExpressionEvaluator` |
-| `TaskSplitter` | 按 `SplitConfig` 拆分 | 纯领域逻辑 |
-| `RegionStateMachine` | 区域状态机驱动 | 纯领域逻辑 |
-| `KeyValueRegionParser` | KEY_VALUE 区域解析 | 纯领域逻辑 |
-| `TableRegionParser` | TABLE 区域解析 | 纯领域逻辑 |
+| 领域服务                   | 职责                                | 依赖                       |
+|----------------------------|-------------------------------------|----------------------------|
+| `ConfigRepository`(SPI)    | 加载 `TemplateConfig`               | 无（接口）                 |
+| `SourceTemplateIdentifier` | AUTO 模式下根据表头指纹识别         | 纯领域逻辑                 |
+| `CanonicalModelBuilder`    | 把区域解析结果组装为 canonical data | 纯领域逻辑                 |
+| `DataValidator`            | 执行 `ValidationRule`               | SPI: `ExpressionEvaluator` |
+| `DataDeriver`              | 执行 `DerivationRule` 派生字段      | SPI: `ExpressionEvaluator` |
+| `TaskSplitter`             | 按 `SplitConfig` 拆分               | 纯领域逻辑                 |
+| `RegionStateMachine`       | 区域状态机驱动                      | 纯领域逻辑                 |
+| `KeyValueRegionParser`     | KEY_VALUE 区域解析                  | 纯领域逻辑                 |
+| `TableRegionParser`        | TABLE 区域解析                      | 纯领域逻辑                 |
 
-`ExpressionEvaluator` 是 SPI 接口（在 domain 定义），Aviator 实现在 infrastructure。这样领域层不依赖 Aviator，符合"domain 层禁止依赖外部库"约束。
+`ExpressionEvaluator` 是 SPI 接口（在 domain 定义），Aviator 实现在 infrastructure。这样领域层不依赖 Aviator，符合"domain
+层禁止依赖外部库"约束。
 
 ### 3.10 Repository 接口
 
@@ -427,12 +442,12 @@ public interface TemplateConfigRepository extends Repository<TemplateConfig, Tem
 
 ### 4.1 应用服务总览
 
-| 应用服务 | 用例 | 入口 |
-|---------|------|------|
-| `ParseExcelAppService` | 上传 Excel 并触发解析全流程 | REST POST `/api/v1/parse` |
-| `QueryParsedDataAppService` | 分页拉取子任务数据 | REST GET `/api/v1/parsed-data/{subTaskId}` |
-| `QueryParseTaskAppService` | 查询主任务状态/摘要 | REST GET `/api/v1/parse-tasks/{fileTaskId}` |
-| `ManageConfigAppService` | 配置管理（YAML 导入 + DB 查询） | REST POST `/api/v1/configs/import`、GET `/api/v1/configs/{bizType}` |
+| 应用服务                    | 用例                            | 入口                                                                |
+|-----------------------------|---------------------------------|---------------------------------------------------------------------|
+| `ParseExcelAppService`      | 上传 Excel 并触发解析全流程     | REST POST `/api/v1/parse`                                           |
+| `QueryParsedDataAppService` | 分页拉取子任务数据              | REST GET `/api/v1/parsed-data/{subTaskId}`                          |
+| `QueryParseTaskAppService`  | 查询主任务状态/摘要             | REST GET `/api/v1/parse-tasks/{fileTaskId}`                         |
+| `ManageConfigAppService`    | 配置管理（YAML 导入 + DB 查询） | REST POST `/api/v1/configs/import`、GET `/api/v1/configs/{bizType}` |
 
 ### 4.2 核心用例：上传解析全流程
 
@@ -440,7 +455,7 @@ public interface TemplateConfigRepository extends Repository<TemplateConfig, Tem
 ParseExcelAppService.parseAndStore(cmd):
   输入: ParseExcelCommand { bizType, fileName, InputStream, operator, templateCode? }
   输出: ParseExcelResult { fileTaskId, status, totalRows, subTasks, errors }
-  
+
   步骤:
   1. 创建 ParseTask（status=PENDING），保存到 Repository
   2. 加载 TemplateConfig（按 bizType 查 ACTIVE 配置，走缓存）
@@ -462,7 +477,8 @@ ParseExcelAppService.parseAndStore(cmd):
   12. 返回 ParseExcelResult
 ```
 
-**事务边界**：整个用例**不**包在一个大事务里。拆分为多个小事务：
+**事务边界**：整个用例 **不**包在一个大事务里。拆分为多个小事务：
+
 - T1: 创建 ParseTask（PENDING）
 - T2: 解析 + 拆分（无 DB 写，纯内存操作）
 - T3-Tn: 每个 SubTaskData 独立事务保存
@@ -491,6 +507,7 @@ canonical data
 ```
 
 **顺序理由**：
+
 - 派生先于拆分：因为拆分键可能依赖派生字段
 - 校验在拆分后：因为"拆分后只有校验通过的才能生成外部表单"，校验状态需要随 sub-task 一起拆分
 
@@ -500,7 +517,7 @@ canonical data
 QueryParsedDataAppService.queryPaged(query):
   输入: PagedDataQuery { subTaskId, pagination }
   输出: PagedDataResult { subTaskId, splitKeyValue, status, pageInfo, rows, nextPageUrl }
-  
+
   步骤:
   1. load SubTaskData（按 subTaskId）
   2. 校验状态：INVALID 返回错误信息 + 错误明细；EXPIRED 返回 410
@@ -510,6 +527,7 @@ QueryParsedDataAppService.queryPaged(query):
 ```
 
 **分页响应格式**：
+
 ```json
 {
   "subTaskId": "sub_001",
@@ -535,38 +553,41 @@ QueryParsedDataAppService.queryPaged(query):
 
 ### 4.5 异步执行策略
 
-整个解析流程是**同步执行**的（HTTP 请求线程内完成），原因：
+整个解析流程是 **同步执行**的（HTTP 请求线程内完成），原因：
+
 - 解析是 CPU/IO 密集型，但单文件通常秒级完成
 - 同步执行简化事务管理和错误处理
 - 大文件场景由 Fesod 流式解析 + 分页拉取保障
 
 两个异步点：
-1. **事件发布**：`EventBus` 在事务提交后通过虚拟线程异步投递
+
+1. **事件发布**：`DefaultEventBus` 在事务提交后通过虚拟线程异步投递
 2. **大文件超时保护**：HTTP 请求设置 5 分钟超时；若未来需要支持超长任务，再引入异步任务表
 
 有意保持 YAGNI：不预先引入异步任务队列、不引入任务状态轮询 API。
 
 ### 4.6 错误处理策略
 
-| 错误类型 | 处理方式 | HTTP 状态 |
-|---------|---------|----------|
-| 配置不存在 | `BusinessException` | 400 |
-| Excel 格式错误 | `BusinessException`，任务状态 FAILED | 400 |
-| 解析过程异常 | 任务状态 FAILED，事件 status=FAILED，返回 200 + 失败状态 | 200 |
-| 校验失败（行级） | 不抛异常，记入 sub-task，状态 INVALID | 200 |
-| 校验失败（任务级） | 视 errorPolicy 决定，可能 FAILED | 200 |
-| 子任务过期 | `BusinessException` | 410 Gone |
-| 系统异常 | `SystemException` | 500 |
+| 错误类型           | 处理方式                                                 | HTTP 状态 |
+|--------------------|----------------------------------------------------------|-----------|
+| 配置不存在         | `BusinessException`                                      | 400       |
+| Excel 格式错误     | `BusinessException`，任务状态 FAILED                     | 400       |
+| 解析过程异常       | 任务状态 FAILED，事件 status=FAILED，返回 200 + 失败状态 | 200       |
+| 校验失败（行级）   | 不抛异常，记入 sub-task，状态 INVALID                    | 200       |
+| 校验失败（任务级） | 视 errorPolicy 决定，可能 FAILED                         | 200       |
+| 子任务过期         | `BusinessException`                                      | 410 Gone  |
+| 系统异常           | `SystemException`                                        | 500       |
 
-**关键设计**：解析过程中的"业务错误"（如校验失败）不抛异常，而是记入任务状态。HTTP 200 表示"请求已被接受并处理"，具体成败看 `status` 字段。
+**关键设计**：解析过程中的"业务错误"（如校验失败）不抛异常，而是记入任务状态。HTTP 200 表示"请求已被接受并处理"，具体成败看
+`status` 字段。
 
 ### 4.7 errorPolicy 应用规则
 
-| 策略 | 派生失败 | 必填/类型校验失败 | 表达式校验失败 |
-|------|---------|-----------------|---------------|
-| `FAIL_FAST` | 抛异常，任务 FAILED | 第一个错误即停止，sub-task INVALID | 第一个错误即停止，sub-task INVALID |
-| `COLLECT_ALL` | 跳过该字段，记录错误 | 收集所有错误，sub-task INVALID | 收集所有错误，sub-task INVALID |
-| `SKIP_ERROR_ROWS` | 跳过该行 | 跳过该行，不进 sub-task | 跳过该行，不进 sub-task |
+| 策略              | 派生失败             | 必填/类型校验失败                  | 表达式校验失败                     |
+|-------------------|----------------------|------------------------------------|------------------------------------|
+| `FAIL_FAST`       | 抛异常，任务 FAILED  | 第一个错误即停止，sub-task INVALID | 第一个错误即停止，sub-task INVALID |
+| `COLLECT_ALL`     | 跳过该字段，记录错误 | 收集所有错误，sub-task INVALID     | 收集所有错误，sub-task INVALID     |
+| `SKIP_ERROR_ROWS` | 跳过该行             | 跳过该行，不进 sub-task            | 跳过该行，不进 sub-task            |
 
 `SKIP_ERROR_ROWS` 模式下，被跳过的行不会出现在任何 sub-task 中，但会在 ParseTask.errors 中记录总数。
 
@@ -577,12 +598,13 @@ QueryParsedDataAppService.queryPaged(query):
 ### 5.1 设计目标
 
 源模板配置定义了"有序的区域集合"，引擎需要：
+
 - 按行扫描 Excel，根据当前行内容判断"是否进入新区域"
 - 在某个区域内，按该区域的 `strategy` 解析行数据
 - 遇到退出标识时结束当前区域
 - 全部行扫描完后，所有区域数据组装为 canonical data
 
-**核心抽象**：把 Excel 看作一个**行流（Row Stream）**，每个 Region 是一个**状态**，扫描器是状态机。
+**核心抽象**：把 Excel 看作一个 **行流（Row Stream）**，每个 Region 是一个 **状态**，扫描器是状态机。
 
 ### 5.2 核心抽象（file-domain）
 
@@ -615,24 +637,25 @@ public interface RawRowStream {
 }
 ```
 
-**关键决策**：`RegionParser` 和 `RawRowStream` 是领域层定义的 SPI，`RawRow` 是与 Fesod 无关的纯领域抽象。Fesod 只在 infrastructure 层负责把 `Row` 转换为 `RawRow`，然后交给领域层的解析器。这样领域层完全不依赖 Fesod。
+**关键决策**：`RegionParser` 和 `RawRowStream` 是领域层定义的 SPI，`RawRow` 是与 Fesod 无关的纯领域抽象。Fesod 只在
+infrastructure 层负责把 `Row` 转换为 `RawRow`，然后交给领域层的解析器。这样领域层完全不依赖 Fesod。
 
 ### 5.3 状态机引擎
 
 ```java
 @DomainService
 public class RegionStateMachine {
-    
+
     private final Map<RegionType, RegionParser> parsers;
-    
+
     public List<RegionParseResult> drive(RawRowStream stream, List<RegionDef> regions, ParseContext ctx) {
         List<RegionParseResult> results = new ArrayList<>();
         int regionIdx = 0;
-        
+
         while (stream.hasNext() && regionIdx < regions.size()) {
             RawRow current = stream.peek();
             RegionDef target = regions.get(regionIdx);
-            
+
             if (shouldEnterRegion(current, target, ctx)) {
                 RegionParseResult result = parsers.get(target.type())
                     .parse(stream, target, ctx);
@@ -673,37 +696,38 @@ public class RegionStateMachine {
 ### 5.4 KEY_VALUE 区域解析器
 
 支持两种布局：
+
 - `RIGHT`：键在左、值在右（同一行）
 - `BELOW`：键在上、值在下（相邻行）
 
 ```java
 @DomainService
 public class KeyValueRegionParser implements RegionParser {
-    
+
     @Override
     public RegionParseResult parse(RawRowStream stream, RegionDef regionDef, ParseContext ctx) {
         KvStrategy strategy = (KvStrategy) regionDef.strategy();
         Map<String, String> labelAliases = strategy.labelAliases();
         Map<String, Object> data = new LinkedHashMap<>();
         int consecutiveBlank = 0;
-        
+
         while (stream.hasNext()) {
             RawRow row = stream.peek();
-            
+
             if (row.isBlank()) {
                 if (++consecutiveBlank >= strategy.maxBlankRows()) break;
                 stream.next();
                 continue;
             }
             consecutiveBlank = 0;
-            
+
             if (ctx.isNextRegionTrigger(row)) break;
-            
+
             stream.next();
             Map<String, String> matched = matchLabels(row, labelAliases, strategy);
             data.putAll(matched);
         }
-        
+
         return new KvRegionResult(regionDef.name(), data);
     }
 }
@@ -714,14 +738,14 @@ public class KeyValueRegionParser implements RegionParser {
 ```java
 @DomainService
 public class TableRegionParser implements RegionParser {
-    
+
     @Override
     public RegionParseResult parse(RawRowStream stream, RegionDef regionDef, ParseContext ctx) {
         TableStrategy strategy = (TableStrategy) regionDef.strategy();
         List<Map<String, Object>> rows = new ArrayList<>();
-        
+
         Map<Integer, String> columnIndex = parseHeader(stream, strategy);
-        
+
         while (stream.hasNext()) {
             RawRow row = stream.peek();
             if (isDataEnd(row, strategy.dataEnd())) break;
@@ -730,7 +754,7 @@ public class TableRegionParser implements RegionParser {
             Map<String, Object> rowData = mapRow(row, columnIndex, strategy);
             rows.add(rowData);
         }
-        
+
         return new TableRegionResult(regionDef.name(), rows);
     }
 }
@@ -743,7 +767,7 @@ public class TableRegionParser implements RegionParser {
 ```java
 @Component
 public class FesodExcelReader {
-    
+
     public void readStreaming(InputStream excelStream, RawRowConsumer consumer) {
         FesodSheet.read(excelStream, new ReadListener<Map<Integer, String>>() {
             @Override
@@ -766,20 +790,20 @@ public class FesodExcelReader {
 ```java
 @Component
 public class ExcelParserImpl implements ExcelParser {
-    
+
     private final FesodExcelReader fesodReader;
     private final RegionStateMachine stateMachine;
-    
+
     @Override
     public List<RegionParseResult> parse(InputStream excelStream, List<RegionDef> regions) {
         BlockingQueue<RawRow> queue = new LinkedBlockingQueue<>(1000);
         AtomicBoolean eof = new AtomicBoolean(false);
-        
+
         Thread.startVirtualThread(() -> {
             fesodReader.readStreaming(excelStream, row -> queue.put(row));
             eof.set(true);
         });
-        
+
         RawRowStream stream = new QueuedRawRowStream(queue, eof);
         ParseContext ctx = new ParseContext(regions);
         return stateMachine.drive(stream, regions, ctx);
@@ -787,7 +811,8 @@ public class ExcelParserImpl implements ExcelParser {
 }
 ```
 
-**设计要点**：Fesod 是推模式（监听器回调），状态机是拉模式（`peek`/`next`）。用阻塞队列桥接，生产者（Fesod）和消费者（状态机）并行，避免一次性把所有行载入内存。虚拟线程保证轻量级并发。
+**设计要点**：Fesod 是推模式（监听器回调），状态机是拉模式（`peek`/`next`
+）。用阻塞队列桥接，生产者（Fesod）和消费者（状态机）并行，避免一次性把所有行载入内存。虚拟线程保证轻量级并发。
 
 ### 5.7 ParseContext
 
@@ -795,29 +820,29 @@ public class ExcelParserImpl implements ExcelParser {
 public class ParseContext {
     private final List<RegionDef> regions;
     private int currentRegionIdx = 0;
-    
+
     public boolean isNextRegionTrigger(RawRow row) {
         if (currentRegionIdx + 1 >= regions.size()) return false;
         RegionDef next = regions.get(currentRegionIdx + 1);
         if (next.trigger() == null) return false;
         return matchesTrigger(row, next.trigger());
     }
-    
+
     public void enterRegion(int idx) { currentRegionIdx = idx; }
 }
 ```
 
 ### 5.8 边界场景处理
 
-| 场景 | 处理 |
-|------|------|
-| 区域无 trigger | 立即进入（适用于第一个区域或顺序确定的场景） |
-| trigger 未命中 | 跳过该区域，进入下一个（容错） |
-| 区域内遇到下一区域 trigger | 提前退出当前区域，当前行不消费 |
-| 表头嗅探未达 minMatchCount | 跳过该行继续嗅探 |
-| dataEnd 未配置 | 默认读到行流结束 |
-| 表格列为空 | 该字段值为 null，校验阶段处理 required |
-| 单元格类型不匹配 | 记录行级错误，按 errorPolicy 决定是否继续 |
+| 场景                       | 处理                                         |
+|----------------------------|----------------------------------------------|
+| 区域无 trigger             | 立即进入（适用于第一个区域或顺序确定的场景） |
+| trigger 未命中             | 跳过该区域，进入下一个（容错）               |
+| 区域内遇到下一区域 trigger | 提前退出当前区域，当前行不消费               |
+| 表头嗅探未达 minMatchCount | 跳过该行继续嗅探                             |
+| dataEnd 未配置             | 默认读到行流结束                             |
+| 表格列为空                 | 该字段值为 null，校验阶段处理 required       |
+| 单元格类型不匹配           | 记录行级错误，按 errorPolicy 决定是否继续    |
 
 ---
 
@@ -843,9 +868,9 @@ public interface ExpressionEvaluator {
 ```java
 @Component
 public class AviatorExpressionEvaluator implements ExpressionEvaluator {
-    
+
     private final ConcurrentHashMap<String, Expression> compiled = new ConcurrentHashMap<>();
-    
+
     @Override
     public Object evaluate(String expr, Map<String, Object> context) {
         Expression expression = compiled.computeIfAbsent(expr, AviatorEvaluator::compile);
@@ -854,22 +879,23 @@ public class AviatorExpressionEvaluator implements ExpressionEvaluator {
 }
 ```
 
-**安全考虑**：Aviator 默认支持反射调用，生产环境应配置 `AviatorEvaluator.setOption(Options.FEATURE_SET, Feature.asSet(Feature.Assignment, Feature.Module))` 限制能力，避免恶意表达式。
+**安全考虑**：Aviator 默认支持反射调用，生产环境应配置
+`AviatorEvaluator.setOption(Options.FEATURE_SET, Feature.asSet(Feature.Assignment, Feature.Module))` 限制能力，避免恶意表达式。
 
 ### 6.3 派生引擎 DataDeriver
 
 ```java
 @DomainService
 public class DataDeriver {
-    
+
     private final ExpressionEvaluator evaluator;
-    
+
     public void derive(CanonicalData data, List<DerivationRule> rules, BusinessContext context) {
         List<DerivationRule> sorted = topologicalSort(rules);
-        
+
         for (DerivationRule rule : sorted) {
             FieldLocation loc = FieldLocation.parse(rule.field());
-            
+
             if (loc.isProperty()) {
                 Map<String, Object> ctx = buildContext(data.properties(), context);
                 Object value = evaluator.evaluate(rule.expr(), ctx);
@@ -888,6 +914,7 @@ public class DataDeriver {
 ```
 
 **派生上下文构建**：
+
 - properties 派生：`ctx = {所有 properties} + {context 变量}`
 - table 行派生：`ctx = {当前行所有字段} + {所有 properties} + {context 变量}`
 
@@ -896,21 +923,21 @@ public class DataDeriver {
 ```java
 @DomainService
 public class DataValidator {
-    
+
     private final ExpressionEvaluator evaluator;
-    
-    public ValidationResult validate(CanonicalData data, List<ValidationRule> rules, 
+
+    public ValidationResult validate(CanonicalData data, List<ValidationRule> rules,
                                     BusinessContext context, ErrorPolicy errorPolicy) {
         List<RowError> errors = new ArrayList<>();
-        
+
         errors.addAll(validateRequired(data));
         errors.addAll(validateTypes(data));
-        
+
         for (ValidationRule rule : rules) {
             errors.addAll(validateRule(data, rule, context, errorPolicy));
             if (errorPolicy == ErrorPolicy.FAIL_FAST && !errors.isEmpty()) break;
         }
-        
+
         return new ValidationResult(errors);
     }
 }
@@ -921,40 +948,40 @@ public class DataValidator {
 ```java
 @DomainService
 public class TaskSplitter {
-    
-    public List<SubTaskData> split(CanonicalData data, SplitConfig config, 
+
+    public List<SubTaskData> split(CanonicalData data, SplitConfig config,
                                    FileTaskId taskId, BizType bizType) {
         FieldLocation loc = FieldLocation.parse(config.keys().get(0));
-        
+
         if (loc.isProperty()) {
             return splitByProperty(data, config, taskId, bizType);
         }
         return splitByTableField(data, loc, config, taskId, bizType);
     }
-    
+
     private List<SubTaskData> splitByTableField(CanonicalData data, FieldLocation loc,
                                                 SplitConfig config, FileTaskId taskId, BizType bizType) {
         List<Map<String, Object>> rows = data.tables().get(loc.tableCode());
-        
+
         Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<>();
         for (Map<String, Object> row : rows) {
             String keyValue = extractSplitKey(row, loc.fieldName(), config);
             grouped.computeIfAbsent(keyValue, k -> new ArrayList<>()).add(row);
         }
-        
+
         List<SubTaskData> result = new ArrayList<>();
         for (Map.Entry<String, List<Map<String, Object>>> entry : grouped.entrySet()) {
             String splitKeyValue = entry.getKey();
-            
+
             CanonicalData subData = CanonicalData.of(
                 data.properties(),
                 Map.of(loc.tableCode(), entry.getValue())
             );
-            
+
             BusinessContext ctx = config.promoteToContext()
                 ? BusinessContext.empty().with(loc.fieldName(), splitKeyValue)
                 : BusinessContext.empty();
-            
+
             SubTaskData subTask = new SubTaskData(
                 SubTaskId.generate(),
                 taskId, bizType, splitKeyValue, ctx,
@@ -980,12 +1007,12 @@ public record CanonicalData(
     public static CanonicalData empty() {
         return new CanonicalData(new LinkedHashMap<>(), new LinkedHashMap<>());
     }
-    
+
     public void setProperty(String key, Object value) {
         properties.put(key, value);
     }
-    
-    public static CanonicalData of(Map<String, Object> properties, 
+
+    public static CanonicalData of(Map<String, Object> properties,
                                    Map<String, List<Map<String, Object>>> tables) {
         return new CanonicalData(
             new LinkedHashMap<>(properties),
@@ -1009,7 +1036,7 @@ public record FieldLocation(
         if (dot < 0) return new FieldLocation(null, path);
         return new FieldLocation(path.substring(0, dot), path.substring(dot + 1));
     }
-    
+
     public boolean isProperty() { return tableCode == null; }
 }
 ```
@@ -1087,7 +1114,8 @@ CREATE INDEX idx_sub_task_status ON file_sub_task(status);
 CREATE INDEX idx_sub_task_expires_at ON file_sub_task(expires_at);
 ```
 
-**关键设计**：子任务的 `properties` 用 JSONB 存储，但 `tables`（明细行数据）单独存到 `file_sub_task_row` 表。理由：明细可能万行级，JSONB 单行存储会导致单行过大，且无法高效分页查询。
+**关键设计**：子任务的 `properties` 用 JSONB 存储，但 `tables`（明细行数据）单独存到 `file_sub_task_row` 表。理由：明细可能万行级，JSONB
+单行存储会导致单行过大，且无法高效分页查询。
 
 #### 7.2.3 `file_sub_task_row`（子任务明细行表）
 
@@ -1106,8 +1134,9 @@ CREATE INDEX idx_sub_task_row_query ON file_sub_task_row(sub_task_id, table_code
 ```
 
 这张表是分页拉取的核心。业务服务 `GET /parsed-data/{subTaskId}?startPos=0&pageSize=1000` 对应查询：
+
 ```sql
-SELECT row_data FROM file_sub_task_row 
+SELECT row_data FROM file_sub_task_row
 WHERE sub_task_id = ? AND table_code = ? AND row_index >= ? AND row_index < ?
 ORDER BY row_index
 ```
@@ -1133,44 +1162,46 @@ CREATE TABLE file_template_config (
     PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX uk_template_config_active ON file_template_config(biz_type) 
+CREATE UNIQUE INDEX uk_template_config_active ON file_template_config(biz_type)
     WHERE status = 'ACTIVE';
 CREATE INDEX idx_template_config_biz_version ON file_template_config(biz_type, version);
 ```
 
 **设计要点**：
+
 - 配置整体存为一个 JSONB（`config_body`），避免拆成十几张子表带来的 JOIN 复杂度
 - 用部分唯一索引保证同一 bizType 只有一个 ACTIVE（PostgreSQL 特性）
 - H2 不支持部分唯一索引，测试时改用应用层校验
 
 ### 7.3 MyBatis-Flex 实体与领域对象映射
 
-实体定义在 `file-infrastructure`，标注 `@Table`、`@Id`。JSONB 字段用 `@Column(typeHandler = JsonTypeHandler.class)` 处理。领域对象 ↔ DO 转换通过 MapStruct Converter。
+实体定义在 `file-infrastructure`，标注 `@Table`、`@Id`。JSONB 字段用 `@Column(typeHandler = JsonTypeHandler.class)`
+处理。领域对象 ↔ DO 转换通过 MapStruct Converter。
 
 ### 7.4 分页查询实现
 
 ```java
 @Repository
 public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
-    
+
     @Override
     public PagedRows findPagedRows(SubTaskId id, Pagination pagination) {
         SubTaskDO subTask = subTaskMapper.findOneById(id.value());
         String tableCode = extractFirstTableCode(subTask);
-        
+
         QueryWrapper query = QueryWrapper.create()
             .where(SUB_TASK_ID.eq(id.value()))
             .and(TABLE_CODE.eq(tableCode))
             .and(ROW_INDEX.ge(pagination.startPos()))
             .and(ROW_INDEX.lt(pagination.startPos() + pagination.pageSize()))
             .orderBy(ROW_INDEX.asc());
-        
+
         List<SubTaskRowDO> rowDOs = subTaskRowMapper.selectListByQuery(query);
-        
+
         List<Map<String, Object>> rows = rowDOs.stream()
             .map(SubTaskRowDO::getRowData)
             .toList();
-        
+
         PageInfo pageInfo = PageInfo.of(subTask.getRowCount(), pagination, rows.size());
         return new PagedRows(rows, pageInfo);
     }
@@ -1182,9 +1213,9 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
 ```java
 @Component
 public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
-    
+
     private static final String CACHE_KEY_PREFIX = "file:config:";
-    
+
     @Override
     public Optional<TemplateConfig> findActive(BizType bizType) {
         String key = CACHE_KEY_PREFIX + "active:" + bizType.value();
@@ -1213,12 +1244,12 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
 ```java
 @Component
 public class ClasspathConfigBootstrap {
-    
+
     @EventListener(ApplicationReadyEvent.class)
     public void bootstrap() {
         List<Resource> yamlFiles = scanClasspath(bootstrapDir);
         Map<String, List<Resource>> grouped = groupByBizType(yamlFiles);
-        
+
         for (var entry : grouped.entrySet()) {
             BizType bizType = new BizType(entry.getKey());
             if (repo.findActive(bizType).isEmpty()) {
@@ -1236,10 +1267,10 @@ public class ClasspathConfigBootstrap {
 ```java
 @Component
 public class YamlConfigLoader {
-    
+
     private final Yaml yaml = new Yaml();
-    
-    public TemplateConfig loadFromYaml(BizType bizType, String baselineYaml, 
+
+    public TemplateConfig loadFromYaml(BizType bizType, String baselineYaml,
                                        List<String> sourceTemplateYamls) {
         Map<String, Object> baseline = yaml.load(baselineYaml);
         List<SourceTemplateDef> sources = sourceTemplateYamls.stream()
@@ -1251,13 +1282,16 @@ public class YamlConfigLoader {
 }
 ```
 
-**YAML 与 DB 关系**：YAML 是配置的"初始来源"，DB 是"权威来源"。YAML 加载后立即写入 DB，之后所有读取都从 DB（带缓存）。修改 YAML 不会自动覆盖 DB，除非显式调用导入 API。
+**YAML 与 DB 关系**：YAML 是配置的"初始来源"，DB 是"权威来源"。YAML 加载后立即写入 DB，之后所有读取都从 DB（带缓存）。修改 YAML
+不会自动覆盖 DB，除非显式调用导入 API。
 
 ### 7.7 TTL 与自动清理
 
-默认 TTL：30 天（可配置 `file-service.sub-task.ttl-days=30`）。过期后 `SubTaskStatus` 改为 `EXPIRED`，业务服务拉取时返回 410 Gone。
+默认 TTL：30 天（可配置 `file-service.sub-task.ttl-days=30`）。过期后 `SubTaskStatus` 改为 `EXPIRED`，业务服务拉取时返回 410
+Gone。
 
 定时清理任务（Phase 1 简化版，只标记过期；物理删除 Phase 2 实现）：
+
 ```java
 @Scheduled(cron = "0 0 3 * * *")
 public void cleanupExpired() {
@@ -1272,10 +1306,10 @@ Phase 1 只实现本地存储 + 短期保留：
 ```java
 @Component
 public class LocalFileStorage {
-    
+
     public String store(InputStream stream, String originalName) { ... }
     public InputStream load(String ref) { ... }
-    
+
     @Scheduled(cron = "0 0 4 * * *")
     public void cleanupOldFiles() { ... }
 }
@@ -1319,10 +1353,10 @@ file-api（协议层）                    file-adapter（实现层）
 ```java
 @HttpExchange("/api/v1/parse")
 public interface ParseApi {
-    
+
     @PostExchange(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResult<ParseResponse> parse(@Valid @RequestBody ParseRequest request);
-    
+
     @GetExchange("/api/v1/parse-tasks/{fileTaskId}")
     ApiResult<ParseTaskSummaryResponse> getTaskSummary(
             @PathVariable("fileTaskId") String fileTaskId);
@@ -1334,7 +1368,7 @@ public interface ParseApi {
 ```java
 @HttpExchange("/api/v1/parsed-data")
 public interface ParsedDataApi {
-    
+
     @GetExchange("/{subTaskId}")
     ApiResult<PagedDataResponse> queryPaged(
             @PathVariable("subTaskId") String subTaskId,
@@ -1349,10 +1383,10 @@ public interface ParsedDataApi {
 ```java
 @HttpExchange("/api/v1/configs")
 public interface ConfigApi {
-    
+
     @PostExchange(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResult<ImportConfigResponse> importFromYaml(@Valid @RequestBody ImportConfigRequest request);
-    
+
     @GetExchange("/{bizType}")
     ApiResult<TemplateConfigResponse> getActiveConfig(@PathVariable("bizType") String bizType);
 }
@@ -1425,18 +1459,18 @@ public record ImportConfigResponse(
 @RestController
 @AllArgsConstructor
 public class ParseController implements ParseApi {
-    
+
     private final ParseExcelAppService parseService;
     private final QueryParseTaskAppService queryService;
     private final ParseControllerConverter converter;
-    
+
     @Override
     public ApiResult<ParseResponse> parse(@Valid @RequestBody ParseRequest request) {
         ParseExcelCommand cmd = converter.toCommand(request);
         ParseExcelResult result = parseService.parseAndStore(cmd);
         return ApiResult.success(converter.toResponse(result));
     }
-    
+
     @Override
     public ApiResult<ParseTaskSummaryResponse> getTaskSummary(String fileTaskId) {
         TaskSummaryResult result = queryService.querySummary(new TaskSummaryQuery(new FileTaskId(fileTaskId)));
@@ -1446,6 +1480,7 @@ public class ParseController implements ParseApi {
 ```
 
 Converter 用 MapStruct 完成 DTO ↔ Command/Result 转换。严格遵守：
+
 - Adapter 层只做"DTO ↔ Command/Result 转换 + 调用应用服务"
 - 所有转换通过 MapStruct Converter
 - Adapter 不直接操作 Entity/DO
@@ -1496,15 +1531,15 @@ public record ImportYamlCommand(
 现有 `shared-event-starter` 存在以下架构问题：
 
 1. **领域事件直接发送到 MQ**（核心问题）
-   - `DomainEvent` 实现类在 `xxx-domain` 模块，跨服务无法引用
-   - 消费方反序列化时需要领域层依赖，严重违反 DDD
+  - `DomainEvent` 实现类在 `xxx-domain` 模块，跨服务无法引用
+  - 消费方反序列化时需要领域层依赖，严重违反 DDD
 
 2. **`JdbcEventStore.findPendingLogs` 反序列化 Bug**
-   - `Class.forName(eventType)` 用简单类名，会抛 `ClassNotFoundException`
-   - 补偿任务恢复时必然失败
+  - `Class.forName(eventType)` 用简单类名，会抛 `ClassNotFoundException`
+  - 补偿任务恢复时必然失败
 
 3. **领域事件直接序列化落库**
-   - 落库的是领域事件 JSON，反序列化需要领域类可访问
+  - 落库的是领域事件 JSON，反序列化需要领域类可访问
 
 #### 8.6.2 修正方案：双轨制
 
@@ -1522,6 +1557,7 @@ public record ImportYamlCommand(
 ```
 
 **核心原则**：
+
 1. 领域事件留在 domain 层：`FileParsedEvent` 定义在 `file-domain`
 2. 集成事件定义在 api 层：`FileParsedMessage` 定义在 `file-api`
 3. 本服务落库领域事件：保留完整领域语义
@@ -1564,7 +1600,7 @@ public record FileParsedMessage(
         int totalRows, int validRows, int invalidRows,
         String status
     ) {}
-    
+
     public static final String EVENT_TYPE = "FileParsed";
 }
 ```
@@ -1575,14 +1611,14 @@ public record FileParsedMessage(
 
 ```java
 @Mapper(componentModel = "spring")
-public interface FileParsedEventConverter 
+public interface FileParsedEventConverter
     extends IntegrationEventConverter<FileParsedEvent> {
-    
+
     @Override
     default Class<FileParsedEvent> supportedEventType() {
         return FileParsedEvent.class;
     }
-    
+
     @Override
     @Mapping(target = "eventId", source = "eventId.value")
     @Mapping(target = "eventType", constant = "FileParsed")
@@ -1602,7 +1638,7 @@ public interface FileParsedEventConverter
 public interface IntegrationEventConverter<D extends DomainEvent> {
     Class<D> supportedEventType();
     Object toIntegrationEvent(D domainEvent);
-    
+
     default String integrationEventType() {
         return supportedEventType().getSimpleName();
     }
@@ -1627,36 +1663,36 @@ CREATE TABLE sys_event_store (
 
 `integration_payload` 是已经转换好的、可直接发送的 JSON。补偿任务恢复时无需再转换。
 
-#### 8.7.3 `EventBus` 改造
+#### 8.7.3 `DefaultEventBus` 改造
 
 ```java
 public class EventBus implements com.example.shared.domain.event.EventBus {
-    
+
     private final List<EventDispatcher> dispatchers;
     private final EventStore eventStore;
     private final EventDeliverer eventDeliverer;
     private final List<IntegrationEventConverter<?>> converters;
-    
+
     @Override
     public void publish(DomainEvent event) {
         // 1. 查找转换器
         IntegrationEventConverter converter = findConverter(event);
-        Object integrationEvent = converter != null 
-            ? converter.toIntegrationEvent(event) 
+        Object integrationEvent = converter != null
+            ? converter.toIntegrationEvent(event)
             : event;  // 无转换器则降级为直接发送领域事件（向后兼容）
-        
-        String integrationType = converter != null 
-            ? converter.integrationEventType() 
+
+        String integrationType = converter != null
+            ? converter.integrationEventType()
             : event.eventType();
-        
+
         // 2. 落库（领域事件 + 集成事件双份）
         eventStore.save(event, integrationEvent, integrationType);
-        
+
         // 3. 遍历分发
         for (EventDispatcher dispatcher : dispatchers) {
             if (dispatcher.isRemote()) {
                 long logId = eventStore.initDispatchLog(event.eventId().toString(), dispatcher.getChannelName());
-                
+
                 if (TransactionSynchronizationManager.isSynchronizationActive()) {
                     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                         @Override
@@ -1692,14 +1728,14 @@ public interface EventDispatcher {
 ```java
 // RocketMQEventDispatcher 修正版
 public class RocketMQEventDispatcher implements EventDispatcher {
-    
+
     @Override
     public void dispatch(DomainEvent domainEvent, Object integrationEvent) {
         String integrationType = integrationEvent.getClass().getSimpleName();
         String topic = "event_%s".formatted(integrationType);
         String destination = topic + ":" + integrationType;
         String key = domainEvent.eventId().toString();
-        
+
         rocketMQTemplate.asyncSend(destination, integrationEvent, new SendCallback() { ... });
     }
 }
@@ -1719,7 +1755,7 @@ public List<PendingEntry> findPendingLogs(int batchSize) {
           AND l.retry_count < 10
         LIMIT ?
         """;
-    
+
     return jdbcClient.sql(sql).param(batchSize)
         .query((rs, _) -> {
             long logId = rs.getLong("id");
@@ -1734,7 +1770,8 @@ public List<PendingEntry> findPendingLogs(int batchSize) {
 }
 ```
 
-**关键改进**：补偿任务恢复时直接读 `integration_payload`（已经是可序列化的 JSON），用 `Map` 反序列化后直接发送，彻底避免 `Class.forName` 和领域类依赖问题。
+**关键改进**：补偿任务恢复时直接读 `integration_payload`（已经是可序列化的 JSON），用 `Map` 反序列化后直接发送，彻底避免
+`Class.forName` 和领域类依赖问题。
 
 #### 8.7.6 向后兼容
 
@@ -1821,20 +1858,20 @@ file-service (生产方)                              business-service (消费�
 
 ### 9.1 `shared-event-starter` 重构文件清单
 
-| 文件 | 操作 | 说明 |
-|------|------|------|
-| `shared-domain/.../event/IntegrationEventConverter.java` | 新增 | SPI 接口 |
-| `shared-event-starter/.../bus/EventBus.java` | 修改 | 注入转换器列表，发布时转换 |
-| `shared-event-starter/.../deliverer/EventDeliverer.java` | 修改 | 传递集成事件 |
-| `shared-event-starter/.../dispatcher/EventDispatcher.java` | 修改 | 接口签名加 `integrationEvent` 参数 |
-| `shared-event-starter/.../dispatcher/RocketMQEventDispatcher.java` | 修改 | 发送集成事件 |
-| `shared-event-starter/.../dispatcher/RedisEventDispatcher.java` | 修改 | 发送集成事件 |
-| `shared-event-starter/.../dispatcher/SpringEventDispatcher.java` | 修改 | 保持发送领域事件（本地） |
-| `shared-event-starter/.../store/JdbcEventStore.java` | 修改 | 双 payload 落库，补偿任务用 `integration_payload` |
-| `shared-event-starter/.../job/EventRecoveryJob.java` | 修改 | 适配新签名 |
-| `shared-event-starter/.../autoconfiguration/EventAutoConfiguration.java` | 修改 | 注入转换器列表 |
-| `shared-event-starter/src/main/resources/pg.sql` | 修改 | 加 `integration_type`、`integration_payload` 字段 |
-| `shared-event-starter/src/main/resources/mysql.sql` | 修改 | 同上 |
+| 文件                                                                     | 操作 | 说明                                              |
+|--------------------------------------------------------------------------|------|---------------------------------------------------|
+| `shared-domain/.../event/IntegrationEventConverter.java`                 | 新增 | SPI 接口                                          |
+| `shared-event-starter/.../bus/EventBus.java`                             | 修改 | 注入转换器列表，发布时转换                        |
+| `shared-event-starter/.../deliverer/EventDeliverer.java`                 | 修改 | 传递集成事件                                      |
+| `shared-event-starter/.../dispatcher/EventDispatcher.java`               | 修改 | 接口签名加 `integrationEvent` 参数                |
+| `shared-event-starter/.../dispatcher/RocketMQEventDispatcher.java`       | 修改 | 发送集成事件                                      |
+| `shared-event-starter/.../dispatcher/RedisEventDispatcher.java`          | 修改 | 发送集成事件                                      |
+| `shared-event-starter/.../dispatcher/SpringEventDispatcher.java`         | 修改 | 保持发送领域事件（本地）                          |
+| `shared-event-starter/.../store/JdbcEventStore.java`                     | 修改 | 双 payload 落库，补偿任务用 `integration_payload` |
+| `shared-event-starter/.../job/EventRecoveryJob.java`                     | 修改 | 适配新签名                                        |
+| `shared-event-starter/.../autoconfiguration/EventAutoConfiguration.java` | 修改 | 注入转换器列表                                    |
+| `shared-event-starter/src/main/resources/pg.sql`                         | 修改 | 加 `integration_type`、`integration_payload` 字段 |
+| `shared-event-starter/src/main/resources/mysql.sql`                      | 修改 | 同上                                              |
 
 ### 9.2 `file-service` 模块结构
 
@@ -2138,18 +2175,18 @@ server:
 
 ### 9.6 文件数量统计
 
-| 模块 | 文件数 |
-|------|-------|
-| shared-event-starter（重构） | 12 |
-| file-types | 5 |
-| file-domain | 约 45 |
-| file-api | 14 |
-| file-application | 11 |
-| file-adapter | 6 |
-| file-infrastructure | 约 25 |
-| file-starter | 5 |
-| 测试文件 | 约 15 |
-| **总计** | **约 138** |
+| 模块                         | 文件数     |
+|------------------------------|------------|
+| shared-event-starter（重构） | 12         |
+| file-types                   | 5          |
+| file-domain                  | 约 45      |
+| file-api                     | 14         |
+| file-application             | 11         |
+| file-adapter                 | 6          |
+| file-infrastructure          | 约 25      |
+| file-starter                 | 5          |
+| 测试文件                     | 约 15      |
+| **总计**                     | **约 138** |
 
 ---
 
@@ -2157,33 +2194,38 @@ server:
 
 ### 10.1 测试金字塔
 
-| 层级 | 测试类型 | 范围 | 数量 |
-|------|---------|------|------|
-| file-domain | 单元测试 | 领域服务、聚合根、值对象 | 约 12 |
-| file-application | 集成测试 | 应用服务（mock Repository） | 约 3 |
-| file-starter | 端到端测试 | 完整流程（H2） | 约 1 |
-| shared-event-starter | 单元测试 | 重构后的 EventBus | 约 3 |
+| 层级                 | 测试类型   | 范围                        | 数量  |
+|----------------------|------------|-----------------------------|-------|
+| file-domain          | 单元测试   | 领域服务、聚合根、值对象    | 约 12 |
+| file-application     | 集成测试   | 应用服务（mock Repository） | 约 3  |
+| file-starter         | 端到端测试 | 完整流程（H2）              | 约 1  |
+| shared-event-starter | 单元测试   | 重构后的 EventBus           | 约 3  |
 
 ### 10.2 关键测试用例
 
 **解析引擎**：
+
 - `RegionStateMachineTest`：区域切换、trigger 命中、提前退出
 - `KeyValueRegionParserTest`：RIGHT/BELOW 布局、连续空行退出
 - `TableRegionParserTest`：表头解析、dataEnd 触发、列别名匹配
 
 **校验引擎**：
+
 - `DataValidatorTest`：必填、类型、表达式校验、errorPolicy 各分支
 - `DataDeriverTest`：properties 派生、table 行派生、拓扑顺序
 
 **拆分引擎**：
+
 - `TaskSplitterTest`：按 table 字段拆分、onMiss 策略、promoteToContext
 
 **端到端**：
+
 - `FileServiceIntegrationTest`：上传 Excel → 解析 → 校验 → 拆分 → 持久化 → 事件发布 → 分页拉取
 
 ### 10.3 测试数据
 
 测试 Excel 文件放在 `file-starter/src/test/resources/test-excel/`：
+
 - `cust_a_v2_sample.xlsx` —— CUST_A_V2 格式样本
 - `large_file_10000_rows.xlsx` —— 大文件性能测试
 - `invalid_data.xlsx` —— 校验失败样本
@@ -2192,20 +2234,21 @@ server:
 
 ## 11. 风险与缓解
 
-| 风险 | 影响 | 缓解措施 |
-|------|------|---------|
-| `shared-event-starter` 重构影响其他服务 | 中 | 向后兼容设计：无转换器时降级为发送领域事件 |
-| Fesod 推模式与状态机拉模式的桥接复杂度 | 中 | 阻塞队列 + 虚拟线程，单测覆盖 |
-| Aviator 表达式安全风险 | 高 | 限制 Feature Set，禁止反射调用 |
-| 大文件内存溢出 | 高 | Fesod 流式读取 + 分页持久化 + 阻塞队列背压 |
-| PostgreSQL JSONB 查询性能 | 中 | 关键查询字段单独建索引，JSONB 仅用于存储 |
-| 配置错误导致解析失败 | 中 | 配置加载时 validateInvariants，启动时校验 |
+| 风险                                    | 影响 | 缓解措施                                   |
+|-----------------------------------------|------|--------------------------------------------|
+| `shared-event-starter` 重构影响其他服务 | 中   | 向后兼容设计：无转换器时降级为发送领域事件 |
+| Fesod 推模式与状态机拉模式的桥接复杂度  | 中   | 阻塞队列 + 虚拟线程，单测覆盖              |
+| Aviator 表达式安全风险                  | 高   | 限制 Feature Set，禁止反射调用             |
+| 大文件内存溢出                          | 高   | Fesod 流式读取 + 分页持久化 + 阻塞队列背压 |
+| PostgreSQL JSONB 查询性能               | 中   | 关键查询字段单独建索引，JSONB 仅用于存储   |
+| 配置错误导致解析失败                    | 中   | 配置加载时 validateInvariants，启动时校验  |
 
 ---
 
 ## 12. Phase 2 预告
 
 Phase 1 完成后，Phase 2 将实现：
+
 - 目标 Excel 生成 API（Fesod 模板填充 + target mapping 渲染）
 - 配置管理 REST API（增删改查）
 - TTL 物理清理任务
@@ -2217,15 +2260,19 @@ Phase 1 完成后，Phase 2 将实现：
 ## 附录 A：领域事件双轨制决策记录
 
 ### 问题
+
 原设计将 `FileParsedEvent` 放在 `file-api` 模块，违反 DDD 原则：领域事件应属于领域层。
 
 ### 决策
+
 采用双轨制：
+
 - 领域事件 `FileParsedEvent` 留在 `file-domain`，保留完整领域语义
 - 集成事件 `FileParsedMessage` 定义在 `file-api`，纯 POJO，跨服务共享
 - 通过 `IntegrationEventConverter` SPI 在 infrastructure 层转换
 
 ### 影响
+
 - `shared-event-starter` 需要重构（12 个文件）
 - 解决了原 `JdbcEventStore.findPendingLogs` 的 `Class.forName` 反序列化 Bug
 - 业务服务消费方只需依赖 `file-api` 模块
@@ -2235,15 +2282,19 @@ Phase 1 完成后，Phase 2 将实现：
 ## 附录 B：API 层接口定义模式决策记录
 
 ### 问题
+
 原设计直接在 Adapter 层定义 Controller，违反项目规范。
 
 ### 决策
+
 严格遵循 API 层约束：
+
 - API 接口定义在 `file-api`，用 `@HttpExchange` 标记
 - Controller 在 `file-adapter` 实现 API 接口，标注 `@RestController`
 - Converter 用 MapStruct 完成 DTO ↔ Command/Result 转换
 
 ### 影响
+
 - 业务服务可通过 Retrofit 代理 API 接口进行调用，无需手写 HTTP 客户端
 - API 协议与实现解耦，便于多端复用
 

@@ -92,6 +92,7 @@ public record PhoneNumber(String value) implements ValueObject {
 ## 三、值对象（Value Object）
 
 ### 3.1 设计原则
+
 - 不可变（Immutable），无ID
 - 实现 `ValueObject` 接口
 - 使用 record 类型
@@ -173,6 +174,7 @@ public enum OrderStatus implements ValueObject {
 ## 四、实体（Entity）
 
 ### 4.1 设计原则
+
 - 继承 `Entity<ID>`，ID实现 `Identifier<?>`
 - 实现 `validateInvariants()` 方法
 - 业务创建用构造函数（id, createdBy），数据库重建用全参构造函数
@@ -254,6 +256,7 @@ public class OrderItem extends Entity<ProductId> {
 ## 五、聚合根（Aggregate Root）
 
 ### 5.1 设计原则
+
 - 继承 `AggregateRoot<ID>`（`AggregateRoot` 继承 `Entity<ID>`）
 - 负责维护聚合内业务规则和一致性
 - 领域事件通过 `registerDomainEvent()` 注册
@@ -351,6 +354,7 @@ public class Order extends AggregateRoot<OrderId> {
 ## 六、领域事件（Domain Event）
 
 ### 6.1 设计原则
+
 - 实现 `DomainEvent` 接口，使用 record 类型
 - 过去时态命名（OrderPlacedEvent）
 - 必须提供 static `of()` 工厂方法
@@ -384,8 +388,9 @@ public record OrderPlacedEvent(
 ```
 
 ### 6.3 领域事件发布流程
+
 1. 聚合根内部注册事件：`registerDomainEvent(event)`
-2. Repository.save() 保存聚合根后发布事件：`eventBus.publish(event)`
+2. Repository.save () 保存聚合根后发布事件：`eventBus.publish(event)`
 3. 发布后清理事件：`clearDomainEvents()`
 
 ---
@@ -393,6 +398,7 @@ public record OrderPlacedEvent(
 ## 七、领域服务（Domain Service）
 
 ### 7.1 设计原则
+
 - 标注 `@DomainService`（不需要额外标注 `@Component`，由基础设施层配置扫描注册）
 - 无状态，只包含领域业务逻辑
 - 禁止依赖外部框架，禁止直接访问数据库或外部服务
@@ -425,19 +431,20 @@ public class PaymentService {
 
 ### 7.3 领域服务与应用服务的区别
 
-| 特性 | 领域服务 | 应用服务 |
-|------|----------|----------|
-| 层级 | Domain层 | Application层 |
-| 职责 | 封装领域业务逻辑 | 编排业务流程 |
-| 状态 | 无状态 | 可持有状态 |
-| 依赖 | 仅依赖领域模型 | 依赖领域服务、Repository |
-| 事务 | 不管理事务 | 管理事务边界 |
+| 特性 | 领域服务         | 应用服务                 |
+|------|------------------|--------------------------|
+| 层级 | Domain层         | Application层            |
+| 职责 | 封装领域业务逻辑 | 编排业务流程             |
+| 状态 | 无状态           | 可持有状态               |
+| 依赖 | 仅依赖领域模型   | 依赖领域服务、Repository |
+| 事务 | 不管理事务       | 管理事务边界             |
 
 ---
 
 ## 八、错误码定义（ErrorCode）
 
 ### 8.1 设计原则
+
 - 每个服务的domain层定义自己的错误码枚举
 - 实现 `ErrorDefinition` 接口
 - 放在 `domain.errorcode` 包下
@@ -481,6 +488,7 @@ public enum OrderDomainErrorCode implements ErrorDefinition {
 ## 九、Repository接口
 
 ### 9.1 设计原则
+
 - 继承 `Repository<T, ID>`
 - 方法命名体现业务语义（load、save、findByXxx）
 - 入参和返回值使用领域原语和领域对象
@@ -509,6 +517,7 @@ public interface OrderRepository extends Repository<Order, OrderId> {
 ## 十、防腐层网关（Gateway）
 
 ### 10.1 设计原则
+
 - 定义在 `domain.gateway` 包下
 - 只定义接口，实现在Infrastructure层
 - 将外部系统模型转换为内部领域模型

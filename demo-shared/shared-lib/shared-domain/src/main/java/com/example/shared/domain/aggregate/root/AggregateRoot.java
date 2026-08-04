@@ -1,10 +1,10 @@
 package com.example.shared.domain.aggregate.root;
 
 import com.example.shared.domain.aggregate.entity.Entity;
-import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.Identifier;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.identifier.contract.Identifier;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public abstract class AggregateRoot<ID extends Identifier<?>> extends Entity<ID>
    * 获取所有已注册的领域事件。
    * 通常在聚合根保存后被清理。
    */
-  public List<DomainEvent> getDomainEvents() {
+  public List<DomainEvent> domainEvents() {
     return Collections.unmodifiableList(domainEvents);
   }
 

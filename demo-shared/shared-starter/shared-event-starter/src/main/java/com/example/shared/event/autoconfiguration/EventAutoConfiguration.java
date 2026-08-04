@@ -1,17 +1,17 @@
 package com.example.shared.event.autoconfiguration;
 
-import com.example.shared.lock.DistributedLock;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.domain.event.IntegrationEventConverter;
-import com.example.shared.event.bus.EventBus;
+import com.example.shared.event.bus.DefaultEventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
-import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
 import com.example.shared.event.dispatcher.RedisEventDispatcher;
+import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
 import com.example.shared.event.dispatcher.SpringEventDispatcher;
 import com.example.shared.event.jackson.DddJacksonModule;
 import com.example.shared.event.job.EventRecoveryJob;
 import com.example.shared.event.store.JdbcEventStore;
+import com.example.shared.lock.DistributedLock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -67,24 +67,24 @@ public class EventAutoConfiguration {
   @ConditionalOnBean(DistributedLock.class)
   @ConditionalOnMissingBean
   public EventRecoveryJob eventRecoveryJob(
-      EventStore eventStore,
-      EventDeliverer eventDeliverer,
-      List<EventDispatcher> dispatchers,
-      DistributedLock distributedLock) {
+    EventStore eventStore,
+    EventDeliverer eventDeliverer,
+    List<EventDispatcher> dispatchers,
+    DistributedLock distributedLock) {
     return new EventRecoveryJob(eventStore, eventDeliverer, dispatchers, distributedLock);
   }
 
   @Bean
   @ConditionalOnMissingBean
   public com.example.shared.domain.event.EventBus eventBus(
-      List<EventDispatcher> dispatchers,
-      EventStore eventStore,
-      EventDeliverer eventDeliverer,
-      @org.springframework.beans.factory.annotation.Autowired(required = false)
-      List<IntegrationEventConverter<?>> converters) {
+    List<EventDispatcher> dispatchers,
+    EventStore eventStore,
+    EventDeliverer eventDeliverer,
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    List<IntegrationEventConverter<?>> converters) {
     List<IntegrationEventConverter<?>> actualConverters =
-        converters != null ? converters : List.of();
-    return new EventBus(dispatchers, eventStore, eventDeliverer, actualConverters);
+      converters != null ? converters : List.of();
+    return new DefaultEventBus(dispatchers, eventStore, eventDeliverer, actualConverters);
   }
 
   @Configuration(proxyBeanMethods = false)
@@ -93,7 +93,7 @@ public class EventAutoConfiguration {
   static class RedisConfig {
     @Bean
     public EventDispatcher redisEventDispatcher(
-        org.springframework.data.redis.core.RedisTemplate<String, Object> template) {
+      org.springframework.data.redis.core.RedisTemplate<String, Object> template) {
       return new RedisEventDispatcher(template);
     }
   }
@@ -104,7 +104,7 @@ public class EventAutoConfiguration {
   static class RocketMQConfig {
     @Bean
     public EventDispatcher rocketMQEventDispatcher(
-        org.apache.rocketmq.spring.core.RocketMQTemplate template) {
+      org.apache.rocketmq.spring.core.RocketMQTemplate template) {
       return new RocketMQEventDispatcher(template);
     }
   }

@@ -4,12 +4,14 @@ import com.example.annuity.infrastructure.converter.BatchDataConverter;
 import com.example.annuity.infrastructure.entity.BatchDO;
 import com.example.annuity.infrastructure.mapper.BatchMapper;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
+import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.FormId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.BatchId;
+import com.example.shared.identifier.id.FormId;
+import com.example.shared.identifier.id.PlanNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,8 +91,8 @@ public class BatchRepositoryImpl implements BatchRepository {
   @Override
   public List<BusinessBatch> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -110,13 +112,13 @@ public class BatchRepositoryImpl implements BatchRepository {
       return Optional.empty();
     }
     BatchDO aDo = mapper.selectOneByQuery(
-        QueryWrapper.create()
-            .where(BATCH_DO.ID.in(
-                QueryWrapper.create()
-                    .select(FORM_DO.BATCH_ID)
-                    .from(FORM_DO)
-                    .where(FORM_DO.ID.eq(formId.value()))
-            ))
+      QueryWrapper.create()
+        .where(BATCH_DO.ID.in(
+          QueryWrapper.create()
+            .select(FORM_DO.BATCH_ID)
+            .from(FORM_DO)
+            .where(FORM_DO.ID.eq(formId.value()))
+        ))
     );
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
@@ -130,22 +132,27 @@ public class BatchRepositoryImpl implements BatchRepository {
       return Optional.empty();
     }
     BatchDO aDo = mapper.selectOneByQuery(
-        QueryWrapper.create()
-            .where(BATCH_DO.ID.in(
-                QueryWrapper.create()
-                    .select(APPLICATION_DO.BATCH_ID)
-                    .from(APPLICATION_DO)
-                    .where(APPLICATION_DO.ID.eq(applicationId.value()))
-            ))
+      QueryWrapper.create()
+        .where(BATCH_DO.ID.in(
+          QueryWrapper.create()
+            .select(APPLICATION_DO.BATCH_ID)
+            .from(APPLICATION_DO)
+            .where(APPLICATION_DO.ID.eq(applicationId.value()))
+        ))
     );
     return Optional.ofNullable(aDo).map(converter::toDomain);
+  }
+
+  @Override
+  public Optional<BusinessBatch> findActive(PlanNo planNo, BusinessType businessType) {
+    return Optional.empty();
   }
 
   /**
    * 发布聚合根内部注册的领域事件
    */
   private void publishDomainEvents(BusinessBatch batch) {
-    List<DomainEvent> events = batch.getDomainEvents();
+    List<DomainEvent> events = batch.domainEvents();
     if (events.isEmpty()) {
       return;
     }
@@ -153,10 +160,10 @@ public class BatchRepositoryImpl implements BatchRepository {
       try {
         eventPublisher.publishEvent(event);
         log.debug("发布领域事件: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName());
+          event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {
         log.error("发布领域事件失败: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName(), e);
+          event.eventId(), event.getClass().getSimpleName(), e);
       }
     }
     batch.clearDomainEvents();

@@ -8,19 +8,13 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
-import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.contract.Identifier;
+import com.example.shared.identifier.id.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -97,27 +91,27 @@ final class KernelAggregateReflector {
    * 通过反射调用 kernel 的 protected 全参构造器，并设置业务字段。
    */
   static BusinessApplication reconstituteApplication(
-      ApplicationId id,
-      UserNo createdBy,
-      UserNo updatedBy,
-      LocalDateTime createdAt,
-      LocalDateTime updatedAt,
-      Version version,
-      BatchId batchId,
-      FormId formId,
-      BusinessContext businessContext,
-      OperatorInfo operatorInfo,
-      BusinessExtension businessExtension,
-      FileId parsedJsonFileId,
-      int expectedDetailCount,
-      ApplicationStatus status,
-      ApplicationFlowStep currentStep,
-      LocalDateTime applyTime,
-      LocalDateTime completeTime) {
+    ApplicationId id,
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BatchId batchId,
+    FormId formId,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BusinessExtension businessExtension,
+    FileId parsedJsonFileId,
+    int expectedDetailCount,
+    ApplicationStatus status,
+    ApplicationFlowStep currentStep,
+    LocalDateTime applyTime,
+    LocalDateTime completeTime) {
     try {
       Constructor<BusinessApplication> ctor = BusinessApplication.class.getDeclaredConstructor(
-          ApplicationId.class, UserNo.class, UserNo.class,
-          LocalDateTime.class, LocalDateTime.class, Version.class);
+        ApplicationId.class, UserNo.class, UserNo.class,
+        LocalDateTime.class, LocalDateTime.class, Version.class);
       ctor.setAccessible(true);
       BusinessApplication app = ctor.newInstance(id, createdBy, updatedBy, createdAt, updatedAt, version);
 
@@ -174,22 +168,22 @@ final class KernelAggregateReflector {
   // ====================================================
 
   static BusinessBatch reconstituteBatch(
-      BatchId id,
-      UserNo createdBy,
-      UserNo updatedBy,
-      LocalDateTime createdAt,
-      LocalDateTime updatedAt,
-      Version version,
-      BusinessContext businessContext,
-      OperatorInfo operatorInfo,
-      BatchStatus status,
-      int totalApplicationCount,
-      int successCount,
-      int failedCount) {
+    BatchId id,
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BatchStatus status,
+    int totalApplicationCount,
+    int successCount,
+    int failedCount) {
     try {
       Constructor<BusinessBatch> ctor = BusinessBatch.class.getDeclaredConstructor(
-          BatchId.class, UserNo.class, UserNo.class,
-          LocalDateTime.class, LocalDateTime.class, Version.class);
+        BatchId.class, UserNo.class, UserNo.class,
+        LocalDateTime.class, LocalDateTime.class, Version.class);
       ctor.setAccessible(true);
       BusinessBatch batch = ctor.newInstance(id, createdBy, updatedBy, createdAt, updatedAt, version);
 
@@ -234,21 +228,21 @@ final class KernelAggregateReflector {
   // ====================================================
 
   static BusinessForm reconstituteForm(
-      FormId id,
-      UserNo createdBy,
-      UserNo updatedBy,
-      LocalDateTime createdAt,
-      LocalDateTime updatedAt,
-      Version version,
-      BatchId batchId,
-      BusinessContext businessContext,
-      OperatorInfo operatorInfo,
-      BusinessFile formFile,
-      FormStatus formStatus) {
+    FormId id,
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BatchId batchId,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BusinessFile formFile,
+    FormStatus formStatus) {
     try {
       Constructor<BusinessForm> ctor = BusinessForm.class.getDeclaredConstructor(
-          FormId.class, UserNo.class, UserNo.class,
-          LocalDateTime.class, LocalDateTime.class, Version.class);
+        FormId.class, UserNo.class, UserNo.class,
+        LocalDateTime.class, LocalDateTime.class, Version.class);
       ctor.setAccessible(true);
       BusinessForm form = ctor.newInstance(id, createdBy, updatedBy, createdAt, updatedAt, version);
 
@@ -271,7 +265,7 @@ final class KernelAggregateReflector {
     return e != null ? e.name() : null;
   }
 
-  static <T> String nullableId(com.example.shared.primitives.identity.Identifier<T> id) {
+  static <T> String nullableId(Identifier<T> id) {
     if (id == null) {
       return null;
     }
@@ -311,7 +305,7 @@ final class KernelAggregateReflector {
   }
 
   private static void setField(Object target, String fieldName, Object value)
-      throws NoSuchFieldException, IllegalAccessException {
+    throws NoSuchFieldException, IllegalAccessException {
     Field field = target.getClass().getDeclaredField(fieldName);
     field.setAccessible(true);
     field.set(target, value);

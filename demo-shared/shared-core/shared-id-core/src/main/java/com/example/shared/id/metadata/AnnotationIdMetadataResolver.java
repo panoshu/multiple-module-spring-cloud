@@ -2,9 +2,9 @@ package com.example.shared.id.metadata;
 
 import com.example.shared.exception.SystemException;
 import com.example.shared.id.errorcode.IdErrorCode;
-import com.example.shared.primitives.identity.IdDefinition;
-import com.example.shared.primitives.identity.IdType;
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.IdDefinition;
+import com.example.shared.identifier.contract.IdType;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

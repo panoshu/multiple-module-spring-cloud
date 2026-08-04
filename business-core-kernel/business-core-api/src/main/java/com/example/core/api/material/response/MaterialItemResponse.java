@@ -9,12 +9,12 @@ import java.util.List;
  * @author panoshu
  */
 public record MaterialItemResponse(
-    String materialCode,
-    String materialName,
-    String level,
-    String requirement,
-    String conditionRule,
-    LocalDateTime uploadedAt,
-    List<String> fileIds
+  String materialCode,
+  String materialName,
+  String level,
+  String requirement,
+  String conditionRule,
+  LocalDateTime uploadedAt,
+  List<String> fileIds
 ) {
 }

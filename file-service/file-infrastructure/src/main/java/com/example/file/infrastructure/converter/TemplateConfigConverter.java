@@ -4,16 +4,12 @@ import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
 import com.example.file.domain.model.aggregate.root.TemplateConfig;
 import com.example.file.domain.model.enums.ConfigStatus;
 import com.example.file.domain.model.enums.ErrorPolicy;
-import com.example.file.domain.model.valueobject.config.CanonicalModelDef;
-import com.example.file.domain.model.valueobject.config.DerivationRule;
-import com.example.file.domain.model.valueobject.config.SplitConfig;
-import com.example.file.domain.model.valueobject.config.TargetMapping;
-import com.example.file.domain.model.valueobject.config.ValidationRule;
+import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.infrastructure.entity.TemplateConfigDO;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -151,7 +147,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationRule>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationRule>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化校验规则列表失败", e);
     }
@@ -174,7 +171,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<DerivationRule>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<DerivationRule>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化派生规则列表失败", e);
     }
@@ -220,7 +218,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SourceTemplateDef>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SourceTemplateDef>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化源模板列表失败", e);
     }

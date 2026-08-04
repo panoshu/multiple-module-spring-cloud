@@ -6,8 +6,8 @@ import com.example.annuity.domain.service.AnnuityEmployeeVerificationRule;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,10 +27,14 @@ class AnnuityDataVerificationHandlerTest {
 
   private static final UserNo OPERATOR = UserNo.of("U-TEST");
 
-  @Mock private AnnuityExtensionResolver extensionResolver;
-  @Mock private AnnuityEmployeeVerificationRule verificationRule;
-  @Mock private AnnuityEmployeeBatchRepository batchRepository;
-  @InjectMocks private AnnuityDataVerificationHandler handler;
+  @Mock
+  private AnnuityExtensionResolver extensionResolver;
+  @Mock
+  private AnnuityEmployeeVerificationRule verificationRule;
+  @Mock
+  private AnnuityEmployeeBatchRepository batchRepository;
+  @InjectMocks
+  private AnnuityDataVerificationHandler handler;
 
   @Test
   @DisplayName("所有明细核查通过 - 返回 SUCCESS 且批次完成")

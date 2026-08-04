@@ -26,9 +26,9 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("/core/progress")
 public interface BusinessProgressApi {
 
-    /**
-     * 查询批次整体进度。
-     */
-    @PostExchange("/batch")
-    ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query);
+  /**
+   * 查询批次整体进度。
+   */
+  @PostExchange("/batch")
+  ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query);
 }

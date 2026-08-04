@@ -25,11 +25,11 @@ class RouteRuleTest {
     @DisplayName("正确映射 routePattern/checkType/checkValue/priority 四个字段")
     void mapsAllGatewayFields() {
       RouteRuleDTO dto = new RouteRuleDTO(
-          1L, "/internet/**", "PERMISSION", "business:handle",
-          "测试规则", 100, true,
-          LocalDateTime.of(2026, 1, 1, 0, 0),
-          LocalDateTime.of(2026, 1, 2, 0, 0),
-          1L
+        1L, "/internet/**", "PERMISSION", "business:handle",
+        "测试规则", 100, true,
+        LocalDateTime.of(2026, 1, 1, 0, 0),
+        LocalDateTime.of(2026, 1, 2, 0, 0),
+        1L
       );
 
       RouteRule rule = RouteRule.from(dto);
@@ -44,11 +44,11 @@ class RouteRuleTest {
     @DisplayName("仅保留网关校验所需字段,屏蔽 ruleId/description/enabled/createdAt/updatedAt/version")
     void onlyMapsGatewayFieldsIgnoringOthers() {
       RouteRuleDTO dto = new RouteRuleDTO(
-          999L, "/hq/**", "ROLE", "admin",
-          "描述", 50, true,
-          LocalDateTime.of(2026, 1, 1, 0, 0),
-          LocalDateTime.of(2026, 1, 2, 0, 0),
-          5L
+        999L, "/hq/**", "ROLE", "admin",
+        "描述", 50, true,
+        LocalDateTime.of(2026, 1, 1, 0, 0),
+        LocalDateTime.of(2026, 1, 2, 0, 0),
+        5L
       );
 
       RouteRule rule = RouteRule.from(dto);
@@ -63,8 +63,8 @@ class RouteRuleTest {
     @DisplayName("SKIP 类型规则 checkValue 为空字符串也能正确映射")
     void mapsSkipRuleWithEmptyCheckValue() {
       RouteRuleDTO dto = new RouteRuleDTO(
-          10L, "/public/**", "SKIP", "",
-          null, 200, true, null, null, 1L
+        10L, "/public/**", "SKIP", "",
+        null, 200, true, null, null, 1L
       );
 
       RouteRule rule = RouteRule.from(dto);

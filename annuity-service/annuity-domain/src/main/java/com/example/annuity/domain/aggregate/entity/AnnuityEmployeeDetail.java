@@ -6,7 +6,7 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -122,21 +122,53 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
    */
   public boolean isMaterialSatisfied() {
     return materials.stream()
-        .filter(AnnuityEmployeeMaterial::required)
-        .allMatch(AnnuityEmployeeMaterial::uploaded);
+      .filter(AnnuityEmployeeMaterial::required)
+      .allMatch(AnnuityEmployeeMaterial::uploaded);
   }
 
-  public AnnuityEmployeeBatchId batchId() { return batchId; }
-  public String employeeName() { return employeeName; }
-  public String idCardNo() { return idCardNo; }
-  public Integer age() { return age; }
-  public Long monthlySalary() { return monthlySalary; }
-  public Long monthlyContribution() { return monthlyContribution; }
-  public AnnuityEmployeeDetailStatus status() { return status; }
-  public String anomalyReason() { return anomalyReason; }
-  public List<AnnuityEmployeeMaterial> materials() { return List.copyOf(materials); }
-  public LocalDateTime verifiedAt() { return verifiedAt; }
-  public LocalDateTime materialPreparedAt() { return materialPreparedAt; }
+  public AnnuityEmployeeBatchId batchId() {
+    return batchId;
+  }
+
+  public String employeeName() {
+    return employeeName;
+  }
+
+  public String idCardNo() {
+    return idCardNo;
+  }
+
+  public Integer age() {
+    return age;
+  }
+
+  public Long monthlySalary() {
+    return monthlySalary;
+  }
+
+  public Long monthlyContribution() {
+    return monthlyContribution;
+  }
+
+  public AnnuityEmployeeDetailStatus status() {
+    return status;
+  }
+
+  public String anomalyReason() {
+    return anomalyReason;
+  }
+
+  public List<AnnuityEmployeeMaterial> materials() {
+    return List.copyOf(materials);
+  }
+
+  public LocalDateTime verifiedAt() {
+    return verifiedAt;
+  }
+
+  public LocalDateTime materialPreparedAt() {
+    return materialPreparedAt;
+  }
 
   @Override
   protected void validateInvariants() {

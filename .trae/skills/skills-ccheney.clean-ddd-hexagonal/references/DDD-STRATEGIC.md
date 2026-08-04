@@ -5,14 +5,18 @@
 > - [DDD Resources](https://www.domainlanguage.com/ddd/) — Domain Language (Eric Evans)
 > - [Bounded Context](https://martinfowler.com/bliki/BoundedContext.html) — Martin Fowler
 > - [Domain Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html) — Martin Fowler
-> - [Anti-Corruption Layer](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/acl.html) — AWS
-> - [Domain Analysis for Microservices](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis) — Microsoft
+> - [Anti-Corruption Layer](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/acl.html) —
+    AWS
+> - [Domain Analysis for Microservices](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis) —
+    Microsoft
 
 ## Overview
 
-Strategic DDD patterns help decompose large systems into manageable parts with clear boundaries. They answer: **"How do we divide a complex domain?"**
+Strategic DDD patterns help decompose large systems into manageable parts with clear boundaries. They answer: **"How do
+we divide a complex domain?"**
 
-**DDD is fundamentally collaborative.** The patterns below emerge from conversations, whiteboarding, and modeling sessions with domain experts—not from coding alone.
+**DDD is fundamentally collaborative.** The patterns below emerge from conversations, whiteboarding, and modeling
+sessions with domain experts—not from coding alone.
 
 ---
 
@@ -31,6 +35,7 @@ Purple sticky: Problem / Question
 ```
 
 **Workshop flow:**
+
 1. **Chaotic exploration** — Everyone adds events they know about
 2. **Timeline ordering** — Arrange events chronologically
 3. **Identify aggregates** — Group related events
@@ -40,6 +45,7 @@ Purple sticky: Problem / Question
 ### Context Mapping Workshop
 
 For existing systems, map how bounded contexts currently interact:
+
 1. List all systems/services
 2. Identify which team owns each
 3. Draw relationships (upstream/downstream)
@@ -51,6 +57,7 @@ For existing systems, map how bounded contexts currently interact:
 ## Ubiquitous Language
 
 The foundation of DDD. A shared vocabulary between developers and domain experts that appears in:
+
 - Code (class names, method names)
 - Documentation
 - Conversations
@@ -95,9 +102,12 @@ class Order {
 
 ## Bounded Contexts
 
-A **semantic boundary** where a particular domain model applies. Within a bounded context, terms have precise, unambiguous meaning.
+A **semantic boundary** where a particular domain model applies. Within a bounded context, terms have precise,
+unambiguous meaning.
 
-> **Key insight:** Polysemy (same word, different meanings) across departments is natural, not a problem. The same term meaning different things in different contexts is expected—"the dominant boundary factor is human culture and language variation." — Martin Fowler
+> **Key insight:** Polysemy (same word, different meanings) across departments is natural, not a problem. The same term
+> meaning different things in different contexts is expected—"the dominant boundary factor is human culture and language
+> variation." — Martin Fowler
 
 ### Key Concepts
 
@@ -135,6 +145,7 @@ flowchart TB
 ```
 
 **"Customer" means different things:**
+
 - **Sales**: Email, preferences, order history
 - **Shipping**: Delivery address, phone number
 - **Billing**: Payment methods, billing address
@@ -177,11 +188,11 @@ Areas of business expertise. Subdomains are **discovered**, not designed.
 
 ### Types
 
-| Type | Description | Investment | Example |
-|------|-------------|------------|---------|
-| **Core** | Competitive advantage | High | Product recommendation engine |
-| **Supporting** | Necessary but not unique | Medium | Order management |
-| **Generic** | Commodity, buy/outsource | Low | Email sending, payments |
+| Type           | Description              | Investment | Example                       |
+|----------------|--------------------------|------------|-------------------------------|
+| **Core**       | Competitive advantage    | High       | Product recommendation engine |
+| **Supporting** | Necessary but not unique | Medium     | Order management              |
+| **Generic**    | Commodity, buy/outsource | Low        | Email sending, payments       |
 
 ### Identification Questions
 
@@ -231,6 +242,7 @@ Describes relationships between bounded contexts.
 ### Relationship Patterns
 
 #### Partnership
+
 Two contexts succeed or fail together. Teams coordinate closely.
 
 ```mermaid
@@ -242,6 +254,7 @@ flowchart LR
 ```
 
 #### Shared Kernel
+
 Two contexts share a subset of the domain model.
 
 ```mermaid
@@ -263,6 +276,7 @@ flowchart LR
 **Warning:** Shared kernels create coupling. Use sparingly.
 
 #### Customer-Supplier
+
 Upstream context provides what downstream needs.
 
 ```mermaid
@@ -274,6 +288,7 @@ flowchart LR
 ```
 
 #### Conformist
+
 Downstream conforms to upstream's model with no negotiation power.
 
 ```mermaid
@@ -287,6 +302,7 @@ flowchart LR
 **Example:** Integrating with a third-party API (Stripe, AWS).
 
 #### Anti-Corruption Layer (ACL)
+
 Translation layer protecting your model from external models.
 
 ```mermaid
@@ -303,6 +319,7 @@ flowchart LR
 ```
 
 **Use when:**
+
 - Integrating with legacy systems
 - Integrating with third-party APIs
 - External model is messy or poorly designed
@@ -363,6 +380,7 @@ export class StripePaymentACL {
 ```
 
 #### Open Host Service / Published Language
+
 Expose a well-defined protocol for integration.
 
 ```mermaid

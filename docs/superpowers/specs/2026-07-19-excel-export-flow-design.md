@@ -11,13 +11,14 @@
 ### 1.1 背景
 
 当前 file-service 已具备：
+
 - Excel 解析（`ExcelParser` SPI + `ExcelParserImpl` fesod 实现）
 - 区域状态机驱动解析（`RegionStateMachine`）
 - 规范数据构建（`CanonicalModelBuilder`）
 - 表达式校验（`DataValidator` + `ExpressionEvaluator`）
 - 业务键拆分（`TaskSplitter` → `SplitUnit`）
 
-但缺少**导出能力**：把解析后的规范数据（或拆分后的子任务数据）回填到 Excel 模板，生成可对外分发的表单文件。
+但缺少 **导出能力**：把解析后的规范数据（或拆分后的子任务数据）回填到 Excel 模板，生成可对外分发的表单文件。
 
 ### 1.2 目标
 
@@ -25,8 +26,8 @@
 2. 在 infrastructure 层用 fesod 模板填充实现 `FesodExcelExporter`
 3. 程序生成填充模板 `docs/excel/示例表单_填充模板.xlsx`（首次运行创建，已存在跳过）
 4. 构造 2 个端到端测试：
-   - 全流程 happy path（解析 → 校验 → 拆分 → 导出 → round-trip 验证）
-   - 校验失败时不导出
+  - 全流程 happy path（解析 → 校验 → 拆分 → 导出 → round-trip 验证）
+  - 校验失败时不导出
 
 ### 1.3 非目标
 
@@ -88,6 +89,7 @@ SplitUnit.data = {
 ```
 
 此结构对 fesod 友好：
+
 - 简单变量 → 模板用 `{customerNo}` 占位符
 - 列表变量 → 模板用 `{.employees.seq}` 占位符（`FillWrapper` 前缀 = "employees"）
 
@@ -131,7 +133,8 @@ public interface ExcelExporter {
 
 ### 3.2 Infrastructure 实现 — `FesodExcelExporter`
 
-**文件**: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/FesodExcelExporter.java`
+**文件**:
+`file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/FesodExcelExporter.java`
 
 ```java
 package com.example.file.infrastructure.gateway;
@@ -189,6 +192,7 @@ public class FesodExcelExporter implements ExcelExporter {
 ```
 
 **关键点**：
+
 - `FillWrapper(prefix, list)` 让模板用 `{.employees.seq}` 而非 `{.seq}`，支持多列表无歧义
 - `FillConfig.forceNewRow(true)` 确保列表填充时新建行，不覆盖底部"填表人"行
 - `try-with-resources` 关闭 `ExcelWriter`（fesod 强制要求）
@@ -201,16 +205,17 @@ public class FesodExcelExporter implements ExcelExporter {
 
 **模板结构**（6 行 4 列）：
 
-| 行 | A | B | C | D |
-|----|---|---|---|---|
-| 0 | `企业客户号：{customerNo}` | | `企业客户名称：{customerName}` | |
-| 1 | (空) | | | |
-| 2 | `序号` | `姓名` | `证件类型` | `证件号码` |
-| 3 | `{.employees.seq}` | `{.employees.name}` | `{.employees.idType}` | `{.employees.idNo}` |
-| 4 | (空) | | | |
-| 5 | `填表人：{filler}` | | `复核人：{reviewer}` | |
+| 行 | A                          | B                   | C                              | D                   |
+|----|----------------------------|---------------------|--------------------------------|---------------------|
+| 0  | `企业客户号：{customerNo}` |                     | `企业客户名称：{customerName}` |                     |
+| 1  | (空)                       |                     |                                |                     |
+| 2  | `序号`                     | `姓名`              | `证件类型`                     | `证件号码`          |
+| 3  | `{.employees.seq}`         | `{.employees.name}` | `{.employees.idType}`          | `{.employees.idNo}` |
+| 4  | (空)                       |                     |                                |                     |
+| 5  | `填表人：{filler}`         |                     | `复核人：{reviewer}`           |                     |
 
 **生成代码**（在测试类中）：
+
 ```java
 private static void ensureFillTemplateExists(Path templatePath) {
   if (Files.exists(templatePath)) return;
@@ -227,7 +232,8 @@ private static void ensureFillTemplateExists(Path templatePath) {
 
 ### 3.4 测试 `ExportFlowIntegrationTest`
 
-**文件**: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`
+**文件**:
+`file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`
 
 #### 测试 1: 全流程 happy path（round-trip）
 
@@ -236,15 +242,15 @@ private static void ensureFillTemplateExists(Path templatePath) {
 void 全流程_解析_校验_拆分_导出_round_trip() throws Exception {
   // 1. 解析示例表单
   CanonicalData data = parseExcel(EXCEL_PATH);
-  
+
   // 2. 校验通过
   ValidationResult result = validate(data);
   assertThat(result.isValid()).isTrue();
-  
+
   // 3. 按 idType 拆分
   List<SplitUnit> units = split(data);
   assertThat(units).hasSize(2);  // 身份证 / 护照
-  
+
   // 4. 每个 SplitUnit 导出
   FesodExcelExporter exporter = new FesodExcelExporter();
   for (SplitUnit unit : units) {
@@ -256,7 +262,7 @@ void 全流程_解析_校验_拆分_导出_round_trip() throws Exception {
     }
     assertThat(Files.exists(outputPath)).isTrue();
     assertThat(Files.size(outputPath)).isGreaterThan(0);
-    
+
     // 5. round-trip: 重新解析导出的 Excel
     CanonicalData reParsed = parseExcel(outputPath.toString());
     // 验证 properties 一致
@@ -277,8 +283,10 @@ void 全流程_解析_校验_拆分_导出_round_trip() throws Exception {
 ```
 
 **round-trip 解析的 RegionDef 配置**：
+
 - KV region: `labelAliases = {customerNo: ["企业客户号："], customerName: ["企业客户名称："], filler: ["填表人："], reviewer: ["复核人："]}`
-- Table region: `headerAliases = {seq: ["序号"], name: ["姓名"], idType: ["证件类型"], idNo: ["证件号码"]}` (注意：导出模板用中表头，原 Excel 用代码 XH/XM/...)
+- Table region: `headerAliases = {seq: ["序号"], name: ["姓名"], idType: ["证件类型"], idNo: ["证件号码"]}`
+  (注意：导出模板用中表头，原 Excel 用代码 XH/XM/...)
 
 #### 测试 2: 校验失败时不导出
 
@@ -291,11 +299,11 @@ void 校验失败时不导出() throws Exception {
   invalidRow.put("name", "张三");
   invalidRow.put("idType", "身份证");
   invalidRow.put("idNo", null);  // 缺失证件号
-  
+
   List<ValidationRule> rules = List.of(
       new ValidationRule("idNo", ValidationScope.ROW, "idNo != null",
           "证件编号不能为空", FieldType.STRING));
-  
+
   ExpressionEvaluator evaluator = (expr, ctx) -> {
     if (expr == null || expr.endsWith("!= null")) {
       String field = expr.substring(0, expr.indexOf("!=")).trim();
@@ -303,15 +311,15 @@ void 校验失败时不导出() throws Exception {
     }
     return true;
   };
-  
+
   DataValidator validator = new DataValidator();
   ValidationResult result = validator.validate(invalidRow, rules,
       ErrorPolicy.COLLECT_ALL, evaluator);
-  
+
   assertThat(result.isValid()).isFalse();
   assertThat(result.errors()).hasSize(1);
   assertThat(result.errors().get(0).message()).isEqualTo("证件编号不能为空");
-  
+
   // 验证不调用 export：用 spy 或计数器验证
   // 简化实现：直接断言 isValid == false 后 return，不调用 exporter
   // 真实场景：ParseFileUseCase 会检查 isValid 才调用 exporter
@@ -377,7 +385,7 @@ void 校验失败时不导出() throws Exception {
 
 **风险**: 导出的 Excel 重新解析时，可能因表头差异（模板用中文"序号"，原 Excel 用代码"XH"）导致 round-trip 失败
 
-**缓解**: round-trip 解析使用**不同的 RegionDef 配置**，`headerAliases` 映射中表头（序号/姓名/...）到标准字段名
+**缓解**: round-trip 解析使用 **不同的 RegionDef 配置**，`headerAliases` 映射中表头（序号/姓名/...）到标准字段名
 
 ### 6.3 模板生成覆盖
 

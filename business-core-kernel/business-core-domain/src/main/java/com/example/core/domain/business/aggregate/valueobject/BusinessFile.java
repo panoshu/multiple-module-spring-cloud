@@ -1,6 +1,6 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 
 /**
  * 业务文件附件

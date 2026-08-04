@@ -19,14 +19,14 @@ package com.example.core.api.context;
  * @author panoshu
  */
 public record BusinessMetaContext(
-    String businessType,
-    String planNo,
-    String customerNo,
-    String customerName,
-    String productNo,
-    String productName,
-    String planName,
-    String operationModel,
-    String accountManager
+  String businessType,
+  String planNo,
+  String customerNo,
+  String customerName,
+  String productNo,
+  String productName,
+  String planName,
+  String operationModel,
+  String accountManager
 ) {
 }

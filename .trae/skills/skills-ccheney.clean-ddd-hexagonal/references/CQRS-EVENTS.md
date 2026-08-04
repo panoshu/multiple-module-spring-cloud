@@ -6,8 +6,10 @@
 > - [CQRS Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) — Microsoft Azure
 > - [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html) — microservices.io
 > - [Domain Events – Salvation](https://udidahan.com/2009/06/14/domain-events-salvation/) — Udi Dahan
-> - [Strengthening Your Domain: Domain Events](https://lostechies.com/jimmybogard/2010/04/08/strengthening-your-domain-domain-events/) — Jimmy Bogard
-> - [Domain Events: Design and Implementation](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/domain-events-design-implementation) — Microsoft
+> - [Strengthening Your Domain: Domain Events](https://lostechies.com/jimmybogard/2010/04/08/strengthening-your-domain-domain-events/) —
+    Jimmy Bogard
+> - [Domain Events: Design and Implementation](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/domain-events-design-implementation) —
+    Microsoft
 
 ## CQRS Overview
 
@@ -183,6 +185,7 @@ Separate write and read databases (optional): write is normalized for transactio
 ## Domain Events
 
 Notifications that something happened in the domain. Used for:
+
 - Updating read models
 - Cross-aggregate communication
 - Integration with other bounded contexts
@@ -526,7 +529,8 @@ class OutboxProcessor:
 
 ## When to Use CQRS
 
-> **Warning:** "You should be very cautious about using CQRS... the majority of cases I've run into have not been so good." — Martin Fowler
+> **Warning:** "You should be very cautious about using CQRS... the majority of cases I've run into have not been so
+> good." — Martin Fowler
 
 CQRS adds significant complexity. Most applications don't need it.
 
@@ -593,8 +597,8 @@ Evolve to separate databases only when needed.
 1. **Events must store deltas** — Not final state, but what changed (enables reversal)
 2. **Snapshots for performance** — Rebuild from snapshots, not from event 0
 3. **External system handling:**
-   - Disable notifications during replays
-   - Cache external query results with timestamps
+  - Disable notifications during replays
+  - Cache external query results with timestamps
 4. **Schema evolution strategy** — Events are forever; plan for versioning
 
 ---
@@ -612,6 +616,7 @@ Saga: PlaceOrderSaga
 ```
 
 **Saga types:**
+
 - **Choreography:** Each service listens/publishes events (simpler, harder to trace)
 - **Orchestration:** Central coordinator manages steps (explicit, easier to debug)
 
@@ -634,6 +639,7 @@ class OrderConfirmedHandler:
 ```
 
 **Implementation options:**
+
 - Store processed message IDs in database
 - Use message broker's deduplication features
 - Design handlers to be naturally idempotent

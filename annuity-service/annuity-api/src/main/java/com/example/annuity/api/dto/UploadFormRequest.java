@@ -15,19 +15,19 @@ import jakarta.validation.constraints.Positive;
  * @since 2026/7/21
  */
 public record UploadFormRequest(
-    @NotBlank String customerNo,
-    @NotBlank String productNo,
-    @NotBlank String planNo,
-    @NotBlank String businessType,
-    String operationModel,
-    String accountManager,
-    @NotBlank String operatorId,
-    String operatorName,
-    String channel,
-    @NotBlank String fileName,
-    @NotNull @Positive Long fileSize,
-    String planType,
-    Long initialContribution,
-    Boolean hasForeignInvestment
+  @NotBlank String customerNo,
+  @NotBlank String productNo,
+  @NotBlank String planNo,
+  @NotBlank String businessType,
+  String operationModel,
+  String accountManager,
+  @NotBlank String operatorId,
+  String operatorName,
+  String channel,
+  @NotBlank String fileName,
+  @NotNull @Positive Long fileSize,
+  String planType,
+  Long initialContribution,
+  Boolean hasForeignInvestment
 ) {
 }

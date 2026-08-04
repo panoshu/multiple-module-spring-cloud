@@ -1,0 +1,344 @@
+package com.pension.permission.domain.channel.aggregate;
+
+
+
+import com.example.shared.annuity.AnnuityChannel;
+import com.example.shared.domain.aggregate.root.AggregateRoot;
+import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.identifier.id.PlanNo;
+import com.example.shared.identifier.id.UserNo;
+import com.pension.permission.domain.channel.enumeration.SessionStatus;
+import com.pension.permission.domain.channel.event.*;
+import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
+import com.pension.permission.types.SessionId;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+public class Session extends AggregateRoot<SessionId> {
+
+  private final UserNo primaryAccountId;
+
+  private final AnnuityChannel channel;
+
+  /**
+   * 当前有效身份
+   */
+  private EffectiveIdentity effectiveIdentity;
+
+  /**
+   * 当前选择办理的计划
+   */
+  private PlanNo selectedPlanId;
+
+  /**
+   * 会话过期时间
+   */
+  private final LocalDateTime expiresAt;
+
+  private SessionStatus status;
+
+
+  /**
+   * ===============================
+   * 新建 Session
+   * ===============================
+   * 用户认证成功后创建。
+   */
+  private Session(
+    SessionId id,
+    UserNo creator,
+    UserNo primaryAccountId,
+    AnnuityChannel channel,
+    EffectiveIdentity effectiveIdentity,
+    LocalDateTime expiresAt
+  ) {
+
+    super(id, creator);
+
+    this.primaryAccountId = primaryAccountId;
+    this.channel = channel;
+    this.effectiveIdentity = effectiveIdentity;
+    this.expiresAt = expiresAt;
+    this.status = SessionStatus.ACTIVE;
+
+    validateInvariants();
+
+    registerDomainEvent(
+      SessionCreated.of(
+        id,
+        primaryAccountId,
+        channel,
+        expiresAt,
+        creator
+      )
+    );
+  }
+
+
+  /**
+   * ===============================
+   * Session 重建
+   * ===============================
+   * Repository / SessionStore 恢复使用。
+   * 不产生领域事件。
+   */
+  private Session(
+    SessionId id,
+
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+
+    UserNo primaryAccountId,
+    AnnuityChannel channel,
+    EffectiveIdentity effectiveIdentity,
+    PlanNo selectedPlanId,
+    LocalDateTime expiresAt
+  ) {
+
+    super(
+      id,
+      createdBy,
+      updatedBy,
+      createdAt,
+      updatedAt,
+      version
+    );
+
+    this.primaryAccountId = primaryAccountId;
+    this.channel = channel;
+    this.effectiveIdentity = effectiveIdentity;
+    this.selectedPlanId = selectedPlanId;
+    this.expiresAt = expiresAt;
+
+    validateInvariants();
+  }
+
+
+  /**
+   * ===============================
+   * 创建工厂方法
+   * ===============================
+   */
+  public static Session create(
+    SessionId id,
+    UserNo creator,
+    UserNo primaryAccountId,
+    AnnuityChannel channel,
+    EffectiveIdentity effectiveIdentity,
+    Duration sessionTimeout
+  ) {
+
+    LocalDateTime now = LocalDateTime.now();
+
+    return new Session(
+      id,
+      creator,
+      primaryAccountId,
+      channel,
+      effectiveIdentity,
+      now.plus(sessionTimeout)
+    );
+  }
+
+
+  /**
+   * ===============================
+   * 重建工厂方法
+   * ===============================
+   */
+  public static Session reconstitute(
+    SessionId id,
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+
+    UserNo primaryAccountId,
+    AnnuityChannel channel,
+    EffectiveIdentity effectiveIdentity,
+    PlanNo selectedPlanId,
+    LocalDateTime expiresAt
+  ) {
+
+    return new Session(
+      id,
+      createdBy,
+      updatedBy,
+      createdAt,
+      updatedAt,
+      version,
+
+      primaryAccountId,
+      channel,
+      effectiveIdentity,
+      selectedPlanId,
+      expiresAt
+    );
+  }
+
+
+  // ===============================
+  // 领域行为
+  // ===============================
+
+  public UserNo primaryAccountId() {
+    return this.primaryAccountId;
+  }
+
+  public AnnuityChannel channel() {
+    return this.channel;
+  }
+
+  public EffectiveIdentity effectiveIdentity() {
+    return this.effectiveIdentity;
+  }
+  /**
+   * 网点渠道二次授权成功后，
+   * 将有效身份提升为被授权经办人
+   */
+  public void elevateIdentity(
+    EffectiveIdentity newIdentity,
+    UserNo operator
+  ) {
+
+    if (newIdentity == null) {
+      throw new IllegalArgumentException(
+        "EffectiveIdentity cannot be null."
+      );
+    }
+
+
+    EffectiveIdentity oldIdentity =
+      this.effectiveIdentity;
+
+
+    this.effectiveIdentity = newIdentity;
+
+
+    registerDomainEvent(
+      SessionIdentityElevated.of(
+        this.id(),
+        this.primaryAccountId,
+        oldIdentity,
+        newIdentity,
+        operator
+      )
+    );
+  }
+
+
+  /**
+   * 选择当前办理计划
+   */
+  public void selectPlan(
+    PlanNo planId,
+    UserNo operator
+  ) {
+
+    if (planId == null) {
+      throw new IllegalArgumentException(
+        "PlanNo cannot be null."
+      );
+    }
+
+    this.selectedPlanId = planId;
+
+    registerDomainEvent(
+      SessionPlanSelected.of(
+        id(),
+        primaryAccountId,
+        planId,
+        operator
+      )
+    );
+  }
+
+  public void expire(
+    UserNo operator
+  ) {
+
+    if(status == SessionStatus.CLOSED){
+      return;
+    }
+
+    if (!isExpired(LocalDateTime.now())) {
+      throw new IllegalStateException(
+        "Session is not expired."
+      );
+    }
+
+    status = SessionStatus.EXPIRED;
+
+    registerDomainEvent(
+      SessionExpired.of(
+        id(),
+        primaryAccountId,
+        operator
+      )
+    );
+  }
+
+
+  public boolean isExpired(
+    LocalDateTime now
+  ) {
+
+    return !now.isBefore(expiresAt);
+  }
+
+
+  @Override
+  protected void validateInvariants() {
+
+    if (primaryAccountId == null) {
+      throw new IllegalStateException(
+        "Primary account id cannot be null."
+      );
+    }
+
+
+    if (channel == null) {
+      throw new IllegalStateException(
+        "Channel cannot be null."
+      );
+    }
+
+
+    if (expiresAt == null) {
+      throw new IllegalStateException(
+        "Expire time cannot be null."
+      );
+    }
+
+
+    if (effectiveIdentity == null) {
+      throw new IllegalStateException(
+        "Effective identity cannot be null."
+      );
+    }
+  }
+
+  public void close(UserNo operator) {
+
+    if (status == SessionStatus.CLOSED) {
+      return;
+    }
+
+
+    this.status = SessionStatus.CLOSED;
+
+
+    registerDomainEvent(
+      SessionClosed.of(
+        this.id(),
+        this.primaryAccountId,
+        operator
+      )
+    );
+  }
+}

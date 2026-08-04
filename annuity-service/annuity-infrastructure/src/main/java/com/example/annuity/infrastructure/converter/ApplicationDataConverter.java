@@ -1,13 +1,11 @@
 package com.example.annuity.infrastructure.converter;
 
 import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
-import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.annuity.infrastructure.entity.ApplicationDO;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
@@ -15,11 +13,7 @@ import com.example.core.domain.business.aggregate.valueobject.enums.status.Appli
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
@@ -113,23 +107,23 @@ public interface ApplicationDataConverter {
     BusinessExtension extension = jsonToExtension(aDo.getBusinessExtension());
 
     return KernelAggregateReflector.reconstituteApplication(
-        new ApplicationId(aDo.getId()),
-        aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-        aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
-        aDo.getCreateTime(),
-        aDo.getUpdateTime(),
-        aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
-        aDo.getBatchId() != null ? BatchId.of(aDo.getBatchId()) : null,
-        aDo.getFormId() != null ? new FormId(aDo.getFormId()) : null,
-        businessContext,
-        operatorInfo,
-        extension,
-        aDo.getParsedJsonFileId() != null ? new FileId(aDo.getParsedJsonFileId()) : null,
-        aDo.getExpectedDetailCount() != null ? aDo.getExpectedDetailCount() : 0,
-        aDo.getStatus() != null ? ApplicationStatus.valueOf(aDo.getStatus()) : null,
-        aDo.getCurrentStep() != null ? ApplicationFlowStep.valueOf(aDo.getCurrentStep()) : null,
-        aDo.getApplyTime(),
-        aDo.getCompleteTime()
+      new ApplicationId(aDo.getId()),
+      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
+      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreateTime(),
+      aDo.getUpdateTime(),
+      aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
+      aDo.getBatchId() != null ? BatchId.of(aDo.getBatchId()) : null,
+      aDo.getFormId() != null ? new FormId(aDo.getFormId()) : null,
+      businessContext,
+      operatorInfo,
+      extension,
+      aDo.getParsedJsonFileId() != null ? new FileId(aDo.getParsedJsonFileId()) : null,
+      aDo.getExpectedDetailCount() != null ? aDo.getExpectedDetailCount() : 0,
+      aDo.getStatus() != null ? ApplicationStatus.valueOf(aDo.getStatus()) : null,
+      aDo.getCurrentStep() != null ? ApplicationFlowStep.valueOf(aDo.getCurrentStep()) : null,
+      aDo.getApplyTime(),
+      aDo.getCompleteTime()
     );
   }
 
@@ -139,24 +133,24 @@ public interface ApplicationDataConverter {
 
   private BusinessContext buildBusinessContext(ApplicationDO aDo) {
     return new BusinessContext(
-        aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
-        aDo.getCustomerNo() != null ? com.example.shared.primitives.identity.CustomerNo.of(aDo.getCustomerNo()) : null,
-        aDo.getCustomerName(),
-        aDo.getProductNo() != null ? com.example.shared.primitives.identity.ProductNo.of(aDo.getProductNo()) : null,
-        aDo.getProductName(),
-        aDo.getPlanNo() != null ? com.example.shared.primitives.identity.PlanNo.of(aDo.getPlanNo()) : null,
-        aDo.getPlanName(),
-        aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-        KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
+      aDo.getCustomerNo() != null ? CustomerNo.of(aDo.getCustomerNo()) : null,
+      aDo.getCustomerName(),
+      aDo.getProductNo() != null ? ProductNo.of(aDo.getProductNo()) : null,
+      aDo.getProductName(),
+      aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
+      aDo.getPlanName(),
+      aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
+      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
     );
   }
 
   private OperatorInfo buildOperatorInfo(ApplicationDO aDo) {
     return new OperatorInfo(
-        aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
-        aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
-        aDo.getOperatorName(),
-        aDo.getIsProxy() != null && aDo.getIsProxy()
+      aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
+      aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
+      aDo.getOperatorName(),
+      aDo.getIsProxy() != null && aDo.getIsProxy()
     );
   }
 
@@ -168,7 +162,7 @@ public interface ApplicationDataConverter {
       return OBJECT_MAPPER.writeValueAsString(extension);
     } catch (JsonProcessingException e) {
       throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
-          .withLogDetail("序列化 BusinessExtension 失败: " + e.getMessage());
+        .withLogDetail("序列化 BusinessExtension 失败: " + e.getMessage());
     }
   }
 
@@ -180,7 +174,7 @@ public interface ApplicationDataConverter {
       return OBJECT_MAPPER.readValue(json, BusinessExtension.class);
     } catch (JsonProcessingException e) {
       throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
-          .withLogDetail("反序列化 BusinessExtension 失败: " + e.getMessage());
+        .withLogDetail("反序列化 BusinessExtension 失败: " + e.getMessage());
     }
   }
 }

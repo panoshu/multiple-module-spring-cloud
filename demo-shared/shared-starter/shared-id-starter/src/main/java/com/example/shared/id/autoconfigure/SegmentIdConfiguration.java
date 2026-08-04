@@ -1,6 +1,5 @@
 package com.example.shared.id.autoconfigure;
 
-import com.example.shared.lock.DistributedLock;
 import com.example.shared.id.properties.IdProperties;
 import com.example.shared.id.segment.allocator.SegmentAllocator;
 import com.example.shared.id.segment.allocator.SegmentBufferAllocator;
@@ -9,6 +8,7 @@ import com.example.shared.id.segment.repository.SegmentRepository;
 import com.example.shared.id.segment.service.DefaultSegmentIdService;
 import com.example.shared.id.segment.service.SegmentIdService;
 import com.example.shared.id.strategy.SegmentStrategy;
+import com.example.shared.lock.DistributedLock;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

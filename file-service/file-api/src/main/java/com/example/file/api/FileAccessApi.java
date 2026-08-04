@@ -18,18 +18,18 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @HttpExchange(url = "/api/file/access")
 public interface FileAccessApi {
 
-    @PostExchange(url = "/upload-tokens")
-    ApplyUploadTokenResponse applyUploadToken(@RequestBody ApplyUploadTokenRequest request);
+  @PostExchange(url = "/upload-tokens")
+  ApplyUploadTokenResponse applyUploadToken(@RequestBody ApplyUploadTokenRequest request);
 
-    @PostExchange(url = "/download-tokens")
-    ApplyDownloadTokenResponse applyDownloadToken(@RequestBody ApplyDownloadTokenRequest request);
+  @PostExchange(url = "/download-tokens")
+  ApplyDownloadTokenResponse applyDownloadToken(@RequestBody ApplyDownloadTokenRequest request);
 
-    @PostExchange(url = "/upload")
-    UploadFileResponse upload(
-        @RequestHeader("X-File-Token") String token,
-        @RequestPart("file") MultipartFile file
-    );
+  @PostExchange(url = "/upload")
+  UploadFileResponse upload(
+    @RequestHeader("X-File-Token") String token,
+    @RequestPart("file") MultipartFile file
+  );
 
-    @GetExchange(url = "/download")
-    ResponseEntity<StreamingResponseBody> download(@RequestHeader("X-File-Token") String token);
+  @GetExchange(url = "/download")
+  ResponseEntity<StreamingResponseBody> download(@RequestHeader("X-File-Token") String token);
 }

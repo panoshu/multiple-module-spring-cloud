@@ -1,11 +1,7 @@
 package com.example.file.domain.service;
 
 import com.example.file.domain.model.enums.TriggerMatchType;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.config.RegionStrategy;
-import com.example.file.domain.model.valueobject.config.RegionTrigger;
-import com.example.file.domain.model.valueobject.config.TableStrategy;
+import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.domain.model.valueobject.parse.RawRow;
 
 import java.util.ArrayList;
@@ -32,8 +28,13 @@ public class ParseContext {
     return matchesTrigger(row, trigger, next);
   }
 
-  public void enterRegion(int idx) { this.currentRegionIdx = idx; }
-  public int currentRegionIdx() { return currentRegionIdx; }
+  public void enterRegion(int idx) {
+    this.currentRegionIdx = idx;
+  }
+
+  public int currentRegionIdx() {
+    return currentRegionIdx;
+  }
 
   private boolean matchesTrigger(RawRow row, RegionTrigger trigger, RegionDef region) {
     if (row == null || row.isBlank()) return false;
@@ -44,14 +45,14 @@ public class ParseContext {
       if (!fingerprints.isEmpty()) {
         int required = Math.min(trigger.minMatchCount(), Math.max(1, fingerprints.size()));
         long matchCount = row.cells().values().stream()
-            .filter(v -> v != null && fingerprints.contains(v.trim()))
-            .count();
+          .filter(v -> v != null && fingerprints.contains(v.trim()))
+          .count();
         return matchCount >= required;
       }
       // 无指纹时退化为非空单元格数检查
       long matchCount = row.cells().values().stream()
-          .filter(v -> v != null && !v.isBlank())
-          .count();
+        .filter(v -> v != null && !v.isBlank())
+        .count();
       return matchCount >= trigger.minMatchCount();
     } else if (trigger.matchType() == TriggerMatchType.REGEX) {
       // 简化：第一个非空单元格匹配任意 regex

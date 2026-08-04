@@ -1,8 +1,8 @@
 package com.example.shared.id.segment.allocator;
 
-import com.example.shared.lock.DistributedLock;
 import com.example.shared.id.segment.model.IdSegment;
 import com.example.shared.id.segment.repository.SegmentRepository;
+import com.example.shared.lock.DistributedLock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;

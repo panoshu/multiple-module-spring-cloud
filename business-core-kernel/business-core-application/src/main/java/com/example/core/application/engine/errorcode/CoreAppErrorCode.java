@@ -35,11 +35,11 @@ public enum CoreAppErrorCode implements ErrorDefinition {
   final String code;
   final String message;
 
-  public String code() {
+  public String getCode() {
     return this.code;
   }
 
-  public String message() {
+  public String getMessage() {
     return this.message;
   }
 }

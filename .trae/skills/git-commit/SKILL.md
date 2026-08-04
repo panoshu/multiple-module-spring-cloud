@@ -5,16 +5,19 @@ description: "Drafts and validates Conventional Commits messages from staged cha
 
 # Git Commit Message Helper
 
-基于 [09-提交信息规范.md](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/.trae/rules/09-提交信息规范.md) 生成和校验 Conventional Commits 格式的提交信息。
+基于 [09-提交信息规范.md](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/.trae/rules/09-提交信息规范.md) 生成和校验
+Conventional Commits 格式的提交信息。
 
 ## When to Use
 
 **触发场景（任一即触发）：**
+
 - 用户说"提交"、"commit"、"git commit"、"保存到 git"
 - 用户要求暂存并提交变更
 - 在完成一个任务/功能/修复后准备提交
 
 **不触发：**
+
 - 用户仅查看 git status / diff / log
 - 用户仅暂存文件（git add）不提交
 - 用户执行 git reset / revert / merge / rebase 等非 commit 操作
@@ -36,20 +39,19 @@ git diff --cached --stat
 git log --oneline -5
 ```
 
-**如果暂存区为空**：提示用户先 `git add`，停止。
-**如果暂存区有未暂存的修改**：询问用户是否要一并提交。
+**如果暂存区为空**：提示用户先 `git add`，停止。 **如果暂存区有未暂存的修改**：询问用户是否要一并提交。
 
 ### Step 2: 分析变更内容
 
 基于 `git diff --cached` 的实际内容，判断：
 
 1. **变更类型（type）**：按优先级选择最主要的类型
-   - `feat` > `fix` > `refactor` > `perf` > `docs` > `test` > `build` > `ci` > `chore` > `style` > `revert`
+  - `feat` > `fix` > `refactor` > `perf` > `docs` > `test` > `build` > `ci` > `chore` > `style` > `revert`
 
 2. **影响范围（scope）**：根据变更文件路径匹配 scope
 
    | 文件路径模式 | Scope |
-   |--------------|-------|
+      |--------------|-------|
    | `demo-shared/shared-types/**` | `shared-types` |
    | `demo-shared/shared-exception/**` | `shared-exception` |
    | `demo-shared/shared-domain/**` | `shared-domain` |
@@ -76,17 +78,20 @@ git log --oneline -5
 ### Step 3: 生成提交信息
 
 **格式：**
+
 ```
 <type>(<scope>): <subject>
 ```
 
 **Subject 规则：**
+
 - 使用中文祈使语气：`新增`、`修复`、`重构`、`移除`、`补充`、`优化`
 - 不超过 50 字符（中文按 2 字符计）
 - 结尾不加句号
 - 首字母不大写
 
 **Body 规则（多文件变更时必须）：**
+
 - 使用有序列表说明变更要点
 - 每行不超过 72 字符
 - 解释"为什么"而非"做了什么"
@@ -95,20 +100,21 @@ git log --oneline -5
 
 提交前必须通过以下校验：
 
-| 校验项 | 规则 |
-|--------|------|
-| type 合法性 | 必须是 feat/fix/refactor/perf/docs/test/build/ci/chore/style/revert 之一 |
-| scope 合法性 | 必须是 09-提交信息规范.md 中定义的 scope |
-| subject 语气 | 必须是祈使语气，无句号结尾 |
-| Header 长度 | 不超过 72 字符 |
-| BOM 字符 | 禁止包含 BOM（`﻿`） |
-| Body 必要性 | 多文件变更必须有 Body |
+| 校验项       | 规则                                                                     |
+|--------------|--------------------------------------------------------------------------|
+| type 合法性  | 必须是 feat/fix/refactor/perf/docs/test/build/ci/chore/style/revert 之一 |
+| scope 合法性 | 必须是 09-提交信息规范.md 中定义的 scope                                 |
+| subject 语气 | 必须是祈使语气，无句号结尾                                               |
+| Header 长度  | 不超过 72 字符                                                           |
+| BOM 字符     | 禁止包含 BOM（`﻿`）                                                       |
+| Body 必要性  | 多文件变更必须有 Body                                                    |
 
 **校验失败时**：指出问题并重新生成，不执行提交。
 
 ### Step 5: 执行提交
 
 **PowerShell 环境约束：**
+
 - ❌ 禁止使用 HEREDOC（`<<'EOF'`），PowerShell 不支持
 - ✅ 使用多个 `-m` 参数传递 Header 和 Body
 
@@ -130,6 +136,7 @@ git status
 ## Common Patterns
 
 ### Pattern 1: 新增功能
+
 ```
 feat(file-domain): 新增 Excel 导出决策服务
 
@@ -139,6 +146,7 @@ feat(file-domain): 新增 Excel 导出决策服务
 ```
 
 ### Pattern 2: 修复缺陷
+
 ```
 fix(shared-domain): 修复 Entity.equals() 类型安全问题
 
@@ -148,6 +156,7 @@ fix(shared-domain): 修复 Entity.equals() 类型安全问题
 ```
 
 ### Pattern 3: 重构
+
 ```
 refactor(shared): 规范化错误码体系并补齐公共基础模块单元测试
 
@@ -157,6 +166,7 @@ refactor(shared): 规范化错误码体系并补齐公共基础模块单元测�
 ```
 
 ### Pattern 4: 文档
+
 ```
 docs(rules): 新增提交信息规范
 
@@ -166,6 +176,7 @@ docs(rules): 新增提交信息规范
 ```
 
 ### Pattern 5: 构建/依赖
+
 ```
 build(deps): 升级 MyBatis-Flex 至 1.11.5
 
@@ -175,20 +186,22 @@ build(deps): 升级 MyBatis-Flex 至 1.11.5
 
 ## Anti-Patterns（禁止）
 
-| ❌ 错误 | 原因 | ✅ 正确 |
-|---------|------|---------|
-| `init` | 无 type/scope/语义 | `chore: 初始化项目结构` |
-| `123` | 完全无语义 | `refactor(core-domain): 重构包结构` |
-| `update` | 非法 type | `refactor(xxx): 重构 xxx` |
-| `fix bug` | 无 scope、笼统 | `fix(file-domain): 修复表头丢失` |
-| `feat:add` | type 后无空格 | `feat(xxx): 新增 xxx` |
-| `feat(xxx): Added` | 过去时/首字母大写 | `feat(xxx): 新增 xxx` |
-| `feat(xxx): 新增了` | 过去时"了" | `feat(xxx): 新增 xxx` |
+| ❌ 错误             | 原因               | ✅ 正确                             |
+|---------------------|--------------------|-------------------------------------|
+| `init`              | 无 type/scope/语义 | `chore: 初始化项目结构`             |
+| `123`               | 完全无语义         | `refactor(core-domain): 重构包结构` |
+| `update`            | 非法 type          | `refactor(xxx): 重构 xxx`           |
+| `fix bug`           | 无 scope、笼统     | `fix(file-domain): 修复表头丢失`    |
+| `feat:add`          | type 后无空格      | `feat(xxx): 新增 xxx`               |
+| `feat(xxx): Added`  | 过去时/首字母大写  | `feat(xxx): 新增 xxx`               |
+| `feat(xxx): 新增了` | 过去时"了"         | `feat(xxx): 新增 xxx`               |
 
 ## Edge Cases
 
 ### Case 1: 跨多个顶级服务
+
 当变更涉及多个顶级服务（如 file-service + approval-service）：
+
 - scope 使用 `monorepo` 或省略 scope
 - 在 Body 中说明各服务的变更
 
@@ -201,6 +214,7 @@ refactor: 统一所有服务的错误码格式
 ```
 
 ### Case 2: 仅修改配置
+
 ```
 chore(config): 补齐 file-starter application.yml 配置
 
@@ -209,6 +223,7 @@ chore(config): 补齐 file-starter application.yml 配置
 ```
 
 ### Case 3: 测试补充
+
 ```
 test(shared-domain): 补充 Entity 基类单元测试
 
@@ -217,7 +232,9 @@ test(shared-domain): 补充 Entity 基类单元测试
 ```
 
 ### Case 4: 混合类型（feat + test）
+
 按优先级选择最主要的 type，在 Body 中说明其他变更：
+
 ```
 feat(kernel): 新增 QLExpress4 条件求值网关实现
 
@@ -229,6 +246,7 @@ feat(kernel): 新增 QLExpress4 条件求值网关实现
 ## Validation Checklist
 
 提交前确认：
+
 - [ ] type 是合法类型
 - [ ] scope 是 09-提交信息规范.md 中定义的 scope
 - [ ] subject 使用祈使语气，无句号结尾

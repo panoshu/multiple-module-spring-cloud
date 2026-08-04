@@ -7,9 +7,8 @@ import com.example.file.domain.model.valueobject.TaskError;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
-import com.example.file.types.TemplateCode;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,8 +21,8 @@ class ParseTaskTest {
   @Test
   void should_create_pending_task() {
     ParseTask task = ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
-        "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
-        List.of("detailList.deptCode"), UserNo.of("u1"));
+      "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
+      List.of("detailList.deptCode"), UserNo.of("u1"));
 
     assertThat(task.status()).isEqualTo(TaskStatus.PENDING);
     assertThat(task.totalRows()).isZero();
@@ -43,7 +42,7 @@ class ParseTaskTest {
     assertThat(task.status()).isEqualTo(TaskStatus.VALIDATING);
 
     task.recordSubTask(new SubTaskSummary(SubTaskId.of("sub1"), "RD_DEPT", 10, 10, 0,
-        com.example.file.domain.model.enums.SubTaskStatus.VALID));
+      com.example.file.domain.model.enums.SubTaskStatus.VALID));
 
     task.markSuccess();
     assertThat(task.status()).isEqualTo(TaskStatus.SUCCESS);
@@ -78,9 +77,9 @@ class ParseTaskTest {
   void recordSubTask_should_aggregate_counts() {
     ParseTask task = newTask();
     task.recordSubTask(new SubTaskSummary(SubTaskId.of("s1"), "A", 10, 8, 2,
-        com.example.file.domain.model.enums.SubTaskStatus.INVALID));
+      com.example.file.domain.model.enums.SubTaskStatus.INVALID));
     task.recordSubTask(new SubTaskSummary(SubTaskId.of("s2"), "B", 5, 5, 0,
-        com.example.file.domain.model.enums.SubTaskStatus.VALID));
+      com.example.file.domain.model.enums.SubTaskStatus.VALID));
 
     assertThat(task.subTaskCount()).isEqualTo(2);
     assertThat(task.totalRows()).isEqualTo(15);
@@ -90,7 +89,7 @@ class ParseTaskTest {
 
   private ParseTask newTask() {
     return ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
-        "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
-        List.of("detailList.deptCode"), UserNo.of("u1"));
+      "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
+      List.of("detailList.deptCode"), UserNo.of("u1"));
   }
 }

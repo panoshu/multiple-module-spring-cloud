@@ -1,7 +1,7 @@
 package com.example.annuity.application.extension;
 
-import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
 import com.example.annuity.domain.aggregate.valueobject.CustomerProfile;
+import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;

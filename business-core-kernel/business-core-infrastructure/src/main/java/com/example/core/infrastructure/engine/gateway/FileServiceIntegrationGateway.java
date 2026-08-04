@@ -14,9 +14,9 @@ import com.example.file.api.response.ApplyDownloadTokenResponse;
 import com.example.file.api.response.ApplyUploadTokenResponse;
 import com.example.file.api.response.FileTaskIdResponse;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.FormId;
+import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,7 +84,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   @Override
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
-                                   Map<String, Object> splitRules) {
+                                  Map<String, Object> splitRules) {
     UploadFileRequest request = new UploadFileRequest(
       BIZ_TYPE_FORM_DETAIL,
       parseTemplateId,

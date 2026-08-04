@@ -20,12 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -50,15 +45,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ExportFlowIntegrationTest {
 
-  /** 源 Excel 路径（只读，不修改）。 */
+  /**
+   * 源 Excel 路径（只读，不修改）。
+   */
   private static final String SOURCE_EXCEL_PATH =
-      Path.of("docs", "excel", "示例表单.xlsx").toString();
+    Path.of("docs", "excel", "示例表单.xlsx").toString();
 
-  /** 测试输出目录（{@code target/test-output/}，避免污染 classpath）。 */
+  /**
+   * 测试输出目录（{@code target/test-output/}，避免污染 classpath）。
+   */
   private static final String OUTPUT_DIR =
-      Path.of("target", "test-output", "export-flow").toString();
+    Path.of("target", "test-output", "export-flow").toString();
 
-  /** 程序生成的填充模板路径，由 {@link #ensureFillTemplateExists(Path)} 注入。 */
+  /**
+   * 程序生成的填充模板路径，由 {@link #ensureFillTemplateExists(Path)} 注入。
+   */
   private static Path fillTemplatePath;
 
   /**
@@ -100,8 +101,8 @@ class ExportFlowIntegrationTest {
     List<RegionDef> sourceRegions = buildSourceRegionDefs();
     ExcelParser excelParser = new ExcelParserImpl();
     RegionStateMachine stateMachine = new RegionStateMachine(Map.of(
-        RegionType.KEY_VALUE, new KeyValueRegionParser(),
-        RegionType.TABLE, new TableRegionParser()));
+      RegionType.KEY_VALUE, new KeyValueRegionParser(),
+      RegionType.TABLE, new TableRegionParser()));
 
     CanonicalData data;
     try (InputStream is = new FileInputStream(SOURCE_EXCEL_PATH)) {
@@ -112,28 +113,28 @@ class ExportFlowIntegrationTest {
 
     // 验证解析结果（基于 Step 1 探针实测值）
     assertThat(data.properties())
-        .containsEntry("customerNo", "000234")
-        .containsEntry("customerName", "客户A")
-        .containsEntry("filler", "张三")
-        .containsEntry("reviewer", "李四");
+      .containsEntry("customerNo", "000234")
+      .containsEntry("customerName", "客户A")
+      .containsEntry("filler", "张三")
+      .containsEntry("reviewer", "李四");
     assertThat(data.tables()).containsKey("employees");
     assertThat(data.tables().get("employees")).hasSize(3);
     assertThat(data.tables().get("employees").get(0))
-        .containsEntry("seq", "1")
-        .containsEntry("name", "张内Aa01")
-        .containsEntry("idType", "身份证")
-        .containsEntry("idNo", "999000198608060000");
+      .containsEntry("seq", "1")
+      .containsEntry("name", "张内Aa01")
+      .containsEntry("idType", "身份证")
+      .containsEntry("idNo", "999000198608060000");
     assertThat(data.tables().get("employees").get(1))
-        .containsEntry("seq", "2")
-        .containsEntry("idType", "护照");
+      .containsEntry("seq", "2")
+      .containsEntry("idType", "护照");
     assertThat(data.tables().get("employees").get(2))
-        .containsEntry("seq", "3")
-        .containsEntry("idType", "身份证");
+      .containsEntry("seq", "3")
+      .containsEntry("idType", "身份证");
 
     // ===== 2. 校验通过 (使用真实 Aviator 引擎) =====
     List<ValidationRule> rules = List.of(
-        new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil", "证件编号不能为空", FieldType.STRING),
-        new ValidationRule("name", ValidationScope.ROW, "name != nil", "姓名不能为空", FieldType.STRING));
+      new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil", "证件编号不能为空", FieldType.STRING),
+      new ValidationRule("name", ValidationScope.ROW, "name != nil", "姓名不能为空", FieldType.STRING));
     ExpressionEvaluator evaluator = new AviatorExpressionEvaluator();
     DataValidator validator = new DataValidator();
     for (Map<String, Object> row : data.tables().get("employees")) {
@@ -146,15 +147,15 @@ class ExportFlowIntegrationTest {
     dataMap.putAll(data.properties());
     dataMap.putAll(data.tables());
     SplitConfig splitConfig = new SplitConfig(
-        List.of("idType"),
-        new SplitKeyDef("idType", "employees.idType", SplitKeyType.FIELD_VALUE),
-        SplitMissPolicy.ERROR, null, null, false, 1000);
+      List.of("idType"),
+      new SplitKeyDef("idType", "employees.idType", SplitKeyType.FIELD_VALUE),
+      SplitMissPolicy.ERROR, null, null, false, 1000);
     TaskSplitter splitter = new TaskSplitter();
     List<SplitUnit> units = splitter.split(dataMap, splitConfig);
 
     assertThat(units).hasSize(2);
     assertThat(units).extracting(SplitUnit::splitKey)
-        .containsExactlyInAnyOrder("身份证", "护照");
+      .containsExactlyInAnyOrder("身份证", "护照");
 
     // ===== 4. 每个 SplitUnit 导出 + 5. round-trip 验证 =====
     ExcelExporter exporter = new FesodExcelExporter();
@@ -183,10 +184,10 @@ class ExportFlowIntegrationTest {
 
       // 验证 properties 一致 (customerNo/customerName/filler/reviewer)
       assertThat(reParsed.properties())
-          .containsEntry("customerNo", unit.data().get("customerNo"))
-          .containsEntry("customerName", unit.data().get("customerName"))
-          .containsEntry("filler", unit.data().get("filler"))
-          .containsEntry("reviewer", unit.data().get("reviewer"));
+        .containsEntry("customerNo", unit.data().get("customerNo"))
+        .containsEntry("customerName", unit.data().get("customerName"))
+        .containsEntry("filler", unit.data().get("filler"))
+        .containsEntry("reviewer", unit.data().get("reviewer"));
 
       // 验证 tables 行数一致
       @SuppressWarnings("unchecked")
@@ -198,10 +199,10 @@ class ExportFlowIntegrationTest {
         Map<String, Object> expected = expectedRows.get(i);
         Map<String, Object> actual = reParsed.tables().get("employees").get(i);
         assertThat(actual)
-            .containsEntry("seq", expected.get("seq"))
-            .containsEntry("name", expected.get("name"))
-            .containsEntry("idType", expected.get("idType"))
-            .containsEntry("idNo", expected.get("idNo"));
+          .containsEntry("seq", expected.get("seq"))
+          .containsEntry("name", expected.get("name"))
+          .containsEntry("idType", expected.get("idType"))
+          .containsEntry("idNo", expected.get("idNo"));
       }
     }
   }
@@ -228,13 +229,13 @@ class ExportFlowIntegrationTest {
     // 故意不 put idNo，模拟源数据缺失证件号
 
     List<ValidationRule> rules = List.of(
-        new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil",
-            "证件编号不能为空", FieldType.STRING));
+      new ValidationRule("idNo", ValidationScope.ROW, "idNo != nil",
+        "证件编号不能为空", FieldType.STRING));
 
     ExpressionEvaluator evaluator = new AviatorExpressionEvaluator();
     DataValidator validator = new DataValidator();
     ValidationResult result = validator.validate(invalidRow, rules,
-        ErrorPolicy.COLLECT_ALL, evaluator);
+      ErrorPolicy.COLLECT_ALL, evaluator);
 
     // 2. 验证校验失败（Aviator 访问不存在的 key 会抛异常，DataValidator catch 后添加错误）
     assertThat(result.isValid()).isFalse();
@@ -249,8 +250,8 @@ class ExportFlowIntegrationTest {
     SplitUnit unit = new SplitUnit("身份证", invalidRow);
     ExportDecisionService decisionService = new ExportDecisionService();
     decisionService.exportIfValid(unit, result, spyExporter,
-        new ByteArrayInputStream(new byte[]{}),
-        new ByteArrayOutputStream());
+      new ByteArrayInputStream(new byte[]{}),
+      new ByteArrayOutputStream());
 
     // 5. 验证 ExportDecisionService 的决策逻辑正确：校验失败时不调用 exporter
     assertThat(callCount.get()).isZero();
@@ -266,31 +267,31 @@ class ExportFlowIntegrationTest {
    */
   private List<RegionDef> buildSourceRegionDefs() {
     return List.of(
-        new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "customerNo", List.of("企业客户号："),
-                    "customerName", List.of("企业客户名称：")),
-                2)),
-        new RegionDef("employee_list", RegionType.TABLE, "employees",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
-            new TableStrategy(
-                3, 1, TableMatchBy.HEADER_NAME,
-                Map.of(
-                    "seq", List.of("XH"),
-                    "name", List.of("XM"),
-                    "idType", List.of("ZJLX"),
-                    "idNo", List.of("ZJHM")),
-                HeaderMatching.STRICT, 0,
-                new DataEndRule(List.of("结束"), 1))),
-        new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "filler", List.of("填表人:"),
-                    "reviewer", List.of("复核人：")),
-                1)));
+      new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "customerNo", List.of("企业客户号："),
+            "customerName", List.of("企业客户名称：")),
+          2)),
+      new RegionDef("employee_list", RegionType.TABLE, "employees",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
+        new TableStrategy(
+          3, 1, TableMatchBy.HEADER_NAME,
+          Map.of(
+            "seq", List.of("XH"),
+            "name", List.of("XM"),
+            "idType", List.of("ZJLX"),
+            "idNo", List.of("ZJHM")),
+          HeaderMatching.STRICT, 0,
+          new DataEndRule(List.of("结束"), 1))),
+      new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "filler", List.of("填表人:"),
+            "reviewer", List.of("复核人：")),
+          1)));
   }
 
   /**
@@ -302,29 +303,29 @@ class ExportFlowIntegrationTest {
    */
   private List<RegionDef> buildRoundTripRegionDefs() {
     return List.of(
-        new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "customerNo", List.of("企业客户号："),
-                    "customerName", List.of("企业客户名称：")),
-                2)),
-        new RegionDef("employee_list", RegionType.TABLE, "employees",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 4),
-            new TableStrategy(
-                1, 0, TableMatchBy.HEADER_NAME,
-                Map.of(
-                    "seq", List.of("序号"),
-                    "name", List.of("姓名"),
-                    "idType", List.of("证件类型"),
-                    "idNo", List.of("证件号码")),
-                HeaderMatching.STRICT, 0, null)),
-        new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "filler", List.of("填表人："),
-                    "reviewer", List.of("复核人：")),
-                1)));
+      new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "customerNo", List.of("企业客户号："),
+            "customerName", List.of("企业客户名称：")),
+          2)),
+      new RegionDef("employee_list", RegionType.TABLE, "employees",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 4),
+        new TableStrategy(
+          1, 0, TableMatchBy.HEADER_NAME,
+          Map.of(
+            "seq", List.of("序号"),
+            "name", List.of("姓名"),
+            "idType", List.of("证件类型"),
+            "idNo", List.of("证件号码")),
+          HeaderMatching.STRICT, 0, null)),
+      new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "filler", List.of("填表人："),
+            "reviewer", List.of("复核人：")),
+          1)));
   }
 }

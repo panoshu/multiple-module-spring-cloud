@@ -13,7 +13,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
 import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,63 +43,64 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class DownloadFileWithTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final FileTokenService tokenService;
-    private final FileStorageGateway storageGateway;
-    private final FileAccessLogRepository logRepository;
-    private final FileAccessLogWriter fileAccessLogWriter;
+  private final FileMetadataRepository metadataRepository;
+  private final FileTokenService tokenService;
+  private final FileStorageGateway storageGateway;
+  private final FileAccessLogRepository logRepository;
+  private final FileAccessLogWriter fileAccessLogWriter;
 
-    @Transactional
-    public DownloadContext prepareDownload(String token, SessionUser session, String clientIp) {
-        // 1. 先解密 token 获取 payload（不消费）
-        FileTokenPayload payload;
-        try {
-            payload = tokenService.decrypt(token);
-        } catch (SystemException e) {
-            // 解密失败：无 fileId 可用，仅记录日志，无法写审计流水
-            log.warn("下载 Token 解密失败, 无法记录审计日志: tokenHash={}, error={}",
-                TokenHashUtil.sha256(token), e.getMessage());
-            throw e;
-        }
-
-        FileId fileId = payload.fileId();
-
-        // 2. load FileMetadata + 3. 完整校验并消费 token
-        FileMetadata file;
-        try {
-            file = metadataRepository.loadOrThrow(fileId);
-            tokenService.verifyAndConsumeDownloadToken(token, session, file);
-        } catch (SystemException | DomainException e) {
-            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw e;
-        }
-
-        // 4. 写入 ACCESS 流水（成功）
-        FileAccessLog accessLog = FileAccessLog.access(
-            file.id(), file.usage(), file.accessScope(), session.userNo(),
-            file.sourceApp(), clientIp, TokenHashUtil.sha256(token),
-            FileAccessResult.SUCCESS, null
-        );
-        logRepository.save(accessLog);
-
-        log.info("文件已通过 Token 准备下载: fileId={}, usage={}", file.id(), file.usage());
-        // 5. 返回 DownloadContext
-        return new DownloadContext(file.id(), file.originalName(), file.size(),
-            file.contentType(), file.digest());
+  @Transactional
+  public DownloadContext prepareDownload(String token, SessionUser session, String clientIp) {
+    // 1. 先解密 token 获取 payload（不消费）
+    FileTokenPayload payload;
+    try {
+      payload = tokenService.decrypt(token);
+    } catch (SystemException e) {
+      // 解密失败：无 fileId 可用，仅记录日志，无法写审计流水
+      log.warn("下载 Token 解密失败, 无法记录审计日志: tokenHash={}, error={}",
+        TokenHashUtil.sha256(token), e.getMessage());
+      throw e;
     }
 
-    /**
-     * 打开文件流（独立事务外，避免长事务持有流）
-     */
-    public InputStream openStream(FileId fileId) {
-        return storageGateway.open(fileId);
+    FileId fileId = payload.fileId();
+
+    // 2. load FileMetadata + 3. 完整校验并消费 token
+    FileMetadata file;
+    try {
+      file = metadataRepository.loadOrThrow(fileId);
+      tokenService.verifyAndConsumeDownloadToken(token, session, file);
+    } catch (SystemException | DomainException e) {
+      fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+      throw e;
     }
 
-    public record DownloadContext(
-        FileId fileId,
-        String originalName,
-        Long size,
-        String contentType,
-        String digest
-    ) {}
+    // 4. 写入 ACCESS 流水（成功）
+    FileAccessLog accessLog = FileAccessLog.access(
+      file.id(), file.usage(), file.accessScope(), session.userNo(),
+      file.sourceApp(), clientIp, TokenHashUtil.sha256(token),
+      FileAccessResult.SUCCESS, null
+    );
+    logRepository.save(accessLog);
+
+    log.info("文件已通过 Token 准备下载: fileId={}, usage={}", file.id(), file.usage());
+    // 5. 返回 DownloadContext
+    return new DownloadContext(file.id(), file.originalName(), file.size(),
+      file.contentType(), file.digest());
+  }
+
+  /**
+   * 打开文件流（独立事务外，避免长事务持有流）
+   */
+  public InputStream openStream(FileId fileId) {
+    return storageGateway.open(fileId);
+  }
+
+  public record DownloadContext(
+    FileId fileId,
+    String originalName,
+    Long size,
+    String contentType,
+    String digest
+  ) {
+  }
 }

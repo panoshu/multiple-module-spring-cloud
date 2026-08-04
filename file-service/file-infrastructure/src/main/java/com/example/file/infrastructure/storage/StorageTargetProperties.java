@@ -19,43 +19,43 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "file.storage")
 public class StorageTargetProperties {
 
-    private boolean enabled = true;
+  private boolean enabled = true;
 
-    @NotEmpty
-    @Valid
-    private List<StorageTargetConfig> targets = new ArrayList<>();
+  @NotEmpty
+  @Valid
+  private List<StorageTargetConfig> targets = new ArrayList<>();
+
+  @NotNull
+  @Valid
+  private RoutingConfig routing = new RoutingConfig();
+
+  @Data
+  public static class StorageTargetConfig {
+    @NotBlank
+    private String id;
 
     @NotNull
-    @Valid
-    private RoutingConfig routing = new RoutingConfig();
+    private StorageType type;
 
-    @Data
-    public static class StorageTargetConfig {
-        @NotBlank
-        private String id;
+    private String endpoint;
+    private String bucket;
+    private String basePath;
+    private String mountRoot;
+    private String accessKeyId;
+    private String accessKeySecret;
 
-        @NotNull
-        private StorageType type;
+    private Map<String, String> options = new HashMap<>();
+  }
 
-        private String endpoint;
-        private String bucket;
-        private String basePath;
-        private String mountRoot;
-        private String accessKeyId;
-        private String accessKeySecret;
-
-        private Map<String, String> options = new HashMap<>();
-    }
-
-    @Data
-    public static class RoutingConfig {
-        @NotBlank
-        private String source = "local-dev";
-        @NotBlank
-        private String parsed = "local-dev";
-        @NotBlank
-        private String export = "local-dev";
-        @NotBlank
-        private String archive = "local-dev";
-    }
+  @Data
+  public static class RoutingConfig {
+    @NotBlank
+    private String source = "local-dev";
+    @NotBlank
+    private String parsed = "local-dev";
+    @NotBlank
+    private String export = "local-dev";
+    @NotBlank
+    private String archive = "local-dev";
+  }
 }

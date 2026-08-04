@@ -1,11 +1,11 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
 import com.example.file.domain.model.aggregate.root.TemplateConfig;
 import com.example.file.domain.model.enums.IdentifyMode;
 import com.example.file.domain.model.valueobject.RawRowStream;
 import com.example.file.domain.model.valueobject.parse.RawRow;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;

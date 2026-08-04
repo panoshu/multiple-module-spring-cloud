@@ -32,29 +32,29 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ApplyDownloadTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final FileTokenService tokenService;
-    private final FileAccessLogRepository logRepository;
+  private final FileMetadataRepository metadataRepository;
+  private final FileTokenService tokenService;
+  private final FileAccessLogRepository logRepository;
 
-    @Transactional
-    public String apply(ApplyDownloadTokenCommand cmd) {
-        if (cmd.ttl() == null) {
-            throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
-                .withLogDetail("ttl 不能为空");
-        }
-
-        FileMetadata file = metadataRepository.loadOrThrow(cmd.fileId());
-        file.verifyDownloadable();
-
-        String token = tokenService.generateDownloadToken(file, cmd.ttl());
-
-        FileAccessLog accessLog = FileAccessLog.apply(
-            cmd.fileId(), file.usage(), file.accessScope(), cmd.downloader(),
-            cmd.sourceApp(), TokenHashUtil.sha256(token)
-        );
-        logRepository.save(accessLog);
-
-        log.info("下载 Token 已申请: fileId={}, usage={}", cmd.fileId(), file.usage());
-        return token;
+  @Transactional
+  public String apply(ApplyDownloadTokenCommand cmd) {
+    if (cmd.ttl() == null) {
+      throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("ttl 不能为空");
     }
+
+    FileMetadata file = metadataRepository.loadOrThrow(cmd.fileId());
+    file.verifyDownloadable();
+
+    String token = tokenService.generateDownloadToken(file, cmd.ttl());
+
+    FileAccessLog accessLog = FileAccessLog.apply(
+      cmd.fileId(), file.usage(), file.accessScope(), cmd.downloader(),
+      cmd.sourceApp(), TokenHashUtil.sha256(token)
+    );
+    logRepository.save(accessLog);
+
+    log.info("下载 Token 已申请: fileId={}, usage={}", cmd.fileId(), file.usage());
+    return token;
+  }
 }

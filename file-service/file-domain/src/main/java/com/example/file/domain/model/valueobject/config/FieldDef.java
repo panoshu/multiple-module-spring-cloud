@@ -4,7 +4,7 @@ import com.example.file.domain.model.enums.FieldType;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 public record FieldDef(
-    String code, FieldType type, boolean required, Integer scale
+  String code, FieldType type, boolean required, Integer scale
 ) implements ValueObject {
   public FieldDef {
     if (code == null || code.isBlank()) throw new IllegalArgumentException("FieldDef.code empty");

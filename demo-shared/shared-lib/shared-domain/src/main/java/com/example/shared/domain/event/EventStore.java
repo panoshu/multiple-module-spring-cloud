@@ -21,10 +21,11 @@ public interface EventStore {
 
   // 数据传输对象
   record PendingEntry(
-      long logId,
-      Object integrationEvent,
-      String channel,
-      String integrationType,
-      int retryCount
-  ) {}
+    long logId,
+    Object integrationEvent,
+    String channel,
+    String integrationType,
+    int retryCount
+  ) {
+  }
 }

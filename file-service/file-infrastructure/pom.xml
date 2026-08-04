@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -10,20 +10,51 @@
   </parent>
   <artifactId>file-infrastructure</artifactId>
   <dependencies>
-    <dependency><groupId>com.example</groupId><artifactId>file-domain</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>shared-id-starter</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>shared-cache-starter</artifactId></dependency>
-    <dependency><groupId>com.mybatis-flex</groupId><artifactId>mybatis-flex-spring-boot3-starter</artifactId></dependency>
-    <dependency><groupId>com.zaxxer</groupId><artifactId>HikariCP</artifactId></dependency>
-    <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
-    <dependency><groupId>org.apache.fesod</groupId><artifactId>fesod-sheet</artifactId></dependency>
-    <dependency><groupId>io.github.aviatorscript</groupId><artifactId>aviator</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-domain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-id-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-cache-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.mybatis-flex</groupId>
+      <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fesod</groupId>
+      <artifactId>fesod-sheet</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.github.aviatorscript</groupId>
+      <artifactId>aviator</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>qlexpress4</artifactId>
     </dependency>
-    <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId></dependency>
-    <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+    </dependency>
     <dependency>
       <groupId>jakarta.validation</groupId>
       <artifactId>jakarta.validation-api</artifactId>
@@ -80,7 +111,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
-    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>

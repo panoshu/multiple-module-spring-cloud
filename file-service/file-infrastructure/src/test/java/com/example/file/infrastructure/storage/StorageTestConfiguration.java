@@ -30,15 +30,15 @@ import static org.mockito.Mockito.mock;
 @ComponentScan(basePackages = "com.example.file.infrastructure.storage")
 public class StorageTestConfiguration {
 
-    /**
-     * Mock FileMetadataRepository 骨架。
-     *
-     * <p>具体 stubbing (loadOrThrow / load / save) 在测试类的 @BeforeEach 中
-     * 通过 {@code reset(repository)} 后用 {@code when(...)} 设置，保证每个测试
-     * 用例对 mock 的行为有完全控制。
-     */
-    @Bean
-    public FileMetadataRepository fileMetadataRepository() {
-        return mock(FileMetadataRepository.class);
-    }
+  /**
+   * Mock FileMetadataRepository 骨架。
+   *
+   * <p>具体 stubbing (loadOrThrow / load / save) 在测试类的 @BeforeEach 中
+   * 通过 {@code reset(repository)} 后用 {@code when(...)} 设置，保证每个测试
+   * 用例对 mock 的行为有完全控制。
+   */
+  @Bean
+  public FileMetadataRepository fileMetadataRepository() {
+    return mock(FileMetadataRepository.class);
+  }
 }

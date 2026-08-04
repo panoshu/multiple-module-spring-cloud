@@ -1,10 +1,7 @@
 # file-service 文件存储引擎设计
 
-**项目**: multiple-module-spring-cloud / file-service
-**作者**: Trae (基于用户需求 brainstorming 产出)
-**日期**: 2026-07-19
-**状态**: 已确认，待生成实施计划
-**关联**: 11.2 中期补全 / 子项目 A（共 5 个子项目 A/B/C/D/E）
+**项目**: multiple-module-spring-cloud / file-service **作者**: Trae (基于用户需求 brainstorming 产出)
+**日期**: 2026-07-19 **状态**: 已确认，待生成实施计划 **关联**: 11.2 中期补全 / 子项目 A（共 5 个子项目 A/B/C/D/E）
 
 ---
 
@@ -18,7 +15,7 @@
 
 ### 0.2 总体目标
 
-1. 在 file-service 内部建立**完整的文件存储子域**
+1. 在 file-service 内部建立 **完整的文件存储子域**
 2. 将 `FileId` 提升为正式领域概念
 3. 提供多后端（Local / 阿里云 OSS / NAS）统一抽象
 4. 重构 `FileStorageGateway` SPI，封装存储细节
@@ -26,13 +23,13 @@
 
 ### 0.3 子项目分解（5 个）
 
-| 子项目 | 内容 | 状态 |
-|---|---|---|
+| 子项目           | 内容                                                      | 状态   |
+|------------------|-----------------------------------------------------------|--------|
 | **A（本 spec）** | 文件存储子域（元数据 + 多后端 + Router + ParseTask 迁移） | 进行中 |
-| B | Token 机制（上传 token 申请/校验、API Controller） | 待启动 |
-| C | 跨服务事件发布（FileUploadedEvent → MQ → 业务服务） | 待启动 |
-| D | 外部表单导出上传（导出后复制到 EXPORT target） | 待启动 |
-| E | business-core-kernel 侧 FileIntegrationGateway 实现 | 待启动 |
+| B                | Token 机制（上传 token 申请/校验、API Controller）        | 待启动 |
+| C                | 跨服务事件发布（FileUploadedEvent → MQ → 业务服务）       | 待启动 |
+| D                | 外部表单导出上传（导出后复制到 EXPORT target）            | 待启动 |
+| E                | business-core-kernel 侧 FileIntegrationGateway 实现       | 待启动 |
 
 ---
 
@@ -40,7 +37,8 @@
 
 ### 1.1 设计目标
 
-在 file-service 内部建立**完整的文件存储子域**，将 `FileId` 提升为正式领域概念，提供多后端（Local / 阿里云 OSS / NAS）统一抽象，为后续 Token 机制、跨服务事件链路、外部表单导出上传打下基础。
+在 file-service 内部建立 **完整的文件存储子域**，将 `FileId` 提升为正式领域概念，提供多后端（Local / 阿里云 OSS /
+NAS）统一抽象，为后续 Token 机制、跨服务事件链路、外部表单导出上传打下基础。
 
 ### 1.2 在整体架构中的位置
 
@@ -97,6 +95,7 @@
 ### 1.3 子项目 A 范围
 
 **包含**：
+
 - file-domain：FileMetadata 聚合根、StorageTarget 值对象、FileStorageGateway SPI 重构、FileMetadataRepository 接口
 - file-application：StoreFileUseCase、OpenFileUseCase、DeleteFileUseCase、CopyFileUseCase
 - file-infrastructure：3 个存储后端实现 + Router + Repository + DO + Mapper + 配置类
@@ -106,6 +105,7 @@
 - 单元测试 + 集成测试
 
 **不包含**：
+
 - Token 机制（B 子项目）
 - 跨服务事件发布（C 子项目）
 - FileIntegrationGateway 业务侧实现（E 子项目）
@@ -187,6 +187,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
 ```
 
 **约束**：
+
 - `create()` → PENDING_UPLOAD：仅记录元数据，文件未上传
 - `markUploaded(storageKey, md5)` → UPLOADED：文件已落存储后端
 - `markDeleted()` → DELETED：逻辑删除（不物理删除）
@@ -204,7 +205,8 @@ public enum FileUsage {
 }
 ```
 
-**作用**：当业务层申请上传 token 时，仅需指定 `FileUsage`，由 `FileStorageRouter` 根据 `application.yml` 的 `file.storage.routing` 配置路由到具体 `StorageTarget`。**业务层不感知具体目标**。
+**作用**：当业务层申请上传 token 时，仅需指定 `FileUsage`，由 `FileStorageRouter` 根据 `application.yml` 的
+`file.storage.routing` 配置路由到具体 `StorageTarget`。 **业务层不感知具体目标**。
 
 ### 2.4 StorageType 枚举
 
@@ -278,7 +280,8 @@ public interface FileStorageGateway {
 ```
 
 **重要约束**：
-- SPI 签名仅用 `FileId`，**不暴露** `storageKey` / `targetId` / `StorageTarget` 给应用层
+
+- SPI 签名仅用 `FileId`， **不暴露** `storageKey` / `targetId` / `StorageTarget` 给应用层
 - `FileMetadata` 的 `targetId` / `storageKey` 由 `FileStorageRouter` 内部填充并持久化
 - **不暴露 delete**：删除文件采用逻辑删除，由 `DeleteFileUseCase` 调 `file.markDeleted()` 完成
 
@@ -334,6 +337,7 @@ public record FileDeletedEvent(
 ```
 
 **事件触发时机**：
+
 - `FileMetadata.create()` → 注册 `FileMetadataCreatedEvent`
 - `FileMetadata.markUploaded()` → 注册 `FileUploadedEvent`
 - `FileMetadata.markDeleted()` → 注册 `FileDeletedEvent`
@@ -370,10 +374,10 @@ public enum FileErrorCodes implements ErrorDefinition {
 
 ### 2.10 不变式总结
 
-| 聚合根 | 不变式 |
-|---|---|
-| FileMetadata | `size >= 0`；`UPLOADED` 状态下 `uploadedAt != null && storageKey != null`；`storageKey` 不对外暴露（getter 不返回） |
-| StorageTarget | `OSS` 类型必须 endpoint+bucket+AK/SK 齐全；`NAS` 类型必须有 bucket(共享名) + basePath；`LOCAL` 类型 basePath 必填 |
+| 聚合根        | 不变式                                                                                                              |
+|---------------|---------------------------------------------------------------------------------------------------------------------|
+| FileMetadata  | `size >= 0`；`UPLOADED` 状态下 `uploadedAt != null && storageKey != null`；`storageKey` 不对外暴露（getter 不返回） |
+| StorageTarget | `OSS` 类型必须 endpoint+bucket+AK/SK 齐全；`NAS` 类型必须有 bucket(共享名) + basePath；`LOCAL` 类型 basePath 必填   |
 
 ### 2.11 与现有 ParseTask 的关系
 
@@ -388,7 +392,8 @@ SubTaskData (聚合根)
 └── 1 个 SubTaskData 对应 0/1 个 FileMetadata (PARSED 类型)
 ```
 
-**关键**：FileMetadata 与 ParseTask/SubTaskData 是**关联关系**（通过 FileId 引用），不是聚合内包含。FileMetadata 是独立聚合根，可独立加载/删除。
+**关键**：FileMetadata 与 ParseTask/SubTaskData 是 **关联关系**（通过 FileId 引用），不是聚合内包含。FileMetadata
+是独立聚合根，可独立加载/删除。
 
 ---
 
@@ -400,14 +405,14 @@ SubTaskData (聚合根)
 
 **与原接口对比**：
 
-| 原签名 | 新签名 | 变化 |
-|---|---|---|
-| `InputStream open(String fileRef)` | `InputStream open(FileId fileId)` | String → FileId |
-| - | `store(...)` | 新增 |
-| - | `exists(FileId)` | 新增 |
-| - | `copy(...)` 返回 `CopyResult(fileId, storageKey)` | 新增 |
-| - | `computeMd5(FileId)` | 新增 |
-| - | ~~`delete(FileId)`~~ | 不暴露（逻辑删除由 UseCase 完成） |
+| 原签名                             | 新签名                                            | 变化                              |
+|------------------------------------|---------------------------------------------------|-----------------------------------|
+| `InputStream open(String fileRef)` | `InputStream open(FileId fileId)`                 | String → FileId                   |
+| -                                  | `store(...)`                                      | 新增                              |
+| -                                  | `exists(FileId)`                                  | 新增                              |
+| -                                  | `copy(...)` 返回 `CopyResult(fileId, storageKey)` | 新增                              |
+| -                                  | `computeMd5(FileId)`                              | 新增                              |
+| -                                  | ~~`delete(FileId)`~~                              | 不暴露（逻辑删除由 UseCase 完成） |
 
 ### 3.2 StorageTargetResolver（独立 SPI）
 
@@ -433,13 +438,15 @@ public interface StorageTargetResolver {
 }
 ```
 
-**作用**：将 `FileUsage` → `StorageTarget` 的映射逻辑封装为独立 SPI，避免 `FileStorageGateway` 承担过多职责。实现位于 infrastructure 层，基于 `StorageTargetProperties` 配置。
+**作用**：将 `FileUsage` → `StorageTarget` 的映射逻辑封装为独立 SPI，避免 `FileStorageGateway` 承担过多职责。实现位于
+infrastructure 层，基于 `StorageTargetProperties` 配置。
 
 ### 3.3 应用用例
 
 #### 3.3.1 StoreFileUseCase（拆分为 createMetadata + store 两个方法）
 
 **设计理由**：
+
 - **业务交互分离**：createMetadata 由业务服务调用（短事务），store 由前端凭 token 调用（文件流事务）
 - **事务边界清晰**：元数据登记 + 文件流存储独立事务
 - **Token 机制契合**：createMetadata 后申请 token，前端凭 token 调 store
@@ -555,7 +562,8 @@ public class DeleteFileUseCase {
 
 #### 3.3.4 CopyFileUseCase（纳入 A 子项目）
 
-**设计说明**：copy 操作的物理文件复制由 `FileStorageGateway.copy()` 完成（内部生成新 storageKey）。但 `markUploaded` 需要 storageKey 入参——因此 `FileStorageGateway.copy()` 的返回值需要包含 storageKey（不只是 FileId）。
+**设计说明**：copy 操作的物理文件复制由 `FileStorageGateway.copy()` 完成（内部生成新 storageKey）。但 `markUploaded` 需要
+storageKey 入参——因此 `FileStorageGateway.copy()` 的返回值需要包含 storageKey（不只是 FileId）。
 
 **调整方案**：将 `FileStorageGateway.copy()` 返回值改为 `CopyResult` record，包含新 FileId 和新 storageKey。
 
@@ -663,21 +671,21 @@ try (InputStream stream = fileStorage.open(task.sourceFileId())) { ... }
 
 ### 3.7 应用用例清单
 
-| 用例 | 文件 | 用途 |
-|---|---|---|
-| `StoreFileUseCase` | `StoreFileUseCase.java` | 创建元数据 + 存储文件流 |
-| `OpenFileUseCase` | `OpenFileUseCase.java` | 打开文件流 + 查询元数据 |
-| `DeleteFileUseCase` | `DeleteFileUseCase.java` | 逻辑删除文件 |
-| `CopyFileUseCase` | `CopyFileUseCase.java` | 跨后端复制（D 子项目复用） |
+| 用例                | 文件                     | 用途                       |
+|---------------------|--------------------------|----------------------------|
+| `StoreFileUseCase`  | `StoreFileUseCase.java`  | 创建元数据 + 存储文件流    |
+| `OpenFileUseCase`   | `OpenFileUseCase.java`   | 打开文件流 + 查询元数据    |
+| `DeleteFileUseCase` | `DeleteFileUseCase.java` | 逻辑删除文件               |
+| `CopyFileUseCase`   | `CopyFileUseCase.java`   | 跨后端复制（D 子项目复用） |
 
 ### 3.8 关键决策表
 
-| 项目 | 决策 | 理由 |
-|---|---|---|
-| 文件删除 | 逻辑删除，SPI 不暴露 delete | 审计需要保留物理文件 |
-| StorageTargetResolver | 独立 SPI | 单一职责，避免 FileStorageGateway 过重 |
-| CopyFileUseCase | 纳入 A 子项目 | SPI 完整性，D 子项目复用 |
-| StoreFileUseCase | 拆分为 createMetadata + store | 业务交互分离，事务边界清晰，契合 Token 机制 |
+| 项目                  | 决策                          | 理由                                        |
+|-----------------------|-------------------------------|---------------------------------------------|
+| 文件删除              | 逻辑删除，SPI 不暴露 delete   | 审计需要保留物理文件                        |
+| StorageTargetResolver | 独立 SPI                      | 单一职责，避免 FileStorageGateway 过重      |
+| CopyFileUseCase       | 纳入 A 子项目                 | SPI 完整性，D 子项目复用                    |
+| StoreFileUseCase      | 拆分为 createMetadata + store | 业务交互分离，事务边界清晰，契合 Token 机制 |
 
 ---
 
@@ -786,11 +794,13 @@ file:
 ```
 
 **环境变量约定**：
+
 - `OSS_ENDPOINT`：私有化 OSS 地址
 - `OSS_AK` / `OSS_SK`：访问凭据
 - 生产环境通过 K8s Secret 或环境变量注入，不写入代码
 
 **本地开发 profile**（application-local.yml）：
+
 ```yaml
 file:
   storage:
@@ -875,6 +885,7 @@ COMMENT ON COLUMN t_file_metadata.version IS '乐观锁版本号';
 ```
 
 **SQL 文件位置**：
+
 - `file-service/file-infrastructure/src/main/resources/schema-pg.sql`（新建）
 
 ### 4.4 ParseTask 表结构变更
@@ -958,6 +969,7 @@ public interface FileMetadataMapper extends BaseMapper<FileMetadataDO> {
 ### 4.7 Converter 设计
 
 采用与 `ParseTaskConverter` 相同的模式：
+
 - `toDomain(DO)` → `default` 方法，手动调用 `FileMetadata.reconstitute(...)`
 - `toDO(FileMetadata)` → `default` 方法，手动构造 DO 并赋值
 - 枚举/ID 类型转换通过 `@Named` 辅助方法或 `expression = "java(...)"`
@@ -988,6 +1000,7 @@ public class StorageAutoConfiguration {
 ```
 
 **校验逻辑**（fail-fast）：
+
 - 校验 `routing.source/parsed/export/archive` 对应的 targetId 都存在
 - 校验 OSS 类型的 target 都有 endpoint + bucket + AK/SK
 - 校验 NAS 类型的 target 都有 bucket（共享名）+ basePath
@@ -1041,7 +1054,8 @@ public interface FileStorageBackend {
 ```
 
 **设计要点**：
-- 这是**基础设施层内部抽象**，不放到 domain 层（避免 domain 感知存储后端细节）
+
+- 这是 **基础设施层内部抽象**，不放到 domain 层（避免 domain 感知存储后端细节）
 - `supportedType()` 用于 Router 启动时建立 `Map<StorageType, FileStorageBackend>` 分发映射
 - 后端实现只关心 `StorageTarget` + `storageKey`，不感知 FileId/FileMetadata
 
@@ -1205,12 +1219,14 @@ public class AliyunOSSFileStorage implements FileStorageBackend, DisposableBean 
 ```
 
 **关键点**：
+
 - `@ConditionalOnClass` 确保未引入 OSS SDK 时不加载
 - OSS 客户端按 targetId 缓存
 - 大文件（>100MB）自动走分片上传
 - 实现 `DisposableBean` 在应用关闭时释放 OSS 连接
 
 **Maven 依赖**（file-infrastructure/pom.xml 新增）：
+
 ```xml
 <dependency>
     <groupId>com.aliyun.oss</groupId>
@@ -1264,7 +1280,8 @@ public class NASFileStorage implements FileStorageBackend {
 }
 ```
 
-**重构建议**：提取 `AbstractFileSystemFileStorage` 抽象基类，Local/NAS 继承，只覆写 `resolvePath` 和 `store`（NAS 需要原子 move）。
+**重构建议**：提取 `AbstractFileSystemFileStorage` 抽象基类，Local/NAS 继承，只覆写 `resolvePath` 和 `store`（NAS 需要原子
+move）。
 
 ### 5.6 FileStorageRouter 实现
 
@@ -1562,17 +1579,17 @@ public class StorageAutoConfiguration {
 
 ### 5.10 关键设计决策总结
 
-| 决策 | 选择 | 理由 |
-|---|---|---|
-| 后端抽象位置 | infra 层（非 domain） | domain 不感知存储后端细节 |
-| 后端分发机制 | `Map<StorageType, Backend>` + `@PostConstruct` | 启动时建立映射，O(1) 分发 |
-| OSS 客户端管理 | 按 targetId 缓存 + `DisposableBean` 关闭 | 避免重复创建，确保资源释放 |
-| 大文件处理 | >100MB 自动分片上传 | OSS 分片上传断点续传 |
-| storageKey 规范 | `{bizType}/{date}/{batchId}/{fileId}/{originalName}` | 按业务可读 + 日期分区 |
-| 跨后端 copy | 源读 + 目标写流 | 不依赖后端原生跨域复制 |
-| NAS 并发写入 | 临时文件 + atomic move | 多节点并发安全 |
-| NAS 路径 | 配置化 mountRoot | 适配不同部署环境 |
-| 配置校验 | fail-fast | 启动时发现配置错误，避免运行时崩溃 |
+| 决策            | 选择                                                 | 理由                               |
+|-----------------|------------------------------------------------------|------------------------------------|
+| 后端抽象位置    | infra 层（非 domain）                                | domain 不感知存储后端细节          |
+| 后端分发机制    | `Map<StorageType, Backend>` + `@PostConstruct`       | 启动时建立映射，O(1) 分发          |
+| OSS 客户端管理  | 按 targetId 缓存 + `DisposableBean` 关闭             | 避免重复创建，确保资源释放         |
+| 大文件处理      | >100MB 自动分片上传                                  | OSS 分片上传断点续传               |
+| storageKey 规范 | `{bizType}/{date}/{batchId}/{fileId}/{originalName}` | 按业务可读 + 日期分区              |
+| 跨后端 copy     | 源读 + 目标写流                                      | 不依赖后端原生跨域复制             |
+| NAS 并发写入    | 临时文件 + atomic move                               | 多节点并发安全                     |
+| NAS 路径        | 配置化 mountRoot                                     | 适配不同部署环境                   |
+| 配置校验        | fail-fast                                            | 启动时发现配置错误，避免运行时崩溃 |
 
 ---
 
@@ -1582,18 +1599,19 @@ public class StorageAutoConfiguration {
 
 通过 Grep 找到 6 个涉及 `sourceFileRef` 的文件：
 
-| 文件 | 层 | 影响点 |
-|---|---|---|
-| `ParseTask.java` | domain | 字段定义 + 构造函数 + getter |
-| `UploadFileCommand.java` | application | Command 字段 |
-| `UploadFileUseCase.java` | application | 创建 ParseTask 时传入 |
-| `ParseFileUseCase.java` | application | `fileStorage.open(task.sourceFileRef())` |
-| `ParseTaskConverter.java` | infrastructure | DO ↔ Domain 字段映射 |
-| `ParseTaskDO.java` | infrastructure | DO 字段 |
+| 文件                      | 层             | 影响点                                   |
+|---------------------------|----------------|------------------------------------------|
+| `ParseTask.java`          | domain         | 字段定义 + 构造函数 + getter             |
+| `UploadFileCommand.java`  | application    | Command 字段                             |
+| `UploadFileUseCase.java`  | application    | 创建 ParseTask 时传入                    |
+| `ParseFileUseCase.java`   | application    | `fileStorage.open(task.sourceFileRef())` |
+| `ParseTaskConverter.java` | infrastructure | DO ↔ Domain 字段映射                     |
+| `ParseTaskDO.java`        | infrastructure | DO 字段                                  |
 
 ### 6.2 字段迁移策略
 
 **字段更名 + 类型变更**：
+
 ```java
 // 旧
 private String sourceFileRef;
@@ -1603,6 +1621,7 @@ private FileId sourceFileId;
 ```
 
 **为什么改类型为 `FileId`**：
+
 - 与 §2 设计的 `FileMetadata` 聚合根建立引用关系
 - 强类型化，避免 magic string
 - SPI `FileStorageGateway.open(FileId)` 签名一致
@@ -1737,13 +1756,13 @@ CREATE INDEX IF NOT EXISTS idx_parse_task_source_file_id
 
 ### 6.10 向后兼容性分析
 
-| 场景 | 兼容性 | 处理 |
-|---|---|---|
-| 现有代码调用 `task.sourceFileRef()` | ❌ 编译失败 | 改为 `task.sourceFileId()` |
-| 现有代码调用 `ParseTask.create(..., String fileRef, ...)` | ❌ 编译失败 | 改为传 `FileId` |
-| 数据库历史数据 `source_file_ref` 字段值 | ⚠️ 数据丢失 | 用户已确认不迁移 |
-| 调用 `fileStorage.open(String)` | ❌ 编译失败 | SPI 签名已改 |
-| UploadFileApi 接口接收 `sourceFileRef: String` | ⚠️ API 不兼容 | 同步改 API DTO 为 `sourceFileId` |
+| 场景                                                      | 兼容性        | 处理                             |
+|-----------------------------------------------------------|---------------|----------------------------------|
+| 现有代码调用 `task.sourceFileRef()`                       | ❌ 编译失败   | 改为 `task.sourceFileId()`       |
+| 现有代码调用 `ParseTask.create(..., String fileRef, ...)` | ❌ 编译失败   | 改为传 `FileId`                  |
+| 数据库历史数据 `source_file_ref` 字段值                   | ⚠️ 数据丢失   | 用户已确认不迁移                 |
+| 调用 `fileStorage.open(String)`                           | ❌ 编译失败   | SPI 签名已改                     |
+| UploadFileApi 接口接收 `sourceFileRef: String`            | ⚠️ API 不兼容 | 同步改 API DTO 为 `sourceFileId` |
 
 ### 6.11 迁移步骤顺序
 
@@ -1760,6 +1779,7 @@ CREATE INDEX IF NOT EXISTS idx_parse_task_source_file_id
 ### 6.12 与 FileMetadata 的关联
 
 **完整引用链**：
+
 ```
 UploadFileCommand.sourceFileId (FileId)
     ↓
@@ -1775,9 +1795,12 @@ StorageTarget + FileStorageBackend
 物理存储
 ```
 
-**重要**：A 子项目里，`ParseTask` 创建时**不强制要求**对应的 `FileMetadata` 已存在。但 `ParseFileUseCase.execute()` 调用 `fileStorage.open(fileId)` 时，Router 会查询 `FileMetadata`，若不存在会抛 `FILE_METADATA_NOT_FOUND`。
+**重要**：A 子项目里，`ParseTask` 创建时 **不强制要求**对应的 `FileMetadata` 已存在。但 `ParseFileUseCase.execute()` 调用
+`fileStorage.open(fileId)` 时，Router 会查询 `FileMetadata`，若不存在会抛 `FILE_METADATA_NOT_FOUND`。
 
-**这意味着**：在 A 子项目完成后，调用方必须先调 `StoreFileUseCase.createMetadata()` 创建 FileMetadata，再调 `UploadFileUseCase.execute()` 创建 ParseTask，最后调 `ParseFileUseCase.execute()` 执行解析。**应用层编排保证**，domain 层不校验，做好日志记录即可。
+**这意味着**：在 A 子项目完成后，调用方必须先调 `StoreFileUseCase.createMetadata()` 创建 FileMetadata，再调
+`UploadFileUseCase.execute()` 创建 ParseTask，最后调 `ParseFileUseCase.execute()` 执行解析。 **应用层编排保证**，domain
+层不校验，做好日志记录即可。
 
 ---
 
@@ -1788,6 +1811,7 @@ StorageTarget + FileStorageBackend
 详见 §2.9。
 
 **错误码命名规范**：
+
 - 前缀 `FILE_` 表示文件服务
 - 中段表示模块（METADATA/STORAGE/DOWNLOAD）
 - 后段表示具体错误
@@ -1795,14 +1819,15 @@ StorageTarget + FileStorageBackend
 
 ### 7.2 异常分类与使用
 
-| 异常类型 | 使用场景 | 示例 |
-|---|---|---|
-| `DomainException` | 业务规则违反（domain 层抛出） | `FileMetadata.markUploaded()` 状态非法 |
-| `SystemException` | 系统级故障（infra 层抛出） | OSS 上传失败、文件 IO 错误 |
-| `IllegalArgumentException` | 编程错误（参数校验） | `null` 入参、空字符串 |
-| `IllegalStateException` | 启动配置错误 | `StorageTargetProperties` 校验失败 |
+| 异常类型                   | 使用场景                      | 示例                                   |
+|----------------------------|-------------------------------|----------------------------------------|
+| `DomainException`          | 业务规则违反（domain 层抛出） | `FileMetadata.markUploaded()` 状态非法 |
+| `SystemException`          | 系统级故障（infra 层抛出）    | OSS 上传失败、文件 IO 错误             |
+| `IllegalArgumentException` | 编程错误（参数校验）          | `null` 入参、空字符串                  |
+| `IllegalStateException`    | 启动配置错误                  | `StorageTargetProperties` 校验失败     |
 
 **关键原则**：
+
 - domain 层只抛 `DomainException`，不感知基础设施故障
 - infra 层捕获底层异常（IOException/OSSException）后包装为 `SystemException`
 - 应用层不捕获异常，让全局异常处理器统一处理
@@ -1870,6 +1895,7 @@ public void store(StorageTarget target, String storageKey,
 #### 7.5.1 Domain 层单元测试
 
 **FileMetadataTest**（新增）
+
 - `create_should_register_FileMetadataCreatedEvent`
 - `create_should_set_status_to_PENDING_UPLOAD`
 - `markUploaded_should_transition_to_UPLOADED`
@@ -1884,6 +1910,7 @@ public void store(StorageTarget target, String storageKey,
 - `reconstitute_should_restore_all_fields`
 
 **StorageTargetTest**（新增）
+
 - `constructor_should_validate_OSS_required_fields`
 - `constructor_should_validate_NAS_required_fields`
 - `constructor_should_validate_LOCAL_required_fields`
@@ -1892,6 +1919,7 @@ public void store(StorageTarget target, String storageKey,
 #### 7.5.2 Application 层单元测试
 
 **StoreFileUseCaseTest**（新增）
+
 - `createMetadata_should_save_and_publish_event`
 - `createMetadata_should_resolve_target_by_usage`
 - `store_should_call_storageGateway_store`
@@ -1900,23 +1928,27 @@ public void store(StorageTarget target, String storageKey,
 - `store_should_publish_FileUploadedEvent`
 
 **OpenFileUseCaseTest**（新增）
+
 - `open_should_return_inputstream_from_gateway`
 - `open_should_throw_when_file_is_deleted`
 - `open_should_throw_when_file_is_expired`
 - `loadMetadata_should_return_metadata`
 
 **DeleteFileUseCaseTest**（新增）
+
 - `delete_should_markDeleted_and_publish_event`
 - `delete_should_be_idempotent`
 - `delete_should_throw_when_file_not_found`
 
 **CopyFileUseCaseTest**（新增）
+
 - `copy_should_create_new_metadata_and_call_gateway_copy`
 - `copy_should_publish_FileMetadataCreatedEvent`
 
 #### 7.5.3 Infrastructure 层单元测试
 
 **LocalFileStorageTest**（新增，使用 `@TempDir`）
+
 - `store_should_write_file_to_local_path`
 - `store_should_create_parent_directories`
 - `open_should_return_readable_stream`
@@ -1926,10 +1958,12 @@ public void store(StorageTarget target, String storageKey,
 - `computeMd5_should_return_correct_md5`
 
 **NASFileStorageTest**（新增，使用 `@TempDir` 模拟 NAS 挂载）
+
 - 与 LocalFileStorageTest 类似
 - 额外：`store_should_use_atomic_move`
 
 **FileStorageRouterTest**（新增，Mock 后端）
+
 - `store_should_route_to_correct_backend_by_target_type`
 - `open_should_route_to_correct_backend`
 - `copy_should_use_same_backend_when_src_dst_type_match`
@@ -1938,6 +1972,7 @@ public void store(StorageTarget target, String storageKey,
 - `generateStorageKey_should_include_date_partition`
 
 **PropertiesBasedStorageTargetResolverTest**（新增）
+
 - `resolveByUsage_should_return_correct_target`
 - `resolveById_should_throw_when_target_not_found`
 - `validate_should_throw_when_routing_target_missing`
@@ -1946,21 +1981,25 @@ public void store(StorageTarget target, String storageKey,
 - `validate_should_pass_when_all_configs_valid`
 
 **FileMetadataConverterTest**（新增）
+
 - `toDO_should_convert_FileId_to_String`
 - `toDomain_should_convert_String_to_FileId`
 - `toDO_should_convert_enums_to_String`
 - `toDomain_should_convert_String_to_enums`
 
 **AliyunOSSFileStorageTest**（可选）
+
 - 集成测试覆盖即可，单元测试不强制
 
 #### 7.5.4 ParseTask 迁移回归测试
 
 **ParseTaskTest**（修改现有测试）
+
 - 字段从 `sourceFileRef: String` 改为 `sourceFileId: FileId`
 - 验证所有现有测试用例通过
 
 **ParseFlowIntegrationTest**（修改现有集成测试）
+
 - 验证完整解析流程仍能跑通
 - 入口从 `sourceFileRef` 改为 `sourceFileId`
 
@@ -2066,16 +2105,17 @@ file:
 
 ### 7.8 测试覆盖目标
 
-| 模块 | 目标覆盖率 | 关键路径覆盖 |
-|---|---|---|
-| file-domain (FileMetadata, StorageTarget) | 90%+ | 状态机、不变式 |
-| file-application (UseCase) | 85%+ | 编排流程、异常路径 |
-| file-infrastructure (Router, Backends) | 80%+ | 路由分发、后端操作 |
-| ParseTask 迁移 | 100% 回归 | 所有现有测试通过 |
+| 模块                                      | 目标覆盖率 | 关键路径覆盖       |
+|-------------------------------------------|------------|--------------------|
+| file-domain (FileMetadata, StorageTarget) | 90%+       | 状态机、不变式     |
+| file-application (UseCase)                | 85%+       | 编排流程、异常路径 |
+| file-infrastructure (Router, Backends)    | 80%+       | 路由分发、后端操作 |
+| ParseTask 迁移                            | 100% 回归  | 所有现有测试通过   |
 
 ### 7.9 测试数据管理
 
 **遵循项目规范**：
+
 - 测试输出到 `target/test-output/`（不写入源码目录）
 - 测试资源使用 `@TempDir` 或 `target/test-classes`
 - 测试方法使用 `@DisplayName` 描述目的
@@ -2084,23 +2124,23 @@ file:
 
 ### 7.10 关键测试场景清单
 
-| # | 场景 | 测试类 | 期望结果 |
-|---|---|---|---|
-| 1 | 创建文件元数据成功 | StoreFileUseCaseTest | fileId 返回，事件发布 |
-| 2 | 创建时 usage 路由正确 | StoreFileUseCaseTest | targetId 匹配配置 |
-| 3 | 存储文件流成功 | StoreFileUseCaseTest | status=UPLOADED, md5 非空 |
-| 4 | 重复上传抛异常 | StoreFileUseCaseTest | FILE_ALREADY_UPLOADED |
-| 5 | 打开已删除文件抛异常 | OpenFileUseCaseTest | FILE_METADATA_NOT_FOUND |
-| 6 | 打开已过期文件抛异常 | OpenFileUseCaseTest | FILE_EXPIRED |
-| 7 | 删除已删除文件幂等 | DeleteFileUseCaseTest | 不抛异常 |
-| 8 | 路由到正确后端 | FileStorageRouterTest | LOCAL/OSS/NAS 各自调用 |
-| 9 | 跨后端复制成功 | FileStorageRouterTest | 新 FileId 生成 |
-| 10 | storageKey 含日期分区 | FileStorageRouterTest | 路径包含 `2026-07-19` |
-| 11 | 配置校验 fail-fast | PropertiesBasedStorageTargetResolverTest | 启动抛 IllegalStateException |
-| 12 | OSS 缺 endpoint 启动失败 | PropertiesBasedStorageTargetResolverTest | 异常消息含 "endpoint" |
-| 13 | 完整生命周期 | StorageIntegrationTest | 创建→存储→打开→删除全部通过 |
-| 14 | ParseTask 迁移回归 | ParseTaskTest | 所有现有测试通过 |
-| 15 | 解析流程集成回归 | ParseFlowIntegrationTest | 完整解析链路通过 |
+| #  | 场景                     | 测试类                                   | 期望结果                     |
+|----|--------------------------|------------------------------------------|------------------------------|
+| 1  | 创建文件元数据成功       | StoreFileUseCaseTest                     | fileId 返回，事件发布        |
+| 2  | 创建时 usage 路由正确    | StoreFileUseCaseTest                     | targetId 匹配配置            |
+| 3  | 存储文件流成功           | StoreFileUseCaseTest                     | status=UPLOADED, md5 非空    |
+| 4  | 重复上传抛异常           | StoreFileUseCaseTest                     | FILE_ALREADY_UPLOADED        |
+| 5  | 打开已删除文件抛异常     | OpenFileUseCaseTest                      | FILE_METADATA_NOT_FOUND      |
+| 6  | 打开已过期文件抛异常     | OpenFileUseCaseTest                      | FILE_EXPIRED                 |
+| 7  | 删除已删除文件幂等       | DeleteFileUseCaseTest                    | 不抛异常                     |
+| 8  | 路由到正确后端           | FileStorageRouterTest                    | LOCAL/OSS/NAS 各自调用       |
+| 9  | 跨后端复制成功           | FileStorageRouterTest                    | 新 FileId 生成               |
+| 10 | storageKey 含日期分区    | FileStorageRouterTest                    | 路径包含 `2026-07-19`        |
+| 11 | 配置校验 fail-fast       | PropertiesBasedStorageTargetResolverTest | 启动抛 IllegalStateException |
+| 12 | OSS 缺 endpoint 启动失败 | PropertiesBasedStorageTargetResolverTest | 异常消息含 "endpoint"        |
+| 13 | 完整生命周期             | StorageIntegrationTest                   | 创建→存储→打开→删除全部通过  |
+| 14 | ParseTask 迁移回归       | ParseTaskTest                            | 所有现有测试通过             |
+| 15 | 解析流程集成回归         | ParseFlowIntegrationTest                 | 完整解析链路通过             |
 
 ### 7.11 测试依赖
 

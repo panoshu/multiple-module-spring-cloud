@@ -1,12 +1,12 @@
 package com.example.shared.exception;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * {@link CommonError} 通用错误码契约测试。
@@ -37,27 +37,27 @@ class CommonErrorTest {
     @EnumSource(CommonError.class)
     @DisplayName("所有错误码必须匹配层级字符串格式 COMMON.XXXX")
     void codeShouldBeFiveDigits(CommonError error) {
-      assertThat(error.code())
-          .as("%s 的 code 必须匹配层级字符串格式 COMMON.XXXX", error.name())
-          .matches(CODE_PATTERN);
+      assertThat(error.getCode())
+        .as("%s 的 code 必须匹配层级字符串格式 COMMON.XXXX", error.name())
+        .matches(CODE_PATTERN);
     }
 
     @ParameterizedTest(name = "{0} 的 message 禁止使用占位符")
     @EnumSource(CommonError.class)
     @DisplayName("所有消息禁止使用占位符")
     void messageShouldNotContainPlaceholder(CommonError error) {
-      assertThat(error.message())
-          .as("%s 的 message 禁止包含占位符", error.name())
-          .doesNotContain("{}");
+      assertThat(error.getMessage())
+        .as("%s 的 message 禁止包含占位符", error.name())
+        .doesNotContain("{}");
     }
 
     @ParameterizedTest(name = "{0} 的 message 禁止使用方括号前缀")
     @EnumSource(CommonError.class)
     @DisplayName("所有消息禁止使用方括号前缀")
     void messageShouldNotContainBracketPrefix(CommonError error) {
-      assertThat(error.message())
-          .as("%s 的 message 禁止以方括号开头", error.name())
-          .doesNotStartWith("[");
+      assertThat(error.getMessage())
+        .as("%s 的 message 禁止以方括号开头", error.name())
+        .doesNotStartWith("[");
     }
   }
 
@@ -68,30 +68,30 @@ class CommonErrorTest {
     @Test
     @DisplayName("SUCCESS 必须为 COMMON.0000")
     void successCodeShouldBeZero() {
-      assertThat(CommonError.SUCCESS.code()).isEqualTo("COMMON.0000");
+      assertThat(CommonError.SUCCESS.getCode()).isEqualTo("COMMON.0000");
     }
 
     @Test
     @DisplayName("4xx 系列错误码应落在 COMMON.0001-COMMON.0049 段")
     void clientErrorCodesShouldBeIn4xxSegment() {
-      assertThat(CommonError.BAD_REQUEST.code()).isEqualTo("COMMON.0001");
-      assertThat(CommonError.UNAUTHORIZED.code()).isEqualTo("COMMON.0002");
-      assertThat(CommonError.FORBIDDEN.code()).isEqualTo("COMMON.0003");
-      assertThat(CommonError.NOT_FOUND.code()).isEqualTo("COMMON.0004");
-      assertThat(CommonError.METHOD_NOT_ALLOWED.code()).isEqualTo("COMMON.0005");
-      assertThat(CommonError.TOO_MANY_REQUESTS.code()).isEqualTo("COMMON.0006");
+      assertThat(CommonError.BAD_REQUEST.getCode()).isEqualTo("COMMON.0001");
+      assertThat(CommonError.UNAUTHORIZED.getCode()).isEqualTo("COMMON.0002");
+      assertThat(CommonError.FORBIDDEN.getCode()).isEqualTo("COMMON.0003");
+      assertThat(CommonError.NOT_FOUND.getCode()).isEqualTo("COMMON.0004");
+      assertThat(CommonError.METHOD_NOT_ALLOWED.getCode()).isEqualTo("COMMON.0005");
+      assertThat(CommonError.TOO_MANY_REQUESTS.getCode()).isEqualTo("COMMON.0006");
     }
 
     @Test
     @DisplayName("5xx 系列错误码应落在 COMMON.0050-COMMON.0099 段")
     void serverErrorCodesShouldBeIn5xxSegment() {
-      assertThat(CommonError.INTERNAL_SERVER_ERROR.code()).isEqualTo("COMMON.0050");
-      assertThat(CommonError.SERVICE_DEGRADATION.code()).isEqualTo("COMMON.0051");
-      assertThat(CommonError.REMOTE_SERVICE_ERROR.code()).isEqualTo("COMMON.0052");
-      assertThat(CommonError.NETWORK_ERROR.code()).isEqualTo("COMMON.0053");
-      assertThat(CommonError.CONCURRENCY_ERROR.code()).isEqualTo("COMMON.0054");
-      assertThat(CommonError.TIMEOUT_ERROR.code()).isEqualTo("COMMON.0055");
-      assertThat(CommonError.UNKNOWN_ERROR.code()).isEqualTo("COMMON.0099");
+      assertThat(CommonError.INTERNAL_SERVER_ERROR.getCode()).isEqualTo("COMMON.0050");
+      assertThat(CommonError.SERVICE_DEGRADATION.getCode()).isEqualTo("COMMON.0051");
+      assertThat(CommonError.REMOTE_SERVICE_ERROR.getCode()).isEqualTo("COMMON.0052");
+      assertThat(CommonError.NETWORK_ERROR.getCode()).isEqualTo("COMMON.0053");
+      assertThat(CommonError.CONCURRENCY_ERROR.getCode()).isEqualTo("COMMON.0054");
+      assertThat(CommonError.TIMEOUT_ERROR.getCode()).isEqualTo("COMMON.0055");
+      assertThat(CommonError.UNKNOWN_ERROR.getCode()).isEqualTo("COMMON.0099");
     }
   }
 
@@ -103,9 +103,9 @@ class CommonErrorTest {
     @DisplayName("UNKNOWN_ERROR 常量必须存在，修正历史 UNKNOW_ERROR 拼写错误")
     void unknownErrorConstantShouldExist() {
       assertThat(CommonError.UNKNOWN_ERROR)
-          .as("UNKNOW_ERROR 已被修正为 UNKNOWN_ERROR")
-          .isNotNull();
-      assertThat(CommonError.UNKNOWN_ERROR.code()).isEqualTo("COMMON.0099");
+        .as("UNKNOW_ERROR 已被修正为 UNKNOWN_ERROR")
+        .isNotNull();
+      assertThat(CommonError.UNKNOWN_ERROR.getCode()).isEqualTo("COMMON.0099");
     }
   }
 
@@ -124,9 +124,9 @@ class CommonErrorTest {
     @DisplayName("message() 必须返回构造时传入的消息，不能返回空字符串")
     void messageShouldNotBeEmpty() {
       for (CommonError error : CommonError.values()) {
-        assertThat(error.message())
-            .as("%s 的 message 不能为空", error.name())
-            .isNotBlank();
+        assertThat(error.getMessage())
+          .as("%s 的 message 不能为空", error.name())
+          .isNotBlank();
       }
     }
   }

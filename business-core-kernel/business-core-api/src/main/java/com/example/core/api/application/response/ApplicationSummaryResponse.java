@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
  * @author panoshu
  */
 public record ApplicationSummaryResponse(
-    String applicationId,
-    String batchId,
-    String status,
-    String currentStep,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt
+  String applicationId,
+  String batchId,
+  String status,
+  String currentStep,
+  LocalDateTime createdAt,
+  LocalDateTime updatedAt
 ) {
 }

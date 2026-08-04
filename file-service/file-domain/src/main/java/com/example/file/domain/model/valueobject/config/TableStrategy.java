@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 
 public record TableStrategy(
-    int headerRows,
-    int headerNameRow,
-    TableMatchBy matchBy,
-    Map<String, List<String>> headerAliases,
-    HeaderMatching headerMatching,
-    int maxRows,
-    DataEndRule dataEnd
+  int headerRows,
+  int headerNameRow,
+  TableMatchBy matchBy,
+  Map<String, List<String>> headerAliases,
+  HeaderMatching headerMatching,
+  int maxRows,
+  DataEndRule dataEnd
 ) implements RegionStrategy, ValueObject {
   public TableStrategy {
     if (headerRows <= 0) headerRows = 1;

@@ -1,6 +1,6 @@
 package com.example.approval.types;
 
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.Identifier;
 
 /**
  * 审批记录ID

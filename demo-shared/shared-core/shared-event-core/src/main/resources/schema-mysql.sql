@@ -11,38 +11,92 @@
 -- -----------------------------------------------------------------------------
 -- 1. 领域事件存储表
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sys_event_store` (
-  `event_id`            VARCHAR(64)   NOT NULL                          COMMENT '事件ID（EventId，主键）',
-  `event_type`          VARCHAR(255)  NOT NULL                          COMMENT '领域事件类型名',
-  `integration_type`    VARCHAR(64)   DEFAULT NULL                      COMMENT '集成事件类型名（NULL 表示无集成事件）',
-  `occurred_on`         TIMESTAMP     NOT NULL                          COMMENT '事件发生时间',
-  `domain_payload`      TEXT          NOT NULL                          COMMENT '领域事件 JSON 序列化内容',
-  `integration_payload` TEXT          DEFAULT NULL                      COMMENT '集成事件 JSON 序列化内容（NULL 表示无集成事件）',
-  `created_at`          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP         COMMENT '记录创建时间',
-
-  PRIMARY KEY (`event_id`),
-  KEY `idx_sys_event_store_event_type`     (`event_type`),
-  KEY `idx_sys_event_store_occurred_on`    (`occurred_on`),
-  KEY `idx_sys_event_store_integration`    (`integration_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='领域事件存储表';
+CREATE TABLE IF NOT EXISTS `sys_event_store`
+(
+  `event_id`
+  VARCHAR
+(
+  64
+) NOT NULL COMMENT '事件ID（EventId，主键）',
+  `event_type` VARCHAR
+(
+  255
+) NOT NULL COMMENT '领域事件类型名',
+  `integration_type` VARCHAR
+(
+  64
+) DEFAULT NULL COMMENT '集成事件类型名（NULL 表示无集成事件）',
+  `occurred_on` TIMESTAMP NOT NULL COMMENT '事件发生时间',
+  `domain_payload` TEXT NOT NULL COMMENT '领域事件 JSON 序列化内容',
+  `integration_payload` TEXT DEFAULT NULL COMMENT '集成事件 JSON 序列化内容（NULL 表示无集成事件）',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+  PRIMARY KEY
+(
+  `event_id`
+),
+  KEY `idx_sys_event_store_event_type`
+(
+  `event_type`
+),
+  KEY `idx_sys_event_store_occurred_on`
+(
+  `occurred_on`
+),
+  KEY `idx_sys_event_store_integration`
+(
+  `integration_type`
+)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='领域事件存储表';
 
 -- -----------------------------------------------------------------------------
 -- 2. 事件分发日志表（记录每个事件在各通道的分发状态，支持补偿重试）
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sys_event_dispatch_log` (
-  `id`              BIGINT       NOT NULL AUTO_INCREMENT                COMMENT '自增主键（技术日志表，非业务表）',
-  `event_id`        VARCHAR(64)  NOT NULL                               COMMENT '关联事件ID',
-  `channel`         VARCHAR(100) NOT NULL                               COMMENT '分发通道: SPRING/REDIS/ROCKETMQ',
-  `status`          VARCHAR(20)  NOT NULL                               COMMENT '分发状态: PENDING/SUCCESS/FAILED',
-  `error_msg`       TEXT         DEFAULT NULL                           COMMENT '失败错误信息（最多 500 字符）',
-  `retry_count`     INT          DEFAULT 0                              COMMENT '已重试次数（上限 10）',
-  `next_retry_at`   TIMESTAMP    NULL DEFAULT NULL                      COMMENT '下次重试时间',
-  `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP              COMMENT '记录创建时间',
-  `updated_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
-
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_event_channel` (`event_id`, `channel`),
-  KEY `idx_sys_event_dispatch_log_status`       (`status`),
-  KEY `idx_sys_event_dispatch_log_next_retry`   (`next_retry_at`),
-  KEY `idx_sys_event_dispatch_log_retry_count`  (`retry_count`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='事件分发日志表';
+CREATE TABLE IF NOT EXISTS `sys_event_dispatch_log`
+(
+  `id`
+  BIGINT
+  NOT
+  NULL
+  AUTO_INCREMENT
+  COMMENT
+  '自增主键（技术日志表，非业务表）',
+  `event_id`
+  VARCHAR
+(
+  64
+) NOT NULL COMMENT '关联事件ID',
+  `channel` VARCHAR
+(
+  100
+) NOT NULL COMMENT '分发通道: SPRING/REDIS/ROCKETMQ',
+  `status` VARCHAR
+(
+  20
+) NOT NULL COMMENT '分发状态: PENDING/SUCCESS/FAILED',
+  `error_msg` TEXT DEFAULT NULL COMMENT '失败错误信息（最多 500 字符）',
+  `retry_count` INT DEFAULT 0 COMMENT '已重试次数（上限 10）',
+  `next_retry_at` TIMESTAMP NULL DEFAULT NULL COMMENT '下次重试时间',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
+  PRIMARY KEY
+(
+  `id`
+),
+  UNIQUE KEY `uq_event_channel`
+(
+  `event_id`,
+  `channel`
+),
+  KEY `idx_sys_event_dispatch_log_status`
+(
+  `status`
+),
+  KEY `idx_sys_event_dispatch_log_next_retry`
+(
+  `next_retry_at`
+),
+  KEY `idx_sys_event_dispatch_log_retry_count`
+(
+  `retry_count`
+)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='事件分发日志表';

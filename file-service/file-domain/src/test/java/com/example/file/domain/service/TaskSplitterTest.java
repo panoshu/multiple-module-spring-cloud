@@ -17,15 +17,15 @@ class TaskSplitterTest {
   @SuppressWarnings("unchecked")
   void should_split_table_rows_by_business_key() {
     SplitConfig config = new SplitConfig(
-        List.of(),
-        new SplitKeyDef("applicant", "items.applicant", SplitKeyType.FIELD_VALUE),
-        null, null, null, false, 0);
+      List.of(),
+      new SplitKeyDef("applicant", "items.applicant", SplitKeyType.FIELD_VALUE),
+      null, null, null, false, 0);
     Map<String, Object> data = Map.of(
-        "applicant", "张三",
-        "items", List.of(
-            Map.of("code", "A1", "applicant", "张三", "qty", 1),
-            Map.of("code", "A2", "applicant", "李四", "qty", 2),
-            Map.of("code", "A3", "applicant", "张三", "qty", 3)));
+      "applicant", "张三",
+      "items", List.of(
+        Map.of("code", "A1", "applicant", "张三", "qty", 1),
+        Map.of("code", "A2", "applicant", "李四", "qty", 2),
+        Map.of("code", "A3", "applicant", "张三", "qty", 3)));
     TaskSplitter splitter = new TaskSplitter();
 
     List<SplitUnit> units = splitter.split(data, config);

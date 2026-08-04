@@ -1,0 +1,134 @@
+package com.pension.permission.application.channel;
+
+import com.example.shared.annuity.AnnuityChannel;
+import com.example.shared.domain.event.EventBus;
+import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.id.UserNo;
+import com.pension.permission.domain.channel.spi.LoginTokenService;
+import com.pension.permission.domain.channel.aggregate.Session;
+import com.pension.permission.domain.channel.repository.SessionRepository;
+import com.pension.permission.domain.channel.service.IdentityResolutionService;
+import com.pension.permission.domain.channel.service.PlanSelectionStrategy;
+import com.pension.permission.domain.channel.service.SecondaryAuthService;
+import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
+import com.pension.permission.domain.channel.valueobject.SelectablePlanScope;
+import com.pension.permission.types.SessionId;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.util.Map;
+
+/**
+ * 会话用例的编排入口：开会话(直接给AccountId / 用凭证登录)、网点二次授权(身份提升)、
+ * 选计划、查可选计划范围、登出。
+ * <p>
+ * 凭证校验+身份定位全部委托给IdentityResolutionService(网上/总部/网点柜员登录、
+ * 网点二次授权四个场景共用同一个方法)，这一层不重复任何校验逻辑，只负责把结果
+ * 包装成Session或EffectiveIdentity，以及事务边界。
+ * <p>
+ * Session的id直接就是LoginTokenService签发的token值本身——两者合一，
+ * 这样"给一个token找到对应会话"不需要额外的映射表：
+ * sessionRepository.findById(new SessionId(token)) 就是全部逻辑。
+ */
+@Service
+@RequiredArgsConstructor
+public class SessionApplicationService {
+
+  private final SessionRepository sessionRepository;
+  private final IdentityResolutionService identityResolutionService;
+  private final SecondaryAuthService secondaryAuthService;
+  private final LoginTokenService loginTokenService;
+  private final Map<AnnuityChannel, PlanSelectionStrategy> strategiesByChannel;
+  private final IdService  idService;
+  private final EventBus eventBus;
+
+  /**
+   * AccountId已经确定的场景下直接建会话(比如身份已经由别的前置步骤确认过)
+   */
+  @Transactional
+  public SessionId openSession(OpenSessionCommand command) {
+    return buildSession(command.accountId(), command.channel());
+  }
+
+  /**
+   * 用凭证登录：账号级凭证(密码/个人UKey)校验通过就是账号本身；
+   * 客户/计划级凭证(企业UKey)校验通过后还要靠手机号定位到具体经办。
+   * 网上渠道经办登录、网点柜员登录都走这个方法。
+   */
+  @Transactional
+  public SessionId openSessionWithCredential(OpenSessionWithCredentialCommand command) {
+    UserNo accountId = identityResolutionService.resolve(
+        command.credentialOwner(), command.channel(), command.proof(), command.phoneNumber())
+      .orElseThrow(() -> new SecurityException("登录失败：凭证校验不通过，或无法定位到有效经办"));
+    return buildSession(accountId, command.channel());
+  }
+
+  private SessionId buildSession(UserNo accountId, AnnuityChannel channel) {
+    String token = loginTokenService.issueToken(accountId, channel);
+    Session session = Session.create(
+      idService.nextId(SessionId.class),
+      accountId,
+      accountId,
+      channel,
+      EffectiveIdentity.direct(accountId),
+      Duration.ofHours(8)
+    );
+    sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
+
+    return session.id();
+  }
+
+  @Transactional
+  public void logout(LogoutCommand command) {
+    Session session = requireSession(command.sessionId());
+    session.close(command.operator());
+    sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
+
+    loginTokenService.invalidateToken(command.sessionId().value());
+    // Session记录本身可以留给自然过期/定期清理，不强制在这里同步删除，
+    // 避免把"登出"这个轻量操作也绑进数据库事务。
+  }
+
+  /**
+   * 网点渠道二次授权：柜员用凭证(经办本人的，或客户/计划级企业UKey+经办手机号)
+   * 完成身份提升，会话的有效身份变成解析出来的经办，同时保留柜员本人作为acting账号。
+   */
+  @Transactional
+  public void performSecondaryAuth(SecondaryAuthCommand command) {
+    Session session = requireSession(command.sessionId());
+
+    EffectiveIdentity elevated = secondaryAuthService.elevate(
+      session.primaryAccountId(), command.credentialOwner(),
+      command.proof(), command.phoneNumber());
+
+    session.elevateIdentity(elevated, command.operator());
+    sessionRepository.save(session);
+
+    session.domainEvents().forEach(eventBus::publish);
+  }
+
+  public SelectablePlanScope listSelectablePlans(SessionId sessionId) {
+    Session session = requireSession(sessionId);
+    PlanSelectionStrategy strategy = strategiesByChannel.get(session.channel());
+    if (strategy == null) {
+      throw new IllegalStateException("该渠道未注册对应的计划选择策略: " + session.channel());
+    }
+    return strategy.listSelectablePlans(session.effectiveIdentity());
+  }
+
+  @Transactional
+  public void selectPlan(SelectPlanCommand command) {
+    Session session = requireSession(command.sessionId());
+    session.selectPlan(command.planId(), command.operator());
+    sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
+  }
+
+  private Session requireSession(SessionId id) {
+    return sessionRepository.loadOrThrow(id);
+  }
+}

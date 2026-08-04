@@ -23,9 +23,7 @@ import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link SaTokenGatewayConfiguration} sa-token 网关配置单元测试。
@@ -71,14 +69,14 @@ class SaTokenGatewayConfigurationTest {
 
   private void invokeApplyRuleCheck(RouteRule rule, ChannelType channel, StpLogic logic) throws Exception {
     Method method = SaTokenGatewayConfiguration.class.getDeclaredMethod(
-        "applyRuleCheck", RouteRule.class, ChannelType.class, StpLogic.class);
+      "applyRuleCheck", RouteRule.class, ChannelType.class, StpLogic.class);
     method.setAccessible(true);
     method.invoke(configuration, rule, channel, logic);
   }
 
   private void invokeCheckChannel(ChannelType current, String checkValue) throws Exception {
     Method method = SaTokenGatewayConfiguration.class.getDeclaredMethod(
-        "checkChannel", ChannelType.class, String.class);
+      "checkChannel", ChannelType.class, String.class);
     method.setAccessible(true);
     method.invoke(configuration, current, checkValue);
   }
@@ -203,8 +201,8 @@ class SaTokenGatewayConfigurationTest {
       when(stpLogic.getLoginType()).thenReturn("internet");
 
       assertThatThrownBy(() -> invokeCheckChannel(ChannelType.INTERNET, "HQ"))
-          .isInstanceOf(InvocationTargetException.class)
-          .hasCauseInstanceOf(NotPermissionException.class);
+        .isInstanceOf(InvocationTargetException.class)
+        .hasCauseInstanceOf(NotPermissionException.class);
     }
 
     @Test
@@ -265,8 +263,8 @@ class SaTokenGatewayConfigurationTest {
       RouteRule rule = new RouteRule("/internet/**", "CHANNEL", "HQ", 100);
 
       assertThatThrownBy(() -> invokeApplyRuleCheck(rule, ChannelType.INTERNET, stpLogic))
-          .isInstanceOf(InvocationTargetException.class)
-          .hasCauseInstanceOf(NotPermissionException.class);
+        .isInstanceOf(InvocationTargetException.class)
+        .hasCauseInstanceOf(NotPermissionException.class);
     }
 
     @Test

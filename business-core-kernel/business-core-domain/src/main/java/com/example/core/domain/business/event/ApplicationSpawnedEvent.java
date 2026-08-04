@@ -1,8 +1,8 @@
 package com.example.core.domain.business.event;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.EventId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.EventId;
 
 import java.time.LocalDateTime;
 

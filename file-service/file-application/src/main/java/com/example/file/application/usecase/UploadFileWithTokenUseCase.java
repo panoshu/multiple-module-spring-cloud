@@ -12,7 +12,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
 import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,86 +46,86 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadFileWithTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final FileTokenService tokenService;
-    private final FileStorageGateway storageGateway;
-    private final FileAccessLogWriter fileAccessLogWriter;
+  private final FileMetadataRepository metadataRepository;
+  private final FileTokenService tokenService;
+  private final FileStorageGateway storageGateway;
+  private final FileAccessLogWriter fileAccessLogWriter;
 
-    @Transactional
-    public FileId upload(String token, SessionUser session, MultipartFile file, String clientIp) {
-        // 1. 先解密 token 获取 payload（不消费）
-        FileTokenPayload payload;
-        try {
-            payload = tokenService.decrypt(token);
-        } catch (SystemException e) {
-            // 解密失败：无 fileId 可用，仅记录日志，无法写审计流水
-            log.warn("上传 Token 解密失败, 无法记录审计日志: tokenHash={}, error={}",
-                TokenHashUtil.sha256(token), e.getMessage());
-            throw e;
-        }
-
-        FileId fileId = payload.fileId();
-
-        // 2. load FileMetadata + 3. 文件类型/大小校验 + 4. 完整校验并消费 token
-        FileMetadata meta;
-        try {
-            meta = metadataRepository.loadOrThrow(fileId);
-            validateUploadFileConstraints(payload, file);
-            tokenService.verifyAndConsumeUploadToken(token, session, meta);
-        } catch (SystemException | DomainException e) {
-            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw e;
-        }
-
-        // 5. 存储文件 + 6. completeUpload
-        try {
-            StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
-            meta.completeUpload(
-                file.getOriginalFilename(), file.getSize(), file.getContentType(),
-                result.storageKey(), result.digest()
-            );
-            metadataRepository.save(meta);
-            fileAccessLogWriter.writeAccessLogSuccess(meta, session, clientIp, token);
-            log.info("文件已通过 Token 上传: fileId={}, storageKey={}", meta.id(), result.storageKey());
-            return meta.id();
-        } catch (IOException e) {
-            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
-        } catch (DomainException | SystemException e) {
-            // 业务异常透传，避免丢失原始错误码语义，但需写 FAIL 流水
-            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw e;
-        } catch (RuntimeException e) {
-            // 其他未预期异常包装为存储失败
-            fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
-            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
-        }
+  @Transactional
+  public FileId upload(String token, SessionUser session, MultipartFile file, String clientIp) {
+    // 1. 先解密 token 获取 payload（不消费）
+    FileTokenPayload payload;
+    try {
+      payload = tokenService.decrypt(token);
+    } catch (SystemException e) {
+      // 解密失败：无 fileId 可用，仅记录日志，无法写审计流水
+      log.warn("上传 Token 解密失败, 无法记录审计日志: tokenHash={}, error={}",
+        TokenHashUtil.sha256(token), e.getMessage());
+      throw e;
     }
 
-    /**
-     * 校验上传文件的类型和大小是否符合 token payload 中的配置。
-     * <p>
-     * 校验在 {@code verifyAndConsumeUploadToken}（含 markUsed）之前执行，
-     * 校验失败时 token 不会被消费，用户可修正文件后重新申请或重试。
-     * <p>
-     * 当 {@code allowedContentTypes}/{@code allowedMaxSize} 为 null 时跳过对应校验
-     * （下载 token 场景；上传 token 正常情况下两者均非空）。
-     */
-    private void validateUploadFileConstraints(FileTokenPayload payload, MultipartFile file) {
-        List<String> allowedTypes = payload.allowedContentTypes();
-        if (allowedTypes != null && !allowedTypes.isEmpty()) {
-            String contentType = file.getContentType();
-            if (contentType == null || !allowedTypes.contains(contentType)) {
-                throw new SystemException(FileErrorCodes.FILE_CONTENT_TYPE_NOT_ALLOWED)
-                    .withLogDetail("fileId=" + payload.fileId() + ", contentType=" + contentType);
-            }
-        }
-        Long allowedMaxSize = payload.allowedMaxSize();
-        if (allowedMaxSize != null && file.getSize() > allowedMaxSize) {
-            throw new SystemException(FileErrorCodes.FILE_SIZE_EXCEEDED)
-                .withLogDetail("fileId=" + payload.fileId() + ", size=" + file.getSize() + ", max=" + allowedMaxSize);
-        }
+    FileId fileId = payload.fileId();
+
+    // 2. load FileMetadata + 3. 文件类型/大小校验 + 4. 完整校验并消费 token
+    FileMetadata meta;
+    try {
+      meta = metadataRepository.loadOrThrow(fileId);
+      validateUploadFileConstraints(payload, file);
+      tokenService.verifyAndConsumeUploadToken(token, session, meta);
+    } catch (SystemException | DomainException e) {
+      fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+      throw e;
     }
+
+    // 5. 存储文件 + 6. completeUpload
+    try {
+      StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
+      meta.completeUpload(
+        file.getOriginalFilename(), file.getSize(), file.getContentType(),
+        result.storageKey(), result.digest()
+      );
+      metadataRepository.save(meta);
+      fileAccessLogWriter.writeAccessLogSuccess(meta, session, clientIp, token);
+      log.info("文件已通过 Token 上传: fileId={}, storageKey={}", meta.id(), result.storageKey());
+      return meta.id();
+    } catch (IOException e) {
+      fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+      throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
+        .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
+    } catch (DomainException | SystemException e) {
+      // 业务异常透传，避免丢失原始错误码语义，但需写 FAIL 流水
+      fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+      throw e;
+    } catch (RuntimeException e) {
+      // 其他未预期异常包装为存储失败
+      fileAccessLogWriter.writeAccessLogFailed(fileId, payload, session, clientIp, token, e.getMessage());
+      throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
+        .withLogDetail("fileId=" + fileId + ", error=" + e.getMessage());
+    }
+  }
+
+  /**
+   * 校验上传文件的类型和大小是否符合 token payload 中的配置。
+   * <p>
+   * 校验在 {@code verifyAndConsumeUploadToken}（含 markUsed）之前执行，
+   * 校验失败时 token 不会被消费，用户可修正文件后重新申请或重试。
+   * <p>
+   * 当 {@code allowedContentTypes}/{@code allowedMaxSize} 为 null 时跳过对应校验
+   * （下载 token 场景；上传 token 正常情况下两者均非空）。
+   */
+  private void validateUploadFileConstraints(FileTokenPayload payload, MultipartFile file) {
+    List<String> allowedTypes = payload.allowedContentTypes();
+    if (allowedTypes != null && !allowedTypes.isEmpty()) {
+      String contentType = file.getContentType();
+      if (contentType == null || !allowedTypes.contains(contentType)) {
+        throw new SystemException(FileErrorCodes.FILE_CONTENT_TYPE_NOT_ALLOWED)
+          .withLogDetail("fileId=" + payload.fileId() + ", contentType=" + contentType);
+      }
+    }
+    Long allowedMaxSize = payload.allowedMaxSize();
+    if (allowedMaxSize != null && file.getSize() > allowedMaxSize) {
+      throw new SystemException(FileErrorCodes.FILE_SIZE_EXCEEDED)
+        .withLogDetail("fileId=" + payload.fileId() + ", size=" + file.getSize() + ", max=" + allowedMaxSize);
+    }
+  }
 }

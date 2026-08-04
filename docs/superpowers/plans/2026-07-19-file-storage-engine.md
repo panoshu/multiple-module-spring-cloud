@@ -1,12 +1,17 @@
 # file-service 文件存储引擎 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 在 file-service 内部建立完整的文件存储子域，提供 FileMetadata 聚合根 + 多后端存储（Local/OSS/NAS）+ Router 路由，并迁移 ParseTask 的 sourceFileRef → sourceFileId。
+**Goal:** 在 file-service 内部建立完整的文件存储子域，提供 FileMetadata 聚合根 + 多后端存储（Local/OSS/NAS）+ Router 路由，并迁移
+ParseTask 的 sourceFileRef → sourceFileId。
 
-**Architecture:** DDD 七层架构。domain 层定义 FileMetadata 聚合根 + StorageTarget 值对象 + FileStorageGateway/StorageTargetResolver 两个 SPI；infrastructure 层实现 3 个存储后端 + FileStorageRouter 路由分发；application 层提供 4 个用例（Store/Open/Delete/Copy）；ParseTask 字段从 String 改为 FileId 强类型。
+**Architecture:** DDD 七层架构。domain 层定义 FileMetadata 聚合根 + StorageTarget 值对象 +
+FileStorageGateway/StorageTargetResolver 两个 SPI；infrastructure 层实现 3 个存储后端 + FileStorageRouter
+路由分发；application 层提供 4 个用例（Store/Open/Delete/Copy）；ParseTask 字段从 String 改为 FileId 强类型。
 
-**Tech Stack:** JDK 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, PostgreSQL, H2 (test), 阿里云 OSS SDK 3.17.4 (optional), commons-codec, MapStruct 1.6.3, JUnit 5 + AssertJ
+**Tech Stack:** JDK 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, PostgreSQL, H2 (test), 阿里云 OSS SDK 3.17.4
+(optional), commons-codec, MapStruct 1.6.3, JUnit 5 + AssertJ
 
 ## Global Constraints
 
@@ -18,11 +23,15 @@
 - **强类型 ID**: FileId 使用 shared-types 已有定义 (`@IdDefinition(type = IdType.ULID)`, record)
 - **BatchId**: 使用 shared-types 已有定义 (`com.example.shared.primitives.identity.BatchId`)
 - **AggregateRoot**: 继承 `com.example.shared.domain.aggregate.root.AggregateRoot<ID>`
-- **DomainEvent**: 实现 `com.example.shared.domain.event.DomainEvent`, record + static `of()` + `EventId.generate()` + `LocalDateTime.now()`
-- **Repository**: 继承 `com.example.shared.domain.repository.Repository<T, ID>`, 实现 load/save/delete/deleteById/loadAll/streamByAppId
-- **测试规范**: @DisplayName 描述, @TempDir 用于文件操作, 输出到 target/test-output/, PER_METHOD 隔离, 静态测试数据提取到 static final
+- **DomainEvent**: 实现 `com.example.shared.domain.event.DomainEvent`, record + static `of()` + `EventId.generate()` +
+  `LocalDateTime.now()`
+- **Repository**: 继承 `com.example.shared.domain.repository.Repository<T, ID>`, 实现
+  load/save/delete/deleteById/loadAll/streamByAppId
+- **测试规范**: @DisplayName 描述, @TempDir 用于文件操作, 输出到 target/test-output/, PER_METHOD 隔离, 静态测试数据提取到
+  static final
 - **错误码**: 前缀 `FILE_`, 全大写下划线分隔, 实现 `ErrorDefinition`
-- **异常分类**: DomainException (domain 层业务规则), SystemException (infra 层系统故障), IllegalStateException (启动配置 fail-fast)
+- **异常分类**: DomainException (domain 层业务规则), SystemException (infra 层系统故障), IllegalStateException (启动配置
+  fail-fast)
 - **提交规范**: 每个任务结束 commit, message 格式 `feat/fix/refactor: 简述`
 
 ## File Structure
@@ -32,7 +41,8 @@
 - `file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageType.java` - 存储类型枚举
 - `file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileUsage.java` - 文件用途枚举
 - `file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileStatus.java` - 文件状态枚举
-- `file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageTarget.java` - 存储目标值对象 (record)
+- `file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageTarget.java` - 存储目标值对象
+  (record)
 - `file-domain/src/main/java/com/example/file/domain/model/aggregate/root/FileMetadata.java` - 文件元数据聚合根
 - `file-domain/src/main/java/com/example/file/domain/event/FileMetadataCreatedEvent.java` - 领域事件
 - `file-domain/src/main/java/com/example/file/domain/event/FileUploadedEvent.java` - 领域事件
@@ -69,15 +79,20 @@
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/NASFileStorage.java` - NAS 存储实现
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageRouter.java` - 路由分发实现
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageTargetProperties.java` - 配置绑定
-- `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolver.java` - Resolver 实现
+-
+`file-infrastructure/src/main/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolver.java` -
+Resolver 实现
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageAutoConfiguration.java` - 自动装配
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/storage/CopyResult.java` - copy 返回值 record
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/entity/FileMetadataDO.java` - DO 实体
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileMetadataMapper.java` - Mapper
 - `file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileMetadataConverter.java` - Converter
-- `file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java` - Repository 实现
+- `file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java` -
+  Repository 实现
 - `file-infrastructure/src/main/resources/schema-pg.sql` - 新建表 DDL
-- `file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` - 注册自动装配
+-
+`file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` -
+注册自动装配
 
 ### 修改文件 (file-infrastructure)
 
@@ -105,27 +120,32 @@
 - `file-infrastructure/src/test/java/com/example/file/infrastructure/storage/LocalFileStorageTest.java`
 - `file-infrastructure/src/test/java/com/example/file/infrastructure/storage/NASFileStorageTest.java`
 - `file-infrastructure/src/test/java/com/example/file/infrastructure/storage/FileStorageRouterTest.java`
-- `file-infrastructure/src/test/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolverTest.java`
+-
+`file-infrastructure/src/test/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolverTest.java`
 - `file-infrastructure/src/test/java/com/example/file/infrastructure/converter/FileMetadataConverterTest.java`
 - `file-infrastructure/src/test/java/com/example/file/infrastructure/StorageIntegrationTest.java`
 
 ### 修改测试文件
 
 - `file-domain/src/test/java/com/example/file/domain/model/aggregate/root/ParseTaskTest.java` - 适配 FileId
-- `file-infrastructure/src/test/java/com/example/file/infrastructure/ParseFlowIntegrationTest.java` - 适配 FileId (如有引用)
+- `file-infrastructure/src/test/java/com/example/file/infrastructure/ParseFlowIntegrationTest.java` - 适配 FileId
+  (如有引用)
 
 ---
 
 ## Task 1: 领域枚举与错误码扩展
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageType.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileUsage.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileStatus.java`
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/errorcode/FileErrorCodes.java`
 
 **Interfaces:**
-- Produces: `StorageType` enum (LOCAL/OSS/NAS), `FileUsage` enum (SOURCE/PARSED/EXPORT/ARCHIVE), `FileStatus` enum (PENDING_UPLOAD/UPLOADED/DELETED), 扩展的 `FileErrorCodes`
+
+- Produces: `StorageType` enum (LOCAL/OSS/NAS), `FileUsage` enum (SOURCE/PARSED/EXPORT/ARCHIVE), `FileStatus` enum
+  (PENDING_UPLOAD/UPLOADED/DELETED), 扩展的 `FileErrorCodes`
 
 - [ ] **Step 1: 创建 StorageType 枚举**
 
@@ -248,12 +268,17 @@ git commit -m "feat(file-domain): 新增文件存储枚举与错误码扩展"
 ## Task 2: StorageTarget 值对象 + 测试
 
 **Files:**
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageTarget.java`
-- Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/StorageTargetTest.java`
+
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/StorageTarget.java`
+- Test:
+  `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/StorageTargetTest.java`
 
 **Interfaces:**
+
 - Consumes: `StorageType` (from Task 1)
-- Produces: `StorageTarget` record (targetId, type, endpoint, bucket, basePath, mountRoot, accessKeyId, accessKeySecret, options)
+- Produces: `StorageTarget` record (targetId, type, endpoint, bucket, basePath, mountRoot, accessKeyId, accessKeySecret,
+  options)
 
 - [ ] **Step 1: 编写失败测试**
 
@@ -357,7 +382,7 @@ public record StorageTarget(
             throw new IllegalArgumentException("targetId 不能为空");
         }
         if (type == null) {
-            throw new IllegalArgumentException("type 不能为空");
+            throw new IllegalArgumentException("IdentityType 不能为空");
         }
         options = options != null ? Map.copyOf(options) : Map.of();
 
@@ -412,6 +437,7 @@ git commit -m "feat(file-domain): 新增 StorageTarget 值对象"
 ## Task 3: FileMetadata 聚合根 + 领域事件 + 测试
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/FileMetadata.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/FileMetadataCreatedEvent.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/FileUploadedEvent.java`
@@ -419,6 +445,7 @@ git commit -m "feat(file-domain): 新增 StorageTarget 值对象"
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/FileMetadataTest.java`
 
 **Interfaces:**
+
 - Consumes: `StorageType`, `FileUsage`, `FileStatus` (Task 1), `FileId`, `BatchId`, `UserNo` (shared-types)
 - Produces: `FileMetadata` 聚合根, 3 个领域事件
 
@@ -589,6 +616,7 @@ Expected: FAIL (FileMetadata 类不存在)
 - [ ] **Step 3: 实现领域事件**
 
 `FileMetadataCreatedEvent.java`:
+
 ```java
 package com.example.file.domain.event;
 
@@ -626,6 +654,7 @@ public record FileMetadataCreatedEvent(
 ```
 
 `FileUploadedEvent.java`:
+
 ```java
 package com.example.file.domain.event;
 
@@ -664,6 +693,7 @@ public record FileUploadedEvent(
 ```
 
 `FileDeletedEvent.java`:
+
 ```java
 package com.example.file.domain.event;
 
@@ -895,14 +925,17 @@ git commit -m "feat(file-domain): 新增 FileMetadata 聚合根与 3 个领域�
 ## Task 4: Repository 接口与 SPI 重构
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/repository/FileMetadataRepository.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/StorageTargetResolver.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/CopyResult.java`
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/FileStorageGateway.java`
 
 **Interfaces:**
+
 - Consumes: `FileMetadata`, `FileId`, `FileUsage`, `StorageTarget`, `BatchId`
-- Produces: `FileMetadataRepository` 接口, `StorageTargetResolver` SPI, `CopyResult` record, 重构后的 `FileStorageGateway` SPI
+- Produces: `FileMetadataRepository` 接口, `StorageTargetResolver` SPI, `CopyResult` record, 重构后的
+  `FileStorageGateway` SPI
 
 - [ ] **Step 1: 创建 FileMetadataRepository 接口**
 
@@ -1041,7 +1074,8 @@ public interface FileStorageGateway {
 }
 ```
 
-**说明**：由于 `CopyResult` 定义在 infrastructure 层（避免 domain 依赖 infra），SPI 的 `copy` 方法返回 `Object`，调用方（CopyFileUseCase）强转为 `CopyResult`。
+**说明**：由于 `CopyResult` 定义在 infrastructure 层（避免 domain 依赖 infra），SPI 的 `copy` 方法返回 `Object`
+，调用方（CopyFileUseCase）强转为 `CopyResult`。
 
 - [ ] **Step 5: 编译验证**
 
@@ -1068,12 +1102,17 @@ git commit -m "feat(file-domain): 新增 Repository/SPI 接口，重构 FileStor
 ## Task 5: FileMetadataDO + Mapper + Converter
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/FileMetadataDO.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileMetadataMapper.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileMetadataConverter.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/converter/FileMetadataConverterTest.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileMetadataMapper.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileMetadataConverter.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/converter/FileMetadataConverterTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileMetadata`, `StorageType`, `FileUsage`, `FileStatus`, `FileId`, `BatchId`, `UserNo`, `Version`
 - Produces: `FileMetadataDO`, `FileMetadataMapper`, `FileMetadataConverter`
 
@@ -1330,10 +1369,13 @@ git commit -m "feat(file-infrastructure): 新增 FileMetadataDO/Mapper/Converter
 ## Task 6: FileMetadataRepositoryImpl + schema-pg.sql
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java`
 - Create: `file-service/file-infrastructure/src/main/resources/schema-pg.sql`
 
 **Interfaces:**
+
 - Consumes: `FileMetadataRepository`, `FileMetadataConverter`, `FileMetadataMapper`, `FileMetadataDO`
 - Produces: `FileMetadataRepositoryImpl`, `schema-pg.sql`
 
@@ -1529,10 +1571,10 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
         for (DomainEvent event : events) {
             try {
                 eventPublisher.publishEvent(event);
-                log.debug("发布领域事件: eventId={}, type={}",
+                log.debug("发布领域事件: eventId={}, IdentityType={}",
                     event.eventId(), event.getClass().getSimpleName());
             } catch (Exception e) {
-                log.error("发布领域事件失败: eventId={}, type={}",
+                log.error("发布领域事件失败: eventId={}, IdentityType={}",
                     event.eventId(), event.getClass().getSimpleName(), e);
             }
         }
@@ -1559,13 +1601,21 @@ git commit -m "feat(file-infrastructure): 新增 FileMetadataRepositoryImpl 与 
 ## Task 7: 配置类与自动装配
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageTargetProperties.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolver.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageAutoConfiguration.java`
-- Create: `file-service/file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (或追加)
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolverTest.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageTargetProperties.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolver.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageAutoConfiguration.java`
+- Create:
+  `file-service/file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+  (或追加)
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/PropertiesBasedStorageTargetResolverTest.java`
 
 **Interfaces:**
+
 - Consumes: `StorageTargetResolver`, `StorageTarget`, `StorageType`, `FileUsage`
 - Produces: `StorageTargetProperties`, `PropertiesBasedStorageTargetResolver`, `StorageAutoConfiguration`
 
@@ -1901,7 +1951,9 @@ public class StorageAutoConfiguration {
 
 - [ ] **Step 6: 注册自动装配**
 
-在 `file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 中追加（如果文件不存在则创建）：
+在
+`file-infrastructure/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+中追加（如果文件不存在则创建）：
 
 ```
 com.example.file.infrastructure.storage.StorageAutoConfiguration
@@ -1928,12 +1980,16 @@ git commit -m "feat(file-infrastructure): 新增配置绑定与自动装配"
 ## Task 8: LocalFileStorage + 测试
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageBackend.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageBackend.java`
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/LocalFileStorage.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/LocalFileStorageTest.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/LocalFileStorageTest.java`
 - Modify: `file-service/file-infrastructure/pom.xml` (新增 commons-codec 依赖)
 
 **Interfaces:**
+
 - Consumes: `StorageTarget`, `StorageType`
 - Produces: `FileStorageBackend` SPI, `LocalFileStorage` 实现
 
@@ -2066,7 +2122,7 @@ import java.io.InputStream;
  * 文件存储后端 SPI (基础设施层内部抽象)
  * <p>
  * 每个具体后端 (Local/OSS/NAS) 实现此接口。
- * FileStorageRouter 通过 target.type() 路由到对应实现。
+ * FileStorageRouter 通过 target.IdentityType() 路由到对应实现。
  */
 public interface FileStorageBackend {
 
@@ -2199,12 +2255,17 @@ git commit -m "feat(file-infrastructure): 新增 LocalFileStorage 实现"
 ## Task 9: NASFileStorage + FileStorageRouter
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/NASFileStorage.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageRouter.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageAutoConfiguration.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/FileStorageRouterTest.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageRouter.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/StorageAutoConfiguration.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/FileStorageRouterTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileStorageGateway`, `FileMetadataRepository`, `StorageTargetResolver`, `FileStorageBackend`, `CopyResult`
 - Produces: `NASFileStorage`, `FileStorageRouter` (实现 FileStorageGateway)
 
@@ -2619,7 +2680,8 @@ public class FileStorageRouter implements FileStorageGateway {
 }
 ```
 
-**注意**：`FileId.generate()` 在 shared-types 中没有此方法，需要使用 `UlidCreator` 直接生成。如果项目已有 `IdService`，则用 `IdService.generate(FileId.class)`。这里使用 UlidCreator 直接生成。
+**注意**：`FileId.generate()` 在 shared-types 中没有此方法，需要使用 `UlidCreator` 直接生成。如果项目已有 `IdService`，则用
+`IdService.generate(FileId.class)`。这里使用 UlidCreator 直接生成。
 
 - [ ] **Step 5: 更新 StorageAutoConfiguration 注册 FileStorageRouter**
 
@@ -2678,14 +2740,18 @@ git commit -m "feat(file-infrastructure): 新增 NASFileStorage 与 FileStorageR
 ## Task 10: AliyunOSSFileStorage + pom 依赖
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/pom.xml` (新增 aliyun-sdk-oss optional)
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
 
 **Interfaces:**
+
 - Consumes: `FileStorageBackend`, `StorageTarget`, `StorageType`
 - Produces: `AliyunOSSFileStorage` 实现 (条件加载)
 
-**说明**：OSS 单元测试需要 Mock OSS 客户端，较为复杂。本任务仅实现类，测试由 StorageIntegrationTest 间接覆盖（本地测试不加载 OSS）。如需独立单元测试，可在后续补充。
+**说明**：OSS 单元测试需要 Mock OSS 客户端，较为复杂。本任务仅实现类，测试由 StorageIntegrationTest 间接覆盖（本地测试不加载
+OSS）。如需独立单元测试，可在后续补充。
 
 - [ ] **Step 1: 新增 aliyun-sdk-oss 依赖**
 
@@ -2854,12 +2920,15 @@ git commit -m "feat(file-infrastructure): 新增 AliyunOSSFileStorage 实现"
 ## Task 11: 应用用例 - StoreFileUseCase + 测试
 
 **Files:**
+
 - Create: `file-service/file-application/src/main/java/com/example/file/application/command/StoreFileCommand.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/StoreFileUseCase.java`
 - Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/StoreFileUseCaseTest.java`
 
 **Interfaces:**
-- Consumes: `FileMetadataRepository`, `FileStorageGateway`, `StorageTargetResolver`, `EventBus`, `FileId`, `BatchId`, `UserNo`
+
+- Consumes: `FileMetadataRepository`, `FileStorageGateway`, `StorageTargetResolver`, `DefaultEventBus`, `FileId`, `BatchId`,
+  `UserNo`
 - Produces: `StoreFileCommand`, `StoreFileUseCase`
 
 - [ ] **Step 1: 编写失败测试**
@@ -2885,7 +2954,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -2893,78 +2961,78 @@ import static org.mockito.Mockito.*;
 
 class StoreFileUseCaseTest {
 
-    private FileMetadataRepository metadataRepository;
-    private FileStorageGateway storageGateway;
-    private StorageTargetResolver targetResolver;
-    private EventBus eventBus;
-    private StoreFileUseCase useCase;
+  private FileMetadataRepository metadataRepository;
+  private FileStorageGateway storageGateway;
+  private StorageTargetResolver targetResolver;
+  private EventBus eventBus;
+  private StoreFileUseCase useCase;
 
-    @BeforeEach
-    void setUp() {
-        metadataRepository = mock(FileMetadataRepository.class);
-        storageGateway = mock(FileStorageGateway.class);
-        targetResolver = mock(StorageTargetResolver.class);
-        eventBus = mock(EventBus.class);
-        useCase = new StoreFileUseCase(metadataRepository, storageGateway, targetResolver, eventBus);
-    }
+  @BeforeEach
+  void setUp() {
+    metadataRepository = mock(FileMetadataRepository.class);
+    storageGateway = mock(FileStorageGateway.class);
+    targetResolver = mock(StorageTargetResolver.class);
+    eventBus = mock(EventBus.class);
+    useCase = new StoreFileUseCase(metadataRepository, storageGateway, targetResolver, eventBus);
+  }
 
-    @Test
-    @DisplayName("createMetadata 应保存元数据并发布事件")
-    void createMetadata_should_save_and_publish_event() {
-        StoreFileCommand cmd = new StoreFileCommand(
-            "test.xlsx", 1024, "application/octet-stream",
-            FileUsage.SOURCE, "annuity", "business-core",
-            BatchId.of("BATCH_001"), UserNo.of("u1"), null
-        );
-        StorageTarget target = new StorageTarget(
-            "oss-source", StorageType.OSS, "https://oss.example.com", "bucket",
-            "base", null, "ak", "sk", java.util.Map.of()
-        );
-        when(targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity")).thenReturn(target);
+  @Test
+  @DisplayName("createMetadata 应保存元数据并发布事件")
+  void createMetadata_should_save_and_publish_event() {
+    StoreFileCommand cmd = new StoreFileCommand(
+        "test.xlsx", 1024, "application/octet-stream",
+        FileUsage.SOURCE, "annuity", "business-core",
+        BatchId.of("BATCH_001"), UserNo.of("u1"), null
+    );
+    StorageTarget target = new StorageTarget(
+        "oss-source", StorageType.OSS, "https://oss.example.com", "bucket",
+        "base", null, "ak", "sk", java.util.Map.of()
+    );
+    when(targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity")).thenReturn(target);
 
-        FileId fileId = useCase.createMetadata(cmd);
+    FileId fileId = useCase.createMetadata(cmd);
 
-        assertThat(fileId).isNotNull();
-        verify(metadataRepository).save(any(FileMetadata.class));
-        verify(eventBus, atLeastOnce()).publish(any());
-    }
+    assertThat(fileId).isNotNull();
+    verify(metadataRepository).save(any(FileMetadata.class));
+    verify(eventBus, atLeastOnce()).publish(any());
+  }
 
-    @Test
-    @DisplayName("store 应调用 storageGateway.store 并标记 UPLOADED")
-    void store_should_call_gateway_and_markUploaded() {
-        FileId fileId = new FileId("01H8TESTFILE001");
-        FileMetadata file = FileMetadata.create(
-            fileId, "test.txt", 5, "text/plain",
-            FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
-            "oss-source", StorageType.OSS, UserNo.of("u1"), null
-        );
-        when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
-        when(storageGateway.computeMd5(fileId)).thenReturn("md5hash");
+  @Test
+  @DisplayName("store 应调用 storageGateway.store 并标记 UPLOADED")
+  void store_should_call_gateway_and_markUploaded() {
+    FileId fileId = new FileId("01H8TESTFILE001");
+    FileMetadata file = FileMetadata.create(
+        fileId, "test.txt", 5, "text/plain",
+        FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
+        "oss-source", StorageType.OSS, UserNo.of("u1"), null
+    );
+    when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
+    when(storageGateway.computeMd5(fileId)).thenReturn("md5hash");
 
-        useCase.store(fileId, new ByteArrayInputStream("hello".getBytes()), 5);
+    useCase.store(fileId, new ByteArrayInputStream("hello".getBytes()), 5);
 
-        assertThat(file.status()).isEqualTo(FileStatus.UPLOADED);
-        assertThat(file.md5()).isEqualTo("md5hash");
-        verify(storageGateway).store(eq(fileId), any(), eq(5L));
-        verify(metadataRepository).save(any(FileMetadata.class));
-    }
+    assertThat(file.status()).isEqualTo(FileStatus.UPLOADED);
+    assertThat(file.md5()).isEqualTo("md5hash");
+    verify(storageGateway).store(eq(fileId), any(), eq(5L));
+    verify(metadataRepository).save(any(FileMetadata.class));
+  }
 
-    @Test
-    @DisplayName("store 在非 PENDING_UPLOAD 状态时应抛异常")
-    void store_should_throw_when_status_is_not_PENDING_UPLOAD() {
-        FileId fileId = new FileId("01H8TESTFILE002");
-        FileMetadata file = FileMetadata.create(
-            fileId, "test.txt", 5, "text/plain",
-            FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
-            "oss-source", StorageType.OSS, UserNo.of("u1"), null
-        );
-        file.markUploaded("key", "md5");
-        when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
+  @Test
+  @DisplayName("store 在非 PENDING_UPLOAD 状态时应抛异常")
+  void store_should_throw_when_status_is_not_PENDING_UPLOAD() {
+    FileId fileId = new FileId("01H8TESTFILE002");
+    FileMetadata file = FileMetadata.create(
+        fileId, "test.txt", 5, "text/plain",
+        FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
+        "oss-source", StorageType.OSS, UserNo.of("u1"), null
+    );
+    file.markUploaded("key", "md5");
+    when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-            useCase.store(fileId, new ByteArrayInputStream("x".getBytes()), 1)
-        ).isInstanceOf(RuntimeException.class);
-    }
+    org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+        useCase.store(fileId, new ByteArrayInputStream("x".getBytes()), 1)
+    ).isInstanceOf(RuntimeException.class);
+  }
 }
 ```
 
@@ -3107,6 +3175,7 @@ git commit -m "feat(file-application): 新增 StoreFileUseCase"
 ## Task 12: 应用用例 - Open/Delete/Copy
 
 **Files:**
+
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/OpenFileUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/DeleteFileUseCase.java`
 - Create: `file-service/file-application/src/main/java/com/example/file/application/command/CopyFileCommand.java`
@@ -3116,12 +3185,14 @@ git commit -m "feat(file-application): 新增 StoreFileUseCase"
 - Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/CopyFileUseCaseTest.java`
 
 **Interfaces:**
-- Consumes: `FileMetadataRepository`, `FileStorageGateway`, `StorageTargetResolver`, `EventBus`, `CopyResult`
+
+- Consumes: `FileMetadataRepository`, `FileStorageGateway`, `StorageTargetResolver`, `DefaultEventBus`, `CopyResult`
 - Produces: `OpenFileUseCase`, `DeleteFileUseCase`, `CopyFileCommand`, `CopyFileUseCase`
 
 - [ ] **Step 1: 编写失败测试**
 
 `OpenFileUseCaseTest.java`:
+
 ```java
 package com.example.file.application.usecase;
 
@@ -3209,6 +3280,7 @@ class OpenFileUseCaseTest {
 ```
 
 `DeleteFileUseCaseTest.java`:
+
 ```java
 package com.example.file.application.usecase;
 
@@ -3282,6 +3354,7 @@ class DeleteFileUseCaseTest {
 ```
 
 `CopyFileUseCaseTest.java`:
+
 ```java
 package com.example.file.application.usecase;
 
@@ -3560,15 +3633,18 @@ git commit -m "feat(file-application): 新增 Open/Delete/Copy 用例"
 ## Task 13: ParseTask 迁移 (sourceFileRef → sourceFileId)
 
 **Files:**
+
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/ParseTask.java`
 - Modify: `file-service/file-application/src/main/java/com/example/file/application/command/UploadFileCommand.java`
 - Modify: `file-service/file-application/src/main/java/com/example/file/application/usecase/UploadFileUseCase.java`
 - Modify: `file-service/file-application/src/main/java/com/example/file/application/usecase/ParseFileUseCase.java`
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/ParseTaskDO.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/ParseTaskConverter.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/ParseTaskConverter.java`
 - Modify: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/ParseTaskTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileId` (shared-types)
 - Produces: 迁移后的 ParseTask (字段 sourceFileId: FileId)
 
@@ -3577,17 +3653,20 @@ git commit -m "feat(file-application): 新增 Open/Delete/Copy 用例"
 将所有 `sourceFileRef` 改为 `sourceFileId`，类型从 `String` 改为 `FileId`：
 
 **修改 import** (在现有 import 后追加)：
+
 ```java
 import com.example.shared.primitives.identity.FileId;
 ```
 
 **修改字段** (line 23)：
+
 ```java
 // 旧: private String sourceFileRef;
 private FileId sourceFileId;
 ```
 
 **修改业务创建构造函数** (line 37-47)：
+
 ```java
 private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, FileId sourceFileId,
                   ErrorPolicy errorPolicy, List<String> splitKeys, UserNo userNo) {
@@ -3603,6 +3682,7 @@ private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, FileId 
 ```
 
 **修改数据库重建构造函数** (line 50-72)：
+
 ```java
 public ParseTask(FileTaskId id, BizType bizType, TemplateCode templateCode, String sourceFileName,
                  FileId sourceFileId, TaskStatus status, ErrorPolicy errorPolicy, List<String> splitKeys,
@@ -3630,6 +3710,7 @@ public ParseTask(FileTaskId id, BizType bizType, TemplateCode templateCode, Stri
 ```
 
 **修改 create 工厂方法** (line 74-81)：
+
 ```java
 public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
                                FileId sourceFileId, ErrorPolicy errorPolicy,
@@ -3642,6 +3723,7 @@ public static ParseTask create(FileTaskId id, BizType bizType, String sourceFile
 ```
 
 **修改 getter** (line 128)：
+
 ```java
 // 旧: public String sourceFileRef() { return sourceFileRef; }
 public FileId sourceFileId() { return sourceFileId; }
@@ -3667,6 +3749,7 @@ public record UploadFileCommand(
 - [ ] **Step 3: 修改 UploadFileUseCase.java**
 
 修改 line 33：
+
 ```java
 // 旧: cmd.sourceFileRef(),
 cmd.sourceFileId(),
@@ -3677,6 +3760,7 @@ cmd.sourceFileId(),
 - [ ] **Step 4: 修改 ParseFileUseCase.java**
 
 修改 line 96 和 line 113：
+
 ```java
 // 旧: try (InputStream inputStream = fileStorage.open(task.sourceFileRef())) {
 try (InputStream inputStream = fileStorage.open(task.sourceFileId())) {
@@ -3688,6 +3772,7 @@ try (InputStream parseStream = fileStorage.open(task.sourceFileId())) {
 - [ ] **Step 5: 修改 ParseTaskDO.java**
 
 修改 line 21：
+
 ```java
 // 旧: private String sourceFileRef;
 private String sourceFileId;
@@ -3696,17 +3781,20 @@ private String sourceFileId;
 - [ ] **Step 6: 修改 ParseTaskConverter.java**
 
 修改 line 33 (toDO 方向)：
+
 ```java
 // 旧: @Mapping(target = "sourceFileRef", expression = "java(task.sourceFileRef())")
 @Mapping(target = "sourceFileId", expression = "java(fileIdToString(task.sourceFileId()))")
 ```
 
 修改 toDomain 方向 (在 @Mapping 列表中添加)：
+
 ```java
 @Mapping(target = "sourceFileId", source = "sourceFileId", qualifiedByName = "toFileId")
 ```
 
 添加辅助方法：
+
 ```java
 default String fileIdToString(FileId fileId) {
     return fileId != null ? fileId.value() : null;
@@ -3719,6 +3807,7 @@ default FileId toFileId(String fileId) {
 ```
 
 添加 import：
+
 ```java
 import com.example.shared.primitives.identity.FileId;
 ```
@@ -3726,6 +3815,7 @@ import com.example.shared.primitives.identity.FileId;
 - [ ] **Step 7: 修改 ParseTaskTest.java**
 
 修改 line 92 (newTask 方法)：
+
 ```java
 // 旧:
 // return ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
@@ -3739,6 +3829,7 @@ return ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
 ```
 
 修改 line 23-25 (should_create_pending_task 测试)：
+
 ```java
 ParseTask task = ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
     "sample.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL,
@@ -3746,6 +3837,7 @@ ParseTask task = ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_decl
 ```
 
 添加 import：
+
 ```java
 import com.example.shared.primitives.identity.FileId;
 ```
@@ -3778,11 +3870,13 @@ git commit -m "refactor(file-service): ParseTask sourceFileRef → sourceFileId 
 ## Task 14: 配置文件更新 (application.yml)
 
 **Files:**
+
 - Modify: `file-service/file-starter/src/main/resources/application.yml`
 - Create: `file-service/file-starter/src/main/resources/application-local.yml`
 - Create: `file-service/file-starter/src/test/resources/application-test.yml`
 
 **Interfaces:**
+
 - Consumes: `StorageTargetProperties`, `StorageAutoConfiguration`
 - Produces: 完整可用的存储配置（默认 Local 后端）
 
@@ -3914,10 +4008,14 @@ git commit -m "feat(file-starter): 追加 file.storage 配置块 (Local/OSS/NAS 
 ## Task 15: StorageIntegrationTest 端到端集成测试
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/StorageIntegrationTest.java`
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/StorageTestConfiguration.java`
+
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/StorageIntegrationTest.java`
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/StorageTestConfiguration.java`
 
 **Interfaces:**
+
 - Consumes: `FileStorageRouter`, `FileMetadataRepository`, `StorageTargetResolver`, `StorageTargetProperties`
 - Produces: 端到端集成测试覆盖 (Local store/open/copy/delete + OSS mock + NAS atomic move)
 
@@ -3967,9 +4065,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -3981,72 +4077,72 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 class StorageIntegrationTest {
 
-    @Autowired
-    private FileStorageGateway storageGateway;
+  @Autowired
+  private FileStorageGateway storageGateway;
 
-    @Autowired
-    private StorageTargetResolver targetResolver;
+  @Autowired
+  private StorageTargetResolver targetResolver;
 
-    @TempDir
-    Path tempDir;
+  @TempDir
+  Path tempDir;
 
-    @Test
-    @DisplayName("Local 后端: store → open → computeMd5 完整流程")
-    void local_backend_store_open_md5_flow() throws Exception {
-        FileId fileId = new FileId("01H8INTEGRATION01");
-        byte[] content = "hello-storage-integration".getBytes();
-        StorageTarget target = targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity");
-        storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
+  @Test
+  @DisplayName("Local 后端: store → open → computeMd5 完整流程")
+  void local_backend_store_open_md5_flow() throws Exception {
+    FileId fileId = new FileId("01H8INTEGRATION01");
+    byte[] content = "hello-storage-integration".getBytes();
+    StorageTarget target = targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity");
+    storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
 
-        try (InputStream opened = storageGateway.open(fileId)) {
-            String md5 = storageGateway.computeMd5(fileId);
-            assertThat(md5).isNotBlank();
-            assertThat(opened.readAllBytes()).isEqualTo(content);
-        }
+    try (InputStream opened = storageGateway.open(fileId)) {
+      String md5 = storageGateway.computeMd5(fileId);
+      assertThat(md5).isNotBlank();
+      assertThat(opened.readAllBytes()).isEqualTo(content);
     }
+  }
 
-    @Test
-    @DisplayName("Local 后端: copy 操作应返回 CopyResult (newFileId + newStorageKey)")
-    void local_backend_copy_should_return_copy_result() {
-        FileId srcFileId = new FileId("01H8INTEGRATION02");
-        byte[] content = "copy-source-content".getBytes();
-        storageGateway.store(srcFileId, new ByteArrayInputStream(content), content.length);
+  @Test
+  @DisplayName("Local 后端: copy 操作应返回 CopyResult (newFileId + newStorageKey)")
+  void local_backend_copy_should_return_copy_result() {
+    FileId srcFileId = new FileId("01H8INTEGRATION02");
+    byte[] content = "copy-source-content".getBytes();
+    storageGateway.store(srcFileId, new ByteArrayInputStream(content), content.length);
 
-        Object result = storageGateway.copy(srcFileId, FileUsage.EXPORT,
-            com.example.shared.primitives.identity.BatchId.of("BATCH_TEST"));
+    Object result = storageGateway.copy(srcFileId, FileUsage.EXPORT,
+        com.example.shared.primitives.identity.BatchId.of("BATCH_TEST"));
 
-        assertThat(result).isInstanceOf(CopyResult.class);
-        CopyResult copyResult = (CopyResult) result;
-        assertThat(copyResult.newFileId()).isNotNull();
-        assertThat(copyResult.newStorageKey()).isNotBlank();
-        assertThat(copyResult.newFileId()).isNotEqualTo(srcFileId);
-    }
+    assertThat(result).isInstanceOf(CopyResult.class);
+    CopyResult copyResult = (CopyResult) result;
+    assertThat(copyResult.newFileId()).isNotNull();
+    assertThat(copyResult.newStorageKey()).isNotBlank();
+    assertThat(copyResult.newFileId()).isNotEqualTo(srcFileId);
+  }
 
-    @Test
-    @DisplayName("Local 后端: delete 后再 open 应抛异常")
-    void local_backend_delete_then_open_throws() {
-        FileId fileId = new FileId("01H8INTEGRATION03");
-        byte[] content = "to-be-deleted".getBytes();
-        storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
+  @Test
+  @DisplayName("Local 后端: delete 后再 open 应抛异常")
+  void local_backend_delete_then_open_throws() {
+    FileId fileId = new FileId("01H8INTEGRATION03");
+    byte[] content = "to-be-deleted".getBytes();
+    storageGateway.store(fileId, new ByteArrayInputStream(content), content.length);
 
-        storageGateway.delete(fileId);
+    storageGateway.delete(fileId);
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> storageGateway.open(fileId))
-            .isInstanceOf(RuntimeException.class);
-    }
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> storageGateway.open(fileId))
+        .isInstanceOf(RuntimeException.class);
+  }
 
-    @Test
-    @DisplayName("StorageTargetResolver 应根据 usage 返回正确的 StorageTarget")
-    void resolver_should_return_correct_target_by_usage() {
-        StorageTarget sourceTarget = targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity");
-        assertThat(sourceTarget).isNotNull();
-        assertThat(sourceTarget.type()).isEqualTo(StorageType.LOCAL);
-        assertThat(sourceTarget.targetId()).isEqualTo("local-default");
+  @Test
+  @DisplayName("StorageTargetResolver 应根据 usage 返回正确的 StorageTarget")
+  void resolver_should_return_correct_target_by_usage() {
+    StorageTarget sourceTarget = targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity");
+    assertThat(sourceTarget).isNotNull();
+    assertThat(sourceTarget.type()).isEqualTo(StorageType.LOCAL);
+    assertThat(sourceTarget.targetId()).isEqualTo("local-default");
 
-        StorageTarget exportTarget = targetResolver.resolveByUsage(FileUsage.EXPORT, "annuity");
-        assertThat(exportTarget).isNotNull();
-        assertThat(exportTarget.targetId()).isEqualTo("local-default");
-    }
+    StorageTarget exportTarget = targetResolver.resolveByUsage(FileUsage.EXPORT, "annuity");
+    assertThat(exportTarget).isNotNull();
+    assertThat(exportTarget.targetId()).isEqualTo("local-default");
+  }
 }
 ```
 
@@ -4093,36 +4189,37 @@ git status  # 确认工作区干净
 
 ### 1. Spec 覆盖检查
 
-| Spec 章节 | 实现 Task | 状态 |
-|----------|----------|------|
-| §0 背景目标 | (整体设计) | ✅ |
-| §1 领域模型 - 枚举 | Task 1 (StorageType/FileUsage/FileStatus) | ✅ |
-| §2.1 StorageTarget 值对象 | Task 2 | ✅ |
-| §2.2 FileMetadata 聚合根 | Task 3 | ✅ |
-| §2.3 领域事件 (3 个) | Task 3 | ✅ |
-| §2.4 Repository 接口 | Task 4 | ✅ |
-| §2.5 StorageTargetResolver SPI | Task 4 | ✅ |
-| §2.6 FileStorageGateway SPI 重构 | Task 4 (含 CopyResult) | ✅ |
-| §3.1 FileMetadataDO + Mapper + Converter | Task 5 | ✅ |
-| §3.2 FileMetadataRepositoryImpl + schema-pg.sql | Task 6 | ✅ |
-| §3.3 配置类与自动装配 | Task 7 | ✅ |
-| §4.1 LocalFileStorage 后端 | Task 8 | ✅ |
-| §4.2 NASFileStorage 后端 | Task 9 | ✅ |
-| §4.3 AliyunOSSFileStorage 后端 | Task 10 | ✅ |
-| §4.4 FileStorageRouter 路由 | Task 9 (与 NAS 合并) | ✅ |
-| §3.3.1 StoreFileUseCase | Task 11 | ✅ |
-| §3.3.2 OpenFileUseCase | Task 12 | ✅ |
-| §3.3.3 DeleteFileUseCase | Task 12 | ✅ |
-| §3.3.4 CopyFileUseCase (CopyResult) | Task 12 | ✅ |
-| §5 ParseTask 迁移 sourceFileRef → sourceFileId | Task 13 | ✅ |
-| §6 配置文件 | Task 14 | ✅ |
-| §8 验收标准 - 集成测试 | Task 15 | ✅ |
+| Spec 章节                                       | 实现 Task                                 | 状态 |
+|-------------------------------------------------|-------------------------------------------|------|
+| §0 背景目标                                     | (整体设计)                                | ✅   |
+| §1 领域模型 - 枚举                              | Task 1 (StorageType/FileUsage/FileStatus) | ✅   |
+| §2.1 StorageTarget 值对象                       | Task 2                                    | ✅   |
+| §2.2 FileMetadata 聚合根                        | Task 3                                    | ✅   |
+| §2.3 领域事件 (3 个)                            | Task 3                                    | ✅   |
+| §2.4 Repository 接口                            | Task 4                                    | ✅   |
+| §2.5 StorageTargetResolver SPI                  | Task 4                                    | ✅   |
+| §2.6 FileStorageGateway SPI 重构                | Task 4 (含 CopyResult)                    | ✅   |
+| §3.1 FileMetadataDO + Mapper + Converter        | Task 5                                    | ✅   |
+| §3.2 FileMetadataRepositoryImpl + schema-pg.sql | Task 6                                    | ✅   |
+| §3.3 配置类与自动装配                           | Task 7                                    | ✅   |
+| §4.1 LocalFileStorage 后端                      | Task 8                                    | ✅   |
+| §4.2 NASFileStorage 后端                        | Task 9                                    | ✅   |
+| §4.3 AliyunOSSFileStorage 后端                  | Task 10                                   | ✅   |
+| §4.4 FileStorageRouter 路由                     | Task 9 (与 NAS 合并)                      | ✅   |
+| §3.3.1 StoreFileUseCase                         | Task 11                                   | ✅   |
+| §3.3.2 OpenFileUseCase                          | Task 12                                   | ✅   |
+| §3.3.3 DeleteFileUseCase                        | Task 12                                   | ✅   |
+| §3.3.4 CopyFileUseCase (CopyResult)             | Task 12                                   | ✅   |
+| §5 ParseTask 迁移 sourceFileRef → sourceFileId  | Task 13                                   | ✅   |
+| §6 配置文件                                     | Task 14                                   | ✅   |
+| §8 验收标准 - 集成测试                          | Task 15                                   | ✅   |
 
 **结论**: Spec 全部章节已覆盖到对应 Task。
 
 ### 2. 占位符扫描
 
 扫描全文，未发现以下问题模式：
+
 - ❌ "TBD" / "TODO" / "implement later" - 无
 - ❌ "Add appropriate error handling" - 无（错误处理已在代码中显式实现）
 - ❌ "Similar to Task N" - 无（每个 Task 都独立展示完整代码）
@@ -4132,48 +4229,48 @@ git status  # 确认工作区干净
 
 ### 3. 类型一致性检查
 
-| 类型/方法 | 定义 Task | 使用 Task | 一致性 |
-|---------|---------|---------|--------|
-| `FileId` | shared-types (复用) | Task 3, 4, 11, 12, 13, 15 | ✅ |
-| `BatchId` | shared-types (复用) | Task 3, 11, 12, 15 | ✅ |
-| `StorageTarget` | Task 2 | Task 3, 4, 7, 11, 12, 15 | ✅ |
-| `FileMetadata` | Task 3 | Task 4, 5, 6, 11, 12 | ✅ |
-| `FileMetadataRepository` | Task 4 | Task 5, 6, 11, 12 | ✅ |
-| `FileStorageGateway` | Task 4 | Task 8, 9, 10 (实现), Task 11, 12, 15 (使用) | ✅ |
-| `StorageTargetResolver` | Task 4 | Task 7 (实现), Task 11, 12, 15 (使用) | ✅ |
-| `CopyResult` | Task 4 (定义于 infrastructure) | Task 9 (Router 返回), Task 12 (UseCase 消费) | ✅ |
-| `FileStorageBackend` (内部 SPI) | Task 8 | Task 9, 10 | ✅ |
-| `FileStorageRouter` | Task 9 | Task 15 (测试) | ✅ |
-| `StorageTargetProperties` | Task 7 | Task 14 (配置绑定) | ✅ |
-| `FileStorageGateway.copy()` 返回类型 | Task 4 (Object) | Task 9 (返回 CopyResult), Task 12 (强转 CopyResult) | ✅ |
-| `ParseTask.sourceFileId()` | Task 13 (FileId) | Task 13 (ParseFileUseCase 调用) | ✅ |
+| 类型/方法                            | 定义 Task                      | 使用 Task                                           | 一致性 |
+|--------------------------------------|--------------------------------|-----------------------------------------------------|--------|
+| `FileId`                             | shared-types (复用)            | Task 3, 4, 11, 12, 13, 15                           | ✅     |
+| `BatchId`                            | shared-types (复用)            | Task 3, 11, 12, 15                                  | ✅     |
+| `StorageTarget`                      | Task 2                         | Task 3, 4, 7, 11, 12, 15                            | ✅     |
+| `FileMetadata`                       | Task 3                         | Task 4, 5, 6, 11, 12                                | ✅     |
+| `FileMetadataRepository`             | Task 4                         | Task 5, 6, 11, 12                                   | ✅     |
+| `FileStorageGateway`                 | Task 4                         | Task 8, 9, 10 (实现), Task 11, 12, 15 (使用)        | ✅     |
+| `StorageTargetResolver`              | Task 4                         | Task 7 (实现), Task 11, 12, 15 (使用)               | ✅     |
+| `CopyResult`                         | Task 4 (定义于 infrastructure) | Task 9 (Router 返回), Task 12 (UseCase 消费)        | ✅     |
+| `FileStorageBackend` (内部 SPI)      | Task 8                         | Task 9, 10                                          | ✅     |
+| `FileStorageRouter`                  | Task 9                         | Task 15 (测试)                                      | ✅     |
+| `StorageTargetProperties`            | Task 7                         | Task 14 (配置绑定)                                  | ✅     |
+| `FileStorageGateway.copy()` 返回类型 | Task 4 (Object)                | Task 9 (返回 CopyResult), Task 12 (强转 CopyResult) | ✅     |
+| `ParseTask.sourceFileId()`           | Task 13 (FileId)               | Task 13 (ParseFileUseCase 调用)                     | ✅     |
 
 **结论**: 所有类型/方法签名跨 Task 一致。
 
 ### 4. 异常分类一致性
 
-| 异常类型 | 使用场景 | Task |
-|--------|---------|------|
-| `DomainException` | domain 层业务规则违反 | Task 3 (FileMetadata 校验) |
-| `SystemException` | infra 层系统故障 | Task 8/9/10 (存储后端故障), Task 11/12 (UseCase 状态异常) |
-| `IllegalStateException` | 启动配置 fail-fast | Task 7 (无 LOCAL 后端时) |
+| 异常类型                | 使用场景              | Task                                                      |
+|-------------------------|-----------------------|-----------------------------------------------------------|
+| `DomainException`       | domain 层业务规则违反 | Task 3 (FileMetadata 校验)                                |
+| `SystemException`       | infra 层系统故障      | Task 8/9/10 (存储后端故障), Task 11/12 (UseCase 状态异常) |
+| `IllegalStateException` | 启动配置 fail-fast    | Task 7 (无 LOCAL 后端时)                                  |
 
 **结论**: 异常分类符合 spec §0 规定。
 
 ### 5. 测试覆盖检查
 
-| 测试文件 | 覆盖范围 | Task |
-|--------|---------|------|
-| `StorageTargetTest` | 值对象校验 | Task 2 |
-| `FileMetadataTest` | 聚合根状态机 + 事件 | Task 3 |
-| `FileMetadataRepositoryImplTest` | Repository CRUD (H2) | Task 6 |
-| `LocalFileStorageTest` | 本地存储单测 | Task 8 |
-| `StoreFileUseCaseTest` | 应用用例 - 创建+上传 | Task 11 |
-| `OpenFileUseCaseTest` | 应用用例 - 打开 | Task 12 |
-| `DeleteFileUseCaseTest` | 应用用例 - 删除（幂等） | Task 12 |
-| `CopyFileUseCaseTest` | 应用用例 - 复制 | Task 12 |
-| `StorageIntegrationTest` | 端到端集成 | Task 15 |
-| `ParseTaskTest` (修改) | 回归测试 | Task 13 |
+| 测试文件                         | 覆盖范围                | Task    |
+|----------------------------------|-------------------------|---------|
+| `StorageTargetTest`              | 值对象校验              | Task 2  |
+| `FileMetadataTest`               | 聚合根状态机 + 事件     | Task 3  |
+| `FileMetadataRepositoryImplTest` | Repository CRUD (H2)    | Task 6  |
+| `LocalFileStorageTest`           | 本地存储单测            | Task 8  |
+| `StoreFileUseCaseTest`           | 应用用例 - 创建+上传    | Task 11 |
+| `OpenFileUseCaseTest`            | 应用用例 - 打开         | Task 12 |
+| `DeleteFileUseCaseTest`          | 应用用例 - 删除（幂等） | Task 12 |
+| `CopyFileUseCaseTest`            | 应用用例 - 复制         | Task 12 |
+| `StorageIntegrationTest`         | 端到端集成              | Task 15 |
+| `ParseTaskTest` (修改)           | 回归测试                | Task 13 |
 
 **结论**: 测试覆盖完整，符合 TDD 流程。
 
@@ -4183,7 +4280,8 @@ git status  # 确认工作区干净
 
 **Plan complete and saved to `docs/superpowers/plans/2026-07-19-file-storage-engine.md`. Two execution options:**
 
-**1. Subagent-Driven (recommended)** - 每个 Task 派发独立 subagent 执行，task 间做 review，迭代快、上下文隔离、错误影响小。适合本 Plan（15 个 Task，每个 Task 边界清晰、可独立验证）。
+**1. Subagent-Driven (recommended)** - 每个 Task 派发独立 subagent 执行，task 间做 review，迭代快、上下文隔离、错误影响小。适合本
+Plan（15 个 Task，每个 Task 边界清晰、可独立验证）。
 
 **2. Inline Execution** - 在当前会话中按 Task 顺序批量执行，checkpoint 处统一 review。适合需要全程把控、随时调整的场景。
 

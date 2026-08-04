@@ -18,7 +18,7 @@ import org.springframework.context.annotation.FilterType;
  */
 @Configuration
 @ComponentScan(
-    basePackages = {"com.example.approval"},
-    includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = DomainService.class)})
+  basePackages = {"com.example.approval"},
+  includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = DomainService.class)})
 public class ApprovalDomainServiceConfiguration {
 }

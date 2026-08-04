@@ -1,7 +1,7 @@
 package com.example.shared.id.strategy;
 
 import com.example.shared.id.segment.service.SegmentIdService;
-import com.example.shared.primitives.identity.IdType;
+import com.example.shared.identifier.contract.IdType;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

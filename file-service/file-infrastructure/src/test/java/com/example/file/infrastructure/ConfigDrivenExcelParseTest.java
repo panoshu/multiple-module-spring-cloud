@@ -5,36 +5,20 @@ import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.gateway.ExcelParser;
 import com.example.file.domain.gateway.ExpressionEvaluator;
 import com.example.file.domain.model.aggregate.root.TemplateConfig;
-import com.example.file.domain.model.enums.ErrorPolicy;
-import com.example.file.domain.model.enums.HeaderMatching;
-import com.example.file.domain.model.enums.KvValuePosition;
-import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.enums.TableMatchBy;
-import com.example.file.domain.model.enums.TriggerMatchType;
+import com.example.file.domain.model.enums.*;
 import com.example.file.domain.model.valueobject.CanonicalData;
 import com.example.file.domain.model.valueobject.RawRowStream;
 import com.example.file.domain.model.valueobject.SplitUnit;
 import com.example.file.domain.model.valueobject.ValidationResult;
-import com.example.file.domain.model.valueobject.config.DataEndRule;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.config.RegionTrigger;
-import com.example.file.domain.model.valueobject.config.TableStrategy;
-import com.example.file.domain.model.valueobject.config.ValidationRule;
+import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.domain.model.valueobject.parse.RegionParseResult;
-import com.example.file.domain.service.CanonicalModelBuilder;
-import com.example.file.domain.service.DataValidator;
-import com.example.file.domain.service.KeyValueRegionParser;
-import com.example.file.domain.service.ParseContext;
-import com.example.file.domain.service.RegionStateMachine;
-import com.example.file.domain.service.TableRegionParser;
-import com.example.file.domain.service.TaskSplitter;
+import com.example.file.domain.service.*;
 import com.example.file.infrastructure.gateway.AviatorExpressionEvaluator;
 import com.example.file.infrastructure.gateway.ExcelParserImpl;
 import com.example.file.infrastructure.gateway.FesodExcelExporter;
 import com.example.file.infrastructure.gateway.YamlConfigLoader;
 import com.example.file.types.BizType;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import org.apache.fesod.sheet.FesodSheet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -47,11 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,13 +59,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ConfigDrivenExcelParseTest {
 
   private static final String BASELINE_YAML_PATH =
-      Path.of("docs", "模板配置", "配置示例", "具体业务基线配置-enterprise_plan_base.yaml").toString();
+    Path.of("docs", "模板配置", "配置示例", "具体业务基线配置-enterprise_plan_base.yaml").toString();
   private static final String SOURCE_TEMPLATE_YAML_PATH =
-      Path.of("docs", "模板配置", "配置示例", "具体的源模板配置-ENTERPRISE_PLAN_STANDARD.yaml").toString();
+    Path.of("docs", "模板配置", "配置示例", "具体的源模板配置-ENTERPRISE_PLAN_STANDARD.yaml").toString();
   private static final String SOURCE_EXCEL_PATH =
-      Path.of("docs", "excel", "示例表单.xlsx").toString();
+    Path.of("docs", "excel", "示例表单.xlsx").toString();
   private static final String OUTPUT_DIR =
-      Path.of("target", "test-output", "config-driven").toString();
+    Path.of("target", "test-output", "config-driven").toString();
 
   private static Path fillTemplatePath;
 
@@ -130,8 +110,8 @@ class ConfigDrivenExcelParseTest {
     // 验证 canonicalModel（6 properties + 1 table）
     assertThat(config.canonicalModel().properties()).hasSize(6);
     assertThat(config.canonicalModel().properties())
-        .extracting(p -> p.code())
-        .contains("planNo", "planName", "customerNo", "customerName", "filler", "reviewer");
+      .extracting(p -> p.code())
+      .contains("planNo", "planName", "customerNo", "customerName", "filler", "reviewer");
     assertThat(config.canonicalModel().tables()).hasSize(1);
     assertThat(config.canonicalModel().tables().get(0).code()).isEqualTo("employees");
     assertThat(config.canonicalModel().tables().get(0).fields()).hasSize(4);
@@ -139,8 +119,8 @@ class ConfigDrivenExcelParseTest {
     // 验证 validationRules（idNo + name 非空校验）
     assertThat(config.validationRules()).hasSize(2);
     assertThat(config.validationRules())
-        .extracting(ValidationRule::field)
-        .contains("idNo", "name");
+      .extracting(ValidationRule::field)
+      .contains("idNo", "name");
 
     // 验证 splitConfig（按 idType 拆分）
     assertThat(config.splitConfig().keys()).contains("idType");
@@ -151,8 +131,8 @@ class ConfigDrivenExcelParseTest {
     assertThat(config.sourceTemplates().get(0).id().value()).isEqualTo("ENTERPRISE_PLAN_STANDARD");
     assertThat(config.sourceTemplates().get(0).regions()).hasSize(3);
     assertThat(config.sourceTemplates().get(0).regions())
-        .extracting(RegionDef::name)
-        .contains("basic_info", "employee_list", "filler_info");
+      .extracting(RegionDef::name)
+      .contains("basic_info", "employee_list", "filler_info");
   }
 
   @Test
@@ -164,10 +144,10 @@ class ConfigDrivenExcelParseTest {
 
     // 验证 properties（来自 basic_info + filler_info 两个 KV 区域）
     assertThat(data.properties())
-        .containsEntry("customerNo", "000234")
-        .containsEntry("customerName", "客户A")
-        .containsEntry("filler", "张三")
-        .containsEntry("reviewer", "李四");
+      .containsEntry("customerNo", "000234")
+      .containsEntry("customerName", "客户A")
+      .containsEntry("filler", "张三")
+      .containsEntry("reviewer", "李四");
 
     // 验证 tables.employees（来自 employee_list TABLE 区域，3 行数据）
     assertThat(data.tables()).containsKey("employees");
@@ -175,16 +155,16 @@ class ConfigDrivenExcelParseTest {
 
     // 验证字段名是标准名（seq/name/idType/idNo），非 Excel 列代码（XH/XM/ZJLX/ZJHM）
     assertThat(data.tables().get("employees").get(0))
-        .containsEntry("seq", "1")
-        .containsEntry("name", "张内Aa01")
-        .containsEntry("idType", "身份证")
-        .containsEntry("idNo", "999000198608060000");
+      .containsEntry("seq", "1")
+      .containsEntry("name", "张内Aa01")
+      .containsEntry("idType", "身份证")
+      .containsEntry("idNo", "999000198608060000");
     assertThat(data.tables().get("employees").get(1))
-        .containsEntry("seq", "2")
-        .containsEntry("idType", "护照");
+      .containsEntry("seq", "2")
+      .containsEntry("idType", "护照");
     assertThat(data.tables().get("employees").get(2))
-        .containsEntry("seq", "3")
-        .containsEntry("idType", "身份证");
+      .containsEntry("seq", "3")
+      .containsEntry("idType", "身份证");
   }
 
   @Test
@@ -225,7 +205,7 @@ class ConfigDrivenExcelParseTest {
     // 实际数据：3 行员工，2 行 idType=身份证，1 行 idType=护照 → 拆分为 2 个子任务
     assertThat(units).hasSize(2);
     assertThat(units).extracting(SplitUnit::splitKey)
-        .containsExactlyInAnyOrder("身份证", "护照");
+      .containsExactlyInAnyOrder("身份证", "护照");
   }
 
   @Test
@@ -274,10 +254,10 @@ class ConfigDrivenExcelParseTest {
 
       // 验证 properties 一致（customerNo/customerName/filler/reviewer）
       assertThat(reParsed.properties())
-          .containsEntry("customerNo", unit.data().get("customerNo"))
-          .containsEntry("customerName", unit.data().get("customerName"))
-          .containsEntry("filler", unit.data().get("filler"))
-          .containsEntry("reviewer", unit.data().get("reviewer"));
+        .containsEntry("customerNo", unit.data().get("customerNo"))
+        .containsEntry("customerName", unit.data().get("customerName"))
+        .containsEntry("filler", unit.data().get("filler"))
+        .containsEntry("reviewer", unit.data().get("reviewer"));
 
       // 验证 tables 行数和字段值一致（seq/name/idType/idNo）
       @SuppressWarnings("unchecked")
@@ -287,10 +267,10 @@ class ConfigDrivenExcelParseTest {
         Map<String, Object> expected = expectedRows.get(i);
         Map<String, Object> actual = reParsed.tables().get("employees").get(i);
         assertThat(actual)
-            .containsEntry("seq", expected.get("seq"))
-            .containsEntry("name", expected.get("name"))
-            .containsEntry("idType", expected.get("idType"))
-            .containsEntry("idNo", expected.get("idNo"));
+          .containsEntry("seq", expected.get("seq"))
+          .containsEntry("name", expected.get("name"))
+          .containsEntry("idType", expected.get("idType"))
+          .containsEntry("idNo", expected.get("idNo"));
       }
     }
   }
@@ -308,11 +288,11 @@ class ConfigDrivenExcelParseTest {
     String sourceTemplateYaml = Files.readString(Path.of(SOURCE_TEMPLATE_YAML_PATH));
     ConfigLoader loader = new YamlConfigLoader();
     return loader.loadFromYaml(
-        BizType.of("ENTERPRISE_PLAN"),
-        baselineYaml,
-        List.of(sourceTemplateYaml),
-        "1.0",
-        UserNo.of("test-user"));
+      BizType.of("ENTERPRISE_PLAN"),
+      baselineYaml,
+      List.of(sourceTemplateYaml),
+      "1.0",
+      UserNo.of("test-user"));
   }
 
   /**
@@ -324,8 +304,8 @@ class ConfigDrivenExcelParseTest {
   private CanonicalData parseExcel(String excelPath, List<RegionDef> regions) throws Exception {
     ExcelParser excelParser = new ExcelParserImpl();
     RegionStateMachine stateMachine = new RegionStateMachine(Map.of(
-        RegionType.KEY_VALUE, new KeyValueRegionParser(),
-        RegionType.TABLE, new TableRegionParser()));
+      RegionType.KEY_VALUE, new KeyValueRegionParser(),
+      RegionType.TABLE, new TableRegionParser()));
     try (InputStream is = new FileInputStream(excelPath)) {
       RawRowStream stream = excelParser.openStream(is);
       List<RegionParseResult> results = stateMachine.drive(stream, regions, new ParseContext(regions));
@@ -348,29 +328,29 @@ class ConfigDrivenExcelParseTest {
    */
   private List<RegionDef> buildRoundTripRegionDefs() {
     return List.of(
-        new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "customerNo", List.of("企业客户号："),
-                    "customerName", List.of("企业客户名称：")),
-                2)),
-        new RegionDef("employee_list", RegionType.TABLE, "employees",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 4),
-            new TableStrategy(
-                1, 0, TableMatchBy.HEADER_NAME,
-                Map.of(
-                    "seq", List.of("序号"),
-                    "name", List.of("姓名"),
-                    "idType", List.of("证件类型"),
-                    "idNo", List.of("证件号码")),
-                HeaderMatching.STRICT, 0, null)),
-        new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "filler", List.of("填表人："),
-                    "reviewer", List.of("复核人：")),
-                1)));
+      new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "customerNo", List.of("企业客户号："),
+            "customerName", List.of("企业客户名称：")),
+          2)),
+      new RegionDef("employee_list", RegionType.TABLE, "employees",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 4),
+        new TableStrategy(
+          1, 0, TableMatchBy.HEADER_NAME,
+          Map.of(
+            "seq", List.of("序号"),
+            "name", List.of("姓名"),
+            "idType", List.of("证件类型"),
+            "idNo", List.of("证件号码")),
+          HeaderMatching.STRICT, 0, null)),
+      new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "filler", List.of("填表人："),
+            "reviewer", List.of("复核人：")),
+          1)));
   }
 }

@@ -4,9 +4,9 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.PlanNo;
+import com.example.shared.identifier.id.ProductNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -137,10 +137,10 @@ class QLExpressConditionEvaluationGatewayTest {
 
     // ✅ 解决方案 B：修改 QLExpressConditionEvaluationGateway 的构造函数，添加白名单：
 
-        // InitOptions options = InitOptions.builder()
-        //     .securityStrategy(QLSecurityStrategy.whiteList(AccountManager.class, CustomerNo.class))
-        //     .build();
-        // this.runner = new Express4Runner(options);
+    // InitOptions options = InitOptions.builder()
+    //     .securityStrategy(QLSecurityStrategy.whiteList(AccountManager.class, CustomerNo.class))
+    //     .build();
+    // this.runner = new Express4Runner(options);
 
     // 此处我们验证：在默认配置下，直接调用方法会触发我们代码中的 catch 块，返回 false (Fail-Safe)
     String expressionWithMethodCall = "accountManager.getValue() == '1100'";

@@ -33,33 +33,33 @@ import java.util.List;
 @HttpExchange("/core/material")
 public interface MaterialAppApi {
 
-    /**
-     * 逐个绑定材料文件。
-     */
-    @PostExchange("/bind-individual")
-    ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command);
+  /**
+   * 逐个绑定材料文件。
+   */
+  @PostExchange("/bind-individual")
+  ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command);
 
-    /**
-     * 打包绑定材料文件。
-     */
-    @PostExchange("/bind-package")
-    ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command);
+  /**
+   * 打包绑定材料文件。
+   */
+  @PostExchange("/bind-package")
+  ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command);
 
-    /**
-     * 解绑材料文件。
-     */
-    @PostExchange("/unbind")
-    ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command);
+  /**
+   * 解绑材料文件。
+   */
+  @PostExchange("/unbind")
+  ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command);
 
-    /**
-     * 查询材料列表。
-     */
-    @PostExchange("/list")
-    ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query);
+  /**
+   * 查询材料列表。
+   */
+  @PostExchange("/list")
+  ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query);
 
-    /**
-     * 校验材料完整性。
-     */
-    @PostExchange("/check-completeness")
-    ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query);
+  /**
+   * 校验材料完整性。
+   */
+  @PostExchange("/check-completeness")
+  ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query);
 }

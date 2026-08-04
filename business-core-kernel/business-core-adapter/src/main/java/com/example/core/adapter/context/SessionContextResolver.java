@@ -4,7 +4,6 @@ import com.example.core.api.context.SessionContext;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.CommonError;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +12,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -34,77 +34,77 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SessionContextResolver {
 
-    private static final String SESSION_HEADER = "X-Session-Context";
+  private static final String SESSION_HEADER = "X-Session-Context";
 
-    private final ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
 
-    /**
-     * 解析会话上下文,header 缺失时返回 empty。
-     */
-    public Optional<SessionContext> optional() {
-        HttpServletRequest request = currentRequest();
-        if (request == null) {
-            return Optional.empty();
-        }
-        String header = request.getHeader(SESSION_HEADER);
-        if (header == null || header.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            byte[] decoded = Base64.getDecoder().decode(header);
-            SessionContext session = objectMapper.readValue(decoded, SessionContext.class);
-            return Optional.of(session);
-        } catch (IOException | IllegalArgumentException e) {
-            log.warn("解析 X-Session-Context header 失败: {}", e.getMessage());
-            return Optional.empty();
-        }
+  /**
+   * 解析会话上下文,header 缺失时返回 empty。
+   */
+  public Optional<SessionContext> optional() {
+    HttpServletRequest request = currentRequest();
+    if (request == null) {
+      return Optional.empty();
     }
-
-    /**
-     * 解析会话上下文,header 缺失时抛 BusinessException。
-     */
-    public SessionContext require() {
-        return optional()
-            .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
-                .withUserDetail("会话上下文缺失,请重新登录")
-                .withLogDetail("X-Session-Context header 缺失或解析失败"));
+    String header = request.getHeader(SESSION_HEADER);
+    if (header == null || header.isBlank()) {
+      return Optional.empty();
     }
-
-    /**
-     * 测试专用:从指定请求解析会话上下文。
-     */
-    public Optional<SessionContext> optional(HttpServletRequest request) {
-        if (request == null) {
-            return Optional.empty();
-        }
-        String header = request.getHeader(SESSION_HEADER);
-        if (header == null || header.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            byte[] decoded = Base64.getDecoder().decode(header);
-            return Optional.of(objectMapper.readValue(decoded, SessionContext.class));
-        } catch (IOException | IllegalArgumentException e) {
-            log.warn("解析 X-Session-Context header 失败: {}", e.getMessage());
-            return Optional.empty();
-        }
+    try {
+      byte[] decoded = Base64.getDecoder().decode(header);
+      SessionContext session = objectMapper.readValue(decoded, SessionContext.class);
+      return Optional.of(session);
+    } catch (IOException | IllegalArgumentException e) {
+      log.warn("解析 X-Session-Context header 失败: {}", e.getMessage());
+      return Optional.empty();
     }
+  }
 
-    /**
-     * 测试专用:从指定请求解析,缺失时抛异常。
-     */
-    public SessionContext require(HttpServletRequest request) {
-        return optional(request)
-            .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
-                .withUserDetail("会话上下文缺失,请重新登录")
-                .withLogDetail("X-Session-Context header 缺失或解析失败"));
-    }
+  /**
+   * 解析会话上下文,header 缺失时抛 BusinessException。
+   */
+  public SessionContext require() {
+    return optional()
+      .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
+        .withUserDetail("会话上下文缺失,请重新登录")
+        .withLogDetail("X-Session-Context header 缺失或解析失败"));
+  }
 
-    private HttpServletRequest currentRequest() {
-        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs instanceof ServletRequestAttributes servletAttrs) {
-            return servletAttrs.getRequest();
-        }
-        return null;
+  /**
+   * 测试专用:从指定请求解析会话上下文。
+   */
+  public Optional<SessionContext> optional(HttpServletRequest request) {
+    if (request == null) {
+      return Optional.empty();
     }
+    String header = request.getHeader(SESSION_HEADER);
+    if (header == null || header.isBlank()) {
+      return Optional.empty();
+    }
+    try {
+      byte[] decoded = Base64.getDecoder().decode(header);
+      return Optional.of(objectMapper.readValue(decoded, SessionContext.class));
+    } catch (IOException | IllegalArgumentException e) {
+      log.warn("解析 X-Session-Context header 失败: {}", e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * 测试专用:从指定请求解析,缺失时抛异常。
+   */
+  public SessionContext require(HttpServletRequest request) {
+    return optional(request)
+      .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
+        .withUserDetail("会话上下文缺失,请重新登录")
+        .withLogDetail("X-Session-Context header 缺失或解析失败"));
+  }
+
+  private HttpServletRequest currentRequest() {
+    RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+    if (attrs instanceof ServletRequestAttributes servletAttrs) {
+      return servletAttrs.getRequest();
+    }
+    return null;
+  }
 }

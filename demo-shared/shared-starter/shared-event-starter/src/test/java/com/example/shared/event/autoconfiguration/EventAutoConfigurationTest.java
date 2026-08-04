@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("EventAutoConfiguration 配置验证")
 class EventAutoConfigurationTest {
 
-    @Test
-    @DisplayName("应标注 @EnableScheduling 以激活 EventRecoveryJob 的 @Scheduled 补偿任务")
-    void should_enable_scheduling() {
-        assertThat(EventAutoConfiguration.class.isAnnotationPresent(EnableScheduling.class))
-            .as("EventAutoConfiguration 必须标注 @EnableScheduling，否则 @Scheduled 补偿任务永不执行")
-            .isTrue();
-    }
+  @Test
+  @DisplayName("应标注 @EnableScheduling 以激活 EventRecoveryJob 的 @Scheduled 补偿任务")
+  void should_enable_scheduling() {
+    assertThat(EventAutoConfiguration.class.isAnnotationPresent(EnableScheduling.class))
+      .as("EventAutoConfiguration 必须标注 @EnableScheduling，否则 @Scheduled 补偿任务永不执行")
+      .isTrue();
+  }
 }

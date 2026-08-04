@@ -60,8 +60,8 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
   @Override
   public List<ParseTask> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -70,7 +70,7 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
   }
 
   private void publishDomainEvents(ParseTask task) {
-    List<DomainEvent> events = task.getDomainEvents();
+    List<DomainEvent> events = task.domainEvents();
     if (events.isEmpty()) {
       return;
     }

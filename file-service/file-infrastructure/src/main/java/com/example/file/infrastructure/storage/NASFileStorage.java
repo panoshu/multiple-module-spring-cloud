@@ -11,92 +11,88 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.security.MessageDigest;
 
 @Slf4j
 @Component
 public class NASFileStorage implements FileStorageBackend {
 
-    @Override
-    public StorageType supportedType() {
-        return StorageType.NAS;
-    }
+  @Override
+  public StorageType supportedType() {
+    return StorageType.NAS;
+  }
 
-    @Override
-    public void store(StorageTarget target, String storageKey,
-                      InputStream content, long contentLength) {
-        Path fullPath = resolvePath(target, storageKey);
-        try {
-            Files.createDirectories(fullPath.getParent());
-            // 临时文件 + atomic move 保证 NAS 多节点并发安全
-            Path tempPath = fullPath.resolveSibling(
-                fullPath.getFileName() + ".tmp." + Thread.currentThread().threadId());
-            try (OutputStream out = Files.newOutputStream(tempPath,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                content.transferTo(out);
-            }
-            Files.move(tempPath, fullPath,
-                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            log.debug("NAS 存储成功: path={}", fullPath);
-        } catch (IOException e) {
-            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("path=" + fullPath);
-        }
+  @Override
+  public void store(StorageTarget target, String storageKey,
+                    InputStream content, long contentLength) {
+    Path fullPath = resolvePath(target, storageKey);
+    try {
+      Files.createDirectories(fullPath.getParent());
+      // 临时文件 + atomic move 保证 NAS 多节点并发安全
+      Path tempPath = fullPath.resolveSibling(
+        fullPath.getFileName() + ".tmp." + Thread.currentThread().threadId());
+      try (OutputStream out = Files.newOutputStream(tempPath,
+        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        content.transferTo(out);
+      }
+      Files.move(tempPath, fullPath,
+        StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      log.debug("NAS 存储成功: path={}", fullPath);
+    } catch (IOException e) {
+      throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
+        .withLogDetail("path=" + fullPath);
     }
+  }
 
-    @Override
-    public InputStream open(StorageTarget target, String storageKey) {
-        Path fullPath = resolvePath(target, storageKey);
-        try {
-            return Files.newInputStream(fullPath, StandardOpenOption.READ);
-        } catch (IOException e) {
-            throw new SystemException(FileErrorCodes.FILE_METADATA_NOT_FOUND, e)
-                .withLogDetail("path=" + fullPath);
-        }
+  @Override
+  public InputStream open(StorageTarget target, String storageKey) {
+    Path fullPath = resolvePath(target, storageKey);
+    try {
+      return Files.newInputStream(fullPath, StandardOpenOption.READ);
+    } catch (IOException e) {
+      throw new SystemException(FileErrorCodes.FILE_METADATA_NOT_FOUND, e)
+        .withLogDetail("path=" + fullPath);
     }
+  }
 
-    @Override
-    public boolean exists(StorageTarget target, String storageKey) {
-        return Files.exists(resolvePath(target, storageKey));
-    }
+  @Override
+  public boolean exists(StorageTarget target, String storageKey) {
+    return Files.exists(resolvePath(target, storageKey));
+  }
 
-    @Override
-    public void copy(StorageTarget target, String srcKey, String dstKey) {
-        Path src = resolvePath(target, srcKey);
-        Path dst = resolvePath(target, dstKey);
-        try {
-            Files.createDirectories(dst.getParent());
-            Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new SystemException(FileErrorCodes.FILE_COPY_FAILED, e)
-                .withLogDetail("src=" + src + ", dst=" + dst);
-        }
+  @Override
+  public void copy(StorageTarget target, String srcKey, String dstKey) {
+    Path src = resolvePath(target, srcKey);
+    Path dst = resolvePath(target, dstKey);
+    try {
+      Files.createDirectories(dst.getParent());
+      Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException e) {
+      throw new SystemException(FileErrorCodes.FILE_COPY_FAILED, e)
+        .withLogDetail("src=" + src + ", dst=" + dst);
     }
+  }
 
-    @Override
-    public String computeDigest(StorageTarget target, String storageKey) {
-        Path fullPath = resolvePath(target, storageKey);
-        try (InputStream in = Files.newInputStream(fullPath)) {
-            MessageDigest sm3 = MessageDigest.getInstance("SM3", "KonaCrypto");
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                sm3.update(buffer, 0, bytesRead);
-            }
-            return Hex.encodeHexString(sm3.digest());
-        } catch (Exception e) {
-            throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
-                .withLogDetail("SM3 摘要计算失败, path=" + fullPath);
-        }
+  @Override
+  public String computeDigest(StorageTarget target, String storageKey) {
+    Path fullPath = resolvePath(target, storageKey);
+    try (InputStream in = Files.newInputStream(fullPath)) {
+      MessageDigest sm3 = MessageDigest.getInstance("SM3", "KonaCrypto");
+      byte[] buffer = new byte[8192];
+      int bytesRead;
+      while ((bytesRead = in.read(buffer)) != -1) {
+        sm3.update(buffer, 0, bytesRead);
+      }
+      return Hex.encodeHexString(sm3.digest());
+    } catch (Exception e) {
+      throw new SystemException(FileErrorCodes.FILE_STORAGE_FAILED, e)
+        .withLogDetail("SM3 摘要计算失败, path=" + fullPath);
     }
+  }
 
-    private Path resolvePath(StorageTarget target, String storageKey) {
-        String mountRoot = target.mountRoot() != null ? target.mountRoot() : "/mnt/nas";
-        return Paths.get(mountRoot, target.bucket(), target.basePath(), storageKey);
-    }
+  private Path resolvePath(StorageTarget target, String storageKey) {
+    String mountRoot = target.mountRoot() != null ? target.mountRoot() : "/mnt/nas";
+    return Paths.get(mountRoot, target.bucket(), target.basePath(), storageKey);
+  }
 }

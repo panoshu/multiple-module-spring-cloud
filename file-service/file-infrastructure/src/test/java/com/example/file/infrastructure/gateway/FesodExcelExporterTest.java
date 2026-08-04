@@ -29,9 +29,9 @@ class FesodExcelExporterTest {
     // 1. 准备模板（用 fesod 写入占位符字符串）
     Path templatePath = tempDir.resolve("template.xlsx");
     List<List<Object>> templateRows = List.of(
-        Arrays.asList("姓名：{name}", null, "年龄：{age}"),
-        List.of("序号", "产品", "数量"),
-        List.of("{items.seq}", "{items.product}", "{items.qty}"));
+      Arrays.asList("姓名：{name}", null, "年龄：{age}"),
+      List.of("序号", "产品", "数量"),
+      List.of("{items.seq}", "{items.product}", "{items.qty}"));
     FesodSheet.write(templatePath.toString()).sheet().doWrite(templateRows);
 
     // 2. 构造 SplitUnit（模拟 TaskSplitter 输出）
@@ -39,8 +39,8 @@ class FesodExcelExporterTest {
     data.put("name", "张三");
     data.put("age", "30");
     data.put("items", List.of(
-        Map.of("seq", "1", "product", "苹果", "qty", "10"),
-        Map.of("seq", "2", "product", "香蕉", "qty", "20")));
+      Map.of("seq", "1", "product", "苹果", "qty", "10"),
+      Map.of("seq", "2", "product", "香蕉", "qty", "20")));
     SplitUnit unit = new SplitUnit("default", data);
 
     // 3. 调用 export
@@ -57,9 +57,9 @@ class FesodExcelExporterTest {
 
     // 5. 重新读取输出文件，验证占位符被替换
     List<Map<Integer, String>> rows = FesodSheet.read(outputPath.toString())
-        .sheet()
-        .headRowNumber(0)
-        .doReadSync();
+      .sheet()
+      .headRowNumber(0)
+      .doReadSync();
     // 第 0 行：姓名：张三 | null | 年龄：30
     assertThat(rows.get(0).get(0)).isEqualTo("姓名：张三");
     assertThat(rows.get(0).get(2)).isEqualTo("年龄：30");
@@ -77,8 +77,8 @@ class FesodExcelExporterTest {
   void export_空列表时不报错() throws Exception {
     Path templatePath = tempDir.resolve("template.xlsx");
     List<List<Object>> templateRows = List.of(
-        List.of("姓名：{name}"),
-        List.of("{items.seq}"));
+      List.of("姓名：{name}"),
+      List.of("{items.seq}"));
     FesodSheet.write(templatePath.toString()).sheet().doWrite(templateRows);
 
     Map<String, Object> data = new LinkedHashMap<>();
@@ -95,9 +95,9 @@ class FesodExcelExporterTest {
 
     assertThat(Files.exists(outputPath)).isTrue();
     List<Map<Integer, String>> rows = FesodSheet.read(outputPath.toString())
-        .sheet()
-        .headRowNumber(0)
-        .doReadSync();
+      .sheet()
+      .headRowNumber(0)
+      .doReadSync();
     assertThat(rows.get(0).get(0)).isEqualTo("姓名：李四");
     // 空列表时 FesodExcelExporter 不调用 writer.fill(FillWrapper)（if (!list.isEmpty()) 守卫），
     // 但 fesod 在 fill(simpleVars, writeSheet) 扫描模板时会清理含 {items.seq} 占位符的行

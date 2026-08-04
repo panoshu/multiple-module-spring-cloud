@@ -8,21 +8,21 @@ import java.util.List;
  * @author approval-service
  */
 public record MatchRulesDTO(
-    /**
-     * 账管人编码列表
-     */
-    List<String> accountManagerCodes,
-    /**
-     * 业务类型列表
-     */
-    List<String> businessTypes,
-    /**
-     * 金额下限（可选）
-     */
-    Long amountMin,
-    /**
-     * 金额上限（可选）
-     */
-    Long amountMax
+  /**
+   * 账管人编码列表
+   */
+  List<String> accountManagerCodes,
+  /**
+   * 业务类型列表
+   */
+  List<String> businessTypes,
+  /**
+   * 金额下限（可选）
+   */
+  Long amountMin,
+  /**
+   * 金额上限（可选）
+   */
+  Long amountMax
 ) {
 }

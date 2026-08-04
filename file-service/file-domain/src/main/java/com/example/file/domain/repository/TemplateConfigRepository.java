@@ -9,7 +9,10 @@ import java.util.Optional;
 
 public interface TemplateConfigRepository extends Repository<TemplateConfig, TemplateConfigId> {
   Optional<TemplateConfig> findActive(BizType bizType);
+
   Optional<TemplateConfig> findByBizTypeAndVersion(BizType bizType, String version);
+
   Optional<TemplateConfig> findById(TemplateConfigId id);
+
   void save(TemplateConfig config);
 }

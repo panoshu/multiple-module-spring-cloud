@@ -29,7 +29,7 @@ public class AnnuityContributionRule {
       return Optional.of("缴费金额不能为负");
     }
     if (AnnuityApplicationExtension.PLAN_TYPE_NEW.equals(ext.planType())
-        && ext.initialContribution() < MIN_INITIAL_CONTRIBUTION_FOR_NEW) {
+      && ext.initialContribution() < MIN_INITIAL_CONTRIBUTION_FOR_NEW) {
       return Optional.of("新建计划初始缴费不少于 100 元");
     }
     return Optional.empty();

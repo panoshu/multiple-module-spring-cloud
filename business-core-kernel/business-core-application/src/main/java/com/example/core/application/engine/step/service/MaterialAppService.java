@@ -5,8 +5,8 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.business.repository.ApplicationRepository;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -117,7 +117,7 @@ public class MaterialAppService {
    *
    * <p>业务服务可覆盖本方法以支持复杂表达式(如 {@code age>60})。
    *
-   * @param rule            规则字符串
+   * @param rule             规则字符串
    * @param conditionContext 条件上下文
    * @return true 表示条件命中(材料变为必传)
    */

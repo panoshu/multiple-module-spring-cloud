@@ -1,8 +1,8 @@
 package com.example.file.types;
 
-import com.example.shared.primitives.identity.IdDefinition;
-import com.example.shared.primitives.identity.IdType;
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.IdDefinition;
+import com.example.shared.identifier.contract.IdType;
+import com.example.shared.identifier.contract.Identifier;
 
 /**
  * 模板配置 ID（ULID）
@@ -14,5 +14,8 @@ public record TemplateConfigId(String value) implements Identifier<String> {
       throw new IllegalArgumentException("TemplateConfigId empty");
     }
   }
-  public static TemplateConfigId of(String value) { return new TemplateConfigId(value); }
+
+  public static TemplateConfigId of(String value) {
+    return new TemplateConfigId(value);
+  }
 }

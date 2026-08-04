@@ -50,7 +50,7 @@ public class ChannelAwareSaRouter {
       stpLogicMap.put(channel, logic);
     }
     log.info("ChannelAwareSaRouter 初始化完成: channels={}",
-        stpLogicMap.keySet().stream().map(ChannelType::loginType).toList());
+      stpLogicMap.keySet().stream().map(ChannelType::loginType).toList());
   }
 
   /**

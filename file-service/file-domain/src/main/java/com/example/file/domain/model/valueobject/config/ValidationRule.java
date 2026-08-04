@@ -5,11 +5,11 @@ import com.example.file.domain.model.enums.ValidationScope;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 public record ValidationRule(
-    String field,
-    ValidationScope scope,
-    String expr,
-    String message,
-    FieldType type
+  String field,
+  ValidationScope scope,
+  String expr,
+  String message,
+  FieldType type
 ) implements ValueObject {
   public ValidationRule {
     scope = scope == null ? ValidationScope.ROW : scope;

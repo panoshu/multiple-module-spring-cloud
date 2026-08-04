@@ -15,8 +15,8 @@ import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,310 +45,310 @@ import static com.example.approval.infrastructure.entity.table.ApprovalRecordDOT
 @RequiredArgsConstructor
 public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepository {
 
-    private final ApprovalInstanceMapper instanceMapper;
-    private final ApprovalNodeExecutionMapper executionMapper;
-    private final ApprovalRecordMapper recordMapper;
-    private final ApprovalInstanceConverter converter;
-    private final ApplicationEventPublisher eventPublisher;
+  private final ApprovalInstanceMapper instanceMapper;
+  private final ApprovalNodeExecutionMapper executionMapper;
+  private final ApprovalRecordMapper recordMapper;
+  private final ApprovalInstanceConverter converter;
+  private final ApplicationEventPublisher eventPublisher;
 
-    @Override
-    public Optional<ApprovalInstance> load(ApprovalInstanceId instanceId) {
-        if (instanceId == null) {
-            return Optional.empty();
-        }
-
-        // 查询审批实例
-        ApprovalInstanceDO instanceDO = instanceMapper.selectOneById(instanceId.value().toString());
-        if (instanceDO == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(convertToInstanceWithDetails(instanceDO));
+  @Override
+  public Optional<ApprovalInstance> load(ApprovalInstanceId instanceId) {
+    if (instanceId == null) {
+      return Optional.empty();
     }
 
-    /**
-     * 将审批实例DO转换为包含节点执行记录和审批记录的完整聚合根
-     *
-     * @param instanceDO 审批实例DO
-     * @return 审批实例聚合根
-     */
-    private ApprovalInstance convertToInstanceWithDetails(ApprovalInstanceDO instanceDO) {
-        String instanceIdStr = instanceDO.getId();
+    // 查询审批实例
+    ApprovalInstanceDO instanceDO = instanceMapper.selectOneById(instanceId.value().toString());
+    if (instanceDO == null) {
+      return Optional.empty();
+    }
 
-        // 查询节点执行记录
-        List<ApprovalNodeExecutionDO> executionDOs = executionMapper.selectListByQuery(
-                QueryWrapper.create()
-                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
-                        .orderBy(APPROVAL_NODE_EXECUTION_DO.NODE_ORDER.asc())
+    return Optional.of(convertToInstanceWithDetails(instanceDO));
+  }
+
+  /**
+   * 将审批实例DO转换为包含节点执行记录和审批记录的完整聚合根
+   *
+   * @param instanceDO 审批实例DO
+   * @return 审批实例聚合根
+   */
+  private ApprovalInstance convertToInstanceWithDetails(ApprovalInstanceDO instanceDO) {
+    String instanceIdStr = instanceDO.getId();
+
+    // 查询节点执行记录
+    List<ApprovalNodeExecutionDO> executionDOs = executionMapper.selectListByQuery(
+      QueryWrapper.create()
+        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+        .orderBy(APPROVAL_NODE_EXECUTION_DO.NODE_ORDER.asc())
+    );
+
+    // 查询每个执行记录的审批记录
+    List<NodeExecution> executions = executionDOs.stream()
+      .map(executionDO -> {
+        NodeExecution execution = converter.toExecutionDomain(executionDO);
+
+        // 查询审批记录
+        List<ApprovalRecordDO> recordDOs = recordMapper.selectListByQuery(
+          QueryWrapper.create()
+            .where(APPROVAL_RECORD_DO.EXECUTION_ID.eq(executionDO.getId()))
+            .orderBy(APPROVAL_RECORD_DO.OPERATED_AT.asc())
         );
 
-        // 查询每个执行记录的审批记录
-        List<NodeExecution> executions = executionDOs.stream()
-                .map(executionDO -> {
-                    NodeExecution execution = converter.toExecutionDomain(executionDO);
+        // 转换审批记录
+        List<ApprovalRecord> records = recordDOs.stream()
+          .map(converter::toRecordDomain)
+          .toList();
 
-                    // 查询审批记录
-                    List<ApprovalRecordDO> recordDOs = recordMapper.selectListByQuery(
-                            QueryWrapper.create()
-                                    .where(APPROVAL_RECORD_DO.EXECUTION_ID.eq(executionDO.getId()))
-                                    .orderBy(APPROVAL_RECORD_DO.OPERATED_AT.asc())
-                    );
-
-                    // 转换审批记录
-                    List<ApprovalRecord> records = recordDOs.stream()
-                            .map(converter::toRecordDomain)
-                            .toList();
-
-                    // 使用重建方法创建完整的执行记录
-                    return NodeExecution.reconstitute(
-                            execution.id(),
-                            execution.nodeId(),
-                            execution.nodeOrder(),
-                            execution.status(),
-                            records,
-                            execution.startedAt(),
-                            execution.completedAt(),
-                            execution.createdBy(),
-                            execution.updatedBy(),
-                            execution.createdAt(),
-                            execution.updatedAt(),
-                            execution.version()
-                    );
-                })
-                .toList();
-
-        // 转换为领域对象
-        ApprovalInstance instance = converter.toDomain(instanceDO);
-
-        // 使用重建方法创建完整的聚合根
-        return ApprovalInstance.reconstitute(
-                instance.id(),
-                instance.flowId(),
-                instance.flowVersion(),
-                instance.businessApplicationId(),
-                instance.businessType(),
-                instance.currentNodeOrder(),
-                instance.status(),
-                instance.initiatorPlan(),
-                instance.currentPlan(),
-                executions,
-                instance.createdBy(),
-                instance.updatedBy(),
-                instance.createdAt(),
-                instance.updatedAt(),
-                instance.version()
+        // 使用重建方法创建完整的执行记录
+        return NodeExecution.reconstitute(
+          execution.id(),
+          execution.nodeId(),
+          execution.nodeOrder(),
+          execution.status(),
+          records,
+          execution.startedAt(),
+          execution.completedAt(),
+          execution.createdBy(),
+          execution.updatedBy(),
+          execution.createdAt(),
+          execution.updatedAt(),
+          execution.version()
         );
+      })
+      .toList();
+
+    // 转换为领域对象
+    ApprovalInstance instance = converter.toDomain(instanceDO);
+
+    // 使用重建方法创建完整的聚合根
+    return ApprovalInstance.reconstitute(
+      instance.id(),
+      instance.flowId(),
+      instance.flowVersion(),
+      instance.businessApplicationId(),
+      instance.businessType(),
+      instance.currentNodeOrder(),
+      instance.status(),
+      instance.initiatorPlan(),
+      instance.currentPlan(),
+      executions,
+      instance.createdBy(),
+      instance.updatedBy(),
+      instance.createdAt(),
+      instance.updatedAt(),
+      instance.version()
+    );
+  }
+
+  @Override
+  public void save(ApprovalInstance instance) {
+    if (instance == null) {
+      throw new IllegalArgumentException("审批实例不能为空");
     }
 
-    @Override
-    public void save(ApprovalInstance instance) {
-        if (instance == null) {
-            throw new IllegalArgumentException("审批实例不能为空");
-        }
+    // 转换审批实例DO
+    ApprovalInstanceDO instanceDO = converter.toDO(instance);
 
-        // 转换审批实例DO
-        ApprovalInstanceDO instanceDO = converter.toDO(instance);
-
-        // 判断是新增还是更新
-        ApprovalInstanceDO existingInstance = instanceMapper.selectOneById(instance.id().value().toString());
-        if (existingInstance == null) {
-            // 新增
-            instanceMapper.insert(instanceDO);
-            log.debug("新增审批实例: instanceId={}", instance.id());
-        } else {
-            // 更新
-            instanceMapper.update(instanceDO);
-            log.debug("更新审批实例: instanceId={}, version={}", instance.id(), instance.version());
-        }
-
-        // 保存节点执行记录和审批记录
-        saveNodeExecutions(instance.id(), instance.getNodeExecutions());
-
-        // 发布领域事件
-        publishDomainEvents(instance);
+    // 判断是新增还是更新
+    ApprovalInstanceDO existingInstance = instanceMapper.selectOneById(instance.id().value().toString());
+    if (existingInstance == null) {
+      // 新增
+      instanceMapper.insert(instanceDO);
+      log.debug("新增审批实例: instanceId={}", instance.id());
+    } else {
+      // 更新
+      instanceMapper.update(instanceDO);
+      log.debug("更新审批实例: instanceId={}, version={}", instance.id(), instance.version());
     }
 
-    @Override
-    public void delete(ApprovalInstance instance) {
-        if (instance == null) {
-            return;
-        }
-        String instanceIdStr = instance.id().value().toString();
-        // 先删除审批记录（通过 execution 关联）
-        recordMapper.deleteByQuery(
-                QueryWrapper.create()
-                        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
-                                QueryWrapper.create()
-                                        .select(APPROVAL_NODE_EXECUTION_DO.ID)
-                                        .from(APPROVAL_NODE_EXECUTION_DO)
-                                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
-                        ))
-        );
-        // 再删除节点执行记录
-        executionMapper.deleteByQuery(
-                QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
-        );
-        // 最后删除主表
-        instanceMapper.deleteById(instanceIdStr);
-        log.debug("删除审批实例: instanceId={}", instance.id());
+    // 保存节点执行记录和审批记录
+    saveNodeExecutions(instance.id(), instance.getNodeExecutions());
+
+    // 发布领域事件
+    publishDomainEvents(instance);
+  }
+
+  @Override
+  public void delete(ApprovalInstance instance) {
+    if (instance == null) {
+      return;
+    }
+    String instanceIdStr = instance.id().value().toString();
+    // 先删除审批记录（通过 execution 关联）
+    recordMapper.deleteByQuery(
+      QueryWrapper.create()
+        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
+          QueryWrapper.create()
+            .select(APPROVAL_NODE_EXECUTION_DO.ID)
+            .from(APPROVAL_NODE_EXECUTION_DO)
+            .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+        ))
+    );
+    // 再删除节点执行记录
+    executionMapper.deleteByQuery(
+      QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+    );
+    // 最后删除主表
+    instanceMapper.deleteById(instanceIdStr);
+    log.debug("删除审批实例: instanceId={}", instance.id());
+  }
+
+  @Override
+  public void deleteById(ApprovalInstanceId id) {
+    if (id == null) {
+      return;
+    }
+    String instanceIdStr = id.value().toString();
+    recordMapper.deleteByQuery(
+      QueryWrapper.create()
+        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
+          QueryWrapper.create()
+            .select(APPROVAL_NODE_EXECUTION_DO.ID)
+            .from(APPROVAL_NODE_EXECUTION_DO)
+            .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+        ))
+    );
+    executionMapper.deleteByQuery(
+      QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
+    );
+    instanceMapper.deleteById(instanceIdStr);
+    log.debug("根据ID删除审批实例: instanceId={}", id);
+  }
+
+  @Override
+  public List<ApprovalInstance> loadAll() {
+    List<ApprovalInstanceDO> instanceDOs = instanceMapper.selectAll();
+    return instanceDOs.stream()
+      .map(this::convertToInstanceWithDetails)
+      .toList();
+  }
+
+  @Override
+  public void streamByAppId(ApprovalInstanceId id, Consumer<AggregateRoot<ApprovalInstanceId>> processor) {
+    if (id == null || processor == null) {
+      return;
+    }
+    load(id).ifPresent(processor);
+  }
+
+  @Override
+  public Optional<ApprovalInstance> findByBusinessApplicationId(ApplicationId applicationId) {
+    if (applicationId == null) {
+      return Optional.empty();
     }
 
-    @Override
-    public void deleteById(ApprovalInstanceId id) {
-        if (id == null) {
-            return;
-        }
-        String instanceIdStr = id.value().toString();
-        recordMapper.deleteByQuery(
-                QueryWrapper.create()
-                        .where(APPROVAL_RECORD_DO.EXECUTION_ID.in(
-                                QueryWrapper.create()
-                                        .select(APPROVAL_NODE_EXECUTION_DO.ID)
-                                        .from(APPROVAL_NODE_EXECUTION_DO)
-                                        .where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
-                        ))
-        );
-        executionMapper.deleteByQuery(
-                QueryWrapper.create().where(APPROVAL_NODE_EXECUTION_DO.INSTANCE_ID.eq(instanceIdStr))
-        );
-        instanceMapper.deleteById(instanceIdStr);
-        log.debug("根据ID删除审批实例: instanceId={}", id);
+    ApprovalInstanceDO instanceDO = instanceMapper.selectOneByQuery(
+      QueryWrapper.create()
+        .where(APPROVAL_INSTANCE_DO.BUSINESS_APPLICATION_ID.eq(applicationId.value()))
+    );
+
+    if (instanceDO == null) {
+      return Optional.empty();
     }
 
-    @Override
-    public List<ApprovalInstance> loadAll() {
-        List<ApprovalInstanceDO> instanceDOs = instanceMapper.selectAll();
-        return instanceDOs.stream()
-                .map(this::convertToInstanceWithDetails)
-                .toList();
+    return load(converter.toDomain(instanceDO).id());
+  }
+
+  @Override
+  public List<ApprovalInstance> findByApproverId(UserNo approverId, InstanceStatus status) {
+    if (approverId == null) {
+      return Collections.emptyList();
     }
 
-    @Override
-    public void streamByAppId(ApprovalInstanceId id, Consumer<AggregateRoot<ApprovalInstanceId>> processor) {
-        if (id == null || processor == null) {
-            return;
-        }
-        load(id).ifPresent(processor);
+    // TODO: 实现根据审批人ID和状态查询审批实例
+    // 当前实现需要通过复杂的关联查询才能找到待审批人审批的实例
+    // 实际应用中可能需要设计专门的待审批视图表或缓存机制
+    log.warn("findByApproverId 方法尚未完整实现");
+    return Collections.emptyList();
+  }
+
+  /**
+   * 保存节点执行记录和审批记录
+   *
+   * @param instanceId 审批实例ID
+   * @param executions 节点执行记录列表
+   */
+  private void saveNodeExecutions(ApprovalInstanceId instanceId, List<NodeExecution> executions) {
+    if (executions == null || executions.isEmpty()) {
+      return;
     }
 
-    @Override
-    public Optional<ApprovalInstance> findByBusinessApplicationId(ApplicationId applicationId) {
-        if (applicationId == null) {
-            return Optional.empty();
-        }
+    for (NodeExecution execution : executions) {
+      // 转换执行记录DO
+      ApprovalNodeExecutionDO executionDO = converter.toExecutionDO(execution);
+      executionDO.setInstanceId(instanceId.value().toString());
 
-        ApprovalInstanceDO instanceDO = instanceMapper.selectOneByQuery(
-                QueryWrapper.create()
-                        .where(APPROVAL_INSTANCE_DO.BUSINESS_APPLICATION_ID.eq(applicationId.value()))
-        );
+      // 判断是新增还是更新
+      ApprovalNodeExecutionDO existingExecution = executionMapper.selectOneById(execution.id().value().toString());
+      if (existingExecution == null) {
+        // 新增
+        executionMapper.insert(executionDO);
+      } else {
+        // 更新
+        executionMapper.update(executionDO);
+      }
 
-        if (instanceDO == null) {
-            return Optional.empty();
-        }
-
-        return load(converter.toDomain(instanceDO).id());
+      // 保存审批记录
+      saveApprovalRecords(executionDO.getId(), execution.getApprovalRecords());
     }
 
-    @Override
-    public List<ApprovalInstance> findByApproverId(UserNo approverId, InstanceStatus status) {
-        if (approverId == null) {
-            return Collections.emptyList();
-        }
+    log.debug("保存节点执行记录: instanceId={}, executionCount={}", instanceId, executions.size());
+  }
 
-        // TODO: 实现根据审批人ID和状态查询审批实例
-        // 当前实现需要通过复杂的关联查询才能找到待审批人审批的实例
-        // 实际应用中可能需要设计专门的待审批视图表或缓存机制
-        log.warn("findByApproverId 方法尚未完整实现");
-        return Collections.emptyList();
+  /**
+   * 保存审批记录列表
+   *
+   * @param executionId 节点执行ID
+   * @param records     审批记录列表
+   */
+  private void saveApprovalRecords(String executionId, List<ApprovalRecord> records) {
+    if (records == null || records.isEmpty()) {
+      return;
     }
 
-    /**
-     * 保存节点执行记录和审批记录
-     *
-     * @param instanceId 审批实例ID
-     * @param executions  节点执行记录列表
-     */
-    private void saveNodeExecutions(ApprovalInstanceId instanceId, List<NodeExecution> executions) {
-        if (executions == null || executions.isEmpty()) {
-            return;
-        }
+    for (ApprovalRecord record : records) {
+      // 转换审批记录DO
+      ApprovalRecordDO recordDO = converter.toRecordDO(record);
+      recordDO.setExecutionId(executionId);
 
-        for (NodeExecution execution : executions) {
-            // 转换执行记录DO
-            ApprovalNodeExecutionDO executionDO = converter.toExecutionDO(execution);
-            executionDO.setInstanceId(instanceId.value().toString());
-
-            // 判断是新增还是更新
-            ApprovalNodeExecutionDO existingExecution = executionMapper.selectOneById(execution.id().value().toString());
-            if (existingExecution == null) {
-                // 新增
-                executionMapper.insert(executionDO);
-            } else {
-                // 更新
-                executionMapper.update(executionDO);
-            }
-
-            // 保存审批记录
-            saveApprovalRecords(executionDO.getId(), execution.getApprovalRecords());
-        }
-
-        log.debug("保存节点执行记录: instanceId={}, executionCount={}", instanceId, executions.size());
+      // 判断是新增还是更新
+      ApprovalRecordDO existingRecord = recordMapper.selectOneById(record.id().value().toString());
+      if (existingRecord == null) {
+        // 新增
+        recordMapper.insert(recordDO);
+      } else {
+        // 更新
+        recordMapper.update(recordDO);
+      }
     }
 
-    /**
-     * 保存审批记录列表
-     *
-     * @param executionId 节点执行ID
-     * @param records      审批记录列表
-     */
-    private void saveApprovalRecords(String executionId, List<ApprovalRecord> records) {
-        if (records == null || records.isEmpty()) {
-            return;
-        }
+    log.debug("保存审批记录: executionId={}, recordCount={}", executionId, records.size());
+  }
 
-        for (ApprovalRecord record : records) {
-            // 转换审批记录DO
-            ApprovalRecordDO recordDO = converter.toRecordDO(record);
-            recordDO.setExecutionId(executionId);
-
-            // 判断是新增还是更新
-            ApprovalRecordDO existingRecord = recordMapper.selectOneById(record.id().value().toString());
-            if (existingRecord == null) {
-                // 新增
-                recordMapper.insert(recordDO);
-            } else {
-                // 更新
-                recordMapper.update(recordDO);
-            }
-        }
-
-        log.debug("保存审批记录: executionId={}, recordCount={}", executionId, records.size());
+  /**
+   * 发布领域事件
+   *
+   * @param instance 审批实例聚合根
+   */
+  private void publishDomainEvents(ApprovalInstance instance) {
+    List<DomainEvent> events = instance.domainEvents();
+    if (events.isEmpty()) {
+      return;
     }
 
-    /**
-     * 发布领域事件
-     *
-     * @param instance 审批实例聚合根
-     */
-    private void publishDomainEvents(ApprovalInstance instance) {
-        List<DomainEvent> events = instance.getDomainEvents();
-        if (events.isEmpty()) {
-            return;
-        }
-
-        for (DomainEvent event : events) {
-            try {
-                eventPublisher.publishEvent(event);
-                log.debug("发布领域事件: eventId={}, eventType={}",
-                        event.eventId(), event.getClass().getSimpleName());
-            } catch (Exception e) {
-                log.error("发布领域事件失败: eventId={}, eventType={}",
-                        event.eventId(), event.getClass().getSimpleName(), e);
-                // 继续发布其他事件，不中断流程
-            }
-        }
-
-        // 清理已发布的事件
-        instance.clearDomainEvents();
+    for (DomainEvent event : events) {
+      try {
+        eventPublisher.publishEvent(event);
+        log.debug("发布领域事件: eventId={}, eventType={}",
+          event.eventId(), event.getClass().getSimpleName());
+      } catch (Exception e) {
+        log.error("发布领域事件失败: eventId={}, eventType={}",
+          event.eventId(), event.getClass().getSimpleName(), e);
+        // 继续发布其他事件，不中断流程
+      }
     }
+
+    // 清理已发布的事件
+    instance.clearDomainEvents();
+  }
 }

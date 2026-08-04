@@ -12,18 +12,18 @@ import java.util.List;
  */
 public interface StorageTargetResolver {
 
-    /**
-     * 按 FileUsage 路由到具体的 StorageTarget
-     */
-    StorageTarget resolveByUsage(FileUsage usage, String bizType);
+  /**
+   * 按 FileUsage 路由到具体的 StorageTarget
+   */
+  StorageTarget resolveByUsage(FileUsage usage, String bizType);
 
-    /**
-     * 按 targetId 直接查询
-     */
-    StorageTarget resolveById(String targetId);
+  /**
+   * 按 targetId 直接查询
+   */
+  StorageTarget resolveById(String targetId);
 
-    /**
-     * 列出所有配置的 StorageTarget
-     */
-    List<StorageTarget> listAll();
+  /**
+   * 列出所有配置的 StorageTarget
+   */
+  List<StorageTarget> listAll();
 }

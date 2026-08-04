@@ -22,28 +22,28 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class KonaFileTokenGateway implements FileTokenGateway {
 
-    private final ObjectMapper objectMapper;
-    private final Sm4Encryptor encryptor;
+  private final ObjectMapper objectMapper;
+  private final Sm4Encryptor encryptor;
 
-    @Override
-    public String encrypt(FileTokenPayload payload) {
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            return encryptor.encrypt(json);
-        } catch (Exception e) {
-            throw new SystemException(FileErrorCodes.FILE_TOKEN_SECRET_NOT_CONFIGURED, e)
-                .withLogDetail("加密失败: " + e.getMessage());
-        }
+  @Override
+  public String encrypt(FileTokenPayload payload) {
+    try {
+      String json = objectMapper.writeValueAsString(payload);
+      return encryptor.encrypt(json);
+    } catch (Exception e) {
+      throw new SystemException(FileErrorCodes.FILE_TOKEN_SECRET_NOT_CONFIGURED, e)
+        .withLogDetail("加密失败: " + e.getMessage());
     }
+  }
 
-    @Override
-    public FileTokenPayload decrypt(String token) {
-        try {
-            String json = encryptor.decrypt(token);
-            return objectMapper.readValue(json, FileTokenPayload.class);
-        } catch (Exception e) {
-            throw new SystemException(FileErrorCodes.FILE_TOKEN_INVALID, e)
-                .withLogDetail("解密失败: " + e.getMessage());
-        }
+  @Override
+  public FileTokenPayload decrypt(String token) {
+    try {
+      String json = encryptor.decrypt(token);
+      return objectMapper.readValue(json, FileTokenPayload.class);
+    } catch (Exception e) {
+      throw new SystemException(FileErrorCodes.FILE_TOKEN_INVALID, e)
+        .withLogDetail("解密失败: " + e.getMessage());
     }
+  }
 }

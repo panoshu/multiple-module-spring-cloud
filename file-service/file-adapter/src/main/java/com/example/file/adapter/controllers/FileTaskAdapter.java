@@ -56,8 +56,8 @@ public class FileTaskAdapter implements FileTaskApi {
     int start = (request.page() - 1) * request.size();
     int end = Math.min(start + request.size(), total);
     List<SubTaskDTO> pageItems = allItems.subList(Math.max(0, start), end).stream()
-        .map(converter::toSubTaskDTO)
-        .toList();
+      .map(converter::toSubTaskDTO)
+      .toList();
 
     boolean hasMore = end < total;
     PageData<SubTaskDTO> pageData = new PageData<>(total, start, pageItems.size(), hasMore, pageItems);

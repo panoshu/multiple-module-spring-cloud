@@ -9,7 +9,7 @@ errorPolicy: COLLECT_ALL # 收集所有错误后统一报错
 canonicalModel:
   headerFields:
     - { code: enterpriseName, type: string, required: true, maxLength: 100 }
-    - { code: declareDate,    type: date,   required: true, formats: ["yyyy-MM-dd", "yyyy/MM/dd", "yyyyMMdd"] }
+    - { code: declareDate,    type: date,   required: true, formats: [ "yyyy-MM-dd", "yyyy/MM/dd", "yyyyMMdd" ] }
     - { code: totalAmount,    type: decimal, scale: 2 } # 头部总金额（可由引擎自动计算）
   detailFields:
     - { code: itemNo,    type: string,  required: true }
@@ -41,7 +41,7 @@ target:
       - { target: decl_date, from: header.declareDate, converter: "date:yyyyMMdd" }
       - { target: total_amt, from: header.totalAmount }
       # 注意：systemTradeNo 不在规范模型中，它由业务系统在请求渲染时通过 Context 传入
-      - { target: trade_no,  from: context.systemTradeNo } 
+      - { target: trade_no,  from: context.systemTradeNo }
       - { target: operator,  from: tail.makerName }
     detail:
       - { target: c_item_no, from: detail.itemNo }

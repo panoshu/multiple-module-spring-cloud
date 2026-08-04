@@ -1,10 +1,12 @@
 # 第一阶段阻塞修复 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 修复 business-core-kernel、approval-service、integration-service 三个不可交付模块的 P0 阻塞问题，使其达到可启动状态。
 
-**Architecture:** 按"简单 bug 修复 → 设计 bug 修复 → 结构性补齐"顺序推进。每个 bug 修复遵循 TDD（先写复现测试，再修复代码）。结构性补齐只创建最小可启动的模块骨架，不实现业务逻辑。
+**Architecture:** 按"简单 bug 修复 → 设计 bug 修复 → 结构性补齐"顺序推进。每个 bug 修复遵循
+TDD（先写复现测试，再修复代码）。结构性补齐只创建最小可启动的模块骨架，不实现业务逻辑。
 
 **Tech Stack:** JDK 25（--enable-preview）、Spring Boot 3.5.14、MyBatis-Flex 1.11.5、JUnit 5、H2 内存数据库（测试用）
 
@@ -23,18 +25,28 @@
 ## 文件结构概览
 
 ### 修改的文件
-- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/errorcode/CoreDomainErrorCode.java` — 修复 message() 返回空串
-- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/MaterialItem.java` — 修复 removeUpload 类型比较 bug
-- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/` 55 个文件 — 包名 vauleobject → valueobject
-- `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalFlow.java` — 修复 update() 调用链断裂
-- `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java` — 修复 allApproversApproved 角色审批立即返回 true
+
+- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/errorcode/CoreDomainErrorCode.java` —
+  修复 message () 返回空串
+-
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/MaterialItem.java` —
+修复 removeUpload 类型比较 bug
+- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/` 55 个文件 —
+  包名 vauleobject → valueobject
+- `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalFlow.java` — 修复
+  update () 调用链断裂
+- `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java` — 修复
+  allApproversApproved 角色审批立即返回 true
 - `approval-service/approval-infrastructure/pom.xml` — 添加 MySQL 驱动依赖
-- `integration-service/integration-service-infrastructure/src/main/java/com/example/integration/infrastructure/core/common/model/TradeRootResponse.java` — 修复 Optional.of(null) NPE
+-
+`integration-service/integration-service-infrastructure/src/main/java/com/example/integration/infrastructure/core/common/model/TradeRootResponse.java` —
+修复 Optional.of (null) NPE
 - `integration-service/integration-service-starter/pom.xml` — 修复 finalName 错误
 - `integration-service/pom.xml` — 添加 integration-service-types 模块声明
 - `pom.xml`（根） — 添加 integration-service-types 依赖管理
 
 ### 新增的文件
+
 - `business-core-kernel/business-core-starter/pom.xml` — starter 模块骨架
 - `business-core-kernel/business-core-starter/src/main/java/com/example/core/CoreApplication.java` — 启动类
 - `business-core-kernel/business-core-starter/src/main/resources/application.yml` — 最小配置
@@ -46,6 +58,7 @@
 - 各模块的测试文件（详见每个任务）
 
 ### 测试文件
+
 - `business-core-domain/src/test/java/.../errorcode/CoreDomainErrorCodeTest.java`
 - `business-core-domain/src/test/java/.../aggregate/valueobject/MaterialItemTest.java`
 - `approval-domain/src/test/java/.../aggregate/root/ApprovalFlowTest.java`
@@ -54,13 +67,17 @@
 
 ---
 
-## Task 1: 修复 CoreDomainErrorCode.message() 返回空串 bug
+## Task 1: 修复 CoreDomainErrorCode.message () 返回空串 bug
 
 **Files:**
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/errorcode/CoreDomainErrorCode.java:34-36`
-- Test: `business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/errorcode/CoreDomainErrorCodeTest.java`
+
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/errorcode/CoreDomainErrorCode.java:34-36`
+- Test:
+  `business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/errorcode/CoreDomainErrorCodeTest.java`
 
 **Interfaces:**
+
 - Consumes: `com.example.shared.exception.ErrorDefinition` 接口
 - Produces: 修复后的 `CoreDomainErrorCode.message()` 返回实际 message 字段值
 
@@ -146,10 +163,14 @@ git commit -m "fix(business-core-domain): CoreDomainErrorCode.message() 返回�
 ## Task 2: 修复 MaterialItem.removeUpload 类型比较 bug
 
 **Files:**
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/MaterialItem.java:61-63`
-- Test: `business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/aggregate/valueobject/MaterialItemTest.java`
 
-**Bug 描述：** 第 62 行 `filter(f -> !f.equals(fileId))` 中 `f` 是 `BusinessFile` 类型，`fileId` 是 `FileId` 类型，`BusinessFile.equals(FileId)` 永远返回 false（record 的 equals 基于同类型比较），导致 removeUpload 永远不会移除任何文件。
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/MaterialItem.java:61-63`
+- Test:
+  `business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/aggregate/valueobject/MaterialItemTest.java`
+
+**Bug 描述：** 第 62 行 `filter(f -> !f.equals(fileId))` 中 `f` 是 `BusinessFile` 类型，`fileId` 是 `FileId` 类型，
+`BusinessFile.equals(FileId)` 永远返回 false（record 的 equals 基于同类型比较），导致 removeUpload 永远不会移除任何文件。
 
 - [ ] **Step 1: 编写失败测试**
 
@@ -266,13 +287,17 @@ git commit -m "fix(business-core-domain): MaterialItem.removeUpload 类型比较
 
 ---
 
-## Task 3: 修复 TradeRootResponse 的 Optional.of(null) NPE 风险
+## Task 3: 修复 TradeRootResponse 的 Optional.of (null) NPE 风险
 
 **Files:**
-- Modify: `integration-service/integration-service-infrastructure/src/main/java/com/example/integration/infrastructure/core/common/model/TradeRootResponse.java:43-45,58-60,73-76`
-- Test: `integration-service/integration-service-infrastructure/src/test/java/com/example/integration/infrastructure/core/common/model/TradeRootResponseTest.java`
 
-**Bug 描述：** `isSuccess()`、`getErrorCode()`、`getErrorMsg()` 三处使用 `Optional.of(statusInfo())`，当 `statusInfo()` 返回 null 时，`Optional.of(null)` 会抛出 NPE。应使用 `Optional.ofNullable()`。
+- Modify:
+  `integration-service/integration-service-infrastructure/src/main/java/com/example/integration/infrastructure/core/common/model/TradeRootResponse.java:43-45,58-60,73-76`
+- Test:
+  `integration-service/integration-service-infrastructure/src/test/java/com/example/integration/infrastructure/core/common/model/TradeRootResponseTest.java`
+
+**Bug 描述：** `isSuccess()`、`getErrorCode()`、`getErrorMsg()` 三处使用 `Optional.of(statusInfo())`，当 `statusInfo()` 返回
+null 时，`Optional.of(null)` 会抛出 NPE。应使用 `Optional.ofNullable()`。
 
 - [ ] **Step 1: 编写失败测试**
 
@@ -332,6 +357,7 @@ Expected: FAIL — 3 个测试因 NPE 失败
 修改 `TradeRootResponse.java`：
 
 第 42-46 行 `isSuccess()`：
+
 ```java
 @Override
 public boolean isSuccess() {
@@ -342,6 +368,7 @@ public boolean isSuccess() {
 ```
 
 第 53-61 行 `getErrorCode()`：
+
 ```java
 @Override
 public String getErrorCode() {
@@ -355,6 +382,7 @@ public String getErrorCode() {
 ```
 
 第 68-77 行 `getErrorMsg()`：
+
 ```java
 @Override
 public String getErrorMsg() {
@@ -386,6 +414,7 @@ git commit -m "fix(integration-service-infrastructure): TradeRootResponse 使用
 ## Task 4: 修复 integration-service-starter finalName 复制粘贴错误
 
 **Files:**
+
 - Modify: `integration-service/integration-service-starter/pom.xml:32`
 
 **Bug 描述：** 第 32 行 `<finalName>demo-consumer</finalName>` 是从其他模块复制粘贴的遗留，应为 `integration-service`。
@@ -415,16 +444,23 @@ git commit -m "fix(integration-service-starter): finalName 复制粘贴错误 de
 ## Task 5: 修复 ApprovalInstance.allApproversApproved 角色审批立即返回 true bug
 
 **Files:**
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java:340-347`
-- Test: `approval-service/approval-domain/src/test/java/com/example/approval/domain/aggregate/root/ApprovalInstanceTest.java`
 
-**Bug 描述：** `allApproversApproved` 方法第 342-344 行：当 `approverIds.isEmpty()` 时立即返回 true。但角色审批（SPECIFIED_ROLE）时 approverIds 本就为空（使用 roleIds），导致角色审批节点第一次审批就立即被标记为完成，跳过了其他审批人。
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalInstance.java:340-347`
+- Test:
+  `approval-service/approval-domain/src/test/java/com/example/approval/domain/aggregate/root/ApprovalInstanceTest.java`
+
+**Bug 描述：** `allApproversApproved` 方法第 342-344 行：当 `approverIds.isEmpty()` 时立即返回 true。但角色审批（SPECIFIED_ROLE）时
+approverIds 本就为空（使用 roleIds），导致角色审批节点第一次审批就立即被标记为完成，跳过了其他审批人。
 
 **修复策略：** 区分两种情况：
-1. SPECIFIED_USER：检查 approverIds 是否都已审批
-2. SPECIFIED_ROLE：approverIds 为空是正常的，但不能立即返回 true，应返回 false（等待实际审批人审批）。角色审批需要等到所有实际审批人完成后才返回 true，但 domain 层无法解析角色对应的用户列表，所以保守返回 false（即每次角色审批只标记当前审批人完成，需要外部判断是否所有角色审批人都已审批）。
 
-实际上，更合理的设计是：approve 方法中已经记录了审批记录，allApproversApproved 应该检查的是"当前节点是否还有未审批的审批人"。对于角色审批，approverIds 为空意味着没有指定具体用户，此时应该基于审批记录判断。
+1. SPECIFIED_USER：检查 approverIds 是否都已审批
+2. SPECIFIED_ROLE：approverIds 为空是正常的，但不能立即返回 true，应返回 false（等待实际审批人审批）。角色审批需要等到所有实际审批人完成后才返回
+   true，但 domain 层无法解析角色对应的用户列表，所以保守返回 false（即每次角色审批只标记当前审批人完成，需要外部判断是否所有角色审批人都已审批）。
+
+实际上，更合理的设计是：approve 方法中已经记录了审批记录，allApproversApproved
+应该检查的是"当前节点是否还有未审批的审批人"。对于角色审批，approverIds 为空意味着没有指定具体用户，此时应该基于审批记录判断。
 
 **简化修复：** 当 approverIds 为空且 roleIds 不为空时（角色审批），返回 false（不能立即通过）。
 
@@ -505,7 +541,8 @@ class ApprovalInstanceTest {
 - [ ] **Step 2: 运行测试确认失败**
 
 Run: `mvn -pl approval-service/approval-domain -am test -Dtest=ApprovalInstanceTest`
-Expected: FAIL — `allApproversApproved_roleApproval_shouldNotReturnTrueWhenApproverIdsEmpty` 失败，currentNodeOrder 已变为 next()
+Expected: FAIL — `allApproversApproved_roleApproval_shouldNotReturnTrueWhenApproverIdsEmpty` 失败，currentNodeOrder 已变为
+next ()
 
 - [ ] **Step 3: 修复代码**
 
@@ -540,15 +577,20 @@ git commit -m "fix(approval-domain): allApproversApproved 角色审批时 approv
 
 ---
 
-## Task 6: 修复 ApprovalFlow.update() 调用链断裂 bug
+## Task 6: 修复 ApprovalFlow.update () 调用链断裂 bug
 
 **Files:**
-- Modify: `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalFlow.java:131-153`
-- Test: `approval-service/approval-domain/src/test/java/com/example/approval/domain/aggregate/root/ApprovalFlowTest.java`
 
-**Bug 描述：** `update()` 方法第 136-145 行：当传入 `flowName != null` 或 `matchRules != null` 时直接抛异常"不可修改"，导致 update 方法永远无法完成正常流程。
+- Modify:
+  `approval-service/approval-domain/src/main/java/com/example/approval/domain/aggregate/root/ApprovalFlow.java:131-153`
+- Test:
+  `approval-service/approval-domain/src/test/java/com/example/approval/domain/aggregate/root/ApprovalFlowTest.java`
+
+**Bug 描述：** `update()` 方法第 136-145 行：当传入 `flowName != null` 或 `matchRules != null` 时直接抛异常"不可修改"，导致
+update 方法永远无法完成正常流程。
 
 **修复策略：** 根据 DDD 原则，`flowName` 和 `matchRules` 是 `final` 字段（不可变）。正确的做法是：
+
 1. 移除 `update` 方法中的 `flowName` 和 `matchRules` 参数（既然不可变就不应作为更新参数）
 2. 或者将 `flowName` 和 `matchRules` 改为非 final，允许修改
 
@@ -716,9 +758,11 @@ git commit -m "fix(approval-domain): ApprovalFlow.update() 调用链断裂导致
 ## Task 7: 添加 approval-service MySQL 驱动依赖
 
 **Files:**
+
 - Modify: `approval-service/approval-infrastructure/pom.xml`
 
-**Bug 描述：** `application.yml` 第 28-31 行配置了 MySQL 数据源（`jdbc:mysql://localhost:3306/approval`，`com.mysql.cj.jdbc.Driver`），但 `approval-infrastructure/pom.xml` 只引入了 PostgreSQL 驱动，没有 MySQL 驱动，导致启动时找不到驱动类。
+**Bug 描述：** `application.yml` 第 28-31 行配置了 MySQL 数据源（`jdbc:mysql://localhost:3306/approval`，
+`com.mysql.cj.jdbc.Driver`），但 `approval-infrastructure/pom.xml` 只引入了 PostgreSQL 驱动，没有 MySQL 驱动，导致启动时找不到驱动类。
 
 - [ ] **Step 1: 添加 MySQL 驱动依赖**
 
@@ -749,12 +793,15 @@ git commit -m "fix(approval-infrastructure): 缺少 MySQL 驱动依赖导致服�
 ## Task 8: 修复 business-core-kernel 包名拼写错误 vauleobject → valueobject
 
 **Files:**
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/` 下所有文件（55 个）
+
+- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/vauleobject/`
+  下所有文件（55 个）
 - Modify: 引用 `vauleobject` 包的所有其他文件（application/infrastructure 模块）
 
 **Bug 描述：** 包名 `vauleobject` 是 `valueobject` 的拼写错误，贯穿 55 个文件。
 
 **修复策略：** 使用 IDE 全局重命名或脚本批量替换。由于 Windows 环境下文件系统大小写不敏感，需要分两步：
+
 1. 先重命名包目录 `vauleobject` → `valueobject_tmp` → `valueobject`
 2. 再批量替换 Java 文件中的 `vauleobject` → `valueobject`
 
@@ -811,6 +858,7 @@ git commit -m "fix(business-core-kernel): 包名拼写错误 vauleobject 改为 
 ## Task 9: 补齐 business-core-types 空壳模块
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-types/src/main/java/com/example/core/types/package-info.java`
 - Modify: `business-core-kernel/business-core-types/pom.xml`（如果需要补充依赖）
 
@@ -852,6 +900,7 @@ git commit -m "feat(business-core-types): 补齐空壳模块的包结构"
 ## Task 10: 补齐 business-core-api 空壳模块
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/package-info.java`
 
 - [ ] **Step 1: 创建 package-info.java**
@@ -888,6 +937,7 @@ git commit -m "feat(business-core-api): 补齐空壳模块的包结构"
 ## Task 11: 补齐 business-core-adapter 空壳模块
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/package-info.java`
 
 - [ ] **Step 1: 创建 package-info.java**
@@ -924,6 +974,7 @@ git commit -m "feat(business-core-adapter): 补齐空壳模块的包结构"
 ## Task 12: 创建 business-core-starter 模块
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-starter/pom.xml`
 - Create: `business-core-kernel/business-core-starter/src/main/java/com/example/core/CoreApplication.java`
 - Create: `business-core-kernel/business-core-starter/src/main/resources/application.yml`
@@ -1065,6 +1116,7 @@ git commit -m "feat(business-core-starter): 创建启动模块，服务可启动
 ## Task 13: 补齐 integration-service-types 模块
 
 **Files:**
+
 - Create: `integration-service/integration-service-types/pom.xml`
 - Create: `integration-service/integration-service-types/src/main/java/com/example/integration/types/package-info.java`
 - Modify: `integration-service/pom.xml`（添加 types 模块声明和 dependencyManagement）
@@ -1203,12 +1255,13 @@ git commit -m "docs: 第一阶段阻塞修复完成，更新 review 报告"
 ## Self-Review
 
 ### Spec coverage
+
 - ✅ business-core-kernel 包名拼写错误（Task 8）
 - ✅ business-core-kernel 3 个空壳模块（Task 9/10/11）
 - ✅ business-core-kernel starter 缺失（Task 12）
-- ✅ business-core-kernel CoreDomainErrorCode.message() bug（Task 1）
+- ✅ business-core-kernel CoreDomainErrorCode.message () bug（Task 1）
 - ✅ business-core-kernel MaterialItem.removeUpload bug（Task 2）
-- ✅ approval-service ApprovalFlow.update() bug（Task 6）
+- ✅ approval-service ApprovalFlow.update () bug（Task 6）
 - ✅ approval-service ApprovalInstance.allApproversApproved bug（Task 5）
 - ✅ approval-service 缺 MySQL 驱动（Task 7）
 - ✅ integration-service types 模块缺失（Task 13）
@@ -1216,13 +1269,15 @@ git commit -m "docs: 第一阶段阻塞修复完成，更新 review 报告"
 - ✅ integration-service finalName 错误（Task 4）
 
 ### Placeholder scan
+
 - 无 TODO/TBD/"implement later"
 - 所有代码块都包含完整代码
 - 所有命令都包含具体路径和预期输出
 
 ### Type consistency
+
 - `CoreDomainErrorCode.message()` 修复后返回 `this.message`（String 类型一致）
-- `MaterialItem.removeUpload` 修复后 `f.fileId().equals(fileId)`（FileId.equals(FileId) 类型一致）
+- `MaterialItem.removeUpload` 修复后 `f.fileId().equals(fileId)`（FileId.equals (FileId) 类型一致）
 - `TradeRootResponse` 修复后 `Optional.ofNullable(statusInfo())`（一致）
 - `ApprovalFlow.update` 修复后 flowName/matchRules 去掉 final（类型一致）
 - `ApprovalInstance.allApproversApproved` 修复后返回 boolean（类型一致）

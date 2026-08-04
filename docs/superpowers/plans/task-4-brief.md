@@ -1,16 +1,25 @@
 # Task 4: BusinessBatchApi 接口定义与 DTO
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/BusinessBatchApi.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CreateBatchCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/FindActiveBatchQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CreateBatchCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/FindActiveBatchQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java`
 
 **Interfaces:**
+
 - Consumes: `ApiResult`, `@HttpExchange`, `@PostExchange`, `@Valid`, `@RequestBody`
 - Produces: `BusinessBatchApi` 接口及配套 Command/Query/Response DTO
 

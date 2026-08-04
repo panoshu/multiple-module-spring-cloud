@@ -23,8 +23,8 @@ public class FesodExcelExporter implements ExcelExporter {
   @Override
   public void export(SplitUnit unit, InputStream templateStream, OutputStream out) {
     try (ExcelWriter writer = FesodSheet.write(out)
-            .withTemplate(templateStream)
-            .build()) {
+      .withTemplate(templateStream)
+      .build()) {
       WriteSheet writeSheet = FesodSheet.writerSheet().build();
       Map<String, Object> data = unit.data();
 
@@ -44,8 +44,8 @@ public class FesodExcelExporter implements ExcelExporter {
           // 升级 fesod 后可考虑改回 {.regionName.field} 标准语法。
           if (!list.isEmpty()) {
             writer.fill(new FillWrapper(e.getKey(), list),
-                FillConfig.builder().forceNewRow(true).build(),
-                writeSheet);
+              FillConfig.builder().forceNewRow(true).build(),
+              writeSheet);
           }
         } else {
           simpleVars.put(e.getKey(), value);

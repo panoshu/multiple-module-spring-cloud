@@ -1,18 +1,18 @@
 package com.example.core.application.engine.step.service;
 
-import com.example.core.domain.engine.gateway.BusinessConfigGateway;
-import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
-import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.FormRepository;
+import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.shared.domain.event.EventBus;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.IdService;
+import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class BusinessFormAppService {
     form.markAsUploaded(uploadedFile);
 
     formRepository.save(form);
-    form.getDomainEvents().forEach(eventBus::publish);
+    form.domainEvents().forEach(eventBus::publish);
     form.clearDomainEvents();
   }
 
@@ -97,7 +97,7 @@ public class BusinessFormAppService {
 
       applicationRepository.save(newApp);
 
-      newApp.getDomainEvents().forEach(eventBus::publish);
+      newApp.domainEvents().forEach(eventBus::publish);
       newApp.clearDomainEvents();
     }
 
@@ -110,7 +110,7 @@ public class BusinessFormAppService {
    * <p>调用底层文件集成网关,获取直传 token,前端使用该 token 直接上传文件到文件服务。
    *
    * @param clientIp 客户端 IP
-   * @param userId 用户 ID
+   * @param userId   用户 ID
    * @param fileSize 文件大小(字节)
    * @return 上传 token 字符串
    */
@@ -130,7 +130,7 @@ public class BusinessFormAppService {
     BusinessForm form = formRepository.loadOrThrow(formId);
     form.markAsDeleted();
     formRepository.save(form);
-    form.getDomainEvents().forEach(eventBus::publish);
+    form.domainEvents().forEach(eventBus::publish);
     form.clearDomainEvents();
     log.info("删除表单: formId={}", formId.value());
   }

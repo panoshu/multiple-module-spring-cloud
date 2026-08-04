@@ -1,49 +1,74 @@
 # Task 7: BusinessApplicationApi 接口与实现
 
 **Files:**
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/BusinessApplicationApi.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/command/AdvanceStepCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/command/SubmitApplicationCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/query/FindApplicationListQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/query/GetApplicationDetailQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/ApplicationSummaryResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/ApplicationDetailResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/AdvanceStepResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/SubmitResponse.java`
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/ApplicationRepository.java` (新增 `findByBatchId` default 方法)
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessApplication.java` (新增 `getStatus`/`getPackageFile`/`getApplyTime`/`getCompleteTime` getter)
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
-- Create: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessApplicationAppServiceTest.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
+
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/BusinessApplicationApi.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/command/AdvanceStepCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/command/SubmitApplicationCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/query/FindApplicationListQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/query/GetApplicationDetailQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/ApplicationSummaryResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/ApplicationDetailResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/AdvanceStepResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/response/SubmitResponse.java`
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/ApplicationRepository.java`
+  (新增 `findByBatchId` default 方法)
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessApplication.java`
+  (新增 `getStatus`/`getPackageFile`/`getApplyTime`/`getCompleteTime` getter)
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
+- Create:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessApplicationAppServiceTest.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
 
 **Interfaces:**
-- Consumes: `FlowOrchestrationService`(已存在), `ApplicationRepository`(已存在,需扩展)
-- Produces: `BusinessApplicationApi` 接口及配套 DTO, `BusinessApplicationController` bean, `BusinessApplicationAppService` bean
 
-## 关键设计决策(必读)
+- Consumes: `FlowOrchestrationService`(已存在), `ApplicationRepository`(已存在,需扩展)
+- Produces: `BusinessApplicationApi` 接口及配套 DTO, `BusinessApplicationController` bean,
+  `BusinessApplicationAppService` bean
+
+## 关键设计决策 (必读)
 
 > 以下是对原 plan brief 的修正,实现时以本节为准:
 
 1. **ID 类型**: `ApplicationId` 是 String-based record。所有 DTO 中的 `Long applicationId`/`Long batchId` 改为 `String`。
 
-2. **ApplicationRepository 扩展**: 新增 `findByBatchId(BatchId)` default 方法(抛 UnsupportedOperationException),留给业务服务覆写。遵循已有的 `findByFileTaskId` 模式。
+2. **ApplicationRepository 扩展**: 新增 `findByBatchId(BatchId)` default 方法 (抛 UnsupportedOperationException)
+   ,留给业务服务覆写。遵循已有的 `findByFileTaskId` 模式。
 
-3. **不留 TODO**: plan brief 的 `submit` 方法有 TODO,本任务需完整实现:submit 直接复用 `flowOrchestrationService.advanceStep()`,审批判断由管道 preValidation 中的 handler 负责。
+3. **不留 TODO**: plan brief 的 `submit` 方法有 TODO,本任务需完整实现:submit 直接复用
+   `flowOrchestrationService.advanceStep()`,审批判断由管道 preValidation 中的 handler 负责。
 
-4. **ApplicationConverter**: 使用 `default` 方法(同 Task 5/6 模式),因 `BusinessApplication` 继承泛型基类,MapStruct `@Mapping` 无法解析继承的访问器。
+4. **ApplicationConverter**: 使用 `default` 方法 (同 Task 5/6 模式),因 `BusinessApplication` 继承泛型基类,MapStruct
+   `@Mapping` 无法解析继承的访问器。
 
 5. **SubmitResponse**: 当前无审批实例 ID 反查能力,`approvalInstanceId` 设为 null,`needApproval` 设为 false,字段保留供后续扩展。
 
-6. **ApplicationDetailResponse**: `forms`/`materials` 等复杂嵌套字段当前不可得(需联表查询),本次返回 null/空列表,字段保留供后续扩展。
+6. **ApplicationDetailResponse**: `forms`/`materials` 等复杂嵌套字段当前不可得 (需联表查询),本次返回 null/空列表,字段保留供后续扩展。
 
 7. **list 接口**: 按 batchId 查询申请单列表,若业务服务未覆写 `findByBatchId` 则抛 UnsupportedOperationException。
 
-8. **advance 接口**: `AdvanceStepCommand` 含 `actionPayload: Map<String,Object>?` 字段,当前 AppService 暂不消费此字段(由管道 handler 自行从聚合根获取业务事实),保留供后续扩展。
+8. **advance 接口**: `AdvanceStepCommand` 含 `actionPayload: Map<String,Object>?` 字段,当前 AppService 暂不消费此字段
+   (由管道 handler 自行从聚合根获取业务事实),保留供后续扩展。
 
 ## Step 1: 编写 BusinessApplicationApi 接口与 DTO
 
 ### BusinessApplicationApi.java
+
 ```java
 package com.example.core.api.application;
 
@@ -108,6 +133,7 @@ public interface BusinessApplicationApi {
 ```
 
 ### AdvanceStepCommand.java
+
 ```java
 package com.example.core.api.application.command;
 
@@ -130,6 +156,7 @@ public record AdvanceStepCommand(
 ```
 
 ### SubmitApplicationCommand.java
+
 ```java
 package com.example.core.api.application.command;
 
@@ -147,6 +174,7 @@ public record SubmitApplicationCommand(
 ```
 
 ### FindApplicationListQuery.java
+
 ```java
 package com.example.core.api.application.query;
 
@@ -165,6 +193,7 @@ public record FindApplicationListQuery(
 ```
 
 ### GetApplicationDetailQuery.java
+
 ```java
 package com.example.core.api.application.query;
 
@@ -182,6 +211,7 @@ public record GetApplicationDetailQuery(
 ```
 
 ### ApplicationSummaryResponse.java
+
 ```java
 package com.example.core.api.application.response;
 
@@ -204,6 +234,7 @@ public record ApplicationSummaryResponse(
 ```
 
 ### ApplicationDetailResponse.java
+
 ```java
 package com.example.core.api.application.response;
 
@@ -233,6 +264,7 @@ public record ApplicationDetailResponse(
 ```
 
 ### AdvanceStepResponse.java
+
 ```java
 package com.example.core.api.application.response;
 
@@ -250,6 +282,7 @@ public record AdvanceStepResponse(
 ```
 
 ### SubmitResponse.java
+
 ```java
 package com.example.core.api.application.response;
 
@@ -272,9 +305,11 @@ public record SubmitResponse(
 ## Step 2: 扩展 ApplicationRepository 与 BusinessApplication
 
 ### ApplicationRepository
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/ApplicationRepository.java`
 
-在现有接口中新增以下方法(保留所有已有方法不变):
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/ApplicationRepository.java`
+
+在现有接口中新增以下方法 (保留所有已有方法不变):
 
 ```java
   /**
@@ -295,9 +330,11 @@ public record SubmitResponse(
 ```
 
 ### BusinessApplication
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessApplication.java`
 
-在现有类中新增以下 getter(保留所有已有方法不变):
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessApplication.java`
+
+在现有类中新增以下 getter (保留所有已有方法不变):
 
 ```java
   public ApplicationStatus getStatus() {
@@ -319,7 +356,8 @@ public record SubmitResponse(
 
 ## Step 3: 编写 BusinessApplicationAppService
 
-文件: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
+文件:
+`business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
 
 ```java
 package com.example.core.application.business.service;
@@ -415,7 +453,8 @@ public class BusinessApplicationAppService {
 
 ## Step 4: 编写 BusinessApplicationAppService 单元测试
 
-文件: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessApplicationAppServiceTest.java`
+文件:
+`business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessApplicationAppServiceTest.java`
 
 ```java
 package com.example.core.application.business.service;
@@ -499,7 +538,8 @@ class BusinessApplicationAppServiceTest {
 
 ## Step 5: 编写 ApplicationConverter
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
 
 ```java
 package com.example.core.adapter.application.converter;
@@ -604,7 +644,8 @@ public interface ApplicationConverter {
 
 ## Step 6: 编写 BusinessApplicationController
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
 
 ```java
 package com.example.core.adapter.application;
@@ -716,7 +757,8 @@ Expected: BUILD SUCCESS
 
 ## Step 8: 运行测试
 
-Run: `mvn test -pl business-core-kernel/business-core-application -am -Dtest=BusinessApplicationAppServiceTest "-Dsurefire.failIfNoSpecifiedTests=false" -q`
+Run:
+`mvn test -pl business-core-kernel/business-core-application -am -Dtest=BusinessApplicationAppServiceTest "-Dsurefire.failIfNoSpecifiedTests=false" -q`
 Expected: PASS (4 tests)
 
 ## Step 9: 提交

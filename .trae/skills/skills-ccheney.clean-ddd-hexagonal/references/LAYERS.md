@@ -2,23 +2,29 @@
 
 > Sources:
 > Primary:
-> - [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — Robert C. Martin
+> - [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — Robert C.
+    Martin
 > - [Onion Architecture](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/) — Jeffrey Palermo
-> Implementation guide:
-> - [Designing a DDD-oriented Microservice](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice) — Microsoft
-> Supplemental synthesis:
-> - [Clean Architecture: Standing on the Shoulders of Giants](https://herbertograca.com/2017/09/28/clean-architecture-standing-on-the-shoulders-of-giants/) — Herberto Graça
+>   Implementation guide:
+> - [Designing a DDD-oriented Microservice](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice) —
+    Microsoft
+>   Supplemental synthesis:
+> - [Clean Architecture: Standing on the Shoulders of Giants](https://herbertograca.com/2017/09/28/clean-architecture-standing-on-the-shoulders-of-giants/) —
+    Herberto Graça
 
 ## The Four Layers
 
-| Layer | Responsibility | Dependencies |
-|-------|---------------|--------------|
-| **Domain** | Business logic, entities, rules | None (pure) |
-| **Application** | Use cases, orchestration | Domain |
-| **Infrastructure** | External systems, frameworks | Application, Domain |
-| **Presentation** | API/UI entry points | Application |
+| Layer              | Responsibility                  | Dependencies        |
+|--------------------|---------------------------------|---------------------|
+| **Domain**         | Business logic, entities, rules | None (pure)         |
+| **Application**    | Use cases, orchestration        | Domain              |
+| **Infrastructure** | External systems, frameworks    | Application, Domain |
+| **Presentation**   | API/UI entry points             | Application         |
 
-This reference uses a DDD-centered variant: aggregate repository interfaces live in the Domain layer, while use-case ports and application-owned outbound ports live in the Application layer. A stricter Hexagonal layout may put all driven ports under `application/ports/driven/` instead. Both are acceptable when dependencies still point inward and infrastructure implements, rather than owns, the abstractions.
+This reference uses a DDD-centered variant: aggregate repository interfaces live in the Domain layer, while use-case
+ports and application-owned outbound ports live in the Application layer. A stricter Hexagonal layout may put all driven
+ports under `application/ports/driven/` instead. Both are acceptable when dependencies still point inward and
+infrastructure implements, rather than owns, the abstractions.
 
 ---
 
@@ -479,6 +485,7 @@ export function configureContainer(): Container {
 The same layered structure applies to any language:
 
 ### Go
+
 ```
 internal/
 ├── domain/
@@ -488,6 +495,7 @@ internal/
 ```
 
 ### Rust
+
 ```
 src/
 ├── domain/
@@ -497,6 +505,7 @@ src/
 ```
 
 ### Python
+
 ```
 src/
 ├── domain/

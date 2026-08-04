@@ -1,8 +1,8 @@
 package com.example.shared.cache.core;
 
-import com.example.shared.lock.DistributedLockFactory;
 import com.example.shared.cache.properties.SharedCacheProperties;
 import com.example.shared.cache.properties.SharedCacheProperties.CacheRule;
+import com.example.shared.lock.DistributedLockFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.Cache;

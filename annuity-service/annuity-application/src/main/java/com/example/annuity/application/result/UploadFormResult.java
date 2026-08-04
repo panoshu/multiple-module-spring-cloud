@@ -13,16 +13,16 @@ package com.example.annuity.application.result;
  * @since 2026/7/21
  */
 public record UploadFormResult(
-    String batchId,
-    String batchStatus,
-    String formId,
-    String formStatus,
-    int totalApplications,
-    int completedApplications,
-    int failedApplications,
-    String planType,
-    Long initialContribution,
-    Boolean hasForeignInvestment
+  String batchId,
+  String batchStatus,
+  String formId,
+  String formStatus,
+  int totalApplications,
+  int completedApplications,
+  int failedApplications,
+  String planType,
+  Long initialContribution,
+  Boolean hasForeignInvestment
 ) {
 
   /**
@@ -34,10 +34,10 @@ public record UploadFormResult(
    * 创建"已校验"状态的预览结果
    */
   public static UploadFormResult validated(String planType, Long initialContribution,
-                                            Boolean hasForeignInvestment) {
+                                           Boolean hasForeignInvestment) {
     return new UploadFormResult(
-        null, STATUS_VALIDATED, null, STATUS_VALIDATED,
-        0, 0, 0, planType, initialContribution, hasForeignInvestment
+      null, STATUS_VALIDATED, null, STATUS_VALIDATED,
+      0, 0, 0, planType, initialContribution, hasForeignInvestment
     );
   }
 }

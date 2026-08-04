@@ -6,8 +6,8 @@ import com.example.annuity.api.dto.ApplicationResponse;
 import com.example.annuity.api.dto.BatchStatusResponse;
 import com.example.annuity.api.dto.UploadFormRequest;
 import com.example.annuity.application.service.AnnuityAppService;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class AnnuityController implements AnnuityApi {
   @Override
   public ApiResult<BatchStatusResponse> uploadForm(UploadFormRequest request) {
     log.info("接收年金表单上传请求: customerNo={}, planNo={}, businessType={}",
-        request.customerNo(), request.planNo(), request.businessType());
+      request.customerNo(), request.planNo(), request.businessType());
     var command = converter.toCommand(request);
     var result = annuityAppService.uploadForm(command);
     return ApiResult.success(converter.toBatchResponse(result));

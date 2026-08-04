@@ -1,9 +1,9 @@
 package com.example.shared.event.job;
 
-import com.example.shared.lock.DistributedLock;
 import com.example.shared.domain.event.EventDispatcher;
 import com.example.shared.domain.event.EventStore;
 import com.example.shared.event.deliverer.EventDeliverer;
+import com.example.shared.lock.DistributedLock;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +28,8 @@ public class EventRecoveryJob {
   @PostConstruct
   public void init() {
     this.dispatcherMap = dispatchers.stream()
-        .filter(EventDispatcher::isRemote)
-        .collect(Collectors.toMap(EventDispatcher::getChannelName, d -> d));
+      .filter(EventDispatcher::isRemote)
+      .collect(Collectors.toMap(EventDispatcher::getChannelName, d -> d));
   }
 
   @Scheduled(fixedDelay = 30_000)
@@ -44,7 +44,7 @@ public class EventRecoveryJob {
         if (dispatcher != null) {
           // 补偿流：直接用反序列化好的 integrationEvent
           eventDeliverer.deliverRecovered(dispatcher, entry.integrationEvent(),
-              entry.integrationType(), entry.logId());
+            entry.integrationType(), entry.logId());
         }
       }
     } finally {

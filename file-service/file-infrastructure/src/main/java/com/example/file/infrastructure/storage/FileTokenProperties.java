@@ -12,17 +12,17 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "file.token")
 public class FileTokenProperties {
 
-    @NotBlank
-    private String secretKey;
+  @NotBlank
+  private String secretKey;
 
-    private Duration defaultUploadTtl = Duration.ofMinutes(15);
-    private Duration defaultDownloadTtl = Duration.ofMinutes(15);
+  private Duration defaultUploadTtl = Duration.ofMinutes(15);
+  private Duration defaultDownloadTtl = Duration.ofMinutes(15);
 
-    private Redis redis = new Redis();
+  private Redis redis = new Redis();
 
-    @Data
-    public static class Redis {
-        private String keyPrefix = "file:token:used:";
-        private Duration defaultTtl = Duration.ofMinutes(15);
-    }
+  @Data
+  public static class Redis {
+    private String keyPrefix = "file:token:used:";
+    private Duration defaultTtl = Duration.ofMinutes(15);
+  }
 }

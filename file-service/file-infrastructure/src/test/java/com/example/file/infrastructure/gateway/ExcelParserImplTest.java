@@ -1,17 +1,9 @@
 package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.gateway.ExcelParser;
-import com.example.file.domain.model.enums.HeaderMatching;
-import com.example.file.domain.model.enums.KvValuePosition;
-import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.enums.TableMatchBy;
-import com.example.file.domain.model.enums.TriggerMatchType;
+import com.example.file.domain.model.enums.*;
 import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.DataEndRule;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.config.RegionTrigger;
-import com.example.file.domain.model.valueobject.config.TableStrategy;
+import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.domain.model.valueobject.parse.KvRegionResult;
 import com.example.file.domain.model.valueobject.parse.RawRow;
 import com.example.file.domain.model.valueobject.parse.RegionParseResult;
@@ -29,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ExcelParserImplTest {
 
   private static final String EXCEL_PATH =
-      Path.of("docs", "excel", "示例表单.xlsx").toString();
+    Path.of("docs", "excel", "示例表单.xlsx").toString();
 
   private final ExcelParser parser = new ExcelParserImpl();
 
@@ -65,13 +57,13 @@ class ExcelParserImplTest {
   @Test
   void parse_KV区域_多组label_value() throws Exception {
     List<RegionDef> regions = List.of(
-        new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "customerNo", List.of("企业客户号："),
-                    "customerName", List.of("企业客户名称：")),
-                2)));
+      new RegionDef("basic_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 2),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "customerNo", List.of("企业客户号："),
+            "customerName", List.of("企业客户名称：")),
+          2)));
     try (InputStream is = new FileInputStream(EXCEL_PATH)) {
       List<RegionParseResult> results = parser.parse(is, regions);
 
@@ -86,17 +78,17 @@ class ExcelParserImplTest {
   @Test
   void parse_表格区域_headerNameRow_1_并映射标准字段() throws Exception {
     List<RegionDef> regions = List.of(
-        new RegionDef("employee_list", RegionType.TABLE, "employees",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
-            new TableStrategy(
-                3, 1, TableMatchBy.HEADER_NAME,
-                Map.of(
-                    "seq", List.of("XH"),
-                    "name", List.of("XM"),
-                    "idType", List.of("ZJLX"),
-                    "idNo", List.of("ZJHM")),
-                HeaderMatching.STRICT, 0,
-                new DataEndRule(List.of("结束"), 1))));
+      new RegionDef("employee_list", RegionType.TABLE, "employees",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
+        new TableStrategy(
+          3, 1, TableMatchBy.HEADER_NAME,
+          Map.of(
+            "seq", List.of("XH"),
+            "name", List.of("XM"),
+            "idType", List.of("ZJLX"),
+            "idNo", List.of("ZJHM")),
+          HeaderMatching.STRICT, 0,
+          new DataEndRule(List.of("结束"), 1))));
     try (InputStream is = new FileInputStream(EXCEL_PATH)) {
       List<RegionParseResult> results = parser.parse(is, regions);
 
@@ -113,13 +105,13 @@ class ExcelParserImplTest {
   @Test
   void parse_表格区域_结束标记停止() throws Exception {
     List<RegionDef> regions = List.of(
-        new RegionDef("employee_list", RegionType.TABLE, "employees",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
-            new TableStrategy(
-                3, 1, TableMatchBy.HEADER_NAME,
-                Map.of("seq", List.of("XH")),
-                HeaderMatching.STRICT, 0,
-                new DataEndRule(List.of("结束"), 1))));
+      new RegionDef("employee_list", RegionType.TABLE, "employees",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 5),
+        new TableStrategy(
+          3, 1, TableMatchBy.HEADER_NAME,
+          Map.of("seq", List.of("XH")),
+          HeaderMatching.STRICT, 0,
+          new DataEndRule(List.of("结束"), 1))));
     try (InputStream is = new FileInputStream(EXCEL_PATH)) {
       List<RegionParseResult> results = parser.parse(is, regions);
 
@@ -133,13 +125,13 @@ class ExcelParserImplTest {
   @Test
   void parse_KV区域2_填表人() throws Exception {
     List<RegionDef> regions = List.of(
-        new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
-            new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
-            new KvStrategy(KvValuePosition.RIGHT,
-                Map.of(
-                    "filler", List.of("填表人:"),
-                    "reviewer", List.of("复核人：")),
-                1)));
+      new RegionDef("filler_info", RegionType.KEY_VALUE, "properties",
+        new RegionTrigger(TriggerMatchType.HEADER_SNIFF, 1),
+        new KvStrategy(KvValuePosition.RIGHT,
+          Map.of(
+            "filler", List.of("填表人:"),
+            "reviewer", List.of("复核人：")),
+          1)));
     try (InputStream is = new FileInputStream(EXCEL_PATH)) {
       List<RegionParseResult> results = parser.parse(is, regions);
 

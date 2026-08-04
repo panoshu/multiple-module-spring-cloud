@@ -5,8 +5,8 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import java.util.List;
 
 public record CanonicalModelDef(
-    List<PropertyFieldDef> properties,
-    List<TableDef> tables
+  List<PropertyFieldDef> properties,
+  List<TableDef> tables
 ) implements ValueObject {
   public CanonicalModelDef {
     properties = properties == null ? List.of() : List.copyOf(properties);

@@ -1,5 +1,6 @@
 package com.example.file.api.response;
 
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 
-public record UploadFileResponse(FileId fileId, String originalName, long size, String digest) {}
+public record UploadFileResponse(FileId fileId, String originalName, long size, String digest) {
+}

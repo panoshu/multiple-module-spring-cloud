@@ -9,7 +9,7 @@ import com.example.core.api.progress.query.GetBatchProgressQuery;
 import com.example.core.api.progress.response.BatchProgressResponse;
 import com.example.core.application.business.service.BusinessProgressAppService;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,17 +37,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BusinessProgressController implements BusinessProgressApi {
 
-    private final BusinessProgressAppService progressAppService;
-    private final ProgressConverter converter;
-    private final SessionContextResolver sessionResolver;
+  private final BusinessProgressAppService progressAppService;
+  private final ProgressConverter converter;
+  private final SessionContextResolver sessionResolver;
 
-    @Override
-    @RequireBusinessPermission("PROGRESS_VIEW")
-    public ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query) {
-        SessionContext session = sessionResolver.require();
-        log.info("查询批次进度: batchId={}, userNo={}", query.batchId(), session.userNo());
+  @Override
+  @RequireBusinessPermission("PROGRESS_VIEW")
+  public ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query) {
+    SessionContext session = sessionResolver.require();
+    log.info("查询批次进度: batchId={}, userNo={}", query.batchId(), session.userNo());
 
-        BusinessBatch batch = progressAppService.getBatchProgress(new BatchId(query.batchId()));
-        return ApiResult.success(converter.toBatchProgressResponse(batch));
-    }
+    BusinessBatch batch = progressAppService.getBatchProgress(new BatchId(query.batchId()));
+    return ApiResult.success(converter.toBatchProgressResponse(batch));
+  }
 }

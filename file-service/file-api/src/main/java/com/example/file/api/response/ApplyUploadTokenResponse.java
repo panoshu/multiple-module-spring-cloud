@@ -1,5 +1,6 @@
 package com.example.file.api.response;
 
-import com.example.shared.primitives.identity.FileId;
+import com.example.shared.identifier.id.FileId;
 
-public record ApplyUploadTokenResponse(String token, FileId fileId) {}
+public record ApplyUploadTokenResponse(String token, FileId fileId) {
+}

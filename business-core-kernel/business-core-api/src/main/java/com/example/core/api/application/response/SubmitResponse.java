@@ -9,8 +9,8 @@ package com.example.core.api.application.response;
  * @author panoshu
  */
 public record SubmitResponse(
-    String applicationId,
-    boolean needApproval,
-    String approvalInstanceId
+  String applicationId,
+  boolean needApproval,
+  String approvalInstanceId
 ) {
 }

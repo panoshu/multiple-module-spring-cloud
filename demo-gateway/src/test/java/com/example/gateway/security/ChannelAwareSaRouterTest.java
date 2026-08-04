@@ -64,8 +64,8 @@ class ChannelAwareSaRouterTest {
       for (ChannelType channel : ChannelType.values()) {
         StpLogic logic = router.getStpLogic(channel);
         assertThat(logic.getConfig().getIsReadHeader())
-            .as("渠道 %s 必须显式开启 Header 读取", channel)
-            .isTrue();
+          .as("渠道 %s 必须显式开启 Header 读取", channel)
+          .isTrue();
       }
     }
 
@@ -75,8 +75,8 @@ class ChannelAwareSaRouterTest {
       for (ChannelType channel : ChannelType.values()) {
         StpLogic logic = router.getStpLogic(channel);
         assertThat(logic.getConfig().getIsReadCookie())
-            .as("渠道 %s 必须显式关闭 Cookie 读取", channel)
-            .isFalse();
+          .as("渠道 %s 必须显式关闭 Cookie 读取", channel)
+          .isFalse();
       }
     }
   }

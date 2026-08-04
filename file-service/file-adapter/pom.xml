@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -10,19 +10,38 @@
   </parent>
   <artifactId>file-adapter</artifactId>
   <dependencies>
-    <dependency><groupId>com.example</groupId><artifactId>file-api</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>file-application</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-application</artifactId>
+    </dependency>
     <!--
       file-adapter 直接依赖 file-infrastructure 以注入 FileTokenProperties
       (FileTokenProperties 在 file-infrastructure，adapter 层允许依赖 infrastructure)。
     -->
-    <dependency><groupId>com.example</groupId><artifactId>file-infrastructure</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>shared-web-starter</artifactId></dependency>
-    <dependency><groupId>org.mapstruct</groupId><artifactId>mapstruct</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-infrastructure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-web-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

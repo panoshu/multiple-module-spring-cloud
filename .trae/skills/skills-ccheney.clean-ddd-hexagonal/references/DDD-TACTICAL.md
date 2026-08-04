@@ -31,7 +31,8 @@ flowchart TB
 
 ## Entity
 
-An object with **identity** that persists through time. Two entities are equal if they have the same identity, regardless of attribute values.
+An object with **identity** that persists through time. Two entities are equal if they have the same identity,
+regardless of attribute values.
 
 ### Characteristics
 
@@ -85,13 +86,13 @@ An object defined by its **attributes**, not identity. Two value objects are equ
 
 ### Common Value Objects
 
-| Value Object | Attributes | Validation |
-|--------------|-----------|------------|
-| Money | amount, currency | amount >= 0 |
-| Email | address | valid email format |
-| Address | street, city, zip, country | required fields |
-| DateRange | start, end | start <= end |
-| Quantity | value | value > 0 |
+| Value Object | Attributes                 | Validation         |
+|--------------|----------------------------|--------------------|
+| Money        | amount, currency           | amount >= 0        |
+| Email        | address                    | valid email format |
+| Address      | street, city, zip, country | required fields    |
+| DateRange    | start, end                 | start <= end       |
+| Quantity     | value                      | value > 0          |
 
 ### Pattern
 
@@ -159,14 +160,15 @@ A cluster of entities and value objects treated as a single unit for data change
 
 ### Aggregate Sizing Heuristics
 
-| Metric | Healthy | Warning | Action |
-|--------|---------|---------|--------|
-| Entities per aggregate | 1-5 | 6-10 | >10: Split |
-| Lines of code (root) | <500 | 500-1000 | >1000: Split |
-| Transaction lock time | <100ms | 100-500ms | >500ms: Split |
-| Concurrent modification conflicts | Rare | Occasional | Frequent: Split |
+| Metric                            | Healthy | Warning    | Action          |
+|-----------------------------------|---------|------------|-----------------|
+| Entities per aggregate            | 1-5     | 6-10       | >10: Split      |
+| Lines of code (root)              | <500    | 500-1000   | >1000: Split    |
+| Transaction lock time             | <100ms  | 100-500ms  | >500ms: Split   |
+| Concurrent modification conflicts | Rare    | Occasional | Frequent: Split |
 
 **Questions to ask:**
+
 - Can parts be eventually consistent? → Separate aggregates
 - Do all parts change together? → Same aggregate
 - Are there independent lifecycles? → Separate aggregates

@@ -8,9 +8,9 @@ import com.example.shared.id.metadata.IdMeta;
 import com.example.shared.id.metadata.IdMetadataResolver;
 import com.example.shared.id.strategy.IdGenerationStrategy;
 import com.example.shared.id.strategy.IdGenerationStrategy.IdContext;
-import com.example.shared.primitives.identity.IdService;
-import com.example.shared.primitives.identity.IdType;
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.contract.IdType;
+import com.example.shared.identifier.contract.Identifier;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;

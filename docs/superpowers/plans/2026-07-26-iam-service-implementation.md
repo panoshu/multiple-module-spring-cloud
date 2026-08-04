@@ -1,27 +1,35 @@
 # iam-service 用户与权限服务实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 按设计文档 `docs/superpowers/specs/2026-07-26-iam-service-design.md` 从零实现 iam-service 用户与权限服务,包含 6 聚合根、13 张表、sa-token 多 StpLogic 集成、防腐层 Gateway(Mock 实现)与 demo-gateway 网关集成。
+**Goal:** 按设计文档 `docs/superpowers/specs/2026-07-26-iam-service-design.md` 从零实现 iam-service 用户与权限服务,包含
+6 聚合根、13 张表、sa-token 多 StpLogic 集成、防腐层 Gateway (Mock 实现)与 demo-gateway 网关集成。
 
-**Architecture:** DDD + 六边形架构 7 层模块(types → domain → api → application → adapter → infrastructure → starter)。两个限界上下文:authentication(认证)与 authorization(授权)。sa-token 通过三套 StpLogic 实现多渠道 Token 隔离;权限计算结果缓存在 sa-token Token-Session 中。防腐层 Gateway 接口定义在领域层,Mock 实现在基础设施层,等外部接口就绪后替换。
+**Architecture:** DDD + 六边形架构 7 层模块 (types → domain → api → application → adapter → infrastructure → starter)
+。两个限界上下文:authentication (认证)与 authorization (授权)。sa-token 通过三套 StpLogic 实现多渠道 Token 隔离;权限计算结果缓存在
+sa-token Token-Session 中。防腐层 Gateway 接口定义在领域层,Mock 实现在基础设施层,等外部接口就绪后替换。
 
-**Tech Stack:** JDK 25(--enable-preview)、Spring Boot 3.5.14、Spring Cloud 2025.0.2、MyBatis-Flex 1.11.5、PostgreSQL/MySQL、Redisson 4.3.1、MapStruct 1.6.3、Lombok 1.18.46、sa-token 1.45.0、RocketMQ 2.3.6。
+**Tech Stack:** JDK 25 (--enable-preview)、Spring Boot 3.5.14、Spring Cloud 2025.0.2、MyBatis-Flex
+1.11.5、PostgreSQL/MySQL、Redisson 4.3.1、MapStruct 1.6.3、Lombok 1.18.46、sa-token 1.45.0、RocketMQ 2.3.6。
 
 ## Global Constraints
 
 - **Java 版本**: JDK 25,编译参数必须包含 `--enable-preview`
 - **Spring Boot**: 3.5.14 / **Spring Cloud**: 2025.0.2 / **Spring Cloud Alibaba**: 2025.0.0.0
 - **ORM**: 仅使用 `mybatis-flex-spring-boot3-starter` 1.11.5,禁止引入 spring-jdbc 或 spring-boot-starter-jdbc
-- **数据库**: PostgreSQL 首选(runtime 依赖 `org.postgresql:postgresql`),MySQL 备选;测试使用 H2
-- **sa-token**: 1.45.0,使用 `sa-token-spring-boot3-starter`(iam-service)与 `sa-token-reactor-spring-boot3-starter`(demo-gateway)+ `sa-token-redis-jackson`
+- **数据库**: PostgreSQL 首选 (runtime 依赖 `org.postgresql:postgresql`),MySQL 备选;测试使用 H2
+- **sa-token**: 1.45.0,使用 `sa-token-spring-boot3-starter`(iam-service)与 `sa-token-reactor-spring-boot3-starter`
+  (demo-gateway)+ `sa-token-redis-jackson`
 - **错误码格式**: `SERVICE.IAM.XXXX`(层级字符串),消息使用纯文本,禁止 `{}` 占位符与方括号前缀
-- **时间戳管理**: 业务数据时间由应用层管理(`Entity` 基类构造函数 + `markUpdated()`),DO 禁止使用 `@Column(onInsertValue/onUpdateValue)`
+- **时间戳管理**: 业务数据时间由应用层管理 (`Entity` 基类构造函数 + `markUpdated()`),DO 禁止使用
+  `@Column(onInsertValue/onUpdateValue)`
 - **API 接口**: 必须使用 `@HttpExchange` + `@GetExchange`/`@PostExchange`,返回 `ApiResult<T>`,定义在 iam-api 模块
 - **DTO 转换**: 必须通过 MapStruct Converter/Mapper,禁止在 Controller 中直接转换
 - **领域层约束**: 禁止 Spring 注解、数据库框架注解、JSON 序列化框架;仅允许依赖 lombok
-- **提交规范**: Conventional Commits,格式 `<type>(<scope>): <subject>`,scope 使用 `iam-types`/`iam-domain`/`iam-api`/`iam-application`/`iam-adapter`/`iam-infrastructure`/`iam-starter`/`iam-service`
-- **sa-token 工具类位置**: 必须放在 `iam-adapter/security/` 包,禁止放在 iam-api(api 层不能依赖 sa-token)
+- **提交规范**: Conventional Commits,格式 `<type>(<scope>): <subject>`,scope 使用 `iam-types`/`iam-domain`/`iam-api`/
+  `iam-application`/`iam-adapter`/`iam-infrastructure`/`iam-starter`/`iam-service`
+- **sa-token 工具类位置**: 必须放在 `iam-adapter/security/` 包,禁止放在 iam-api (api 层不能依赖 sa-token)
 - **测试数据库**: 测试使用 H2 内存数据库,不使用 MySQL
 
 ---
@@ -305,34 +313,34 @@ demo-gateway/src/main/java/com/example/gateway/
 
 ## Task 编排总览
 
-| Phase | Task | 范围 | 依赖 |
-|---|---|---|---|
-| 1 | Task 1 | 项目骨架 + 父 POM 集成 | 无 |
-| 1 | Task 2 | iam-types 层 ID 类型 | Task 1 |
-| 2 | Task 3 | 错误码三件套(IamAuth/Authz/System) | Task 1 |
-| 2 | Task 4 | authentication 域值对象 | Task 2, Task 3 |
-| 2 | Task 5 | User 聚合根 + UserProfile 实体 | Task 4 |
-| 2 | Task 6 | Credential 聚合根 + CredentialValidator SPI | Task 4 |
-| 2 | Task 7 | SecondaryAuthSession 聚合根 + SPI | Task 4 |
-| 2 | Task 8 | LoginLog 聚合根 + LoginFailureRecord | Task 4 |
-| 2 | Task 9 | authentication 域事件 + Repository 接口 | Task 5-8 |
-| 3 | Task 10 | authorization 域值对象 + 防腐层 Gateway 接口 | Task 2, Task 3 |
-| 3 | Task 11 | PermissionRule 聚合根 + Repository 接口 | Task 10 |
-| 3 | Task 12 | PlanDelegation 聚合根 + 子实体 + Repository 接口 | Task 10 |
-| 3 | Task 13 | BusinessDefinition + RouteRule 实体 + Repository 接口 | Task 10 |
-| 3 | Task 14 | PermissionResolver + PermissionCombinationStrategy SPI | Task 10-13 |
-| 3 | Task 15 | authorization 域事件 | Task 11-13 |
-| 4 | Task 16 | iam-api 层 DTO/Command/Query + API 接口 | Task 9, 15 |
-| 4 | Task 17 | iam-application 应用服务 + 事件订阅者 | Task 16 |
-| 5 | Task 18 | iam-infrastructure DO + Mapper(13 表) | Task 17 |
-| 5 | Task 19 | iam-infrastructure Entity Converter + Repository 实现 | Task 18 |
-| 5 | Task 20 | iam-infrastructure 防腐层 Gateway Mock 实现 | Task 19 |
-| 5 | Task 21 | schema-pg.sql + schema-mysql.sql 双 DDL | Task 18 |
-| 6 | Task 22 | iam-adapter sa-token 集成(StpUtil × 3 + ChannelContext + StpInterface) | Task 17 |
-| 6 | Task 23 | iam-adapter Controller + Converter | Task 22 |
-| 7 | Task 24 | iam-starter 启动类 + 配置文件 | Task 23 |
-| 7 | Task 25 | demo-gateway sa-token 集成 | Task 24 |
-| 7 | Task 26 | 错误码规范文档更新 + 全量构建验证 | Task 25 |
+| Phase | Task    | 范围                                                                   | 依赖           |
+|-------|---------|------------------------------------------------------------------------|----------------|
+| 1     | Task 1  | 项目骨架 + 父 POM 集成                                                 | 无             |
+| 1     | Task 2  | iam-types 层 ID 类型                                                   | Task 1         |
+| 2     | Task 3  | 错误码三件套(IamAuth/Authz/System)                                     | Task 1         |
+| 2     | Task 4  | authentication 域值对象                                                | Task 2, Task 3 |
+| 2     | Task 5  | User 聚合根 + UserProfile 实体                                         | Task 4         |
+| 2     | Task 6  | Credential 聚合根 + CredentialValidator SPI                            | Task 4         |
+| 2     | Task 7  | SecondaryAuthSession 聚合根 + SPI                                      | Task 4         |
+| 2     | Task 8  | LoginLog 聚合根 + LoginFailureRecord                                   | Task 4         |
+| 2     | Task 9  | authentication 域事件 + Repository 接口                                | Task 5-8       |
+| 3     | Task 10 | authorization 域值对象 + 防腐层 Gateway 接口                           | Task 2, Task 3 |
+| 3     | Task 11 | PermissionRule 聚合根 + Repository 接口                                | Task 10        |
+| 3     | Task 12 | PlanDelegation 聚合根 + 子实体 + Repository 接口                       | Task 10        |
+| 3     | Task 13 | BusinessDefinition + RouteRule 实体 + Repository 接口                  | Task 10        |
+| 3     | Task 14 | PermissionResolver + PermissionCombinationStrategy SPI                 | Task 10-13     |
+| 3     | Task 15 | authorization 域事件                                                   | Task 11-13     |
+| 4     | Task 16 | iam-api 层 DTO/Command/Query + API 接口                                | Task 9, 15     |
+| 4     | Task 17 | iam-application 应用服务 + 事件订阅者                                  | Task 16        |
+| 5     | Task 18 | iam-infrastructure DO + Mapper(13 表)                                  | Task 17        |
+| 5     | Task 19 | iam-infrastructure Entity Converter + Repository 实现                  | Task 18        |
+| 5     | Task 20 | iam-infrastructure 防腐层 Gateway Mock 实现                            | Task 19        |
+| 5     | Task 21 | schema-pg.sql + schema-mysql.sql 双 DDL                                | Task 18        |
+| 6     | Task 22 | iam-adapter sa-token 集成(StpUtil × 3 + ChannelContext + StpInterface) | Task 17        |
+| 6     | Task 23 | iam-adapter Controller + Converter                                     | Task 22        |
+| 7     | Task 24 | iam-starter 启动类 + 配置文件                                          | Task 23        |
+| 7     | Task 25 | demo-gateway sa-token 集成                                             | Task 24        |
+| 7     | Task 26 | 错误码规范文档更新 + 全量构建验证                                      | Task 25        |
 
 ---
 
@@ -341,6 +349,7 @@ demo-gateway/src/main/java/com/example/gateway/
 ### Task 1: 项目骨架与父 POM 集成
 
 **Files:**
+
 - Create: `iam-service/pom.xml`
 - Create: `iam-service/iam-types/pom.xml`
 - Create: `iam-service/iam-domain/pom.xml`
@@ -353,6 +362,7 @@ demo-gateway/src/main/java/com/example/gateway/
 - Modify: `.trae/rules/08-错误码规范.md`
 
 **Interfaces:**
+
 - Produces: 7 个 iam-* Maven 模块可被引用;根 POM `<modules>` 包含 `iam-service`
 
 - [ ] **Step 1: 创建 iam-service 父 POM**
@@ -640,7 +650,7 @@ demo-gateway/src/main/java/com/example/gateway/
 
 - [ ] **Step 11: 在根 pom.xml 的 `<dependencyManagement>` 中添加 iam-* 模块和 sa-token 依赖**
 
-在 `<!-- 2nd Dependencies-->` 部分末尾(`annuity-starter` 之后)追加:
+在 `<!-- 2nd Dependencies-->` 部分末尾 (`annuity-starter` 之后)追加:
 
 ```xml
 <!-- iam-service 模块 -->
@@ -681,7 +691,7 @@ demo-gateway/src/main/java/com/example/gateway/
 </dependency>
 ```
 
-在 `<!-- Other 3rd Dependencies -->` 部分末尾(kona-crypto 之后)追加:
+在 `<!-- Other 3rd Dependencies -->` 部分末尾 (kona-crypto 之后)追加:
 
 ```xml
 <!-- sa-token -->
@@ -712,7 +722,7 @@ demo-gateway/src/main/java/com/example/gateway/
 
 - [ ] **Step 13: 清理 iam-service 下的旧文件**
 
-执行命令清理掉之前残留的旧实现(避免与新设计冲突):
+执行命令清理掉之前残留的旧实现 (避免与新设计冲突):
 
 ```bash
 git rm -rf iam-service/iam-application/src iam-service/iam-infrastructure/src iam-service/iam-domain/src
@@ -742,6 +752,7 @@ git commit -m "build(iam-service): 初始化 iam-service 7 模块骨架与父 PO
 ### Task 2: iam-types 层 ID 类型
 
 **Files:**
+
 - Create: `iam-service/iam-types/src/main/java/com/example/iam/types/UserId.java`
 - Create: `iam-service/iam-types/src/main/java/com/example/iam/types/CredentialId.java`
 - Create: `iam-service/iam-types/src/main/java/com/example/iam/types/SecondaryAuthSessionId.java`
@@ -754,6 +765,7 @@ git commit -m "build(iam-service): 初始化 iam-service 7 模块骨架与父 PO
 - Test: `iam-service/iam-types/src/test/java/com/example/iam/types/IdTypesTest.java`
 
 **Interfaces:**
+
 - Consumes: `com.example.shared.primitives.identity.Identifier`(来自 shared-types)
 - Produces: 8 个 ID 类型,均 `extends Identifier<Long>`,提供 `of(Long)` 与 `value()` 方法
 

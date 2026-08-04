@@ -4,11 +4,11 @@ import com.example.file.domain.model.enums.RegionType;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 public record RegionDef(
-    String name,
-    RegionType type,
-    String bindTo,
-    RegionTrigger trigger,
-    RegionStrategy strategy
+  String name,
+  RegionType type,
+  String bindTo,
+  RegionTrigger trigger,
+  RegionStrategy strategy
 ) implements ValueObject {
   public RegionDef {
     if (name == null || name.isBlank()) throw new IllegalArgumentException("RegionDef.name empty");

@@ -10,20 +10,20 @@ package com.example.shared.domain.event;
  */
 public interface IntegrationEventConverter<D extends DomainEvent> {
 
-    /**
-     * 此转换器支持的领域事件类型
-     */
-    Class<D> supportedEventType();
+  /**
+   * 此转换器支持的领域事件类型
+   */
+  Class<D> supportedEventType();
 
-    /**
-     * 将领域事件转换为集成事件（纯 POJO，可跨服务序列化）
-     */
-    Object toIntegrationEvent(D domainEvent);
+  /**
+   * 将领域事件转换为集成事件（纯 POJO，可跨服务序列化）
+   */
+  Object toIntegrationEvent(D domainEvent);
 
-    /**
-     * 集成事件类型标识，默认使用领域事件类名。用于 MQ topic 路由和落库标识。
-     */
-    default String integrationEventType() {
-        return supportedEventType().getSimpleName();
-    }
+  /**
+   * 集成事件类型标识，默认使用领域事件类名。用于 MQ topic 路由和落库标识。
+   */
+  default String integrationEventType() {
+    return supportedEventType().getSimpleName();
+  }
 }

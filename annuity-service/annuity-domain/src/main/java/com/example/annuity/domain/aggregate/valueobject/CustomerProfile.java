@@ -1,7 +1,7 @@
 package com.example.annuity.domain.aggregate.valueobject;
 
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
-import com.example.shared.primitives.identity.CustomerNo;
+import com.example.shared.identifier.id.CustomerNo;
 
 import java.util.List;
 
@@ -15,9 +15,9 @@ import java.util.List;
  * @since 2026/7/22
  */
 public record CustomerProfile(
-    CustomerNo customerNo,
-    String riskLevel,
-    List<String> relatedCompanies
+  CustomerNo customerNo,
+  String riskLevel,
+  List<String> relatedCompanies
 ) implements ValueObject {
 
   public CustomerProfile {

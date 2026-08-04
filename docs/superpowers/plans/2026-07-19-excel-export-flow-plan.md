@@ -1,10 +1,13 @@
 # Excel 导出全流程测试 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在 file-service 新增基于 fesod 模板填充的 Excel 导出能力，并构造从解析、校验、拆分到导出外部表单的端到端全流程测试。
 
-**Architecture:** Domain 层新增 `ExcelExporter` Gateway SPI，infrastructure 层用 fesod 的 `FesodSheet.write().withTemplate().doFill()` 实现 `FesodExcelExporter`。测试通过 `@BeforeAll` 程序生成填充模板到 `docs/excel/示例表单_填充模板.xlsx`，然后验证 解析→校验→拆分→导出→round-trip 全流程。
+**Architecture:** Domain 层新增 `ExcelExporter` Gateway SPI，infrastructure 层用 fesod 的
+`FesodSheet.write().withTemplate().doFill()` 实现 `FesodExcelExporter`。测试通过 `@BeforeAll` 程序生成填充模板到
+`docs/excel/示例表单_填充模板.xlsx`，然后验证 解析→校验→拆分→导出→round-trip 全流程。
 
 **Tech Stack:** JDK 25, fesod-sheet 2.0.2-incubating, JUnit 5, AssertJ
 
@@ -12,7 +15,7 @@
 
 - PowerShell 环境，mvn 的 -D 参数用引号：`"-Dmaven.legacyLocalRepo=true"`
 - Git commit 用 `--no-gpg-sign` + 临时文件 commit message（PowerShell 不支持 HEREDOC）
-- RawRow.cells() 列索引统一为 **0-based**
+- RawRow.cells () 列索引统一为 **0-based**
 - 领域对象用 record + 非 JavaBean getter
 - 测试用 AssertJ 断言
 - fesod 包路径前缀：`org.apache.fesod.sheet.*`（已在 ExcelParserImpl.java 验证）
@@ -25,45 +28,49 @@
 
 ## 值对象签名速查表（实施时参照）
 
-| 类 | 构造函数签名 |
-|----|-------------|
-| `SplitUnit` | `(String splitKey, Map<String, Object> data)` |
-| `ValidationRule` | `(String field, ValidationScope scope, String expr, String message, FieldType type)` |
-| `RegionDef` | `(String name, RegionType type, String bindTo, RegionTrigger trigger, RegionStrategy strategy)` |
-| `RegionTrigger` | `(TriggerMatchType matchType, int minMatchCount)` |
-| `KvStrategy` | `(KvValuePosition valuePosition, Map<String, List<String>> labelAliases, int maxBlankRows)` |
-| `TableStrategy` | `(int headerRows, int headerNameRow, TableMatchBy matchBy, Map<String, List<String>> headerAliases, HeaderMatching headerMatching, int maxRows, DataEndRule dataEnd)` |
-| `DataEndRule` | `(List<String> markers, int blankRowCount)` |
-| `SplitConfig` | `(List<String> keys, SplitKeyDef splitKey, SplitMissPolicy onMiss, String defaultOnMissValue, String fileNamingTemplate, boolean promoteToContext, int maxRowsPerSubTask)` |
-| `SplitKeyDef` | `(String targetField, String sourcePath, SplitKeyType type)` |
+| 类               | 构造函数签名                                                                                                                                                               |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SplitUnit`      | `(String splitKey, Map<String, Object> data)`                                                                                                                              |
+| `ValidationRule` | `(String field, ValidationScope scope, String expr, String message, FieldType type)`                                                                                       |
+| `RegionDef`      | `(String name, RegionType type, String bindTo, RegionTrigger trigger, RegionStrategy strategy)`                                                                            |
+| `RegionTrigger`  | `(TriggerMatchType matchType, int minMatchCount)`                                                                                                                          |
+| `KvStrategy`     | `(KvValuePosition valuePosition, Map<String, List<String>> labelAliases, int maxBlankRows)`                                                                                |
+| `TableStrategy`  | `(int headerRows, int headerNameRow, TableMatchBy matchBy, Map<String, List<String>> headerAliases, HeaderMatching headerMatching, int maxRows, DataEndRule dataEnd)`      |
+| `DataEndRule`    | `(List<String> markers, int blankRowCount)`                                                                                                                                |
+| `SplitConfig`    | `(List<String> keys, SplitKeyDef splitKey, SplitMissPolicy onMiss, String defaultOnMissValue, String fileNamingTemplate, boolean promoteToContext, int maxRowsPerSubTask)` |
+| `SplitKeyDef`    | `(String targetField, String sourcePath, SplitKeyType type)`                                                                                                               |
 
 ### 关键接口
 
-| 接口 | 方法 |
-|------|------|
-| `ExcelExporter` (新增) | `void export(SplitUnit unit, InputStream templateStream, OutputStream out)` |
-| `ExcelParser` (已存在) | `RawRowStream openStream(InputStream)` |
-| `ExpressionEvaluator` (已存在) | `Object evaluate(String expr, Map<String, Object> context)` |
+| 接口                           | 方法                                                                        |
+|--------------------------------|-----------------------------------------------------------------------------|
+| `ExcelExporter` (新增)         | `void export(SplitUnit unit, InputStream templateStream, OutputStream out)` |
+| `ExcelParser` (已存在)         | `RawRowStream openStream(InputStream)`                                      |
+| `ExpressionEvaluator` (已存在) | `Object evaluate(String expr, Map<String, Object> context)`                 |
 
 ### 关键服务方法
 
-| 服务 | 方法 |
-|------|------|
-| `RegionStateMachine.drive` | `(RawRowStream, List<RegionDef>, ParseContext) → List<RegionParseResult>` |
-| `CanonicalModelBuilder.build` | `(List<RegionParseResult>, List<RegionDef>) → CanonicalData` |
-| `DataValidator.validate` | `(Map<String, Object>, List<ValidationRule>, ErrorPolicy, ExpressionEvaluator) → ValidationResult` |
-| `TaskSplitter.split` | `(Map<String, Object>, SplitConfig) → List<SplitUnit>` |
+| 服务                          | 方法                                                                                               |
+|-------------------------------|----------------------------------------------------------------------------------------------------|
+| `RegionStateMachine.drive`    | `(RawRowStream, List<RegionDef>, ParseContext) → List<RegionParseResult>`                          |
+| `CanonicalModelBuilder.build` | `(List<RegionParseResult>, List<RegionDef>) → CanonicalData`                                       |
+| `DataValidator.validate`      | `(Map<String, Object>, List<ValidationRule>, ErrorPolicy, ExpressionEvaluator) → ValidationResult` |
+| `TaskSplitter.split`          | `(Map<String, Object>, SplitConfig) → List<SplitUnit>`                                             |
 
 ---
 
 ## Task 1: ExcelExporter SPI + FesodExcelExporter 实现 + smoke test
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/ExcelExporter.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/FesodExcelExporter.java`
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/FesodExcelExporterTest.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/gateway/FesodExcelExporter.java`
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/FesodExcelExporterTest.java`
 
 **Interfaces:**
+
 - Consumes: `SplitUnit`（已存在，`com.example.file.domain.model.valueobject.SplitUnit`）
 - Produces: `ExcelExporter` SPI（供后续 Task 2 测试使用）
 
@@ -95,7 +102,8 @@ public interface ExcelExporter {
 
 - [ ] **Step 2: 写失败测试 `FesodExcelExporterTest`**
 
-创建 `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/FesodExcelExporterTest.java`：
+创建
+`file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/FesodExcelExporterTest.java`：
 
 ```java
 package com.example.file.infrastructure.gateway;
@@ -270,7 +278,9 @@ public class FesodExcelExporter implements ExcelExporter {
 Run: `mvn -pl file-service/file-infrastructure -am test -Dtest=FesodExcelExporterTest -q`
 Expected: PASS，2/2 tests
 
-**注意**：如果 fesod 的 `FillConfig` 或 `FillWrapper` 包路径不对（例如不是 `org.apache.fesod.sheet.fill`），编译会失败。此时用 IDE 的自动导入或检查 fesod jar 实际包路径：
+**注意**：如果 fesod 的 `FillConfig` 或 `FillWrapper` 包路径不对（例如不是 `org.apache.fesod.sheet.fill`），编译会失败。此时用
+IDE 的自动导入或检查 fesod jar 实际包路径：
+
 ```bash
 mvn -pl file-service/file-infrastructure dependency:tree -Dincludes=org.apache.fesod 2>&1 | findstr fesod
 # 然后查看 jar 内容
@@ -309,11 +319,15 @@ git commit -F .superpowers/sdd/task-1-commit-msg.txt --no-gpg-sign
 ## Task 2: 模板生成 + 全流程 happy path 测试
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`
+
+- Create:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`
 - Generate: `docs/excel/示例表单_填充模板.xlsx`（由 `@BeforeAll` 程序生成）
 
 **Interfaces:**
-- Consumes: `ExcelExporter`（Task 1）、`ExcelParser`、`RegionStateMachine`、`CanonicalModelBuilder`、`DataValidator`、`TaskSplitter`、`SplitUnit`、`CanonicalData`
+
+- Consumes: `ExcelExporter`（Task 1）、`ExcelParser`、`RegionStateMachine`、`CanonicalModelBuilder`、`DataValidator`、
+  `TaskSplitter`、`SplitUnit`、`CanonicalData`
 - Produces: 全流程测试，验证解析→校验→拆分→导出→round-trip
 
 - [ ] **Step 1: 写测试骨架 + 模板生成 + 全流程 happy path 测试**
@@ -555,6 +569,7 @@ Run: `mvn -pl file-service/file-infrastructure -am test -Dtest=ExportFlowIntegra
 Expected: PASS（如果 fesod 填充正常工作）或 FAIL（如果 round-trip 数据不一致）
 
 **调试要点**：
+
 1. 如果 `@BeforeAll` 没有生成模板（docs/excel/ 目录不可写），检查权限或手动创建目录
 2. 如果 round-trip 解析失败，检查 `buildRoundTripRegionDefs()` 的 `headerAliases` 是否匹配导出模板的中表头
 3. 如果列表填充覆盖了底部"填表人"行，确认 `FillConfig.forceNewRow(true)` 已生效
@@ -596,9 +611,13 @@ git commit -F .superpowers/sdd/task-2-commit-msg.txt --no-gpg-sign
 ## Task 3: 校验失败时不导出测试
 
 **Files:**
-- Modify: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`（在 Task 2 基础上追加测试方法）
+
+- Modify:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/ExportFlowIntegrationTest.java`（在
+  Task 2 基础上追加测试方法）
 
 **Interfaces:**
+
 - Consumes: `DataValidator`、`ValidationRule`、`ExpressionEvaluator`、`ExcelExporter`
 - Produces: 验证校验失败时不调用 export
 
@@ -708,6 +727,7 @@ git commit -F .superpowers/sdd/task-3-commit-msg.txt --no-gpg-sign
 ## Self-Review Notes
 
 ### Spec coverage
+
 - ✅ Domain SPI `ExcelExporter` → Task 1 Step 1
 - ✅ Infrastructure 实现 `FesodExcelExporter` → Task 1 Step 4
 - ✅ 程序生成模板 → Task 2 Step 1 (`@BeforeAll`)
@@ -717,12 +737,14 @@ git commit -F .superpowers/sdd/task-3-commit-msg.txt --no-gpg-sign
 - ✅ 不修改现有代码 → 全部 Create，无 Modify
 
 ### Type consistency
+
 - `ExcelExporter.export(SplitUnit, InputStream, OutputStream)` — Task 1 定义，Task 2/3 调用，签名一致
 - `SplitUnit.splitKey()` / `SplitUnit.data()` — 已存在，测试中使用一致
 - `ValidationResult.isValid()` / `ValidationResult.errors()` — 已存在，Task 3 使用一致
 - `FillConfig.builder().forceNewRow(true).build()` — fesod API，Task 1 实现使用
 
 ### 风险点
+
 1. **fesod FillWrapper/FillConfig 包路径**：Task 1 Step 5 有调试说明，如果路径不对用 `jar tf` 检查
 2. **round-trip 数据一致性**：Task 2 用独立的 `buildRoundTripRegionDefs()` 配置（中表头映射），与源 Excel 配置（代码表头）分离
 3. **模板生成覆盖**：`@BeforeAll` 检查 `Files.exists`，已存在跳过

@@ -1,12 +1,18 @@
 # business-core-kernel 公共 API 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 为 business-core-kernel 实现一套公共 HTTP API,覆盖批次/表单/申请单/材料/进度管理,配套会话解析、权限校验、业务类型注册基础设施,使各业务服务引入 kernel 后即可获得通用业务办理能力。
+**Goal:** 为 business-core-kernel 实现一套公共 HTTP API,覆盖批次/表单/申请单/材料/进度管理,配套会话解析、权限校验、业务类型注册基础设施,使各业务服务引入
+kernel 后即可获得通用业务办理能力。
 
-**Architecture:** 在 `business-core-api` 定义 5 类 `@HttpExchange` 接口与 DTO;`business-core-adapter` 实现 Controller,入口完成"业务类型校验 → 会话解析 → BusinessMetaContext 组装 → 权限校验 → 调用 AppService"五步;`business-core-application` 扩展 AppService 编排业务流程;`business-core-starter` 通过自动装配注册所有组件。会话信息通过 `X-Session-Context` header 透传,kernel 不直接依赖 sa-token。
+**Architecture:** 在 `business-core-api` 定义 5 类 `@HttpExchange` 接口与 DTO;`business-core-adapter` 实现
+Controller,入口完成"业务类型校验 → 会话解析 → BusinessMetaContext 组装 → 权限校验 → 调用 AppService"五步;
+`business-core-application` 扩展 AppService 编排业务流程;`business-core-starter` 通过自动装配注册所有组件。会话信息通过
+`X-Session-Context` header 透传,kernel 不直接依赖 sa-token。
 
-**Tech Stack:** JDK 25 (--enable-preview), Spring Boot 3.5.14, Spring Web (@HttpExchange), MapStruct 1.6.3, Lombok, JUnit 5 + Mockito
+**Tech Stack:** JDK 25 (--enable-preview), Spring Boot 3.5.14, Spring Web (@HttpExchange), MapStruct 1.6.3, Lombok,
+JUnit 5 + Mockito
 
 ## Global Constraints
 
@@ -15,7 +21,7 @@
 - API 接口使用 `@HttpExchange` + `@PostExchange`,禁用 GET/POST 之外的请求类型
 - 请求体使用 `@RequestBody` + `@Valid`,返回体统一 `ApiResult<T>`(`com.example.shared.web.core.api.ApiResult`)
 - DTO 转换通过 MapStruct Converter,禁止在 Controller 中直接转换
-- 错误码遵循层级字符串格式(`CORE.DOMAIN.XXXX` / `CORE.APP.XXXX` / `CORE.INFRA.XXXX`)
+- 错误码遵循层级字符串格式 (`CORE.DOMAIN.XXXX` / `CORE.APP.XXXX` / `CORE.INFRA.XXXX`)
 - 业务数据时间戳由应用层管理,禁止 ORM 自动填充
 - 所有公共类需要 Javadoc,作者用 `panoshu`
 - 提交信息遵循 Conventional Commits,scope 用 `core-api`/`core-adapter`/`core-application`/`core-domain`/`kernel`
@@ -96,16 +102,25 @@ business-core-kernel/
 ## Task 1: 会话上下文基础设施
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/context/SessionContext.java`
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/context/BusinessMetaContext.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/SessionContextResolver.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/BusinessMetaContextAssembler.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/SessionContextResolverTest.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/BusinessMetaContextAssemblerTest.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/SessionContextResolver.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/BusinessMetaContextAssembler.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/SessionContextResolverTest.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/BusinessMetaContextAssemblerTest.java`
 
 **Interfaces:**
-- Consumes: `com.example.shared.web.core.api.ApiResult`, `com.example.shared.exception.BusinessException`, `com.example.shared.exception.CommonError`
-- Produces: `SessionContext` record, `BusinessMetaContext` record (api 层,与 domain 层 `com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext` 区分), `SessionContextResolver` bean, `BusinessMetaContextAssembler` bean
+
+- Consumes: `com.example.shared.web.core.api.ApiResult`, `com.example.shared.exception.BusinessException`,
+  `com.example.shared.exception.CommonError`
+- Produces: `SessionContext` record, `BusinessMetaContext` record (api 层,与 domain 层
+  `com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext` 区分), `SessionContextResolver` bean,
+  `BusinessMetaContextAssembler` bean
 
 - [ ] **Step 1: 编写 SessionContext record**
 
@@ -158,7 +173,7 @@ public record SessionContext(
 }
 ```
 
-- [ ] **Step 2: 编写 BusinessMetaContext record(api 层)**
+- [ ] **Step 2: 编写 BusinessMetaContext record (api 层)**
 
 ```java
 package com.example.core.api.context;
@@ -275,7 +290,9 @@ Expected: FAIL (SessionContextResolver 不存在)
 
 - [ ] **Step 5: 编写 SessionContextResolver 实现**
 
-> **设计决策**:为保持 API 接口契约纯净(`BusinessBatchApi` 等接口的方法签名不含 `HttpServletRequest`),`SessionContextResolver` 不接受 `HttpServletRequest` 参数,而是通过 Spring 的 `RequestContextHolder` 获取当前请求上下文。Controller 方法签名与 API 接口完全一致。
+> **设计决策**:为保持 API 接口契约纯净 (`BusinessBatchApi` 等接口的方法签名不含 `HttpServletRequest`),
+> `SessionContextResolver` 不接受 `HttpServletRequest` 参数,而是通过 Spring 的 `RequestContextHolder` 获取当前请求上下文。Controller
+> 方法签名与 API 接口完全一致。
 
 ```java
 package com.example.core.adapter.context;
@@ -530,7 +547,8 @@ Expected: PASS (2 tests)
 
 - [ ] **Step 11: 检查 adapter pom.xml 依赖**
 
-确认 `business-core-adapter/pom.xml` 已包含 `shared-exception`(通过 `business-core-api` 传递)与 `jackson-databind`(通过 spring-web)。如缺少 jackson,在 `business-core-adapter/pom.xml` 添加:
+确认 `business-core-adapter/pom.xml` 已包含 `shared-exception`(通过 `business-core-api` 传递)与 `jackson-databind`(通过
+spring-web)。如缺少 jackson,在 `business-core-adapter/pom.xml` 添加:
 
 ```xml
 <dependency>
@@ -574,17 +592,27 @@ git commit -m "feat(core-api): 新增会话上下文与业务元数据组装基�
 ## Task 2: 权限校验 SPI 与业务类型注册
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/BusinessAccessGuard.java`
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/DefaultBusinessAccessGuard.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/registrar/BusinessTypeRegistrar.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/validator/SupportedBusinessTypeValidator.java`
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/errorcode/CoreDomainErrorCode.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/guard/DefaultBusinessAccessGuardTest.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/validator/SupportedBusinessTypeValidatorTest.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/BusinessAccessGuard.java`
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/DefaultBusinessAccessGuard.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/registrar/BusinessTypeRegistrar.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/validator/SupportedBusinessTypeValidator.java`
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/errorcode/CoreDomainErrorCode.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/guard/DefaultBusinessAccessGuardTest.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/validator/SupportedBusinessTypeValidatorTest.java`
 
 **Interfaces:**
+
 - Consumes: `SessionContext`, `BusinessMetaContext` (api 层), `BusinessException`, `CommonError`
-- Produces: `BusinessAccessGuard` SPI (application 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean, `SupportedBusinessTypeValidator` bean
+- Produces: `BusinessAccessGuard` SPI (application 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean,
+  `SupportedBusinessTypeValidator` bean
 
 - [ ] **Step 1: 扩展 CoreDomainErrorCode 新增 UNSUPPORTED_BUSINESS_TYPE**
 
@@ -597,9 +625,10 @@ PROXY_FORBIDDEN("CORE.DOMAIN.0006", "无代办权限"),
 SECONDARY_AUTH_REQUIRED("CORE.DOMAIN.0007", "需要二次授权"),
 ```
 
-- [ ] **Step 2: 编写 BusinessAccessGuard SPI 接口(application 层)**
+- [ ] **Step 2: 编写 BusinessAccessGuard SPI 接口 (application 层)**
 
-> **设计决策**:`BusinessAccessGuard` 放在 application 层(而非 domain 层 gateway),因为它依赖 api 层的 `SessionContext` / `BusinessMetaContext` DTO,符合依赖规则 `application → api + domain`。
+> **设计决策**:`BusinessAccessGuard` 放在 application 层 (而非 domain 层 gateway),因为它依赖 api 层的 `SessionContext` /
+> `BusinessMetaContext` DTO,符合依赖规则 `application → api + domain`。
 
 ```java
 package com.example.core.application.business.guard;
@@ -1033,11 +1062,16 @@ git commit -m "feat(core-application): 新增权限校验 SPI 与业务类型注
 ## Task 3: 功能权限注解与 AOP 拦截器
 
 **Files:**
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/RequireBusinessPermission.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/BusinessPermissionAspect.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/security/BusinessPermissionAspectTest.java`
+
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/RequireBusinessPermission.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/security/BusinessPermissionAspect.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/security/BusinessPermissionAspectTest.java`
 
 **Interfaces:**
+
 - Consumes: `SessionContextResolver`, `SessionContext`, `BusinessException`, `CommonError`
 - Produces: `@RequireBusinessPermission` 注解, `BusinessPermissionAspect` bean
 
@@ -1082,7 +1116,8 @@ public @interface RequireBusinessPermission {
 
 - [ ] **Step 2: 编写 BusinessPermissionAspect 失败测试**
 
-> **设计决策**:Aspect 不再从方法参数找 `HttpServletRequest`,而是直接调用 `sessionContextResolver.require()`(内部通过 `RequestContextHolder` 获取当前请求)。测试时通过 `RequestContextHolder.setRequestAttributes(...)` 设置模拟请求。
+> **设计决策**:Aspect 不再从方法参数找 `HttpServletRequest`,而是直接调用 `sessionContextResolver.require()`(内部通过
+> `RequestContextHolder` 获取当前请求)。测试时通过 `RequestContextHolder.setRequestAttributes(...)` 设置模拟请求。
 
 ```java
 package com.example.core.adapter.security;
@@ -1261,16 +1296,25 @@ git commit -m "feat(core-adapter): 新增功能权限注解与 AOP 拦截器
 ## Task 4: BusinessBatchApi 接口定义与 DTO
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/BusinessBatchApi.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CreateBatchCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/FindActiveBatchQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CreateBatchCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/FindActiveBatchQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java`
 
 **Interfaces:**
+
 - Consumes: `ApiResult`, `@HttpExchange`, `@PostExchange`, `@Valid`, `@RequestBody`
 - Produces: `BusinessBatchApi` 接口及配套 Command/Query/Response DTO
 
@@ -1529,13 +1573,21 @@ git commit -m "feat(core-api): 新增 BusinessBatchApi 接口与配套 DTO
 ## Task 5: BusinessBatchAppService 与 Controller 实现
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
 
 **Interfaces:**
-- Consumes: `BusinessBatchApi`, `SessionContextResolver`, `BusinessMetaContextAssembler`, `SupportedBusinessTypeValidator`, `BusinessAccessGuard`, `BatchRepository`, `BusinessBatch` 聚合根, `BusinessContext` 值对象
+
+- Consumes: `BusinessBatchApi`, `SessionContextResolver`, `BusinessMetaContextAssembler`,
+  `SupportedBusinessTypeValidator`, `BusinessAccessGuard`, `BatchRepository`, `BusinessBatch` 聚合根, `BusinessContext`
+  值对象
 - Produces: `BusinessBatchAppService` bean, `BusinessBatchController` bean, `BatchConverter` bean
 
 - [ ] **Step 1: 编写 BusinessBatchAppService 失败测试**
@@ -1700,11 +1752,13 @@ public class BusinessBatchAppService {
 Run: `mvn test -pl business-core-kernel/business-core-application -Dtest=BusinessBatchAppServiceTest`
 Expected: PASS (2 tests)
 
-> **注意**:本测试假设 `BusinessBatch.create(batchId, context, operator)` 静态工厂方法存在。如不存在,需要在 `BusinessBatch` 聚合根中新增。运行测试前先检查。
+> **注意**:本测试假设 `BusinessBatch.create(batchId, context, operator)` 静态工厂方法存在。如不存在,需要在
+> `BusinessBatch` 聚合根中新增。运行测试前先检查。
 
 - [ ] **Step 5: 检查/补充 BusinessBatch.create 静态工厂方法**
 
-检查 `BusinessBatch` 是否有 `create(BatchId, BusinessContext, OperatorInfo)` 静态方法。如无,在 `BusinessBatch.java` 中添加:
+检查 `BusinessBatch` 是否有 `create(BatchId, BusinessContext, OperatorInfo)` 静态方法。如无,在 `BusinessBatch.java`
+中添加:
 
 ```java
 /**
@@ -1719,7 +1773,7 @@ public static BusinessBatch create(BatchId batchId, BusinessContext context, Ope
 }
 ```
 
-- [ ] **Step 6: 编写 BatchConverter(MapStruct)**
+- [ ] **Step 6: 编写 BatchConverter (MapStruct)**
 
 ```java
 package com.example.core.adapter.batch.converter;
@@ -1758,7 +1812,8 @@ public interface BatchConverter {
 
 - [ ] **Step 7: 编写 BusinessBatchController**
 
-> **设计决策**:Controller 方法签名与 `BusinessBatchApi` 接口完全一致(无 `HttpServletRequest` 参数)。会话通过 `SessionContextResolver.require()` 内部使用 `RequestContextHolder` 获取当前请求解析。
+> **设计决策**:Controller 方法签名与 `BusinessBatchApi` 接口完全一致 (无 `HttpServletRequest` 参数)。会话通过
+> `SessionContextResolver.require()` 内部使用 `RequestContextHolder` 获取当前请求解析。
 
 ```java
 package com.example.core.adapter.batch;
@@ -1905,12 +1960,16 @@ git commit -m "feat(core-adapter): 实现 BusinessBatchApi 与应用服务
 ## Task 6: BusinessFormApi 接口与实现
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/BusinessFormApi.java`
 - Create: 4 个 Command + 1 个 Query + 2 个 Response DTO
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
 
 **Interfaces:**
+
 - Consumes: `BusinessFormAppService`(已存在), `SessionContextResolver`, `SupportedBusinessTypeValidator`
 - Produces: `BusinessFormApi` 接口及配套 DTO, `BusinessFormController` bean
 
@@ -1967,7 +2026,9 @@ public interface BusinessFormApi {
 
 - [ ] **Step 2: 编写 FormConverter 与 BusinessFormController**
 
-Controller 实现 `BusinessFormApi`,方法签名与接口完全一致(无 `HttpServletRequest` 参数),入口调用 `SupportedBusinessTypeValidator`(从 batchId 反查业务类型)→ `SessionContextResolver.require()` → `BusinessAccessGuard` → 已有的 `BusinessFormAppService`。
+Controller 实现 `BusinessFormApi`,方法签名与接口完全一致 (无 `HttpServletRequest` 参数),入口调用
+`SupportedBusinessTypeValidator`(从 batchId 反查业务类型)→ `SessionContextResolver.require()` → `BusinessAccessGuard` →
+已有的 `BusinessFormAppService`。
 
 由于 `BusinessFormAppService.confirmUpload` 已存在,Controller 直接调用即可:
 
@@ -2042,15 +2103,22 @@ git commit -m "feat(core-api): 新增 BusinessFormApi 接口与 Controller 实�
 ## Task 7: BusinessApplicationApi 接口与实现
 
 **Files:**
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/BusinessApplicationApi.java`
+
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/application/BusinessApplicationApi.java`
 - Create: 2 个 Command + 2 个 Query + 4 个 Response DTO
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/BusinessApplicationController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/application/converter/ApplicationConverter.java`
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessApplicationAppService.java`
 
 **Interfaces:**
+
 - Consumes: `FlowOrchestrationService`(已存在), `ApplicationRepository`(已存在)
-- Produces: `BusinessApplicationApi` 接口及配套 DTO, `BusinessApplicationController` bean, `BusinessApplicationAppService` bean
+- Produces: `BusinessApplicationApi` 接口及配套 DTO, `BusinessApplicationController` bean,
+  `BusinessApplicationAppService` bean
 
 - [ ] **Step 1: 编写 BusinessApplicationApi 接口与 DTO**
 
@@ -2123,7 +2191,8 @@ public class BusinessApplicationAppService {
 
 - [ ] **Step 3: 编写 BusinessApplicationController**
 
-参考 Task 5 的模式,Controller 实现 `BusinessApplicationApi`,入口完成会话解析与功能权限校验,调用 `BusinessApplicationAppService`。
+参考 Task 5 的模式,Controller 实现 `BusinessApplicationApi`,入口完成会话解析与功能权限校验,调用
+`BusinessApplicationAppService`。
 
 - [ ] **Step 4: 编译验证与提交**
 
@@ -2145,20 +2214,26 @@ git commit -m "feat(core-api): 新增 BusinessApplicationApi 接口与实现
 ## Task 8: MaterialAppApi 与 BusinessProgressApi 接口与实现
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/material/MaterialAppApi.java`
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/progress/BusinessProgressApi.java`
 - Create: 各自的 Command/Query/Response DTO
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/material/MaterialController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/progress/BusinessProgressController.java`
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessProgressAppService.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/material/MaterialController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/progress/BusinessProgressController.java`
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessProgressAppService.java`
 
 **Interfaces:**
+
 - Consumes: `MaterialAppService`(已存在,在 engine/step/service 包), `BatchRepository`, `FormRepository`
 - Produces: `MaterialAppApi`, `BusinessProgressApi` 接口及 DTO, 两个 Controller bean, `BusinessProgressAppService` bean
 
 - [ ] **Step 1: 编写 MaterialAppApi 接口与 DTO**
 
 定义:
+
 - `BindIndividualMaterialCommand{applicationId, materialItem}`
 - `BindPackageMaterialCommand{applicationId, materialPackageId}`
 - `UnbindMaterialCommand{applicationId, materialItemId}`
@@ -2229,12 +2304,16 @@ git commit -m "feat(core-api): 新增 MaterialAppApi 与 BusinessProgressApi
 ## Task 9: 自动装配与集成验证
 
 **Files:**
-- Create: `business-core-kernel/business-core-starter/src/main/java/com/example/core/configuration/CoreKernelAutoConfiguration.java`
-- Modify: `business-core-kernel/business-core-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+
+- Create:
+  `business-core-kernel/business-core-starter/src/main/java/com/example/core/configuration/CoreKernelAutoConfiguration.java`
+- Modify:
+  `business-core-kernel/business-core-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
 - Modify: `business-core-kernel/business-core-adapter/pom.xml`(确认依赖完整)
 - Modify: 根 `pom.xml`(如需新增 shared-exception 等依赖管理)
 
 **Interfaces:**
+
 - Consumes: 所有前序 Task 产出的 bean
 - Produces: `CoreKernelAutoConfiguration` 自动配置类
 
@@ -2300,7 +2379,9 @@ public class CoreKernelAutoConfiguration {
 
 - [ ] **Step 2: 注册自动配置**
 
-在 `business-core-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 中添加:
+在
+`business-core-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+中添加:
 
 ```
 com.example.core.configuration.CoreKernelAutoConfiguration
@@ -2347,32 +2428,35 @@ git commit -m "feat(kernel): 新增 CoreKernelAutoConfiguration 自动装配
 
 **1. Spec coverage 检查:**
 
-| Spec 章节 | 对应 Task |
-|---|---|
-| §1 整体定位与边界 | Task 1-9 整体覆盖 |
-| §2 SessionContext 与 sa-token 集成 | Task 1(SessionContext + SessionContextResolver) |
-| §3 BusinessMetaContext | Task 1(BusinessMetaContext + Assembler) |
-| §4.1 功能权限 | Task 3(@RequireBusinessPermission + AOP) |
-| §4.2 数据权限 | Task 2(BusinessAccessGuard + Default) |
-| §4.3 SupportedBusinessTypeValidator | Task 2 |
-| §4.4 Controller 使用模式 | Task 5/6/7/8(Controller 实现) |
-| §5.1 BusinessBatchApi | Task 4/5 |
-| §5.2 BusinessFormApi | Task 6 |
-| §5.3 BusinessApplicationApi | Task 7 |
-| §5.4 MaterialAppApi | Task 8 |
-| §5.5 BusinessProgressApi | Task 8 |
-| §6 业务服务接入示例 | Task 9(自动装配) |
-| §8 后续接入指南 | Task 4(BusinessBatchApi 注释中说明) |
+| Spec 章节                           | 对应 Task                                       |
+|-------------------------------------|-------------------------------------------------|
+| §1 整体定位与边界                   | Task 1-9 整体覆盖                               |
+| §2 SessionContext 与 sa-token 集成  | Task 1(SessionContext + SessionContextResolver) |
+| §3 BusinessMetaContext              | Task 1(BusinessMetaContext + Assembler)         |
+| §4.1 功能权限                       | Task 3(@RequireBusinessPermission + AOP)        |
+| §4.2 数据权限                       | Task 2(BusinessAccessGuard + Default)           |
+| §4.3 SupportedBusinessTypeValidator | Task 2                                          |
+| §4.4 Controller 使用模式            | Task 5/6/7/8(Controller 实现)                   |
+| §5.1 BusinessBatchApi               | Task 4/5                                        |
+| §5.2 BusinessFormApi                | Task 6                                          |
+| §5.3 BusinessApplicationApi         | Task 7                                          |
+| §5.4 MaterialAppApi                 | Task 8                                          |
+| §5.5 BusinessProgressApi            | Task 8                                          |
+| §6 业务服务接入示例                 | Task 9(自动装配)                                |
+| §8 后续接入指南                     | Task 4(BusinessBatchApi 注释中说明)             |
 
-**2. 占位符扫描:** Task 5/6/7/8 的 Controller 中有 TODO 标记,这些是已知的待实现点(需要对接已有的 AppService 方法或补充实现),不是 plan 占位符。已明确标注。
+**2. 占位符扫描:** Task 5/6/7/8 的 Controller 中有 TODO 标记,这些是已知的待实现点 (需要对接已有的 AppService
+方法或补充实现),不是 plan 占位符。已明确标注。
 
 **3. 类型一致性:**
+
 - `SessionContext` 在所有 Task 中字段一致
 - `BusinessMetaContext`(api 层)与 `BusinessContext`(domain 层)在 Task 5 的 `toDomainContext` 方法中正确映射
 - `BusinessAccessGuard` 接口在 Task 2 定义,Task 5 的 Controller 注入使用
 - `BusinessTypeRegistrar.of()` 工厂方法在 Task 2 定义,Task 9 的自动配置中通过 `@ConditionalOnMissingBean` 兜底
 
 **4. 已知简化点:**
+
 - Controller 部分方法体标注 TODO,实际对接已有 AppService 时需要补充实现
-- 集成测试未包含(需要 Spring Context + H2 数据库),建议在 Task 9 后单独补充
+- 集成测试未包含 (需要 Spring Context + H2 数据库),建议在 Task 9 后单独补充
 - `BusinessBatch.create` 静态工厂方法可能需要根据现有聚合根结构调整

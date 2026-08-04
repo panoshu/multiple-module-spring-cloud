@@ -67,67 +67,67 @@ import static org.mockito.Mockito.when;
 @EnableConfigurationProperties(FileTokenProperties.class)
 public class FileAccessIntegrationTestConfiguration {
 
-    /**
-     * Jackson ObjectMapper，注册 JavaTimeModule 支持 {@link java.time.LocalDateTime} 序列化。
-     *
-     * <p>{@link KonaFileTokenGateway} 加密时将 {@code FileTokenPayload} 序列化为 JSON，
-     * 解密时反序列化回对象，因此需要 ObjectMapper 支持 Java 时间类型。
-     */
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
-    }
+  private static RBucket<String> createSimulatedBucket() {
+    RBucket<String> bucket = mock(RBucket.class);
+    AtomicBoolean exists = new AtomicBoolean(false);
 
-    /**
-     * Mock RedissonClient，模拟 Redis SETNX + TTL 语义。
-     *
-     * <p>每个 bucket key 维护独立的 {@link AtomicBoolean}：
-     * <ul>
-     *   <li>首次 {@code setIfAbsent(value, ttl)} 通过 CAS (false→true) 返回 true</li>
-     *   <li>后续调用 CAS 失败返回 false</li>
-     *   <li>{@code isExists()} 返回 {@code AtomicBoolean.get()}</li>
-     * </ul>
-     *
-     * <p>这样 {@link RedisFileTokenStore} 的真实 SETNX 一次性语义被完整验证，
-     * 无需真实 Redis 实例。
-     */
-    @Bean
-    public RedissonClient redissonClient() {
-        RedissonClient client = mock(RedissonClient.class);
-        Map<String, RBucket<String>> buckets = new ConcurrentHashMap<>();
+    when(bucket.setIfAbsent(any(String.class), any(Duration.class)))
+      .thenAnswer(inv -> exists.compareAndSet(false, true));
+    when(bucket.isExists()).thenAnswer(inv -> exists.get());
 
-        when(client.getBucket(anyString())).thenAnswer(inv -> {
-            String key = inv.getArgument(0);
-            return buckets.computeIfAbsent(key, k -> createSimulatedBucket());
-        });
+    return bucket;
+  }
 
-        return client;
-    }
+  /**
+   * Jackson ObjectMapper，注册 JavaTimeModule 支持 {@link java.time.LocalDateTime} 序列化。
+   *
+   * <p>{@link KonaFileTokenGateway} 加密时将 {@code FileTokenPayload} 序列化为 JSON，
+   * 解密时反序列化回对象，因此需要 ObjectMapper 支持 Java 时间类型。
+   */
+  @Bean
+  public ObjectMapper objectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    return mapper;
+  }
 
-    /**
-     * 手动注册 {@link RedisFileTokenStore} Bean。
-     *
-     * <p>不通过 {@link com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration}
-     * 注册的原因：该自动配置类的 {@code @ConditionalOnBean(RedissonClient.class)} 在
-     * 测试上下文中无法识别本类同级 @Bean 定义的 RedissonClient
-     * （auto-config 条件求值时机早于 regular @Bean 注册），导致 bean 被跳过。
-     * 直接手动 new 可绕过此限制，仍测试 RedisFileTokenStore 的真实实现逻辑。
-     */
-    @Bean
-    public FileTokenStore fileTokenStore(RedissonClient redissonClient, FileTokenProperties properties) {
-        return new RedisFileTokenStore(redissonClient, properties);
-    }
+  /**
+   * Mock RedissonClient，模拟 Redis SETNX + TTL 语义。
+   *
+   * <p>每个 bucket key 维护独立的 {@link AtomicBoolean}：
+   * <ul>
+   *   <li>首次 {@code setIfAbsent(value, ttl)} 通过 CAS (false→true) 返回 true</li>
+   *   <li>后续调用 CAS 失败返回 false</li>
+   *   <li>{@code isExists()} 返回 {@code AtomicBoolean.get()}</li>
+   * </ul>
+   *
+   * <p>这样 {@link RedisFileTokenStore} 的真实 SETNX 一次性语义被完整验证，
+   * 无需真实 Redis 实例。
+   */
+  @Bean
+  public RedissonClient redissonClient() {
+    RedissonClient client = mock(RedissonClient.class);
+    Map<String, RBucket<String>> buckets = new ConcurrentHashMap<>();
 
-    private static RBucket<String> createSimulatedBucket() {
-        RBucket<String> bucket = mock(RBucket.class);
-        AtomicBoolean exists = new AtomicBoolean(false);
+    when(client.getBucket(anyString())).thenAnswer(inv -> {
+      String key = inv.getArgument(0);
+      return buckets.computeIfAbsent(key, k -> createSimulatedBucket());
+    });
 
-        when(bucket.setIfAbsent(any(String.class), any(Duration.class)))
-            .thenAnswer(inv -> exists.compareAndSet(false, true));
-        when(bucket.isExists()).thenAnswer(inv -> exists.get());
+    return client;
+  }
 
-        return bucket;
-    }
+  /**
+   * 手动注册 {@link RedisFileTokenStore} Bean。
+   *
+   * <p>不通过 {@link com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration}
+   * 注册的原因：该自动配置类的 {@code @ConditionalOnBean(RedissonClient.class)} 在
+   * 测试上下文中无法识别本类同级 @Bean 定义的 RedissonClient
+   * （auto-config 条件求值时机早于 regular @Bean 注册），导致 bean 被跳过。
+   * 直接手动 new 可绕过此限制，仍测试 RedisFileTokenStore 的真实实现逻辑。
+   */
+  @Bean
+  public FileTokenStore fileTokenStore(RedissonClient redissonClient, FileTokenProperties properties) {
+    return new RedisFileTokenStore(redissonClient, properties);
+  }
 }

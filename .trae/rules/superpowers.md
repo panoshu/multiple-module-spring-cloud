@@ -1,11 +1,15 @@
 ---
 alwaysApply: true
 ---
+
 # Superpowers for Trae
 
-**ATTENTION AI:** This project uses the Superpowers Agentic Framework adapted for Trae. The `.trae/skills` directory contains the runtime skills. The rules below are mandatory workflow constraints.
+**ATTENTION AI:** This project uses the Superpowers Agentic Framework adapted for Trae. The `.trae/skills` directory
+contains the runtime skills. The rules below are mandatory workflow constraints.
 
-The `.trae/hooks.json` hooks inject `using-superpowers` at session start and reinforce the contract on each user prompt. Trae may auto-load matching skills as context. If the SessionStart hook is disabled, unavailable, or visibly did not run, your first action before any task work is to open or read `.trae/skills/using-superpowers/SKILL.md`.
+The `.trae/hooks.json` hooks inject `using-superpowers` at session start and reinforce the contract on each user prompt.
+Trae may auto-load matching skills as context. If the SessionStart hook is disabled, unavailable, or visibly did not
+run, your first action before any task work is to open or read `.trae/skills/using-superpowers/SKILL.md`.
 
 ## 1. Instruction Priority
 
@@ -17,33 +21,38 @@ If a user instruction conflicts with a Superpowers skill, follow the user and st
 
 ## 2. Iron Laws
 
-- **No fix without root cause:** for bugs, test failures, or unexpected behavior, use `systematic-debugging` before proposing fixes.
+- **No fix without root cause:** for bugs, test failures, or unexpected behavior, use `systematic-debugging` before
+  proposing fixes.
 - **No production code without a red test:** before implementation, use `test-driven-development`.
 - **No blind mock assertions:** when tests involve mocks, use `testing-anti-patterns`.
-- **No success claim without evidence:** before saying work is done, fixed, passing, installed, or updated, use `verification-before-completion` and verify real command output or observable state.
+- **No success claim without evidence:** before saying work is done, fixed, passing, installed, or updated, use
+  `verification-before-completion` and verify real command output or observable state.
 
 ## 3. Trae Tool Mapping
 
 Translate upstream Superpowers tool names to Trae native tools:
 
-| Upstream wording | Trae action |
-|---|---|
-| `superpowers:<skill>` or Skill tool | Trae auto-loaded skill context, or manually open/read `.trae/skills/<skill>/SKILL.md` |
-| `TodoWrite` | Trae `TodoWrite` |
-| `Task tool (general-purpose)` | Trae `Task` subagent with the completed prompt template; use `.trae/agents` named agents when one matches |
-| `Read`, `Write`, `Edit` | Trae file tools |
-| `Bash` | Trae shell/terminal |
+| Upstream wording                    | Trae action                                                                                               |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `superpowers:<skill>` or Skill tool | Trae auto-loaded skill context, or manually open/read `.trae/skills/<skill>/SKILL.md`                     |
+| `TodoWrite`                         | Trae `TodoWrite`                                                                                          |
+| `Task tool (general-purpose)`       | Trae `Task` subagent with the completed prompt template; use `.trae/agents` named agents when one matches |
+| `Read`, `Write`, `Edit`             | Trae file tools                                                                                           |
+| `Bash`                              | Trae shell/terminal                                                                                       |
 
-Do not use old `find-skills`, `skill-run`, or `remembering-conversations` scripts in Trae. Skill activation is Trae-native and may appear as referenced context rather than an explicit tool call in the trajectory.
+Do not use old `find-skills`, `skill-run`, or `remembering-conversations` scripts in Trae. Skill activation is
+Trae-native and may appear as referenced context rather than an explicit tool call in the trajectory.
 
 ## 4. Subagent Selection
 
-When delegating work, the candidate pool includes both Trae's built-in subagents and the Superpowers named subagents in `.trae/agents/`. Choose the strongest available subagent for the current development need.
+When delegating work, the candidate pool includes both Trae's built-in subagents and the Superpowers named subagents in
+`.trae/agents/`. Choose the strongest available subagent for the current development need.
 
 Strength means:
 
 1. The agent's description covers more of the user's actual goal.
-2. The agent is more specialized for the current phase: implementation, task review, code review, plan review, debugging, research, or verification.
+2. The agent is more specialized for the current phase: implementation, task review, code review, plan review,
+   debugging, research, or verification.
 3. The agent carries the right workflow obligations, including tests, evidence, read-only review, or report format.
 4. The agent avoids irrelevant scope and does not require hidden context.
 
@@ -54,9 +63,13 @@ Prefer these Superpowers agents when their role matches exactly:
 - `superpowers-code-reviewer` for broad review after a completed feature or before merge.
 - `superpowers-plan-reviewer` for reviewing an implementation plan before execution.
 
-If a Trae built-in subagent better covers the user's current domain or tool need, use that instead. If no subagent is clearly stronger or Trae Task is unavailable, work inline and state why.
+If a Trae built-in subagent better covers the user's current domain or tool need, use that instead. If no subagent is
+clearly stronger or Trae Task is unavailable, work inline and state why.
 
-Do not report `.trae/agents` or a named Superpowers subagent as missing unless you have listed `.trae/agents` from the current target root in the same turn and confirmed the current working directory. If an agent was visible or successfully invoked earlier, do not later claim it is absent; treat any failure as a task/runtime failure and choose the next strongest agent or continue inline.
+Do not report `.trae/agents` or a named Superpowers subagent as missing unless you have listed `.trae/agents` from the
+current target root in the same turn and confirmed the current working directory. If an agent was visible or
+successfully invoked earlier, do not later claim it is absent; treat any failure as a task/runtime failure and choose
+the next strongest agent or continue inline.
 
 ## 5. Mandatory Skill Triggers
 
@@ -64,63 +77,64 @@ Use the matching skill before responding or acting. If Trae did not auto-load it
 
 ### Session Start
 
-| Situation | Required skill |
-|---|---|
+| Situation                                   | Required skill      |
+|---------------------------------------------|---------------------|
 | Starting a new conversation or project task | `using-superpowers` |
 
 ### Architecture and Planning
 
-| Situation | Required skill |
-|---|---|
-| New feature, rewrite, refactor, UI, behavior change, or project idea | `brainstorming` |
-| A spec or requirements need an implementation plan | `writing-plans` |
-| Need isolated work before implementation | `using-git-worktrees` |
-| Stuck on complexity, assumptions, scale, or approach | `when-stuck` |
+| Situation                                                            | Required skill        |
+|----------------------------------------------------------------------|-----------------------|
+| New feature, rewrite, refactor, UI, behavior change, or project idea | `brainstorming`       |
+| A spec or requirements need an implementation plan                   | `writing-plans`       |
+| Need isolated work before implementation                             | `using-git-worktrees` |
+| Stuck on complexity, assumptions, scale, or approach                 | `when-stuck`          |
 
 ### Problem-Solving Additions
 
-| Situation | Required skill |
-|---|---|
-| Conventional approaches feel inadequate and unrelated analogies may unlock options | `collision-zone-thinking` |
-| Hidden assumptions need to be flipped or challenged | `inversion-exercise` |
-| The same pattern appears across multiple domains | `meta-pattern-recognition` |
-| Two valid approaches optimize for different priorities | `preserving-productive-tensions` |
-| Scale, limits, or edge cases need stress testing | `scale-game` |
-| Complexity is growing through repeated special cases | `simplification-cascades` |
-| A technical choice needs historical or lineage context | `tracing-knowledge-lineages` |
+| Situation                                                                          | Required skill                   |
+|------------------------------------------------------------------------------------|----------------------------------|
+| Conventional approaches feel inadequate and unrelated analogies may unlock options | `collision-zone-thinking`        |
+| Hidden assumptions need to be flipped or challenged                                | `inversion-exercise`             |
+| The same pattern appears across multiple domains                                   | `meta-pattern-recognition`       |
+| Two valid approaches optimize for different priorities                             | `preserving-productive-tensions` |
+| Scale, limits, or edge cases need stress testing                                   | `scale-game`                     |
+| Complexity is growing through repeated special cases                               | `simplification-cascades`        |
+| A technical choice needs historical or lineage context                             | `tracing-knowledge-lineages`     |
 
 ### Implementation and Review
 
-| Situation | Required skill |
-|---|---|
-| Executing an implementation plan with independent tasks | `subagent-driven-development` |
-| Executing a plan inline or when subagents are unavailable | `executing-plans` |
-| Before first line of production code | `test-driven-development` |
-| Writing or changing tests with mocks/test doubles | `testing-anti-patterns` |
-| Completing a major task or before merge/PR | `requesting-code-review` |
-| Receiving review feedback | `receiving-code-review` |
+| Situation                                                 | Required skill                |
+|-----------------------------------------------------------|-------------------------------|
+| Executing an implementation plan with independent tasks   | `subagent-driven-development` |
+| Executing a plan inline or when subagents are unavailable | `executing-plans`             |
+| Before first line of production code                      | `test-driven-development`     |
+| Writing or changing tests with mocks/test doubles         | `testing-anti-patterns`       |
+| Completing a major task or before merge/PR                | `requesting-code-review`      |
+| Receiving review feedback                                 | `receiving-code-review`       |
 
 ### Debugging and Completion
 
-| Situation | Required skill |
-|---|---|
-| Bug, failing test, crash, or unexpected behavior | `systematic-debugging` |
-| Symptom appears deep in a stack and origin is unclear | `root-cause-tracing` |
-| Async test uses `sleep`, `setTimeout`, polling guesses, or is flaky | `condition-based-waiting` |
-| Root cause is found and validation should prevent recurrence | `defense-in-depth` |
-| About to claim done/fixed/passing/installed/updated | `verification-before-completion` |
-| Implementation is complete and branch/worktree needs finishing | `finishing-a-development-branch` |
+| Situation                                                           | Required skill                   |
+|---------------------------------------------------------------------|----------------------------------|
+| Bug, failing test, crash, or unexpected behavior                    | `systematic-debugging`           |
+| Symptom appears deep in a stack and origin is unclear               | `root-cause-tracing`             |
+| Async test uses `sleep`, `setTimeout`, polling guesses, or is flaky | `condition-based-waiting`        |
+| Root cause is found and validation should prevent recurrence        | `defense-in-depth`               |
+| About to claim done/fixed/passing/installed/updated                 | `verification-before-completion` |
+| Implementation is complete and branch/worktree needs finishing      | `finishing-a-development-branch` |
 
 ### Skill Maintenance
 
-| Situation | Required skill |
-|---|---|
-| Creating, editing, migrating, or testing skills | `writing-skills` |
-| Testing skill behavior with pressure scenarios | `testing-skills-with-subagents` |
+| Situation                                       | Required skill                  |
+|-------------------------------------------------|---------------------------------|
+| Creating, editing, migrating, or testing skills | `writing-skills`                |
+| Testing skill behavior with pressure scenarios  | `testing-skills-with-subagents` |
 
 ## 6. Flattened Skill Compatibility
 
-Upstream Superpowers v5 keeps several techniques as reference files inside parent skills. This Trae package intentionally exposes the important ones as flat skills so trigger matching stays reliable:
+Upstream Superpowers v5 keeps several techniques as reference files inside parent skills. This Trae package
+intentionally exposes the important ones as flat skills so trigger matching stays reliable:
 
 - `condition-based-waiting`
 - `defense-in-depth`
@@ -132,39 +146,50 @@ If a scenario matches one of these, call the flat skill directly.
 
 ## 7. Required Task Tracking
 
-When a skill contains a checklist, phase list, graph, or multi-step process, the first action after using it is to create Trae `TodoWrite` items for those steps. Mark items complete as work actually completes.
+When a skill contains a checklist, phase list, graph, or multi-step process, the first action after using it is to
+create Trae `TodoWrite` items for those steps. Mark items complete as work actually completes.
 
 ## 8. Rule Reinforcement
 
-This rule file is the persistent Superpowers reinforcement layer for Trae. Do not require a separate memory payload or a memory tool to make Superpowers work.
+This rule file is the persistent Superpowers reinforcement layer for Trae. Do not require a separate memory payload or a
+memory tool to make Superpowers work.
 
-- `.trae/hooks.json` must register `SessionStart` and `UserPromptSubmit` hooks. `PreToolUse` is not enabled by default because some Windows Trae host versions can leave stdin open and strand PowerShell hook processes.
+- `.trae/hooks.json` must register `SessionStart` and `UserPromptSubmit` hooks. `PreToolUse` is not enabled by default
+  because some Windows Trae host versions can leave stdin open and strand PowerShell hook processes.
 - `.trae/agents/` contains named subagent definitions for common Superpowers dispatch roles.
-- If `SessionStart` does not visibly inject `using-superpowers`, open or read `.trae/skills/using-superpowers/SKILL.md` before any task work.
-- For bugs, failed tests, crashes, and unexpected behavior, use `systematic-debugging` before proposing or applying a fix.
+- If `SessionStart` does not visibly inject `using-superpowers`, open or read `.trae/skills/using-superpowers/SKILL.md`
+  before any task work.
+- For bugs, failed tests, crashes, and unexpected behavior, use `systematic-debugging` before proposing or applying a
+  fix.
 - For deep call-stack symptoms or unclear origin, use `root-cause-tracing`.
 - For flaky async waits, sleeps, timeouts, or polling guesses, use `condition-based-waiting`.
 - Before production code, use `test-driven-development`.
-- Before claiming done, fixed, passing, installed, or updated, use `verification-before-completion` and cite real evidence.
+- Before claiming done, fixed, passing, installed, or updated, use `verification-before-completion` and cite real
+  evidence.
 - Upstream `Task tool (general-purpose)` means Trae `Task`; upstream `TodoWrite` means Trae `TodoWrite`.
-- Choose the strongest subagent from both Trae built-ins and `.trae/agents/`; prefer Superpowers named agents only when their role fits the current work best.
+- Choose the strongest subagent from both Trae built-ins and `.trae/agents/`; prefer Superpowers named agents only when
+  their role fits the current work best.
 - Do not claim `.trae/agents` is missing without a same-turn directory listing from the target root.
 - Always pass complete task prompts, file paths, constraints, and expected evidence to subagents.
 - Multi-step skill workflows must be tracked with Trae `TodoWrite`.
 
 ## 9. Runtime Contract
 
-- **Hook:** `.trae/hooks.json` registers `SessionStart` and `UserPromptSubmit` hooks that call readable scripts in `.trae/hooks/`.
+- **Hook:** `.trae/hooks.json` registers `SessionStart` and `UserPromptSubmit` hooks that call readable scripts in
+  `.trae/hooks/`.
 - **Agents:** `.trae/agents/*.md` defines named subagents Trae can auto-load.
 - **SessionStart:** injects the full `using-superpowers` skill.
 - **UserPromptSubmit:** injects a compact per-turn reminder.
 - **PreToolUse guard:** `.trae/hooks/pre-run-command-guard.ps1` is shipped but not registered by default.
-- **Self-prune helper:** `.trae/hooks/self-prune-source.ps1` may remove only the verified bootstrap source clone after the target runtime validator passes.
+- **Self-prune helper:** `.trae/hooks/self-prune-source.ps1` may remove only the verified bootstrap source clone after
+  the target runtime validator passes.
 - **Rule:** `.trae/rules/superpowers.md` defines non-negotiable trigger constraints.
 - **Skill:** `.trae/skills/*/SKILL.md` contains the actual workflow instructions.
 - **Reinforcement:** persistent workflow reminders live in this rule file.
 
-During Superpowers installation or upgrade, never delete `.trae/hooks.json`, `.trae/hooks/`, `.trae/agents/`, `.trae/rules/`, or `.trae/skills/`. These are runtime files, not removable residue. If a nested bootstrap clone must be removed, use `.trae/hooks/self-prune-source.ps1`; do not reclone after the target runtime has already validated.
+During Superpowers installation or upgrade, never delete `.trae/hooks.json`, `.trae/hooks/`, `.trae/agents/`,
+`.trae/rules/`, or `.trae/skills/`. These are runtime files, not removable residue. If a nested bootstrap clone must be
+removed, use `.trae/hooks/self-prune-source.ps1`; do not reclone after the target runtime has already validated.
 
 ## 10. Anti-Rationalization Checks
 

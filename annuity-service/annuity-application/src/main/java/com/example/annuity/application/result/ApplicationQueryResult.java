@@ -13,21 +13,21 @@ import java.time.LocalDateTime;
  * @since 2026/7/21
  */
 public record ApplicationQueryResult(
-    String applicationId,
-    String batchId,
-    String formId,
-    String businessType,
-    String customerNo,
-    String productNo,
-    String planNo,
-    String applicationStatus,
-    String currentStep,
-    String planType,
-    Long initialContribution,
-    Boolean hasForeignInvestment,
-    String createdBy,
-    LocalDateTime createdTime,
-    String updatedBy,
-    LocalDateTime updatedTime
+  String applicationId,
+  String batchId,
+  String formId,
+  String businessType,
+  String customerNo,
+  String productNo,
+  String planNo,
+  String applicationStatus,
+  String currentStep,
+  String planType,
+  Long initialContribution,
+  Boolean hasForeignInvestment,
+  String createdBy,
+  LocalDateTime createdTime,
+  String updatedBy,
+  LocalDateTime updatedTime
 ) {
 }

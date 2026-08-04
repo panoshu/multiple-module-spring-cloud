@@ -1,6 +1,6 @@
 package com.example.integration.adapter.trade.mapper;
 
-import com.example.shared.primitives.page.Pagination;
+import com.example.shared.page.Pagination;
 import com.example.shared.web.core.dto.PageQuery;
 import org.mapstruct.Mapper;
 

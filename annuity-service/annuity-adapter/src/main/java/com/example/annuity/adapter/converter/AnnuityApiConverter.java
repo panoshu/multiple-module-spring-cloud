@@ -13,10 +13,10 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.PlanNo;
+import com.example.shared.identifier.id.ProductNo;
+import com.example.shared.identifier.id.UserNo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -56,13 +56,13 @@ public interface AnnuityApiConverter {
       return null;
     }
     return new UploadFormCommand(
-        toBusinessContext(request),
-        toOperatorInfo(request),
-        request.fileName(),
-        request.fileSize(),
-        request.planType(),
-        request.initialContribution(),
-        request.hasForeignInvestment()
+      toBusinessContext(request),
+      toOperatorInfo(request),
+      request.fileName(),
+      request.fileSize(),
+      request.planType(),
+      request.initialContribution(),
+      request.hasForeignInvestment()
     );
   }
 
@@ -71,15 +71,15 @@ public interface AnnuityApiConverter {
    */
   default BusinessContext toBusinessContext(UploadFormRequest request) {
     return new BusinessContext(
-        BusinessType.valueOf(request.businessType()),
-        CustomerNo.of(request.customerNo()),
-        null,
-        ProductNo.of(request.productNo()),
-        null,
-        PlanNo.of(request.planNo()),
-        null,
-        request.operationModel() != null ? OperationModel.valueOf(request.operationModel()) : null,
-        request.accountManager() != null ? AccountManager.valueOf(request.accountManager()) : null
+      BusinessType.valueOf(request.businessType()),
+      CustomerNo.of(request.customerNo()),
+      null,
+      ProductNo.of(request.productNo()),
+      null,
+      PlanNo.of(request.planNo()),
+      null,
+      request.operationModel() != null ? OperationModel.valueOf(request.operationModel()) : null,
+      request.accountManager() != null ? AccountManager.valueOf(request.accountManager()) : null
     );
   }
 
@@ -88,10 +88,10 @@ public interface AnnuityApiConverter {
    */
   default OperatorInfo toOperatorInfo(UploadFormRequest request) {
     return new OperatorInfo(
-        request.channel() != null ? AnnuityChannel.valueOf(request.channel()) : null,
-        UserNo.of(request.operatorId()),
-        request.operatorName(),
-        false
+      request.channel() != null ? AnnuityChannel.valueOf(request.channel()) : null,
+      UserNo.of(request.operatorId()),
+      request.operatorName(),
+      false
     );
   }
 

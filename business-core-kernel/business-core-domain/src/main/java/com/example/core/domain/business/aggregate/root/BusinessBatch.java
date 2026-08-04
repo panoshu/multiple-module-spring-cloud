@@ -1,16 +1,16 @@
 package com.example.core.domain.business.aggregate.root;
 
-import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
-import com.example.core.domain.business.event.BatchStatusChangedEvent;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
+import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
+import com.example.core.domain.business.event.BatchStatusChangedEvent;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
-import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.UserNo;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
+import com.example.shared.identifier.id.BatchId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +41,22 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   protected BusinessBatch(BatchId batchId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
+  }
+
+  /**
+   * 工厂方法:创建新业务批次
+   *
+   * @param batchId  批次ID
+   * @param context  业务上下文
+   * @param operator 操作人信息
+   * @return 新创建的批次聚合根
+   */
+  public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
+    BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
+    batch.businessContext = context;
+    batch.operatorInfo = operator;
+    batch.status = BatchStatus.CREATED;
+    return batch;
   }
 
   /**
@@ -110,7 +126,6 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     validateStatusConsistency();
   }
 
-
   private void validateStatusConsistency() {
     if (isTerminalStatus(this.status)) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
@@ -120,22 +135,6 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
 
   private boolean isTerminalStatus(BatchStatus status) {
     return status != null && status.isTerminal();
-  }
-
-  /**
-   * 工厂方法:创建新业务批次
-   *
-   * @param batchId 批次ID
-   * @param context 业务上下文
-   * @param operator 操作人信息
-   * @return 新创建的批次聚合根
-   */
-  public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
-    BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
-    batch.businessContext = context;
-    batch.operatorInfo = operator;
-    batch.status = BatchStatus.CREATED;
-    return batch;
   }
 
   /**

@@ -1,7 +1,7 @@
 package com.example.core.domain.business.aggregate.valueobject.reference;
 
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.identifier.id.ApplicationId;
 
 /**
  * description

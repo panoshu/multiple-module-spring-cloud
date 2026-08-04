@@ -28,11 +28,11 @@ public enum TradeErrorCode implements ErrorDefinition {
   private final String code;
   private final String message;
 
-  public String code() {
+  public String getCode() {
     return this.code;
   }
 
-  public String message() {
+  public String getMessage() {
     return this.message;
   }
 }

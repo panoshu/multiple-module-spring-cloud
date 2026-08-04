@@ -1,9 +1,9 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.valueobject.SplitUnit;
 import com.example.file.domain.model.valueobject.config.SplitConfig;
 import com.example.file.domain.model.valueobject.config.SplitKeyDef;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -39,7 +39,7 @@ public class TaskSplitter {
       Object k = row.get(field);
       String key = k != null ? k.toString() : "default";
       grouped.computeIfAbsent(key, x -> new ArrayList<>())
-          .add((Map<String, Object>) row);
+        .add((Map<String, Object>) row);
     }
     int limit = config.maxRowsPerSubTask() > 0 ? config.maxRowsPerSubTask() : Integer.MAX_VALUE;
 

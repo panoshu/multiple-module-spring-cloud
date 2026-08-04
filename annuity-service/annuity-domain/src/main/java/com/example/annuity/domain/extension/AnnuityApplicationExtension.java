@@ -19,10 +19,10 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
  * @since 2026/7/21
  */
 public record AnnuityApplicationExtension(
-    BusinessType businessType,
-    String planType,
-    Long initialContribution,
-    boolean hasForeignInvestment
+  BusinessType businessType,
+  String planType,
+  Long initialContribution,
+  boolean hasForeignInvestment
 ) implements BusinessExtension {
 
   /**

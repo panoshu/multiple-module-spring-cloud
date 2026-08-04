@@ -1,48 +1,75 @@
 # Task 5: BusinessBatchAppService 与 Controller 实现
 
 **Files:**
-- Modify: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java` (Long → String batchId)
-- Modify: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java` (Long → String batchId)
-- Modify: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java` (Long → String batchId)
-- Modify: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java` (Long → String batchId)
-- Modify: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java` (Long → String batchId)
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessBatch.java` (新增 create 工厂方法、cancel 行为、getters)
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/BatchRepository.java` (新增 findActive 方法)
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
+
+- Modify:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchSummaryResponse.java`
+  (Long → String batchId)
+- Modify:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchCreatedResponse.java`
+  (Long → String batchId)
+- Modify:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/response/BatchDetailResponse.java`
+  (Long → String batchId)
+- Modify:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/command/CancelBatchCommand.java`
+  (Long → String batchId)
+- Modify:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/batch/query/GetBatchDetailQuery.java`
+  (Long → String batchId)
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessBatch.java`
+  (新增 create 工厂方法、cancel 行为、getters)
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/BatchRepository.java`
+  (新增 findActive 方法)
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
 
 **Interfaces:**
-- Consumes: `BusinessBatchApi`, `SessionContextResolver`, `BusinessMetaContextAssembler`, `SupportedBusinessTypeValidator`, `BusinessAccessGuard`, `BatchRepository`, `BusinessBatch` 聚合根, `BusinessContext` 值对象, `OperatorInfo` 值对象
+
+- Consumes: `BusinessBatchApi`, `SessionContextResolver`, `BusinessMetaContextAssembler`,
+  `SupportedBusinessTypeValidator`, `BusinessAccessGuard`, `BatchRepository`, `BusinessBatch` 聚合根, `BusinessContext`
+  值对象, `OperatorInfo` 值对象
 - Produces: `BusinessBatchAppService` bean, `BusinessBatchController` bean, `BatchConverter` bean
 
-## 关键设计决策(必读)
+## 关键设计决策 (必读)
 
 > 以下是对原 plan brief 的修正,实现时以本节为准:
 
-1. **ID 类型修正**: `BatchId` 是 `record BatchId(String value)`,格式 `%p%d%s` 生成形如 `BATCH20260726001` 的字符串。Task 4 的 DTO 误用 `Long batchId`,本任务需将所有 DTO 中的 `Long batchId` 改为 `String batchId`,以保持与领域类型一致。
+1. **ID 类型修正**: `BatchId` 是 `record BatchId(String value)`,格式 `%p%d%s` 生成形如 `BATCH20260726001` 的字符串。Task
+   4 的 DTO 误用 `Long batchId`,本任务需将所有 DTO 中的 `Long batchId` 改为 `String batchId`,以保持与领域类型一致。
 
 2. **IdService 方法名**: 正确方法是 `idService.nextId(BatchId.class)`,不是 `generateId`。
 
-3. **OperatorInfo 构造函数**: 实际签名为 `OperatorInfo(AnnuityChannel channel, UserNo operatorId, String operatorName, boolean isProxy)`,4 个参数,不是 2 个。
+3. **OperatorInfo 构造函数**: 实际签名为
+   `OperatorInfo(AnnuityChannel channel, UserNo operatorId, String operatorName, boolean isProxy)`,4 个参数,不是 2 个。
 
 4. **BusinessBatch 需补充**:
-   - 静态工厂方法 `create(BatchId, BusinessContext, OperatorInfo)`
-   - `cancel(String reason)` 行为方法,修改状态为 CANCELLED 并注册领域事件
-   - 各字段的 getter(`getBusinessContext()`, `getOperatorInfo()`, `getStatus()`, `getTotalApplicationCount()`, `getSuccessCount()`, `getFailedCount()`, `getBusinessFormRefs()`)
+  - 静态工厂方法 `create(BatchId, BusinessContext, OperatorInfo)`
+  - `cancel(String reason)` 行为方法,修改状态为 CANCELLED 并注册领域事件
+  - 各字段的 getter (`getBusinessContext()`, `getOperatorInfo()`, `getStatus()`, `getTotalApplicationCount()`,
+    `getSuccessCount()`, `getFailedCount()`, `getBusinessFormRefs()`)
 
-5. **BatchRepository 需补充**: `findActive(PlanNo planNo, BusinessType businessType)` 方法,返回 `Optional<BusinessBatch>`,查询未完成/处理中的批次。
+5. **BatchRepository 需补充**: `findActive(PlanNo planNo, BusinessType businessType)` 方法,返回
+   `Optional<BusinessBatch>`,查询未完成/处理中的批次。
 
 6. **BatchStatus 枚举需补充**: 新增 `CANCELLED` 终态状态,并更新 `isTerminal()`。
 
 7. **Controller findActive/cancel 方法**: 不留 TODO,完整实现。
 
-## Step 1: 修正 Task 4 的 DTO(ID 类型 Long → String)
+## Step 1: 修正 Task 4 的 DTO (ID 类型 Long → String)
 
 将以下 5 个文件中的 `Long batchId` 改为 `String batchId`,注解从 `@NotNull` 改为 `@NotBlank`:
 
 ### BatchSummaryResponse.java
+
 ```java
 package com.example.core.api.batch.response;
 
@@ -68,6 +95,7 @@ public record BatchSummaryResponse(
 ```
 
 ### BatchCreatedResponse.java
+
 ```java
 package com.example.core.api.batch.response;
 
@@ -87,6 +115,7 @@ public record BatchCreatedResponse(
 ```
 
 ### BatchDetailResponse.java
+
 ```java
 package com.example.core.api.batch.response;
 
@@ -128,6 +157,7 @@ public record BatchDetailResponse(
 ```
 
 ### CancelBatchCommand.java
+
 ```java
 package com.example.core.api.batch.command;
 
@@ -146,6 +176,7 @@ public record CancelBatchCommand(
 ```
 
 ### GetBatchDetailQuery.java
+
 ```java
 package com.example.core.api.batch.query;
 
@@ -162,9 +193,10 @@ public record GetBatchDetailQuery(
 }
 ```
 
-## Step 2: 扩展 BatchStatus 枚举(新增 CANCELLED)
+## Step 2: 扩展 BatchStatus 枚举 (新增 CANCELLED)
 
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/valueobject/enums/status/BatchStatus.java`
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/valueobject/enums/status/BatchStatus.java`
 
 ```java
 package com.example.core.domain.business.aggregate.valueobject.enums.status;
@@ -206,9 +238,10 @@ public enum BatchStatus {
 
 ## Step 3: 扩展 BusinessBatch 聚合根
 
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessBatch.java`
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessBatch.java`
 
-在现有类中新增以下内容(保留所有已有方法不变):
+在现有类中新增以下内容 (保留所有已有方法不变):
 
 ```java
   /**
@@ -277,13 +310,16 @@ public enum BatchStatus {
 ```
 
 **注意**:
+
 - `businessFormRefs` 字段当前是包级私有 `List<BusinessFormRef> businessFormRefs;`,保持不变,通过 getter 暴露
 - `cancel` 方法注册 `BatchStatusChangedEvent`(已存在于 `com.example.core.domain.business.event`)
-- 修改 `validateStatusConsistency()` 逻辑:当 status 为 CANCELLED 时不应该再更新计数,但创建时 status=null 需要跳过校验。原方法在 status=null 时 `isTerminalStatus(null)` 返回 false,所以创建场景不会误抛。保持原逻辑不变。
+- 修改 `validateStatusConsistency()` 逻辑:当 status 为 CANCELLED 时不应该再更新计数,但创建时 status=null 需要跳过校验。原方法在
+  status=null 时 `isTerminalStatus(null)` 返回 false,所以创建场景不会误抛。保持原逻辑不变。
 
 ## Step 4: 扩展 BatchRepository 接口
 
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/BatchRepository.java`
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/repository/BatchRepository.java`
 
 ```java
 package com.example.core.domain.business.repository;
@@ -323,7 +359,8 @@ public interface BatchRepository extends Repository<BusinessBatch, BatchId> {
 
 ## Step 5: 编写 BusinessBatchAppService 失败测试
 
-文件: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
+文件:
+`business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/service/BusinessBatchAppServiceTest.java`
 
 ```java
 package com.example.core.application.business.service;
@@ -474,7 +511,8 @@ Expected: FAIL (BusinessBatchAppService 不存在)
 
 ## Step 7: 编写 BusinessBatchAppService 实现
 
-文件: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
+文件:
+`business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/service/BusinessBatchAppService.java`
 
 ```java
 package com.example.core.application.business.service;
@@ -588,9 +626,10 @@ public class BusinessBatchAppService {
 Run: `mvn test -pl business-core-kernel/business-core-application -Dtest=BusinessBatchAppServiceTest`
 Expected: PASS (5 tests)
 
-## Step 9: 编写 BatchConverter(MapStruct)
+## Step 9: 编写 BatchConverter (MapStruct)
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/converter/BatchConverter.java`
 
 ```java
 package com.example.core.adapter.batch.converter;
@@ -654,7 +693,8 @@ public interface BatchConverter {
 
 ## Step 10: 编写 BusinessBatchController
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/batch/BusinessBatchController.java`
 
 ```java
 package com.example.core.adapter.batch;

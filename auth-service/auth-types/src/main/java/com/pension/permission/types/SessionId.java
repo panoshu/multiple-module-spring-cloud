@@ -1,0 +1,15 @@
+package com.pension.permission.types;
+
+import com.example.shared.identifier.contract.IdDefinition;
+import com.example.shared.identifier.contract.IdType;
+import com.example.shared.identifier.contract.Identifier;
+
+import java.util.Objects;
+import java.util.UUID;
+
+@IdDefinition(type = IdType.ULID)
+public record SessionId(String value) implements Identifier<String> {
+  public SessionId {
+    Objects.requireNonNull(value, "value");
+  }
+}

@@ -15,26 +15,26 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ApprovalInstanceRejectedEventConverter
-        implements IntegrationEventConverter<ApprovalInstanceRejected> {
+  implements IntegrationEventConverter<ApprovalInstanceRejected> {
 
-    @Override
-    public Class<ApprovalInstanceRejected> supportedEventType() {
-        return ApprovalInstanceRejected.class;
-    }
+  @Override
+  public Class<ApprovalInstanceRejected> supportedEventType() {
+    return ApprovalInstanceRejected.class;
+  }
 
-    @Override
-    public Object toIntegrationEvent(ApprovalInstanceRejected event) {
-        return new ApprovalInstanceRejectedEventDTO(
-                event.eventId().value(),
-                String.valueOf(event.instanceId().value()),
-                event.businessNo(),
-                event.businessType(),
-                event.occurredOn()
-        );
-    }
+  @Override
+  public Object toIntegrationEvent(ApprovalInstanceRejected event) {
+    return new ApprovalInstanceRejectedEventDTO(
+      event.eventId().value(),
+      String.valueOf(event.instanceId().value()),
+      event.businessNo(),
+      event.businessType(),
+      event.occurredOn()
+    );
+  }
 
-    @Override
-    public String integrationEventType() {
-        return IntegrationEventTypes.APPROVAL_INSTANCE_REJECTED;
-    }
+  @Override
+  public String integrationEventType() {
+    return IntegrationEventTypes.APPROVAL_INSTANCE_REJECTED;
+  }
 }

@@ -1,12 +1,16 @@
 # 文件服务 Token 访问机制实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 为文件服务实现基于国密 SM4 加密的 Token 访问机制，支持业务服务申请 token、前端直接上传/下载、流水审计、一次性使用等功能。
 
-**Architecture:** DDD 七层架构（types → domain → api → application → adapter → infrastructure → starter）。Token 作为领域服务（FileTokenService），加密/Redis 通过 SPI 隔离。FileMetadata 改造支持两阶段创建（createForUpload + completeUpload），新增 FileAccessLog 聚合根记录审计流水。
+**Architecture:** DDD 七层架构（types → domain → api → application → adapter → infrastructure → starter）。Token
+作为领域服务（FileTokenService），加密/Redis 通过 SPI 隔离。FileMetadata 改造支持两阶段创建（createForUpload +
+completeUpload），新增 FileAccessLog 聚合根记录审计流水。
 
-**Tech Stack:** JDK 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, PostgreSQL (JSONB), MapStruct 1.6.3, Lombok, Redisson, 腾讯 Kona 1.0.15 (SM4/SM3 国密算法)
+**Tech Stack:** JDK 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, PostgreSQL (JSONB), MapStruct 1.6.3, Lombok,
+Redisson, 腾讯 Kona 1.0.15 (SM4/SM3 国密算法)
 
 ## Global Constraints
 
@@ -31,18 +35,31 @@
 ### Task 1: file-domain 基础值对象与枚举
 
 **Files:**
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessScope.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileTokenPayload.java`
+
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessScope.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileTokenPayload.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/SessionUser.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessAction.java`
-- Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessResult.java`
-- Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/FileAccessScopeTest.java`
-- Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/FileTokenPayloadTest.java`
-- Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/SessionUserTest.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessAction.java`
+- Create:
+  `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/valueobject/FileAccessResult.java`
+- Test:
+  `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/FileAccessScopeTest.java`
+- Test:
+  `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/FileTokenPayloadTest.java`
+- Test:
+  `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/valueobject/SessionUserTest.java`
 
 **Interfaces:**
-- Consumes: `com.example.shared.primitives.identity.FileId/UserNo`, `com.example.shared.domain.mark.ValueObject`, `com.example.file.domain.model.aggregate.valueobject.FileUsage`
-- Produces: `FileAccessScope(CustomerNo, ProductNo)`, `FileTokenPayload(tokenId, fileId, usage, bizType, customerNo, productNo, operator, allowedContentTypes, allowedMaxSize, expireAt)`, `SessionUser(userNo, customerNo, productNo)`, `FileAccessAction.{APPLY, ACCESS}`, `FileAccessResult.{SUCCESS, FAIL, EXPIRED, REJECTED}`
+
+- Consumes: `com.example.shared.primitives.identity.FileId/UserNo`, `com.example.shared.domain.mark.ValueObject`,
+  `com.example.file.domain.model.aggregate.valueobject.FileUsage`
+- Produces: `FileAccessScope(CustomerNo, ProductNo)`,
+  `FileTokenPayload(tokenId, fileId, usage, bizType, customerNo, productNo, operator, allowedContentTypes, allowedMaxSize, expireAt)`,
+  `SessionUser(userNo, customerNo, productNo)`, `FileAccessAction.{APPLY, ACCESS}`,
+  `FileAccessResult.{SUCCESS, FAIL, EXPIRED, REJECTED}`
 
 - [ ] **Step 1: 写 FileAccessScope 失败测试**
 
@@ -332,11 +349,15 @@ git commit -m "feat(file-domain): 新增 Token 访问相关值对象与枚举"
 ### Task 2: FileErrorCodes 扩展
 
 **Files:**
+
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/errorcode/FileErrorCodes.java`
 
 **Interfaces:**
+
 - Consumes: `com.example.shared.exception.ErrorDefinition`
-- Produces: 10 个新错误码：FILE_TOKEN_INVALID / FILE_TOKEN_EXPIRED / FILE_TOKEN_ALREADY_USED / FILE_TOKEN_MISMATCH / FILE_CONTENT_TYPE_NOT_ALLOWED / FILE_SIZE_EXCEEDED / FILE_NOT_UPLOADABLE / FILE_NOT_DOWNLOADABLE / FILE_DIGEST_MISMATCH / FILE_TOKEN_SECRET_NOT_CONFIGURED
+- Produces: 10 个新错误码：FILE_TOKEN_INVALID / FILE_TOKEN_EXPIRED / FILE_TOKEN_ALREADY_USED / FILE_TOKEN_MISMATCH /
+  FILE_CONTENT_TYPE_NOT_ALLOWED / FILE_SIZE_EXCEEDED / FILE_NOT_UPLOADABLE / FILE_NOT_DOWNLOADABLE /
+  FILE_DIGEST_MISMATCH / FILE_TOKEN_SECRET_NOT_CONFIGURED
 
 - [ ] **Step 1: 修改 FileErrorCodes 添加 10 个错误码**
 
@@ -375,13 +396,18 @@ git commit -m "feat(file-domain): 扩展 10 个 Token 访问相关错误码"
 ### Task 3: FileAccessLog 聚合根 + Repository 接口
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/FileAccessLog.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/repository/FileAccessLogRepository.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/FileAccessLogTest.java`
 
 **Interfaces:**
-- Consumes: `com.example.shared.domain.aggregate.root.AggregateRoot`, `com.example.shared.primitives.identity.{FileId,UserNo,CustomerNo,ProductNo}`, `FileAccessScope`, `FileAccessAction`, `FileAccessResult`, `FileUsage`
-- Produces: `FileAccessLog` 聚合根（apply/access 工厂方法 + markSuccess/markFail），`FileAccessLogRepository` 接口（save/findById/findByFileId/findByTokenHash）
+
+- Consumes: `com.example.shared.domain.aggregate.root.AggregateRoot`,
+  `com.example.shared.primitives.identity.{FileId,UserNo,CustomerNo,ProductNo}`, `FileAccessScope`, `FileAccessAction`,
+  `FileAccessResult`, `FileUsage`
+- Produces: `FileAccessLog` 聚合根（apply/access 工厂方法 + markSuccess/markFail），`FileAccessLogRepository`
+  接口（save/findById/findByFileId/findByTokenHash）
 
 - [ ] **Step 1: 写 FileAccessLog 失败测试**
 
@@ -399,67 +425,65 @@ import com.example.shared.primitives.identity.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("FileAccessLog 聚合根")
 class FileAccessLogTest {
 
-    @Test
-    @DisplayName("apply 工厂方法创建 APPLY 记录")
-    void should_create_apply_log() {
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileAccessLog log = FileAccessLog.apply(
-            new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
-            "approval-service", "hash-001"
-        );
-        assertThat(log.action()).isEqualTo(FileAccessAction.APPLY);
-        assertThat(log.result()).isEqualTo(FileAccessResult.SUCCESS);
-        assertThat(log.fileId()).isEqualTo(new FileId("f001"));
-        assertThat(log.tokenHash()).isEqualTo("hash-001");
-        assertThat(log.occurAt()).isNotNull();
-    }
+  @Test
+  @DisplayName("apply 工厂方法创建 APPLY 记录")
+  void should_create_apply_log() {
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileAccessLog log = FileAccessLog.apply(
+        new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
+        "approval-service", "hash-001"
+    );
+    assertThat(log.action()).isEqualTo(FileAccessAction.APPLY);
+    assertThat(log.result()).isEqualTo(FileAccessResult.SUCCESS);
+    assertThat(log.fileId()).isEqualTo(new FileId("f001"));
+    assertThat(log.tokenHash()).isEqualTo("hash-001");
+    assertThat(log.occurAt()).isNotNull();
+  }
 
-    @Test
-    @DisplayName("access 工厂方法创建 ACCESS 记录（成功）")
-    void should_create_access_success_log() {
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileAccessLog log = FileAccessLog.access(
-            new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
-            "approval-service", "192.168.1.1", "hash-001",
-            FileAccessResult.SUCCESS, null
-        );
-        assertThat(log.action()).isEqualTo(FileAccessAction.ACCESS);
-        assertThat(log.result()).isEqualTo(FileAccessResult.SUCCESS);
-        assertThat(log.sourceIp()).isEqualTo("192.168.1.1");
-    }
+  @Test
+  @DisplayName("access 工厂方法创建 ACCESS 记录（成功）")
+  void should_create_access_success_log() {
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileAccessLog log = FileAccessLog.access(
+        new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
+        "approval-service", "192.168.1.1", "hash-001",
+        FileAccessResult.SUCCESS, null
+    );
+    assertThat(log.action()).isEqualTo(FileAccessAction.ACCESS);
+    assertThat(log.result()).isEqualTo(FileAccessResult.SUCCESS);
+    assertThat(log.sourceIp()).isEqualTo("192.168.1.1");
+  }
 
-    @Test
-    @DisplayName("access 工厂方法创建 ACCESS 记录（失败）")
-    void should_create_access_failed_log() {
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileAccessLog log = FileAccessLog.access(
-            new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
-            "approval-service", "192.168.1.1", "hash-001",
-            FileAccessResult.FAIL, "token 校验失败"
-        );
-        assertThat(log.result()).isEqualTo(FileAccessResult.FAIL);
-        assertThat(log.failReason()).isEqualTo("token 校验失败");
-    }
+  @Test
+  @DisplayName("access 工厂方法创建 ACCESS 记录（失败）")
+  void should_create_access_failed_log() {
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileAccessLog log = FileAccessLog.access(
+        new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
+        "approval-service", "192.168.1.1", "hash-001",
+        FileAccessResult.FAIL, "token 校验失败"
+    );
+    assertThat(log.result()).isEqualTo(FileAccessResult.FAIL);
+    assertThat(log.failReason()).isEqualTo("token 校验失败");
+  }
 
-    @Test
-    @DisplayName("markFail 修改 result 和 failReason")
-    void should_mark_fail() {
-        FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
-        FileAccessLog log = FileAccessLog.apply(
-            new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
-            "approval-service", "hash-001"
-        );
-        log.markFail("存储失败");
-        assertThat(log.result()).isEqualTo(FileAccessResult.FAIL);
-        assertThat(log.failReason()).isEqualTo("存储失败");
-    }
+  @Test
+  @DisplayName("markFail 修改 result 和 failReason")
+  void should_mark_fail() {
+    FileAccessScope scope = new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001"));
+    FileAccessLog log = FileAccessLog.apply(
+        new FileId("f001"), FileUsage.SOURCE, scope, UserNo.of("u1"),
+        "approval-service", "hash-001"
+    );
+    log.markFail("存储失败");
+    assertThat(log.result()).isEqualTo(FileAccessResult.FAIL);
+    assertThat(log.failReason()).isEqualTo("存储失败");
+  }
 }
 ```
 
@@ -606,13 +630,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FileAccessLogRepository extends Repository<FileAccessLog, String> {
-    
+
     List<FileAccessLog> findByFileId(FileId fileId);
-    
+
     List<FileAccessLog> findByTokenHash(String tokenHash);
-    
+
     long countByActionAndTimeRange(FileAccessAction action, LocalDateTime from, LocalDateTime to);
-    
+
     Optional<FileAccessLog> findById(String id);
 }
 ```
@@ -636,6 +660,7 @@ git commit -m "feat(file-domain): 新增 FileAccessLog 聚合根和 Repository �
 ### Task 4: 领域事件
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/UploadTokenAppliedEvent.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/DownloadTokenAppliedEvent.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/event/FileUploadedWithTokenEvent.java`
@@ -643,7 +668,9 @@ git commit -m "feat(file-domain): 新增 FileAccessLog 聚合根和 Repository �
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/event/FileAccessEventTest.java`
 
 **Interfaces:**
-- Consumes: `com.example.shared.domain.event.DomainEvent`, `com.example.shared.primitives.identity.{EventId,FileId,UserNo,CustomerNo,ProductNo}`, `FileMetadata`
+
+- Consumes: `com.example.shared.domain.event.DomainEvent`,
+  `com.example.shared.primitives.identity.{EventId,FileId,UserNo,CustomerNo,ProductNo}`, `FileMetadata`
 - Produces: 4 个领域事件，均含 `tokenHash` 字段
 
 - [ ] **Step 1: 写事件失败测试**
@@ -858,12 +885,13 @@ public record FileDownloadedEvent(
 }
 ```
 
-- [ ] **Step 4: 运行测试验证失败（依赖 accessScope() 字段，Task 5 才实现）**
+- [ ] **Step 4: 运行测试验证失败（依赖 accessScope () 字段，Task 5 才实现）**
 
 Run: `mvn -pl file-service/file-domain test -Dtest=FileAccessEventTest`
 Expected: FAIL (`file.accessScope()` 方法不存在 — 这是预期的，Task 5 实现)
 
-> **Note:** 此 Task 的事件类引用了 `file.accessScope()` 和 `file.digest()`，这两个方法在 Task 5 实现。事件类本身可编译，但测试会失败。这是预期行为，Task 5 完成后测试会通过。
+> **Note:** 此 Task 的事件类引用了 `file.accessScope()` 和 `file.digest()`，这两个方法在 Task 5
+> 实现。事件类本身可编译，但测试会失败。这是预期行为，Task 5 完成后测试会通过。
 
 - [ ] **Step 5: Commit**
 
@@ -884,13 +912,17 @@ git commit -m "feat(file-domain): 新增 4 个文件访问领域事件
 ### Task 5: FileMetadata 聚合根改造
 
 **Files:**
+
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/model/aggregate/root/FileMetadata.java`
-- Modify: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/FileMetadataTest.java` (若已存在)
+- Modify: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/FileMetadataTest.java`
+  (若已存在)
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/model/aggregate/root/FileMetadataTokenTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileAccessScope`, `FileStatus`, `FileUsage`, `StorageType`, `AggregateRoot`
-- Produces: `FileMetadata.createForUpload()` / `completeUpload()` / `verifyDownloadable()` / `accessScope()` / `digest()` / `digestAlgorithm()`
+- Produces: `FileMetadata.createForUpload()` / `completeUpload()` / `verifyDownloadable()` / `accessScope()` /
+  `digest()` / `digestAlgorithm()`
 
 - [ ] **Step 1: 写 FileMetadata Token 改造测试**
 
@@ -1014,6 +1046,7 @@ Expected: FAIL (createForUpload/completeUpload/verifyDownloadable/accessScope/di
 - [ ] **Step 3: 修改 FileMetadata 类**
 
 在现有 FileMetadata 基础上：
+
 1. 新增字段 `accessScope`、`digest`、`digestAlgorithm`，将 `size` 改为 `Long`（允许 null）
 2. 保留现有 `create()` 方法（向后兼容）
 3. 新增 `createForUpload()` 方法
@@ -1021,7 +1054,8 @@ Expected: FAIL (createForUpload/completeUpload/verifyDownloadable/accessScope/di
 5. 新增 `verifyDownloadable()` 方法
 6. 新增 getters: `accessScope()`, `digest()`, `digestAlgorithm()`
 
-完整修改后的 FileMetadata.java（保留原有 create/reconstitute/markUploaded/markDeleted，新增 createForUpload/completeUpload/verifyDownloadable）:
+完整修改后的 FileMetadata.java（保留原有 create/reconstitute/markUploaded/markDeleted，新增
+createForUpload/completeUpload/verifyDownloadable）:
 
 ```java
 package com.example.file.domain.model.aggregate.root;
@@ -1308,10 +1342,12 @@ git commit -m "feat(file-domain): FileMetadata 新增 createForUpload/completeUp
 ### Task 6: FileTokenGateway + FileTokenStore SPI
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/FileTokenGateway.java`
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/FileTokenStore.java`
 
 **Interfaces:**
+
 - Consumes: `FileTokenPayload`
 - Produces: `FileTokenGateway.encrypt/decrypt`, `FileTokenStore.markUsed/isUsed`
 
@@ -1328,12 +1364,12 @@ import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
  * 由 KonaFileTokenGateway 实现，使用国密 SM4 算法。
  */
 public interface FileTokenGateway {
-    
+
     /**
      * 加密 token 载荷，返回密文字符串
      */
     String encrypt(FileTokenPayload payload);
-    
+
     /**
      * 解密 token 字符串，返回载荷
      * 解密失败或格式错误抛 SystemException(FILE_TOKEN_INVALID)
@@ -1355,13 +1391,13 @@ import java.time.Duration;
  * 由 RedisFileTokenStore 实现，基于 Redis SETNX + TTL。
  */
 public interface FileTokenStore {
-    
+
     /**
      * 标记 token 已使用
      * @return true=首次标记成功, false=已存在（重复使用）
      */
     boolean markUsed(String tokenId, Duration ttl);
-    
+
     /**
      * 检查 token 是否已使用
      */
@@ -1387,12 +1423,16 @@ git commit -m "feat(file-domain): 新增 FileTokenGateway 和 FileTokenStore SPI
 ### Task 7: FileTokenService 领域服务
 
 **Files:**
+
 - Create: `file-service/file-domain/src/main/java/com/example/file/domain/service/FileTokenService.java`
 - Test: `file-service/file-domain/src/test/java/com/example/file/domain/service/FileTokenServiceTest.java`
 
 **Interfaces:**
-- Consumes: `FileTokenGateway`, `FileTokenStore`, `FileTokenPayload`, `SessionUser`, `FileMetadata`, `FileErrorCodes`, `@DomainService`
-- Produces: `FileTokenService.generateUploadToken()`, `generateDownloadToken()`, `verifyAndConsumeUploadToken()`, `verifyAndConsumeDownloadToken()`
+
+- Consumes: `FileTokenGateway`, `FileTokenStore`, `FileTokenPayload`, `SessionUser`, `FileMetadata`, `FileErrorCodes`,
+  `@DomainService`
+- Produces: `FileTokenService.generateUploadToken()`, `generateDownloadToken()`, `verifyAndConsumeUploadToken()`,
+  `verifyAndConsumeDownloadToken()`
 
 - [ ] **Step 1: 写 FileTokenService 失败测试**
 
@@ -1723,7 +1763,7 @@ public class FileTokenService {
         }
         if (!payload.customerNo().equals(session.customerNo())) {
             throw new SystemException(FileErrorCodes.FILE_TOKEN_MISMATCH)
-                .withLogDetail("token customer: " + payload.customerNo() + ", session: " + session.customerNo());
+                .withLogDetail("token product: " + payload.customerNo() + ", session: " + session.customerNo());
         }
         if (!payload.productNo().equals(session.productNo())) {
             throw new SystemException(FileErrorCodes.FILE_TOKEN_MISMATCH)
@@ -1759,18 +1799,23 @@ git commit -m "feat(file-domain): 新增 FileTokenService 领域服务"
 ### Task 8: FileStorageGateway SPI 改造（computeMd5 → computeDigest）
 
 **Files:**
+
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/FileStorageGateway.java`
 - Modify: `file-service/file-domain/src/main/java/com/example/file/domain/gateway/StoreResult.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageBackend.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageRouter.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageBackend.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileStorageRouter.java`
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/LocalFileStorage.java`
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/NASFileStorage.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
 - Modify: `file-service/file-application/src/main/java/com/example/file/application/usecase/StoreFileUseCase.java`
 - Modify: `file-service/file-application/src/main/java/com/example/file/application/usecase/CopyFileUseCase.java`
 - Modify: `file-service/file-application/src/test/java/com/example/file/application/usecase/StoreFileUseCaseTest.java`
 
 **Interfaces:**
+
 - Consumes: 现有 `FileStorageGateway.computeMd5()`, `StoreResult.md5()`
 - Produces: `FileStorageGateway.computeDigest()`, `StoreResult.digest()`
 
@@ -1829,11 +1874,13 @@ public interface FileStorageGateway {
 
 - [ ] **Step 5: 修改三个 FileStorage 实现**
 
-LocalFileStorage/NASFileStorage/AliyunOSSFileStorage 中将 `computeMd5` 方法重命名为 `computeDigest`，方法体保持原有 MD5 实现（Task 11 会改为 SM3）。
+LocalFileStorage/NASFileStorage/AliyunOSSFileStorage 中将 `computeMd5` 方法重命名为 `computeDigest`，方法体保持原有 MD5
+实现（Task 11 会改为 SM3）。
 
 - [ ] **Step 6: 修改 StoreFileUseCase**
 
-将 `String md5 = storageGateway.computeMd5(fileId)` 改为 `String digest = storageGateway.computeDigest(fileId)`，调用 `file.markUploaded(storageKey, digest)`（markUploaded 仍用 md5 参数名，传 digest 值）。
+将 `String md5 = storageGateway.computeMd5(fileId)` 改为 `String digest = storageGateway.computeDigest(fileId)`，调用
+`file.markUploaded(storageKey, digest)`（markUploaded 仍用 md5 参数名，传 digest 值）。
 
 - [ ] **Step 7: 修改 CopyFileUseCase**
 
@@ -1875,15 +1922,22 @@ git commit -m "refactor(file-service): computeMd5 重命名为 computeDigest
 ### Task 9: file-infrastructure Kona 加密集成
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/pom.xml` (新增 kona-crypto 依赖)
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileTokenProperties.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/KonaAutoConfiguration.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/KonaFileTokenGateway.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/KonaFileTokenGatewayTest.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/FileTokenProperties.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/KonaAutoConfiguration.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/KonaFileTokenGateway.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/KonaFileTokenGatewayTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileTokenGateway`, `FileTokenPayload`, `FileErrorCodes`, `SystemException`
-- Produces: `KonaFileTokenGateway` (SM4 加解密实现), `FileTokenProperties` (配置类), `KonaAutoConfiguration` (Provider 注册)
+- Produces: `KonaFileTokenGateway` (SM4 加解密实现), `FileTokenProperties` (配置类), `KonaAutoConfiguration` (Provider
+  注册)
 
 - [ ] **Step 1: 添加 kona-crypto 依赖**
 
@@ -2124,7 +2178,9 @@ public class KonaFileTokenGateway implements FileTokenGateway {
 Run: `mvn -pl file-service/file-infrastructure test -Dtest=KonaFileTokenGatewayTest`
 Expected: PASS (3 tests)
 
-> **Note:** 若 Kona SDK 与 JDK 25 preview 不兼容，需先验证 Kona Provider 是否可用。若 `Cipher.getInstance("SM4/CBC/PKCS5Padding", "KonaCrypto")` 抛 `NoSuchProviderException`，需在 `KonaAutoConfiguration` 中显式调用 `Security.addProvider(new KonaCryptoProvider())`。
+> **Note:** 若 Kona SDK 与 JDK 25 preview 不兼容，需先验证 Kona Provider 是否可用。若
+> `Cipher.getInstance("SM4/CBC/PKCS5Padding", "KonaCrypto")` 抛 `NoSuchProviderException`，需在 `KonaAutoConfiguration`
+> 中显式调用 `Security.addProvider(new KonaCryptoProvider())`。
 
 - [ ] **Step 7: Commit**
 
@@ -2142,10 +2198,14 @@ git commit -m "feat(file-infrastructure): 集成腾讯 Kona SM4 加密套件"
 ### Task 10: RedisFileTokenStore 实现
 
 **Files:**
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/RedisFileTokenStore.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/RedisFileTokenStoreTest.java`
+
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/RedisFileTokenStore.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/RedisFileTokenStoreTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileTokenStore`, `FileTokenProperties`, `RedissonClient`
 - Produces: `RedisFileTokenStore` (基于 Redis SETNX + TTL)
 
@@ -2275,12 +2335,16 @@ git commit -m "feat(file-infrastructure): 新增 RedisFileTokenStore 一次性 t
 ### Task 11: SM3 摘要改造
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/LocalFileStorage.java`
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/NASFileStorage.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/LocalFileStorageDigestTest.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/storage/AliyunOSSFileStorage.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/LocalFileStorageDigestTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileStorageBackend.computeDigest()`, Kona `MessageDigest.getInstance("SM3", "KonaCrypto")`
 - Produces: SM3 摘要算法（替代 MD5）
 
@@ -2383,15 +2447,22 @@ git commit -m "feat(file-infrastructure): 摘要算法从 MD5 改为 SM3 国密"
 ### Task 12: FileAccessLog 持久层
 
 **Files:**
+
 - Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/FileAccessLogDO.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileAccessLogMapper.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileAccessLogConverter.java`
-- Create: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileAccessLogRepositoryImpl.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/mapper/FileAccessLogMapper.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileAccessLogConverter.java`
+- Create:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileAccessLogRepositoryImpl.java`
 - Modify: `file-service/file-infrastructure/src/main/resources/schema-pg.sql` (新增 t_file_access_log 表)
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/repository/FileAccessLogRepositoryImplTest.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/repository/FileAccessLogRepositoryImplTest.java`
 
 **Interfaces:**
-- Consumes: `FileAccessLog`, `FileAccessLogRepository`, `FileAccessAction`, `FileAccessResult`, `FileUsage`, MyBatis-Flex `@Table`
+
+- Consumes: `FileAccessLog`, `FileAccessLogRepository`, `FileAccessAction`, `FileAccessResult`, `FileUsage`,
+  MyBatis-Flex `@Table`
 - Produces: `FileAccessLogDO`, `FileAccessLogMapper`, `FileAccessLogConverter`, `FileAccessLogRepositoryImpl`
 
 - [ ] **Step 1: 在 schema-pg.sql 新增 t_file_access_log 表**
@@ -2582,7 +2653,8 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 }
 ```
 
-> **Note:** `FileAccessLogConverter` 需补 `toDomain(FileAccessLogDO)` 方法（反向映射，含 String → 强类型 ID 的转换）。参考现有 `FileMetadataConverter` 模式。
+> **Note:** `FileAccessLogConverter` 需补 `toDomain(FileAccessLogDO)` 方法（反向映射，含 String → 强类型 ID 的转换）。参考现有
+> `FileMetadataConverter` 模式。
 
 - [ ] **Step 6: 在 FileAccessLogConverter 补 toDomain 方法**
 
@@ -2681,13 +2753,18 @@ git commit -m "feat(file-infrastructure): 新增 FileAccessLog 持久层（DO/Ma
 ### Task 13: FileMetadata 持久层适配
 
 **Files:**
+
 - Modify: `file-service/file-infrastructure/src/main/resources/schema-pg.sql` (ALTER t_file_metadata)
 - Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/entity/FileMetadataDO.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileMetadataConverter.java`
-- Modify: `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java`
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/repository/FileMetadataTokenRepositoryTest.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/converter/FileMetadataConverter.java`
+- Modify:
+  `file-service/file-infrastructure/src/main/java/com/example/file/infrastructure/repository/FileMetadataRepositoryImpl.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/repository/FileMetadataTokenRepositoryTest.java`
 
 **Interfaces:**
+
 - Consumes: Task 5 改造后的 `FileMetadata`（含 accessScope/digest/digestAlgorithm）
 - Produces: 适配后的 FileMetadataDO/Converter/RepositoryImpl（支持新字段读写）
 
@@ -2762,7 +2839,8 @@ default FileAccessScope jsonToScope(String json) {
 }
 ```
 
-> **Note:** `FileMetadataConverter` 需从 interface 改为 abstract class（或注入 ObjectMapper bean），以支持 JSON 转换。参考项目现有 Converter 模式。
+> **Note:** `FileMetadataConverter` 需从 interface 改为 abstract class（或注入 ObjectMapper bean），以支持 JSON 转换。参考项目现有
+> Converter 模式。
 
 - [ ] **Step 4: 修改 FileMetadataRepositoryImpl 适配新字段**
 
@@ -2874,6 +2952,7 @@ git commit -m "feat(file-infrastructure): FileMetadata 持久层适配 Token 新
 ### Task 14: file-api 层 API 接口
 
 **Files:**
+
 - Create: `file-service/file-api/src/main/java/com/example/file/api/FileAccessApi.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/ApplyUploadTokenRequest.java`
 - Create: `file-service/file-api/src/main/java/com/example/file/api/request/ApplyDownloadTokenRequest.java`
@@ -2882,6 +2961,7 @@ git commit -m "feat(file-infrastructure): FileMetadata 持久层适配 Token 新
 - Create: `file-service/file-api/src/main/java/com/example/file/api/response/UploadFileResponse.java`
 
 **Interfaces:**
+
 - Consumes: `@HttpExchange` (Spring Framework), `FileId`, `CustomerNo`, `ProductNo`, `UserNo`
 - Produces: `FileAccessApi` 接口 + 6 个 DTO
 
@@ -3005,19 +3085,32 @@ git commit -m "feat(file-api): 新增 FileAccessApi 接口和 6 个 DTO"
 ### Task 15: file-application 层 UseCase
 
 **Files:**
-- Create: `file-service/file-application/src/main/java/com/example/file/application/command/ApplyUploadTokenCommand.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/command/ApplyDownloadTokenCommand.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/ApplyUploadTokenUseCase.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/UploadFileWithTokenUseCase.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/ApplyDownloadTokenUseCase.java`
-- Create: `file-service/file-application/src/main/java/com/example/file/application/usecase/DownloadFileWithTokenUseCase.java`
-- Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/ApplyUploadTokenUseCaseTest.java`
-- Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/UploadFileWithTokenUseCaseTest.java`
-- Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/ApplyDownloadTokenUseCaseTest.java`
-- Test: `file-service/file-application/src/test/java/com/example/file/application/usecase/DownloadFileWithTokenUseCaseTest.java`
+
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/command/ApplyUploadTokenCommand.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/command/ApplyDownloadTokenCommand.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/ApplyUploadTokenUseCase.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/UploadFileWithTokenUseCase.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/ApplyDownloadTokenUseCase.java`
+- Create:
+  `file-service/file-application/src/main/java/com/example/file/application/usecase/DownloadFileWithTokenUseCase.java`
+- Test:
+  `file-service/file-application/src/test/java/com/example/file/application/usecase/ApplyUploadTokenUseCaseTest.java`
+- Test:
+  `file-service/file-application/src/test/java/com/example/file/application/usecase/UploadFileWithTokenUseCaseTest.java`
+- Test:
+  `file-service/file-application/src/test/java/com/example/file/application/usecase/ApplyDownloadTokenUseCaseTest.java`
+- Test:
+  `file-service/file-application/src/test/java/com/example/file/application/usecase/DownloadFileWithTokenUseCaseTest.java`
 
 **Interfaces:**
-- Consumes: `FileTokenService`, `FileMetadataRepository`, `FileAccessLogRepository`, `StorageTargetResolver`, `FileStorageGateway`, `FileTokenProperties`
+
+- Consumes: `FileTokenService`, `FileMetadataRepository`, `FileAccessLogRepository`, `StorageTargetResolver`,
+  `FileStorageGateway`, `FileTokenProperties`
 - Produces: 4 个 UseCase + 2 个 Command
 
 - [ ] **Step 1: 实现 Command 对象**
@@ -3168,86 +3261,85 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadFileWithTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final FileTokenService tokenService;
-    private final FileStorageGateway storageGateway;
-    private final FileAccessLogRepository logRepository;
+  private final FileMetadataRepository metadataRepository;
+  private final FileTokenService tokenService;
+  private final FileStorageGateway storageGateway;
+  private final FileAccessLogRepository logRepository;
 
-    @Transactional
-    public FileId upload(String token, SessionUser session, MultipartFile file, String clientIp) {
-        // 1. 先解密 token 获取 fileId（用于失败时记录流水）
-        FileMetadata meta;
-        try {
-            // 解密但不消费，用于加载 file
-            var payload = tokenService.verifyAndConsumeUploadToken(token, session, /* file */ null);
-            meta = metadataRepository.loadOrThrow(payload.fileId());
-            // 注意：实际实现需先 load file 再传给 verifyAndConsumeUploadToken，参考 spec 5.1
-        } catch (SystemException e) {
-            writeAccessLogFailed(token, session, clientIp, e.getMessage());
-            throw e;
-        }
-
-        try {
-            StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
-            meta.completeUpload(
-                file.getOriginalFilename(), file.getSize(), file.getContentType(),
-                result.storageKey(), result.digest()
-            );
-            metadataRepository.save(meta);
-            writeAccessLogSuccess(meta, session, clientIp, token);
-            return meta.id();
-        } catch (Exception e) {
-            writeAccessLogFailed(token, session, clientIp, e.getMessage());
-            throw e;
-        }
+  @Transactional
+  public FileId upload(String token, SessionUser session, MultipartFile file, String clientIp) {
+    // 1. 先解密 token 获取 fileId（用于失败时记录流水）
+    FileMetadata meta;
+    try {
+      // 解密但不消费，用于加载 file
+      var payload = tokenService.verifyAndConsumeUploadToken(token, session, /* file */ null);
+      meta = metadataRepository.loadOrThrow(payload.fileId());
+      // 注意：实际实现需先 load file 再传给 verifyAndConsumeUploadToken，参考 spec 5.1
+    } catch (SystemException e) {
+      writeAccessLogFailed(token, session, clientIp, e.getMessage());
+      throw e;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void writeAccessLogSuccess(FileMetadata meta, SessionUser session, String clientIp, String token) {
-        FileAccessLog log = FileAccessLog.access(
-            meta.id(), meta.usage(), meta.accessScope(), session.userNo(),
-            meta.sourceApp(), clientIp, sha256(token),
-            FileAccessResult.SUCCESS, null
-        );
-        logRepository.save(log);
+    try {
+      StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
+      meta.completeUpload(
+          file.getOriginalFilename(), file.getSize(), file.getContentType(),
+          result.storageKey(), result.digest()
+      );
+      metadataRepository.save(meta);
+      writeAccessLogSuccess(meta, session, clientIp, token);
+      return meta.id();
+    } catch (Exception e) {
+      writeAccessLogFailed(token, session, clientIp, e.getMessage());
+      throw e;
     }
+  }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void writeAccessLogFailed(String token, SessionUser session, String clientIp, String reason) {
-        FileAccessLog log = FileAccessLog.access(
-            null, FileUsage.SOURCE, new com.example.file.domain.model.aggregate.valueobject.FileAccessScope(
-                session.customerNo(), session.productNo()
-            ),
-            session.userNo(), "unknown", clientIp, sha256(token),
-            FileAccessResult.FAIL, reason
-        );
-        logRepository.save(log);
-    }
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void writeAccessLogSuccess(FileMetadata meta, SessionUser session, String clientIp, String token) {
+    FileAccessLog log = FileAccessLog.access(
+        meta.id(), meta.usage(), meta.accessScope(), session.userNo(),
+        meta.sourceApp(), clientIp, sha256(token),
+        FileAccessResult.SUCCESS, null
+    );
+    logRepository.save(log);
+  }
 
-    private String sha256(String input) {
-        try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (Exception e) {
-            return "sha256-error";
-        }
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void writeAccessLogFailed(String token, SessionUser session, String clientIp, String reason) {
+    FileAccessLog log = FileAccessLog.access(
+        null, FileUsage.SOURCE, new com.example.file.domain.model.aggregate.valueobject.FileAccessScope(
+            session.customerNo(), session.productNo()
+        ),
+        session.userNo(), "unknown", clientIp, sha256(token),
+        FileAccessResult.FAIL, reason
+    );
+    logRepository.save(log);
+  }
+
+  private String sha256(String input) {
+    try {
+      java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      StringBuilder hex = new StringBuilder();
+      for (byte b : hash) {
+        hex.append(String.format("%02x", b));
+      }
+      return hex.toString();
+    } catch (Exception e) {
+      return "sha256-error";
     }
+  }
 }
 ```
 
-> **Note:** 实际实现时需要先 decrypt 获取 fileId → load FileMetadata → 调用 verifyAndConsumeUploadToken(file)。简化版可直接在 tokenService 内部 decrypt 两次（一次取 fileId，一次正式校验），或调整 tokenService 接口。Implementer 可根据 spec 5.1 调整。
+> **Note:** 实际实现时需要先 decrypt 获取 fileId → load FileMetadata → 调用 verifyAndConsumeUploadToken (file)。简化版可直接在
+> tokenService 内部 decrypt 两次（一次取 fileId，一次正式校验），或调整 tokenService 接口。Implementer 可根据 spec 5.1 调整。
 
 - [ ] **Step 4: 实现 ApplyDownloadTokenUseCase**
 
@@ -3331,63 +3423,64 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DownloadFileWithTokenUseCase {
 
-    private final FileMetadataRepository metadataRepository;
-    private final FileTokenService tokenService;
-    private final FileStorageGateway storageGateway;
-    private final FileAccessLogRepository logRepository;
+  private final FileMetadataRepository metadataRepository;
+  private final FileTokenService tokenService;
+  private final FileStorageGateway storageGateway;
+  private final FileAccessLogRepository logRepository;
 
-    @Transactional
-    public DownloadContext prepareDownload(String token, SessionUser session, String clientIp) {
-        // 解密取 fileId（参考 UploadFileWithTokenUseCase 注释）
-        FileMetadata file = metadataRepository.loadOrThrow(/* fileId from token */);
-        tokenService.verifyAndConsumeDownloadToken(token, session, file);
+  @Transactional
+  public DownloadContext prepareDownload(String token, SessionUser session, String clientIp) {
+    // 解密取 fileId（参考 UploadFileWithTokenUseCase 注释）
+    FileMetadata file = metadataRepository.loadOrThrow(/* fileId from token */);
+    tokenService.verifyAndConsumeDownloadToken(token, session, file);
 
-        FileAccessLog log = FileAccessLog.access(
-            file.id(), file.usage(), file.accessScope(), session.userNo(),
-            file.sourceApp(), clientIp, sha256(token),
-            FileAccessResult.SUCCESS, null
-        );
-        logRepository.save(log);
+    FileAccessLog log = FileAccessLog.access(
+        file.id(), file.usage(), file.accessScope(), session.userNo(),
+        file.sourceApp(), clientIp, sha256(token),
+        FileAccessResult.SUCCESS, null
+    );
+    logRepository.save(log);
 
-        return new DownloadContext(file.id(), file.originalName(), file.size(),
-            file.contentType(), file.digest());
+    return new DownloadContext(file.id(), file.originalName(), file.size(),
+        file.contentType(), file.digest());
+  }
+
+  public InputStream openStream(FileId fileId) {
+    return storageGateway.open(fileId);
+  }
+
+  public record DownloadContext(
+      FileId fileId, String originalName, Long size,
+      String contentType, String digest
+  ) {
+  }
+
+  private String sha256(String input) {
+    try {
+      java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      StringBuilder hex = new StringBuilder();
+      for (byte b : hash) {
+        hex.append(String.format("%02x", b));
+      }
+      return hex.toString();
+    } catch (Exception e) {
+      return "sha256-error";
     }
-
-    public InputStream openStream(FileId fileId) {
-        return storageGateway.open(fileId);
-    }
-
-    public record DownloadContext(
-        FileId fileId, String originalName, Long size,
-        String contentType, String digest
-    ) {}
-
-    private String sha256(String input) {
-        try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (Exception e) {
-            return "sha256-error";
-        }
-    }
+  }
 }
 ```
 
 - [ ] **Step 6: 写 4 个 UseCase 测试**
 
-参考 `FileTokenServiceTest` 模式，mock `FileMetadataRepository`/`FileTokenService`/`FileStorageGateway`/`FileAccessLogRepository`。每个 UseCase 至少 1 个正常流程 + 1-2 个失败流程测试。
+参考 `FileTokenServiceTest` 模式，mock `FileMetadataRepository`/`FileTokenService`/`FileStorageGateway`/
+`FileAccessLogRepository`。每个 UseCase 至少 1 个正常流程 + 1-2 个失败流程测试。
 
 ```java
 // ApplyUploadTokenUseCaseTest.java 示例
@@ -3484,14 +3577,17 @@ git commit -m "feat(file-application): 新增 4 个 Token 访问 UseCase"
 ### Task 16: file-adapter 层 + 配置 + 集成测试
 
 **Files:**
+
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/access/FileAccessAdapter.java`
 - Create: `file-service/file-adapter/src/main/java/com/example/file/adapter/access/converter/FileAccessConverter.java`
 - Modify: `file-service/file-starter/src/main/resources/application.yml` (新增 file.token 配置)
 - Modify: `file-service/file-starter/src/main/resources/application-local.yml` (本地覆盖)
 - Create: `file-service/file-infrastructure/src/test/resources/application-test.yml` (测试配置)
-- Test: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/FileAccessIntegrationTest.java`
+- Test:
+  `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/storage/FileAccessIntegrationTest.java`
 
 **Interfaces:**
+
 - Consumes: `FileAccessApi`, 4 个 UseCase, `SessionUser`, `StreamingResponseBody`
 - Produces: `FileAccessAdapter` (实现 FileAccessApi，含流式下载)，配置文件
 
@@ -3827,7 +3923,10 @@ git commit -m "feat(file-service): 新增 FileAccessAdapter + 配置 + 端到端
 
 ### 2. Placeholder 检查
 
-- ⚠️ Task 15 的 UploadFileWithTokenUseCase 和 DownloadFileWithTokenUseCase 中有 `/* file */ null` 和 `/* fileId from token */` 占位符。这是因 `tokenService.verifyAndConsumeUploadToken` 需要 FileMetadata 参数但 UseCase 内部需要先 decrypt 取 fileId 才能 load file。Implementer 需在实现时调整：先在 UseCase 内直接调用 `tokenGateway.decrypt(token)` 取 fileId（或调整 TokenService 接口），然后 load file，再调用 verifyAndConsume。已在代码注释中说明。
+- ⚠️ Task 15 的 UploadFileWithTokenUseCase 和 DownloadFileWithTokenUseCase 中有 `/* file */ null` 和
+  `/* fileId from token */` 占位符。这是因 `tokenService.verifyAndConsumeUploadToken` 需要 FileMetadata 参数但 UseCase
+  内部需要先 decrypt 取 fileId 才能 load file。Implementer 需在实现时调整：先在 UseCase 内直接调用
+  `tokenGateway.decrypt(token)` 取 fileId（或调整 TokenService 接口），然后 load file，再调用 verifyAndConsume。已在代码注释中说明。
 - ✅ 其他无 TBD/TODO 占位符
 
 ### 3. 类型一致性检查
@@ -3840,9 +3939,11 @@ git commit -m "feat(file-service): 新增 FileAccessAdapter + 配置 + 端到端
 
 ### 4. 已知设计妥协
 
-- **`tokenService.verifyAndConsumeUploadToken(file)` 鸡生蛋问题**: UseCase 需先 decrypt 取 fileId 才能 load file，但 verifyAndConsumeUploadToken 需要 file 参数。实现时可：
+- **`tokenService.verifyAndConsumeUploadToken(file)` 鸡生蛋问题**: UseCase 需先 decrypt 取 fileId 才能 load file，但
+  verifyAndConsumeUploadToken 需要 file 参数。实现时可：
   - 方案 A: 在 UseCase 注入 `FileTokenGateway`，先 decrypt 取 fileId → load file → verifyAndConsume
-  - 方案 B: 调整 `FileTokenService` 接口，提供 `decryptOnly(token)` 方法返回 payload，再 load file，再调用 `consumeToken(payload, session, file)`
+  - 方案 B: 调整 `FileTokenService` 接口，提供 `decryptOnly(token)` 方法返回 payload，再 load file，再调用
+    `consumeToken(payload, session, file)`
 - Implementer 可选择任一方案，spec 不强制
 
 ---

@@ -16,24 +16,24 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface ProgressConverter {
 
-    /**
-     * 批次聚合根 → 进度响应
-     */
-    default BatchProgressResponse toBatchProgressResponse(BusinessBatch batch) {
-        if (batch == null) {
-            return null;
-        }
-        int total = batch.getTotalApplicationCount();
-        int success = batch.getSuccessCount();
-        int failed = batch.getFailedCount();
-        int pending = Math.max(0, total - success - failed);
-        return new BatchProgressResponse(
-            batch.id().value(),
-            batch.getStatus() != null ? batch.getStatus().name() : null,
-            total,
-            success,
-            failed,
-            pending
-        );
+  /**
+   * 批次聚合根 → 进度响应
+   */
+  default BatchProgressResponse toBatchProgressResponse(BusinessBatch batch) {
+    if (batch == null) {
+      return null;
     }
+    int total = batch.getTotalApplicationCount();
+    int success = batch.getSuccessCount();
+    int failed = batch.getFailedCount();
+    int pending = Math.max(0, total - success - failed);
+    return new BatchProgressResponse(
+      batch.id().value(),
+      batch.getStatus() != null ? batch.getStatus().name() : null,
+      total,
+      success,
+      failed,
+      pending
+    );
+  }
 }

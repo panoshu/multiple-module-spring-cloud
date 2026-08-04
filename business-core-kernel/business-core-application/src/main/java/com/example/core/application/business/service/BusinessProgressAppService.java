@@ -2,7 +2,7 @@ package com.example.core.application.business.service;
 
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.repository.BatchRepository;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.BatchId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,16 +27,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BusinessProgressAppService {
 
-    private final BatchRepository batchRepository;
+  private final BatchRepository batchRepository;
 
-    /**
-     * 查询批次整体进度。
-     *
-     * @param batchId 批次 ID
-     * @return 批次聚合根(含统计计数)
-     */
-    @Transactional(readOnly = true)
-    public BusinessBatch getBatchProgress(BatchId batchId) {
-        return batchRepository.loadOrThrow(batchId);
-    }
+  /**
+   * 查询批次整体进度。
+   *
+   * @param batchId 批次 ID
+   * @return 批次聚合根(含统计计数)
+   */
+  @Transactional(readOnly = true)
+  public BusinessBatch getBatchProgress(BatchId batchId) {
+    return batchRepository.loadOrThrow(batchId);
+  }
 }

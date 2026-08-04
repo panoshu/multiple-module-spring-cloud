@@ -20,31 +20,31 @@ import org.springframework.stereotype.Component;
 @Component
 public class BusinessMetaContextAssembler {
 
-    /**
-     * 组装业务元数据上下文。
-     *
-     * @param businessType 业务类型(来自前端 Command)
-     * @param commandPlanNo 计划编号(来自前端 Command,用于校验一致性)
-     * @param session 会话上下文(来自 X-Session-Context header)
-     * @return 完整的业务元数据上下文
-     * @throws BusinessException 当 commandPlanNo 与 session.planNo 不一致时
-     */
-    public BusinessMetaContext assemble(String businessType, String commandPlanNo, SessionContext session) {
-        if (!commandPlanNo.equals(session.planNo())) {
-            throw new BusinessException(CommonError.BAD_REQUEST)
-                .withUserDetail("所选计划与会话中的计划不一致")
-                .withLogDetail("commandPlanNo=%s, sessionPlanNo=%s".formatted(commandPlanNo, session.planNo()));
-        }
-        return new BusinessMetaContext(
-            businessType,
-            session.planNo(),
-            session.customerNo(),
-            session.customerName(),
-            session.productNo(),
-            session.productName(),
-            session.planName(),
-            session.operationModel(),
-            session.accountManager()
-        );
+  /**
+   * 组装业务元数据上下文。
+   *
+   * @param businessType  业务类型(来自前端 Command)
+   * @param commandPlanNo 计划编号(来自前端 Command,用于校验一致性)
+   * @param session       会话上下文(来自 X-Session-Context header)
+   * @return 完整的业务元数据上下文
+   * @throws BusinessException 当 commandPlanNo 与 session.planNo 不一致时
+   */
+  public BusinessMetaContext assemble(String businessType, String commandPlanNo, SessionContext session) {
+    if (!commandPlanNo.equals(session.planNo())) {
+      throw new BusinessException(CommonError.BAD_REQUEST)
+        .withUserDetail("所选计划与会话中的计划不一致")
+        .withLogDetail("commandPlanNo=%s, sessionPlanNo=%s".formatted(commandPlanNo, session.planNo()));
     }
+    return new BusinessMetaContext(
+      businessType,
+      session.planNo(),
+      session.customerNo(),
+      session.customerName(),
+      session.productNo(),
+      session.productName(),
+      session.planName(),
+      session.operationModel(),
+      session.accountManager()
+    );
+  }
 }

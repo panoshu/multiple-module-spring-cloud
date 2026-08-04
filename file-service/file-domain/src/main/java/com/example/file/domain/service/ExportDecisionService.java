@@ -1,9 +1,9 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.model.valueobject.SplitUnit;
 import com.example.file.domain.model.valueobject.ValidationResult;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,16 +30,16 @@ public class ExportDecisionService {
   /**
    * 当校验通过时导出 SplitUnit，否则静默跳过.
    *
-   * @param unit      待导出的拆分单元（不能为 null）
-   * @param result    校验结果（不能为 null，调用方应通过 {@link ValidationResult#isValid()} 判断）
-   * @param exporter  Excel 导出 SPI 实例（不能为 null）
-   * @param template  Excel 填充模板输入流
-   * @param out       导出输出流
+   * @param unit     待导出的拆分单元（不能为 null）
+   * @param result   校验结果（不能为 null，调用方应通过 {@link ValidationResult#isValid()} 判断）
+   * @param exporter Excel 导出 SPI 实例（不能为 null）
+   * @param template Excel 填充模板输入流
+   * @param out      导出输出流
    * @throws IllegalArgumentException 当 unit/result/exporter 为 null 时
    */
   public void exportIfValid(SplitUnit unit, ValidationResult result,
-                             ExcelExporter exporter,
-                             InputStream template, OutputStream out) {
+                            ExcelExporter exporter,
+                            InputStream template, OutputStream out) {
     if (unit == null) {
       throw new IllegalArgumentException("SplitUnit cannot be null");
     }

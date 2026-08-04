@@ -18,7 +18,7 @@ public class GetFileTaskUseCase {
   private final SubTaskDataRepository subTaskDataRepository;
 
   public GetFileTaskUseCase(ParseTaskRepository parseTaskRepository,
-                             SubTaskDataRepository subTaskDataRepository) {
+                            SubTaskDataRepository subTaskDataRepository) {
     this.parseTaskRepository = parseTaskRepository;
     this.subTaskDataRepository = subTaskDataRepository;
   }
@@ -27,39 +27,39 @@ public class GetFileTaskUseCase {
   public FileTaskDetailResult execute(String fileTaskId) {
     FileTaskId taskId = FileTaskId.of(fileTaskId);
     ParseTask task = parseTaskRepository.findById(taskId)
-        .orElseThrow(() -> new IllegalArgumentException("Task not found: " + fileTaskId));
+      .orElseThrow(() -> new IllegalArgumentException("Task not found: " + fileTaskId));
 
     var summaries = subTaskDataRepository.findSummariesByTask(taskId);
     List<FileTaskDetailResult.SubTaskSummaryItem> subTasks = summaries.stream()
-        .map(s -> new FileTaskDetailResult.SubTaskSummaryItem(
-            s.subTaskId().value(),
-            s.splitKeyValue(),
-            s.totalRows(),
-            s.validRows(),
-            s.invalidRows(),
-            s.status().name()
-        ))
-        .toList();
+      .map(s -> new FileTaskDetailResult.SubTaskSummaryItem(
+        s.subTaskId().value(),
+        s.splitKeyValue(),
+        s.totalRows(),
+        s.validRows(),
+        s.invalidRows(),
+        s.status().name()
+      ))
+      .toList();
 
     String errorMsg = task.errors().stream()
-        .findFirst()
-        .map(TaskError::message)
-        .orElse(null);
+      .findFirst()
+      .map(TaskError::message)
+      .orElse(null);
 
     return new FileTaskDetailResult(
-        task.id().value(),
-        task.bizType().value(),
-        task.templateCode() != null ? task.templateCode().value() : null,
-        task.sourceFileName(),
-        task.status().name(),
-        task.subTaskCount(),
-        task.totalRows(),
-        task.validCount(),
-        task.invalidCount(),
-        errorMsg,
-        task.createdAt(),
-        task.finishedAt(),
-        subTasks
+      task.id().value(),
+      task.bizType().value(),
+      task.templateCode() != null ? task.templateCode().value() : null,
+      task.sourceFileName(),
+      task.status().name(),
+      task.subTaskCount(),
+      task.totalRows(),
+      task.validCount(),
+      task.invalidCount(),
+      errorMsg,
+      task.createdAt(),
+      task.finishedAt(),
+      subTasks
     );
   }
 }

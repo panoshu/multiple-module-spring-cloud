@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
  * @since 2026/7/14
  */
 public record ApprovalInstanceCreatedEventDTO(
-        String eventId,
-        String instanceId,
-        String businessNo,
-        String businessType,
-        LocalDateTime occurredOn
+  String eventId,
+  String instanceId,
+  String businessNo,
+  String businessType,
+  LocalDateTime occurredOn
 ) {
 }

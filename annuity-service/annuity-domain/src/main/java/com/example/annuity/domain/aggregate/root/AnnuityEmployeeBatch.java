@@ -7,8 +7,8 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    * 业务创建构造器
    */
   private AnnuityEmployeeBatch(AnnuityEmployeeBatchId id, ApplicationId applicationId,
-                              int totalEmployeeCount, UserNo createdBy) {
+                               int totalEmployeeCount, UserNo createdBy) {
     super(id, createdBy);
     this.applicationId = Objects.requireNonNull(applicationId, "applicationId cannot be null");
     if (totalEmployeeCount < 0) {
@@ -72,7 +72,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    * 工厂方法:创建新批次
    */
   public static AnnuityEmployeeBatch create(AnnuityEmployeeBatchId id, ApplicationId applicationId,
-                                           int totalEmployeeCount, UserNo createdBy) {
+                                            int totalEmployeeCount, UserNo createdBy) {
     return new AnnuityEmployeeBatch(id, applicationId, totalEmployeeCount, createdBy);
   }
 
@@ -81,7 +81,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    */
   public void addDetail(AnnuityEmployeeDetail detail) {
     if (this.status != AnnuityEmployeeBatchStatus.PENDING
-        && this.status != AnnuityEmployeeBatchStatus.PROCESSING) {
+      && this.status != AnnuityEmployeeBatchStatus.PROCESSING) {
       throw new IllegalStateException("批次已终态,无法添加明细: " + this.status);
     }
     this.details.add(detail);
@@ -154,8 +154,8 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    */
   public List<AnnuityEmployeeDetail> pendingDetails() {
     return details.stream()
-        .filter(d -> d.status() == AnnuityEmployeeDetailStatus.PENDING)
-        .toList();
+      .filter(d -> d.status() == AnnuityEmployeeDetailStatus.PENDING)
+      .toList();
   }
 
   /**
@@ -163,8 +163,8 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    */
   public List<AnnuityEmployeeDetail> verifiedDetails() {
     return details.stream()
-        .filter(d -> d.status() == AnnuityEmployeeDetailStatus.VERIFIED)
-        .toList();
+      .filter(d -> d.status() == AnnuityEmployeeDetailStatus.VERIFIED)
+      .toList();
   }
 
   /**
@@ -176,15 +176,32 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
 
   private AnnuityEmployeeDetail findDetailOrThrow(AnnuityEmployeeDetailId detailId) {
     return findDetail(detailId)
-        .orElseThrow(() -> new IllegalArgumentException("明细不存在: " + detailId));
+      .orElseThrow(() -> new IllegalArgumentException("明细不存在: " + detailId));
   }
 
-  public ApplicationId applicationId() { return applicationId; }
-  public List<AnnuityEmployeeDetail> details() { return List.copyOf(details); }
-  public AnnuityEmployeeBatchStatus status() { return status; }
-  public int totalEmployeeCount() { return totalEmployeeCount; }
-  public int processedCount() { return processedCount; }
-  public int anomalyCount() { return anomalyCount; }
+  public ApplicationId applicationId() {
+    return applicationId;
+  }
+
+  public List<AnnuityEmployeeDetail> details() {
+    return List.copyOf(details);
+  }
+
+  public AnnuityEmployeeBatchStatus status() {
+    return status;
+  }
+
+  public int totalEmployeeCount() {
+    return totalEmployeeCount;
+  }
+
+  public int processedCount() {
+    return processedCount;
+  }
+
+  public int anomalyCount() {
+    return anomalyCount;
+  }
 
   @Override
   protected void validateInvariants() {

@@ -1,8 +1,8 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.gateway.ExpressionEvaluator;
 import com.example.file.domain.model.valueobject.config.DerivationRule;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.LinkedHashMap;
 import java.util.List;

@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface ParseTaskRepository extends Repository<ParseTask, FileTaskId> {
   Optional<ParseTask> findById(FileTaskId id);
+
   void save(ParseTask task);
 }

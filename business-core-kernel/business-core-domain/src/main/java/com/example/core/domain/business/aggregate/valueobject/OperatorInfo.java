@@ -1,7 +1,7 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 /**
  * OperatorInfo

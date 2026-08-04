@@ -32,7 +32,9 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "core.engine.condition-evaluator", name = "type", havingValue = "qlexpress")
 public class QLExpressConditionEvaluationGateway implements ConditionEvaluationGateway {
 
-  /** QLExpress4 核心运行器，线程安全，单例复用 */
+  /**
+   * QLExpress4 核心运行器，线程安全，单例复用
+   */
   private final Express4Runner runner;
 
   public QLExpressConditionEvaluationGateway() {

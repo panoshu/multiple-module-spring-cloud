@@ -17,67 +17,67 @@ package com.example.gateway.security;
  */
 public enum ChannelType {
 
-    /**
-     * 网上渠道:经办人(HR)通过互联网办理年金业务。
-     */
-    INTERNET("internet", "satoken-internet", "/internet"),
+  /**
+   * 网上渠道:经办人(HR)通过互联网办理年金业务。
+   */
+  INTERNET("internet", "satoken-internet", "/internet"),
 
-    /**
-     * 总部渠道:运营人员通过内网办理年金业务,可选择任意计划。
-     */
-    HQ("hq", "satoken-hq", "/hq"),
+  /**
+   * 总部渠道:运营人员通过内网办理年金业务,可选择任意计划。
+   */
+  HQ("hq", "satoken-hq", "/hq"),
 
-    /**
-     * 网点渠道:银行网点柜员办理年金业务,需二次授权。
-     */
-    BRANCH("branch", "satoken-branch", "/branch");
+  /**
+   * 网点渠道:银行网点柜员办理年金业务,需二次授权。
+   */
+  BRANCH("branch", "satoken-branch", "/branch");
 
-    private final String loginType;
-    private final String tokenHeader;
-    private final String pathPrefix;
+  private final String loginType;
+  private final String tokenHeader;
+  private final String pathPrefix;
 
-    ChannelType(String loginType, String tokenHeader, String pathPrefix) {
-        this.loginType = loginType;
-        this.tokenHeader = tokenHeader;
-        this.pathPrefix = pathPrefix;
+  ChannelType(String loginType, String tokenHeader, String pathPrefix) {
+    this.loginType = loginType;
+    this.tokenHeader = tokenHeader;
+    this.pathPrefix = pathPrefix;
+  }
+
+  /**
+   * 根据请求路径前缀识别渠道类型。
+   *
+   * @param path 请求路径 (如 /internet/business/handle)
+   * @return 匹配的渠道类型,未匹配返回 null (公共接口)
+   */
+  public static ChannelType fromPath(String path) {
+    if (path == null || path.isBlank()) {
+      return null;
     }
-
-    /**
-     * 获取 sa-token loginType (StpLogic 类型标识)。
-     */
-    public String loginType() {
-        return loginType;
+    for (ChannelType channel : values()) {
+      if (path.startsWith(channel.pathPrefix + "/") || path.equals(channel.pathPrefix)) {
+        return channel;
+      }
     }
+    return null;
+  }
 
-    /**
-     * 获取渠道对应的 Token Header 名称。
-     */
-    public String tokenHeader() {
-        return tokenHeader;
-    }
+  /**
+   * 获取 sa-token loginType (StpLogic 类型标识)。
+   */
+  public String loginType() {
+    return loginType;
+  }
 
-    /**
-     * 获取渠道路径前缀 (如 /internet, /hq, /branch)。
-     */
-    public String pathPrefix() {
-        return pathPrefix;
-    }
+  /**
+   * 获取渠道对应的 Token Header 名称。
+   */
+  public String tokenHeader() {
+    return tokenHeader;
+  }
 
-    /**
-     * 根据请求路径前缀识别渠道类型。
-     *
-     * @param path 请求路径 (如 /internet/business/handle)
-     * @return 匹配的渠道类型,未匹配返回 null (公共接口)
-     */
-    public static ChannelType fromPath(String path) {
-        if (path == null || path.isBlank()) {
-            return null;
-        }
-        for (ChannelType channel : values()) {
-            if (path.startsWith(channel.pathPrefix + "/") || path.equals(channel.pathPrefix)) {
-                return channel;
-            }
-        }
-        return null;
-    }
+  /**
+   * 获取渠道路径前缀 (如 /internet, /hq, /branch)。
+   */
+  public String pathPrefix() {
+    return pathPrefix;
+  }
 }

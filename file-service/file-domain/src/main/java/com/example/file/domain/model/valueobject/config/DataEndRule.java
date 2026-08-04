@@ -5,8 +5,8 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import java.util.List;
 
 public record DataEndRule(
-    List<String> markers,
-    int blankRowCount
+  List<String> markers,
+  int blankRowCount
 ) implements ValueObject {
   public DataEndRule {
     markers = markers == null ? List.of() : List.copyOf(markers);

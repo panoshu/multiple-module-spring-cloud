@@ -5,7 +5,7 @@ package com.example.file.domain.model.aggregate.valueobject;
  * 状态机: PENDING_UPLOAD → UPLOADED → DELETED
  */
 public enum FileStatus {
-    PENDING_UPLOAD,
-    UPLOADED,
-    DELETED
+  PENDING_UPLOAD,
+  UPLOADED,
+  DELETED
 }

@@ -12,32 +12,32 @@ import java.time.LocalDateTime;
 @Table("t_file_sub_task_data")
 public class SubTaskDataDO {
 
-    @Id(keyType = KeyType.None)
-    private String id;
+  @Id(keyType = KeyType.None)
+  private String id;
 
-    private String fileTaskId;
-    private String bizType;
-    private String splitKeyValue;
-    private String context;
-    private String properties;
-    private String tables;
-    private Integer rowCount;
-    private String status;
-    private String validationErrors;
-    private LocalDateTime expiresAt;
-    private LocalDateTime consumedAt;
+  private String fileTaskId;
+  private String bizType;
+  private String splitKeyValue;
+  private String context;
+  private String properties;
+  private String tables;
+  private Integer rowCount;
+  private String status;
+  private String validationErrors;
+  private LocalDateTime expiresAt;
+  private LocalDateTime consumedAt;
 
-    private String createdBy;
-    private String updatedBy;
+  private String createdBy;
+  private String updatedBy;
 
-    // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
-    private LocalDateTime createTime;
+  // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
+  private LocalDateTime createTime;
 
-    private LocalDateTime updateTime;
+  private LocalDateTime updateTime;
 
-    @Column(isLogicDelete = true)
-    private Boolean deleted;
+  @Column(isLogicDelete = true)
+  private Boolean deleted;
 
-    @Column(version = true)
-    private Integer version;
+  @Column(version = true)
+  private Integer version;
 }

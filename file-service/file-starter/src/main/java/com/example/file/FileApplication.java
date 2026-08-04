@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @MapperScan("com.example.file.infrastructure.mapper")
 public class FileApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(FileApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(FileApplication.class, args);
+  }
 }

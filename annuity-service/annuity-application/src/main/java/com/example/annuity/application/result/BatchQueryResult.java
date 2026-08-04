@@ -12,24 +12,24 @@ import java.util.List;
  * @since 2026/7/21
  */
 public record BatchQueryResult(
-    String batchId,
-    String batchStatus,
-    String formId,
-    String formStatus,
-    int totalApplications,
-    int completedApplications,
-    int failedApplications,
-    List<ApplicationSummary> applications
+  String batchId,
+  String batchStatus,
+  String formId,
+  String formStatus,
+  int totalApplications,
+  int completedApplications,
+  int failedApplications,
+  List<ApplicationSummary> applications
 ) {
 
   /**
    * 批次内单个申请单的摘要信息
    */
   public record ApplicationSummary(
-      String applicationId,
-      String businessType,
-      String applicationStatus,
-      String currentStep
+    String applicationId,
+    String businessType,
+    String applicationStatus,
+    String currentStep
   ) {
   }
 }

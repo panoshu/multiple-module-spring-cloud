@@ -45,8 +45,8 @@ public class AnnuityEmployeeMaterialAction implements StepExtensionAction {
     log.info("开始计算员工级材料清单, applicationId={}", app.id());
 
     AnnuityEmployeeBatch batch = batchRepository.findByApplicationId(app.id())
-        .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
-            .withLogDetail("申请单未关联员工批次: " + app.id().value()));
+      .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
+        .withLogDetail("申请单未关联员工批次: " + app.id().value()));
 
     for (AnnuityEmployeeDetail detail : batch.verifiedDetails()) {
       List<AnnuityEmployeeMaterial> materials = materialRule.calculate(detail, context);

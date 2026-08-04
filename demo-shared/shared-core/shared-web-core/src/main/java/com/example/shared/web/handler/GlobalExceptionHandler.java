@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
 
     log.warn("参数校验失败 | URI: [{}] | Errors: [{}]", request.getRequestURI(), errorMessage);
 
-    return ApiResult.failure(CommonError.BAD_REQUEST.code(), errorMessage);
+    return ApiResult.failure(CommonError.BAD_REQUEST.getCode(), errorMessage);
   }
 
   // 4 资源未找到异常 (HTTP 404)
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ApiResult<Void> handle404(NoResourceFoundException e, HttpServletRequest request) {
     log.error("资源未找到! 请求URI: [{}] | 错误信息: {}", request.getRequestURI(), e.getMessage());
-    return ApiResult.failure(CommonError.NOT_FOUND.code(), "资源未找到");
+    return ApiResult.failure(CommonError.NOT_FOUND.getCode(), "资源未找到");
   }
 
   // 5. 兜底异常处理（包含三道防线）
@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
     // [防线3] 真正的未知系统异常
     log.error("Unexpected Error [URI: {}]: ", request.getRequestURI(), e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(ApiResult.failure(CommonError.UNKNOWN_ERROR.code(), CommonError.UNKNOWN_ERROR.message()));
+      .body(ApiResult.failure(CommonError.UNKNOWN_ERROR.getCode(), CommonError.UNKNOWN_ERROR.getMessage()));
   }
 
   private boolean isClientDisconnected(Throwable t) {

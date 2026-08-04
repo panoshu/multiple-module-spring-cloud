@@ -5,13 +5,12 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.event.FileParsedEventDTO;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -69,7 +68,7 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
    */
   @Override
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
-                                   Map<String, Object> splitRules) {
+                                  Map<String, Object> splitRules) {
     String fileTaskId = sourceFileId != null ? sourceFileId.value() : formId.value();
     log.info("[Mock] 立即模拟文件解析完成, formId={}, fileTaskId={}", formId.value(), fileTaskId);
     publishFileParsedEvent(fileTaskId);
@@ -79,23 +78,23 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
   public InputStream downloadStream(FileId fileId, BusinessMetaContext context) {
     log.info("[Mock] 返回模拟员工明细 JSON 流, fileId={}", fileId.value());
     String mockJson = """
-        [
-          {
-            "employeeName": "张三",
-            "idCardNo": "110101199001011234",
-            "age": 35,
-            "monthlySalary": 100000,
-            "monthlyContribution": 12000
-          },
-          {
-            "employeeName": "李四",
-            "idCardNo": "110101198505056789",
-            "age": 40,
-            "monthlySalary": 150000,
-            "monthlyContribution": 18000
-          }
-        ]
-        """;
+      [
+        {
+          "employeeName": "张三",
+          "idCardNo": "110101199001011234",
+          "age": 35,
+          "monthlySalary": 100000,
+          "monthlyContribution": 12000
+        },
+        {
+          "employeeName": "李四",
+          "idCardNo": "110101198505056789",
+          "age": 40,
+          "monthlySalary": 150000,
+          "monthlyContribution": 18000
+        }
+      ]
+      """;
     return new java.io.ByteArrayInputStream(mockJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
 
@@ -109,14 +108,14 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
    */
   private void publishFileParsedEvent(String fileTaskId) {
     FileParsedEventDTO event = new FileParsedEventDTO(
-        UUID.randomUUID().toString(),
-        fileTaskId,
-        BIZ_TYPE_FORM_DETAIL,
-        STATUS_SUCCESS,
-        0,
-        List.of(),
-        null,
-        LocalDateTime.now()
+      UUID.randomUUID().toString(),
+      fileTaskId,
+      BIZ_TYPE_FORM_DETAIL,
+      STATUS_SUCCESS,
+      0,
+      List.of(),
+      null,
+      LocalDateTime.now()
     );
     eventSimulator.publish(event);
     log.info("[Mock] 已发布 FileParsedEventDTO, fileTaskId={}, status={}", fileTaskId, STATUS_SUCCESS);

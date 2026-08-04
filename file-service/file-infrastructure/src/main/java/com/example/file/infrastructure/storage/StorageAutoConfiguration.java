@@ -16,18 +16,18 @@ import java.util.List;
 @EnableConfigurationProperties(StorageTargetProperties.class)
 public class StorageAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean(StorageTargetResolver.class)
-    public StorageTargetResolver storageTargetResolver(StorageTargetProperties properties) {
-        return new PropertiesBasedStorageTargetResolver(properties);
-    }
+  @Bean
+  @ConditionalOnMissingBean(StorageTargetResolver.class)
+  public StorageTargetResolver storageTargetResolver(StorageTargetProperties properties) {
+    return new PropertiesBasedStorageTargetResolver(properties);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean(FileStorageGateway.class)
-    public FileStorageGateway fileStorageGateway(
-            FileMetadataRepository metadataRepository,
-            StorageTargetResolver targetResolver,
-            List<FileStorageBackend> backends) {
-        return new FileStorageRouter(metadataRepository, targetResolver, backends);
-    }
+  @Bean
+  @ConditionalOnMissingBean(FileStorageGateway.class)
+  public FileStorageGateway fileStorageGateway(
+    FileMetadataRepository metadataRepository,
+    StorageTargetResolver targetResolver,
+    List<FileStorageBackend> backends) {
+    return new FileStorageRouter(metadataRepository, targetResolver, backends);
+  }
 }

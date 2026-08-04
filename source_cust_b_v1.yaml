@@ -7,30 +7,30 @@ status: ACTIVE
 
 identify:
   mode: AUTO
-  fingerprint: ["B-CORP DECLARATION", "Item No"]
+  fingerprint: [ "B-CORP DECLARATION", "Item No" ]
 
 headerRegion:
   rows: 1-5 # 强制指定前5行是头部区域
   valuePosition: RIGHT
   labelAliases:
-    enterpriseName: ["Enterprise:", "企业:"]
-    declareDate:    ["Date:", "日期:"]
+    enterpriseName: [ "Enterprise:", "企业:" ]
+    declareDate: [ "Date:", "日期:" ]
 
 tableRegion:
   headerRows: 2 # 客户B有两行表头（第一行英文，第二行中文）
   matchBy: HEADER_NAME
-  ignoreRowPatterns: ["^\\*说明", "^注意:"] # 强力清洗：忽略以 "*说明" 或 "注意:" 开头的整行数据
+  ignoreRowPatterns: [ "^\\*说明", "^注意:" ] # 强力清洗：忽略以 "*说明" 或 "注意:" 开头的整行数据
   columnAliases:
-    itemNo:    ["Item No", "Part Number", "料号"]
-    itemName:  ["Description", "描述"]
-    qty:       ["Qty", "数量"]
-    unitPrice: ["Unit Price", "单价"]
-    amount:    ["Total Amount", "总额"]
+    itemNo: [ "Item No", "Part Number", "料号" ]
+    itemName: [ "Description", "描述" ]
+    qty: [ "Qty", "数量" ]
+    unitPrice: [ "Unit Price", "单价" ]
+    amount: [ "Total Amount", "总额" ]
   dataEnd:
-    markers: ["EOF", "END OF DATA"]
+    markers: [ "EOF", "END OF DATA" ]
     blankRowCount: 3 # 连续3个空行也视为明细结束
 
 tailRegion:
   valuePosition: RIGHT
   labelAliases:
-    makerName: ["Prepared By:", "制单:"]
+    makerName: [ "Prepared By:", "制单:" ]

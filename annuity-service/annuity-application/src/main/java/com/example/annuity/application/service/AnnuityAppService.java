@@ -10,13 +10,13 @@ import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.BatchId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,9 +54,9 @@ public class AnnuityAppService {
   public UploadFormResult uploadForm(UploadFormCommand command) {
     validateAnnuityRules(command);
     return UploadFormResult.validated(
-        command.planType(),
-        command.initialContribution(),
-        command.hasForeignInvestment()
+      command.planType(),
+      command.initialContribution(),
+      command.hasForeignInvestment()
     );
   }
 
@@ -115,7 +115,7 @@ public class AnnuityAppService {
   private void validateInitialContribution(Long initialContribution) {
     if (initialContribution != null && initialContribution < 0) {
       throw new DomainException(AnnuityDomainErrorCode.INVALID_CONTRIBUTION)
-          .withLogDetail("初始缴费金额不能为负: " + initialContribution);
+        .withLogDetail("初始缴费金额不能为负: " + initialContribution);
     }
   }
 
@@ -124,11 +124,11 @@ public class AnnuityAppService {
       return;
     }
     boolean valid = AnnuityApplicationExtension.PLAN_TYPE_NEW.equals(planType)
-        || AnnuityApplicationExtension.PLAN_TYPE_MODIFY.equals(planType)
-        || AnnuityApplicationExtension.PLAN_TYPE_DELETE.equals(planType);
+      || AnnuityApplicationExtension.PLAN_TYPE_MODIFY.equals(planType)
+      || AnnuityApplicationExtension.PLAN_TYPE_DELETE.equals(planType);
     if (!valid) {
       throw new DomainException(AnnuityDomainErrorCode.UNSUPPORTED_PLAN_TYPE)
-          .withLogDetail("不支持的计划类型: " + planType);
+        .withLogDetail("不支持的计划类型: " + planType);
     }
   }
 
@@ -141,36 +141,36 @@ public class AnnuityAppService {
     AnnuityApplicationExtension ext = readAnnuityExtension(app);
 
     return new ApplicationQueryResult(
-        app.id().value(),
-        app.getBatchId() != null ? app.getBatchId().value() : null,
-        app.bindedFormId() != null ? app.bindedFormId().value() : null,
-        ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
-        ctx != null && ctx.customerNo() != null ? ctx.customerNo().value() : null,
-        ctx != null && ctx.productNo() != null ? ctx.productNo().value() : null,
-        ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
-        null,
-        app.currentStep() != null ? app.currentStep().name() : null,
-        ext != null ? ext.planType() : null,
-        ext != null ? ext.initialContribution() : null,
-        ext != null ? ext.hasForeignInvestment() : null,
-        app.createdBy() != null ? app.createdBy().value() : null,
-        app.createdAt(),
-        app.updatedBy() != null ? app.updatedBy().value() : null,
-        app.updatedAt()
+      app.id().value(),
+      app.getBatchId() != null ? app.getBatchId().value() : null,
+      app.bindedFormId() != null ? app.bindedFormId().value() : null,
+      ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
+      ctx != null && ctx.customerNo() != null ? ctx.customerNo().value() : null,
+      ctx != null && ctx.productNo() != null ? ctx.productNo().value() : null,
+      ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
+      null,
+      app.currentStep() != null ? app.currentStep().name() : null,
+      ext != null ? ext.planType() : null,
+      ext != null ? ext.initialContribution() : null,
+      ext != null ? ext.hasForeignInvestment() : null,
+      app.createdBy() != null ? app.createdBy().value() : null,
+      app.createdAt(),
+      app.updatedBy() != null ? app.updatedBy().value() : null,
+      app.updatedAt()
     );
   }
 
   private BatchQueryResult toBatchQueryResult(BusinessBatch batch,
-                                               List<BatchQueryResult.ApplicationSummary> applications) {
+                                              List<BatchQueryResult.ApplicationSummary> applications) {
     return new BatchQueryResult(
-        batch.id().value(),
-        null,
-        null,
-        null,
-        applications.size(),
-        0,
-        0,
-        applications
+      batch.id().value(),
+      null,
+      null,
+      null,
+      applications.size(),
+      0,
+      0,
+      applications
     );
   }
 

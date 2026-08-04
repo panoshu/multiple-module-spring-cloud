@@ -20,16 +20,16 @@ import java.util.Set;
  */
 public interface BusinessTypeRegistrar {
 
-    /**
-     * 返回本服务支持的业务类型枚举名称集合。
-     */
-    Set<String> supportedBusinessTypes();
+  /**
+   * 工厂方法,创建一个包含指定业务类型的注册器。
+   */
+  static BusinessTypeRegistrar of(String... types) {
+    Set<String> set = Set.of(types);
+    return () -> set;
+  }
 
-    /**
-     * 工厂方法,创建一个包含指定业务类型的注册器。
-     */
-    static BusinessTypeRegistrar of(String... types) {
-        Set<String> set = Set.of(types);
-        return () -> set;
-    }
+  /**
+   * 返回本服务支持的业务类型枚举名称集合。
+   */
+  Set<String> supportedBusinessTypes();
 }

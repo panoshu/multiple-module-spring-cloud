@@ -10,7 +10,7 @@ import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -89,7 +89,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
     if (sourceTemplates == null || sourceTemplates.isEmpty())
       throw new IllegalArgumentException("sourceTemplates empty");
     return new TemplateConfig(id, bizType, version, errorPolicy, canonicalModel,
-        validationRules, derivationRules, splitConfig, sourceTemplates, userNo);
+      validationRules, derivationRules, splitConfig, sourceTemplates, userNo);
   }
 
   public void activate() {
@@ -126,17 +126,55 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
     if (status == null) throw new IllegalStateException("status null");
   }
 
-  public BizType bizType() { return bizType; }
-  public String templateVersion() { return templateVersion; }
-  public ErrorPolicy errorPolicy() { return errorPolicy; }
-  public CanonicalModelDef canonicalModel() { return canonicalModel; }
-  public List<ValidationRule> validationRules() { return validationRules; }
-  public List<DerivationRule> derivationRules() { return derivationRules; }
-  public SplitConfig splitConfig() { return splitConfig; }
-  public List<SourceTemplateDef> sourceTemplates() { return List.copyOf(sourceTemplates); }
-  public String targetTemplateRef() { return targetTemplateRef; }
-  public TargetMapping targetMapping() { return targetMapping; }
-  public ConfigStatus status() { return status; }
-  public LocalDateTime effectiveFrom() { return effectiveFrom; }
-  public LocalDateTime effectiveTo() { return effectiveTo; }
+  public BizType bizType() {
+    return bizType;
+  }
+
+  public String templateVersion() {
+    return templateVersion;
+  }
+
+  public ErrorPolicy errorPolicy() {
+    return errorPolicy;
+  }
+
+  public CanonicalModelDef canonicalModel() {
+    return canonicalModel;
+  }
+
+  public List<ValidationRule> validationRules() {
+    return validationRules;
+  }
+
+  public List<DerivationRule> derivationRules() {
+    return derivationRules;
+  }
+
+  public SplitConfig splitConfig() {
+    return splitConfig;
+  }
+
+  public List<SourceTemplateDef> sourceTemplates() {
+    return List.copyOf(sourceTemplates);
+  }
+
+  public String targetTemplateRef() {
+    return targetTemplateRef;
+  }
+
+  public TargetMapping targetMapping() {
+    return targetMapping;
+  }
+
+  public ConfigStatus status() {
+    return status;
+  }
+
+  public LocalDateTime effectiveFrom() {
+    return effectiveFrom;
+  }
+
+  public LocalDateTime effectiveTo() {
+    return effectiveTo;
+  }
 }

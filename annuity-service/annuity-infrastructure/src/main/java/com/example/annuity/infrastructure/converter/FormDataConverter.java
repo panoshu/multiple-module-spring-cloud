@@ -10,10 +10,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import org.mapstruct.Mapper;
 
 /**
@@ -88,46 +85,46 @@ public interface FormDataConverter {
     }
 
     BusinessContext businessContext = new BusinessContext(
-        aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
-        aDo.getCustomerNo() != null ? com.example.shared.primitives.identity.CustomerNo.of(aDo.getCustomerNo()) : null,
-        aDo.getCustomerName(),
-        aDo.getProductNo() != null ? com.example.shared.primitives.identity.ProductNo.of(aDo.getProductNo()) : null,
-        aDo.getProductName(),
-        aDo.getPlanNo() != null ? com.example.shared.primitives.identity.PlanNo.of(aDo.getPlanNo()) : null,
-        aDo.getPlanName(),
-        aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-        KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
+      aDo.getCustomerNo() != null ? CustomerNo.of(aDo.getCustomerNo()) : null,
+      aDo.getCustomerName(),
+      aDo.getProductNo() != null ? ProductNo.of(aDo.getProductNo()) : null,
+      aDo.getProductName(),
+      aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
+      aDo.getPlanName(),
+      aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
+      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
     );
 
     OperatorInfo operatorInfo = new OperatorInfo(
-        aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
-        aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
-        aDo.getOperatorName(),
-        aDo.getIsProxy() != null && aDo.getIsProxy()
+      aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
+      aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
+      aDo.getOperatorName(),
+      aDo.getIsProxy() != null && aDo.getIsProxy()
     );
 
     BusinessFile formFile = null;
     if (aDo.getFormFileId() != null) {
       formFile = new BusinessFile(
-          new FileId(aDo.getFormFileId()),
-          aDo.getFormFileName(),
-          null,
-          aDo.getFormFileSize()
+        new FileId(aDo.getFormFileId()),
+        aDo.getFormFileName(),
+        null,
+        aDo.getFormFileSize()
       );
     }
 
     return KernelAggregateReflector.reconstituteForm(
-        new FormId(aDo.getId()),
-        aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-        aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
-        aDo.getCreateTime(),
-        aDo.getUpdateTime(),
-        aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
-        aDo.getBatchId() != null ? BatchId.of(aDo.getBatchId()) : null,
-        businessContext,
-        operatorInfo,
-        formFile,
-        aDo.getFormStatus() != null ? FormStatus.valueOf(aDo.getFormStatus()) : null
+      new FormId(aDo.getId()),
+      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
+      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreateTime(),
+      aDo.getUpdateTime(),
+      aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
+      aDo.getBatchId() != null ? BatchId.of(aDo.getBatchId()) : null,
+      businessContext,
+      operatorInfo,
+      formFile,
+      aDo.getFormStatus() != null ? FormStatus.valueOf(aDo.getFormStatus()) : null
     );
   }
 }

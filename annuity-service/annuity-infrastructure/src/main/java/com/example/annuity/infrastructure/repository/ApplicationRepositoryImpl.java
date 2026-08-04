@@ -7,7 +7,7 @@ import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.identifier.id.ApplicationId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,8 +84,8 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
   @Override
   public List<BusinessApplication> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -109,7 +109,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
       return Optional.empty();
     }
     ApplicationDO aDo = mapper.selectOneByQuery(
-        QueryWrapper.create().where(APPLICATION_DO.PARSED_JSON_FILE_ID.eq(fileTaskId))
+      QueryWrapper.create().where(APPLICATION_DO.PARSED_JSON_FILE_ID.eq(fileTaskId))
     );
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
@@ -118,7 +118,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
    * 发布聚合根内部注册的领域事件
    */
   private void publishDomainEvents(BusinessApplication app) {
-    List<DomainEvent> events = app.getDomainEvents();
+    List<DomainEvent> events = app.domainEvents();
     if (events.isEmpty()) {
       return;
     }
@@ -126,10 +126,10 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
       try {
         eventPublisher.publishEvent(event);
         log.debug("发布领域事件: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName());
+          event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {
         log.error("发布领域事件失败: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName(), e);
+          event.eventId(), event.getClass().getSimpleName(), e);
       }
     }
     app.clearDomainEvents();

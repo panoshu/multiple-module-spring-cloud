@@ -49,11 +49,11 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   @Override
   public Optional<TemplateConfig> findActive(BizType bizType) {
     List<TemplateConfigDO> dos = mapper.selectListByQuery(
-        QueryWrapper.create()
-            .where(TEMPLATE_CONFIG_DO.BIZ_TYPE.eq(bizType.value()))
-            .where(TEMPLATE_CONFIG_DO.STATUS.eq(ConfigStatus.ACTIVE.name()))
-            .orderBy(TEMPLATE_CONFIG_DO.EFFECTIVE_FROM.desc())
-            .limit(1)
+      QueryWrapper.create()
+        .where(TEMPLATE_CONFIG_DO.BIZ_TYPE.eq(bizType.value()))
+        .where(TEMPLATE_CONFIG_DO.STATUS.eq(ConfigStatus.ACTIVE.name()))
+        .orderBy(TEMPLATE_CONFIG_DO.EFFECTIVE_FROM.desc())
+        .limit(1)
     );
     return dos.isEmpty() ? Optional.empty() : Optional.of(converter.toDomain(dos.get(0)));
   }
@@ -61,9 +61,9 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   @Override
   public Optional<TemplateConfig> findByBizTypeAndVersion(BizType bizType, String version) {
     TemplateConfigDO aDo = mapper.selectOneByQuery(
-        QueryWrapper.create()
-            .where(TEMPLATE_CONFIG_DO.BIZ_TYPE.eq(bizType.value()))
-            .where(TEMPLATE_CONFIG_DO.TEMPLATE_VERSION.eq(version))
+      QueryWrapper.create()
+        .where(TEMPLATE_CONFIG_DO.BIZ_TYPE.eq(bizType.value()))
+        .where(TEMPLATE_CONFIG_DO.TEMPLATE_VERSION.eq(version))
     );
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
@@ -87,8 +87,8 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   @Override
   public List<TemplateConfig> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -97,7 +97,7 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   }
 
   private void publishDomainEvents(TemplateConfig config) {
-    List<DomainEvent> events = config.getDomainEvents();
+    List<DomainEvent> events = config.domainEvents();
     if (events.isEmpty()) {
       return;
     }

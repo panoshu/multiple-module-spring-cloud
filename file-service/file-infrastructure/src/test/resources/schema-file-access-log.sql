@@ -7,30 +7,31 @@
 
 DROP TABLE IF EXISTS t_file_access_log;
 
-CREATE TABLE t_file_access_log (
-    id              VARCHAR(64)   NOT NULL,
-    file_id         VARCHAR(64)   NOT NULL,
-    action          VARCHAR(20)   NOT NULL,
-    usage           VARCHAR(20)   NOT NULL,
-    customer_no     VARCHAR(64)   NOT NULL,
-    product_no      VARCHAR(64)   NOT NULL,
-    operator        VARCHAR(64)   NOT NULL,
-    source_app      VARCHAR(64),
-    source_ip       VARCHAR(64),
-    token_hash      VARCHAR(128)  NOT NULL,
-    result          VARCHAR(20)   NOT NULL,
-    fail_reason     VARCHAR(512),
-    occur_at        TIMESTAMP     NOT NULL,
-    created_by      VARCHAR(64)   NOT NULL,
-    updated_by      VARCHAR(64),
-    create_time     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    update_time     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    deleted         INT           DEFAULT 0,
-    version         INT           DEFAULT 0,
-    PRIMARY KEY (id)
+CREATE TABLE t_file_access_log
+(
+  id          VARCHAR(64)  NOT NULL,
+  file_id     VARCHAR(64)  NOT NULL,
+  action      VARCHAR(20)  NOT NULL,
+  usage       VARCHAR(20)  NOT NULL,
+  customer_no VARCHAR(64)  NOT NULL,
+  product_no  VARCHAR(64)  NOT NULL,
+  operator    VARCHAR(64)  NOT NULL,
+  source_app  VARCHAR(64),
+  source_ip   VARCHAR(64),
+  token_hash  VARCHAR(128) NOT NULL,
+  result      VARCHAR(20)  NOT NULL,
+  fail_reason VARCHAR(512),
+  occur_at    TIMESTAMP    NOT NULL,
+  created_by  VARCHAR(64)  NOT NULL,
+  updated_by  VARCHAR(64),
+  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted     INT       DEFAULT 0,
+  version     INT       DEFAULT 0,
+  PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_access_log_file_id ON t_file_access_log(file_id);
-CREATE INDEX idx_access_log_token_hash ON t_file_access_log(token_hash);
-CREATE INDEX idx_access_log_action_time ON t_file_access_log(action, occur_at);
-CREATE INDEX idx_access_log_customer_product ON t_file_access_log(customer_no, product_no, occur_at);
+CREATE INDEX idx_access_log_file_id ON t_file_access_log (file_id);
+CREATE INDEX idx_access_log_token_hash ON t_file_access_log (token_hash);
+CREATE INDEX idx_access_log_action_time ON t_file_access_log (action, occur_at);
+CREATE INDEX idx_access_log_customer_product ON t_file_access_log (customer_no, product_no, occur_at);

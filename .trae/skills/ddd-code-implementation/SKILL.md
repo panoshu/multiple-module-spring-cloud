@@ -8,6 +8,7 @@ description: "DDD代码实现技能：指导代码实现阶段的各种模式和
 ## 一、API层接口定义
 
 ### 1.1 设计原则
+
 - API接口定义在 `xxx-api` 模块中
 - 使用 `@HttpExchange` 注解标记接口，方法使用 `@GetExchange`/`@PostExchange`
 - 只定义协议，不包含实现逻辑
@@ -82,18 +83,19 @@ public record OrderResponse(
 
 ### 1.5 API层命名规范
 
-| 组件 | 命名模式 | 示例 |
-|------|----------|------|
-| API接口 | 业务名称 + Api | OrderApi |
-| 请求体DTO | 业务名称 + Request | OrderCreateRequest |
-| 返回体DTO | 业务名称 + Response | OrderResponse |
-| 查询请求DTO | 业务名称 + QueryRequest | OrderQueryRequest |
+| 组件        | 命名模式                | 示例               |
+|-------------|-------------------------|--------------------|
+| API接口     | 业务名称 + Api          | OrderApi           |
+| 请求体DTO   | 业务名称 + Request      | OrderCreateRequest |
+| 返回体DTO   | 业务名称 + Response     | OrderResponse      |
+| 查询请求DTO | 业务名称 + QueryRequest | OrderQueryRequest  |
 
 ---
 
 ## 二、Adapter层实现
 
 ### 2.1 设计原则
+
 - 实现 API 层定义的接口，标注 `@RestController`
 - 通过构造函数注入依赖（应用服务、转换器）
 - 请求体DTO → 领域Command/DTO：通过MapStruct Converter完成
@@ -160,12 +162,12 @@ public class OrderController implements OrderApi {
 
 ### 2.3 Adapter层职责
 
-| 职责 | 说明 |
-|------|------|
-| 实现API接口 | 实现API层定义的接口协议 |
-| DTO转换 | 请求体DTO ↔ 领域DTO的转换（通过Converter） |
-| 调用应用服务 | 委托应用层处理业务逻辑 |
-| 响应包装 | 返回统一的ApiResult格式 |
+| 职责         | 说明                                       |
+|--------------|--------------------------------------------|
+| 实现API接口  | 实现API层定义的接口协议                    |
+| DTO转换      | 请求体DTO ↔ 领域DTO的转换（通过Converter） |
+| 调用应用服务 | 委托应用层处理业务逻辑                     |
+| 响应包装     | 返回统一的ApiResult格式                    |
 
 ---
 
@@ -274,12 +276,12 @@ public interface OrderConverter {
 
 ### 3.4 MapStruct配置要点
 
-| 配置项 | 说明 | 推荐值 |
-|--------|------|--------|
-| componentModel | 生成代码的组件模型 | spring |
-| uses | 引入通用转换器 | CommonConverter等 |
-| unmappedTargetPolicy | 未映射目标字段策略 | IGNORE |
-| nullValuePropertyMappingStrategy | null值映射策略 | IGNORE（更新场景） |
+| 配置项                           | 说明               | 推荐值             |
+|----------------------------------|--------------------|--------------------|
+| componentModel                   | 生成代码的组件模型 | spring             |
+| uses                             | 引入通用转换器     | CommonConverter等  |
+| unmappedTargetPolicy             | 未映射目标字段策略 | IGNORE             |
+| nullValuePropertyMappingStrategy | null值映射策略     | IGNORE（更新场景） |
 
 ---
 
@@ -287,11 +289,11 @@ public interface OrderConverter {
 
 ### 4.1 异常层级与使用场景
 
-| 异常类 | 使用层 | 使用场景 | 示例 |
-|--------|--------|----------|------|
-| `DomainException` | Domain层 | 领域规则校验失败 | 金额不能为负数、状态不允许此操作 |
-| `BusinessException` | Application层 | 业务流程异常 | 审批流未找到、流程已被他人处理 |
-| `SystemException` | Infrastructure层 | 系统级错误 | 数据库连接失败、外部服务超时 |
+| 异常类              | 使用层           | 使用场景         | 示例                             |
+|---------------------|------------------|------------------|----------------------------------|
+| `DomainException`   | Domain层         | 领域规则校验失败 | 金额不能为负数、状态不允许此操作 |
+| `BusinessException` | Application层    | 业务流程异常     | 审批流未找到、流程已被他人处理   |
+| `SystemException`   | Infrastructure层 | 系统级错误       | 数据库连接失败、外部服务超时     |
 
 ### 4.2 DomainException 使用模板
 
@@ -414,6 +416,7 @@ public record OrderCreatedEvent(
 ## 六、应用层服务实现
 
 ### 6.1 设计原则
+
 - 标注 `@Service`，管理事务边界（@Transactional）
 - 编排业务流程，不包含业务规则
 - 入参只能是CQE对象（Command/Query/Event）
@@ -501,6 +504,7 @@ public class OrderDTOAssembler {
 ## 七、Repository实现
 
 ### 7.1 设计原则
+
 - 必须在save方法中发布领域事件
 - 使用Data Converter（MapStruct）完成Entity与DO转换
 - 使用MyBatis-Flex进行数据库操作
@@ -579,7 +583,8 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 DO实体是基础设施层与数据库的映射对象，使用MyBatis-Flex注解。
 
-> **时间戳管理约束**：`createTime`/`updateTime` 禁止使用 `@Column(onInsertValue/onUpdateValue)` 自动管理，必须由应用层通过 Converter 从领域对象 `createdAt()`/`updatedAt()` 映射。详见 `06-数据库规范.md` 第十节。
+> **时间戳管理约束**：`createTime`/`updateTime` 禁止使用 `@Column(onInsertValue/onUpdateValue)` 自动管理，必须由应用层通过
+> Converter 从领域对象 `createdAt()`/`updatedAt()` 映射。详见 `06-数据库规范.md` 第十节。
 
 ```java
 package com.example.order.infrastructure.entity;
@@ -705,56 +710,56 @@ public class ExternalPaymentGatewayImpl implements ExternalPaymentGateway {
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-| 转换步骤 | 层级 | 转换内容 | 使用工具 |
-|----------|------|----------|----------|
-| 1 | Adapter | 请求体DTO → 领域Command/DTO | MapStruct Converter |
-| 2 | Infrastructure | Entity → DO | MapStruct EntityConverter |
-| 3 | Infrastructure | DO → Entity | MapStruct EntityConverter |
-| 4 | Adapter | 领域DTO → 返回体DTO | MapStruct Converter |
+| 转换步骤 | 层级           | 转换内容                    | 使用工具                  |
+|----------|----------------|-----------------------------|---------------------------|
+| 1        | Adapter        | 请求体DTO → 领域Command/DTO | MapStruct Converter       |
+| 2        | Infrastructure | Entity → DO                 | MapStruct EntityConverter |
+| 3        | Infrastructure | DO → Entity                 | MapStruct EntityConverter |
+| 4        | Adapter        | 领域DTO → 返回体DTO         | MapStruct Converter       |
 
 ---
 
 ## 十一、反模式与避坑指南
 
 ### ❌ 反模式 1：贫血模型
-**现象**：实体类只有 Getter/Setter，没有任何业务行为。
-**正解**：充血模型，把属于该实体的行为放回实体内部。
+
+**现象**：实体类只有 Getter/Setter，没有任何业务行为。 **正解**：充血模型，把属于该实体的行为放回实体内部。
 
 ### ❌ 反模式 2：大泥球聚合
-**现象**：设计了一个极大的聚合根，每次加载都要连表查出海量数据。
-**正解**：聚合之间只引用 ID。
+
+**现象**：设计了一个极大的聚合根，每次加载都要连表查出海量数据。 **正解**：聚合之间只引用 ID。
 
 ### ❌ 反模式 3：基本类型偏执
-**现象**：方法参数全是 `String`, `Long`。
-**正解**：使用领域原语 `void pay(OrderId orderId, UserId userId, Money amount)`。
+
+**现象**：方法参数全是 `String`, `Long`。 **正解**：使用领域原语 `void pay(OrderId orderId, UserId userId, Money amount)`。
 
 ### ❌ 反模式 4：基础设施驱动设计
-**现象**：领域层充满了 `@Entity`, `@Table` 等注解。
-**正解**：领域层纯 POJO/Record，在基础设施层做转换。
+
+**现象**：领域层充满了 `@Entity`, `@Table` 等注解。 **正解**：领域层纯 POJO/Record，在基础设施层做转换。
 
 ### ❌ 反模式 5：跨聚合引用
-**现象**：聚合根内部直接持有另一个聚合根的对象引用。
-**正解**：聚合之间只通过 ID 引用。
+
+**现象**：聚合根内部直接持有另一个聚合根的对象引用。 **正解**：聚合之间只通过 ID 引用。
 
 ### ❌ 反模式 6：忽略领域事件
-**现象**：所有操作都是同步调用，没有使用事件解耦。
-**正解**：使用领域事件异步处理非核心流程。
+
+**现象**：所有操作都是同步调用，没有使用事件解耦。 **正解**：使用领域事件异步处理非核心流程。
 
 ### ❌ 反模式 7：流水账代码
-**现象**：Adapter中包含所有逻辑。
-**正解**：分层处理，每层只做一件事。
+
+**现象**：Adapter中包含所有逻辑。 **正解**：分层处理，每层只做一件事。
 
 ### ❌ 反模式 8：手动编写转换代码
-**现象**：在Adapter中手动编写大量DTO转换代码。
-**正解**：使用MapStruct自动生成转换代码。
+
+**现象**：在Adapter中手动编写大量DTO转换代码。 **正解**：使用MapStruct自动生成转换代码。
 
 ### ❌ 反模式 9：Controller不实现API接口
-**现象**：Controller自定义路由，不实现API层定义的接口。
-**正解**：Controller必须实现API层的 `@HttpExchange` 接口。
+
+**现象**：Controller自定义路由，不实现API层定义的接口。 **正解**：Controller必须实现API层的 `@HttpExchange` 接口。
 
 ### ❌ 反模式 10：Adapter中直接转换DTO
-**现象**：在Controller中直接new DTO或手写转换逻辑。
-**正解**：所有DTO转换通过MapStruct Converter完成。
+
+**现象**：在Controller中直接new DTO或手写转换逻辑。 **正解**：所有DTO转换通过MapStruct Converter完成。
 
 ---
 
@@ -777,6 +782,6 @@ public class ExternalPaymentGatewayImpl implements ExternalPaymentGateway {
 - [ ] DTOAssembler是否将领域对象正确转换为DTO？
 - [ ] Gateway实现是否将外部模型转换为内部领域模型？
 - [ ] DO实体是否包含通用字段（createTime/updateTime/deleted/version）？
-- [ ] DO 的 createTime/updateTime 是否**未使用** `@Column(onInsertValue/onUpdateValue)`？
+- [ ] DO 的 createTime/updateTime 是否 **未使用** `@Column(onInsertValue/onUpdateValue)`？
 - [ ] Converter 的 toDO 方法是否从 `createdAt()`/`updatedAt()` 映射到 `createTime`/`updateTime`？
-- [ ] Converter 的 toDO 方法是否**未对** `createTime`/`updateTime` **使用** `@Mapping(ignore = true)`？
+- [ ] Converter 的 toDO 方法是否 **未对** `createTime`/`updateTime` **使用** `@Mapping(ignore = true)`？

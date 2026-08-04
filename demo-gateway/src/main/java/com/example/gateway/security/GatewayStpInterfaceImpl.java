@@ -34,10 +34,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GatewayStpInterfaceImpl implements StpInterface {
 
-  /** Token-Session 中存储当前计划 ID 的键(与 iam-service IamStpInterfaceImpl 保持一致) */
+  /**
+   * Token-Session 中存储当前计划 ID 的键(与 iam-service IamStpInterfaceImpl 保持一致)
+   */
   public static final String SESSION_KEY_CURRENT_PLAN_ID = "currentPlanId";
 
-  /** Token-Session 中存储当前权限集合的键 */
+  /**
+   * Token-Session 中存储当前权限集合的键
+   */
   public static final String SESSION_KEY_CURRENT_PERMISSIONS = "currentPermissions";
 
   private final ChannelAwareSaRouter channelAwareSaRouter;

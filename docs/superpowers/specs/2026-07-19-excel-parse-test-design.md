@@ -1,7 +1,6 @@
 # 基于真实 Excel 的解析测试与遗留项完善设计
 
-**日期**: 2026-07-19
-**分支**: `feature/file-service-parse-engine`
+**日期**: 2026-07-19 **分支**: `feature/file-service-parse-engine`
 **输入文件**: `docs/excel/示例表单.xlsx`
 
 ## 1. 背景与目标
@@ -13,6 +12,7 @@ file-service 解析引擎的 Phase B-I 已完成，7 层模块全部编译通过
 3. 缺乏基于真实 Excel 文件的端到端测试验证
 
 本设计的目标：
+
 - 基于 `docs/excel/示例表单.xlsx` 创建测试案例，验证解析、校验等完整流程
 - 完善 `ExcelParserImpl` 和 `YamlConfigLoader` 两个遗留项
 - 采用 TDD 方式，分三层独立测试
@@ -71,11 +71,11 @@ R15: 2 | 说明内容2
 
 当前 `ExcelParserImpl` 的 3 个不足：
 
-| 问题 | 当前行为 | 期望行为 |
-|------|----------|----------|
-| KV 每行多组 label-value | 只读 col1=key, col2=value | 扫描所有列，按 label-value 对交替读取 |
-| 表格多行表头 | 武断取最后一行作为 headers | 由配置 `headerNameRow` 指定第几行作为列名 |
-| 结束标记行 | 只靠空行退出 | 检查 DataEndRule.markers 匹配 |
+| 问题                    | 当前行为                   | 期望行为                                  |
+|-------------------------|----------------------------|-------------------------------------------|
+| KV 每行多组 label-value | 只读 col1=key, col2=value  | 扫描所有列，按 label-value 对交替读取     |
+| 表格多行表头            | 武断取最后一行作为 headers | 由配置 `headerNameRow` 指定第几行作为列名 |
+| 结束标记行              | 只靠空行退出               | 检查 DataEndRule.markers 匹配             |
 
 ### 3.2 完善方案（需小幅修改领域模型）
 
@@ -107,11 +107,13 @@ public record TableStrategy(
 ```
 
 **语义**：
+
 - `headerNameRow = 0`：取最后一行（`headerRows` 行），向后兼容现有行为
 - `headerNameRow = 1`：取第 1 行作为列名
 - `headerNameRow = N`（1 ≤ N ≤ headerRows）：取第 N 行作为列名
 
 **示例 Excel 的配置**：
+
 ```yaml
 strategy:
   headerRows: 3        # 共 3 行表头（R5 列代码 + R6 分组标题 + R7 中文表头）
@@ -119,7 +121,9 @@ strategy:
 ```
 
 **影响范围**（需同步更新）：
-- `file-domain/TableRegionParser.java`：第 36 行 `headerRowsRead == strategy.headerRows() - 1` 改为根据 `headerNameRow` 判断
+
+- `file-domain/TableRegionParser.java`：第 36 行 `headerRowsRead == strategy.headerRows() - 1` 改为根据 `headerNameRow`
+  判断
 - `file-infrastructure/ExcelParserImpl.java`：`parseTableRegion` 同步逻辑
 - `file-domain/.../TableRegionParserTest.java`：构造调用增加 headerNameRow 参数
 - `file-domain/.../CanonicalModelBuilderTest.java`：构造调用增加 headerNameRow 参数
@@ -156,7 +160,8 @@ label 清理：去掉末尾的 `：`、`:`、空格。
 
 ### 4.1 设计原则：标准模型与表单样式解耦
 
-**核心原则**：`canonicalModel` 用业务语义命名，与具体表单样式无关；表单特定的列名通过 `sourceTemplates[].regions[].strategy.headerAliases` 映射到标准字段。
+**核心原则**：`canonicalModel` 用业务语义命名，与具体表单样式无关；表单特定的列名通过
+`sourceTemplates[].regions[].strategy.headerAliases` 映射到标准字段。
 
 这样当业务新增另一种表单样式（列名不同）时，`canonicalModel` 保持不变，只需新增一份 `sourceTemplate` 配置列名映射。
 
@@ -243,11 +248,13 @@ sourceTemplates:
 - **headerAliases**：标准字段名 → 该列在表头行中可能出现的值列表
 
 解析流程：
+
 1. Parser 根据 `headerNameRow` 取对应行的单元格值作为"识别列名"
 2. Parser 遍历识别列名，通过 `headerAliases` 反查映射到标准字段名
 3. 数据行的单元格按"识别列名 → 标准字段名"映射后写入 `CanonicalData.tables`
 
-`headerAliases` 的 value 是列表，支持同一标准字段在不同表头行中的不同表达（如 `seq: [XH, 序号*]` 兼容 R5 列代码和 R7 中文表头）。
+`headerAliases` 的 value 是列表，支持同一标准字段在不同表头行中的不同表达（如 `seq: [XH, 序号*]` 兼容 R5 列代码和 R7
+中文表头）。
 
 ### 4.4 完善内容
 
@@ -257,39 +264,42 @@ sourceTemplates:
 2. 解析 `validationRules` → `List<ValidationRule>`（field 用标准字段名）
 3. 解析 `derivationRules` → `List<DerivationRule>`
 4. 解析 `splitConfig` → `SplitConfig`（含 SplitKeyDef 列表）
-5. 解析 `sourceTemplates` → `List<SourceTemplateDef>`（含 RegionDef 列表，含 RegionTrigger + RegionStrategy，TableStrategy 含 headerAliases 映射）
+5. 解析 `sourceTemplates` → `List<SourceTemplateDef>`（含 RegionDef 列表，含 RegionTrigger + RegionStrategy，TableStrategy
+   含 headerAliases 映射）
 
 ## 5. 三层测试设计
 
 ### 5.1 ExcelParserImplTest（解析层单元测试）
 
-**位置**: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/ExcelParserImplTest.java`
+**位置**:
+`file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/ExcelParserImplTest.java`
 
 **测试数据**: `docs/excel/示例表单.xlsx`（通过相对路径读取）
 
-| 用例 | 验证点 |
-|------|--------|
-| `openStream_读取所有行` | 15 行，R1 非空，R3 空行 |
-| `parse_KV区域_多组label_value` | basic_info 解析出 4 个 KV（planNo/planName/customerNo/customerName） |
+| 用例                                      | 验证点                                                                                                               |
+|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `openStream_读取所有行`                   | 15 行，R1 非空，R3 空行                                                                                              |
+| `parse_KV区域_多组label_value`            | basic_info 解析出 4 个 KV（planNo/planName/customerNo/customerName）                                                 |
 | `parse_表格区域_指定表头行并映射标准字段` | headerNameRow=1 取 R5 列代码识别，通过 headerAliases 映射后数据行字段为标准名（seq/name/idType/idNo...），3 条数据行 |
-| `parse_表格区域_结束标记` | 遇"结束"行停止，不把 R11 当数据 |
-| `parse_KV区域2_填表人` | filler=张三, reviewer=李四 |
+| `parse_表格区域_结束标记`                 | 遇"结束"行停止，不把 R11 当数据                                                                                      |
+| `parse_KV区域2_填表人`                    | filler=张三, reviewer=李四                                                                                           |
 
 **配置构建**: Java 代码直接构建 `List<RegionDef>`
 
 ### 5.2 YamlConfigLoaderTest（ConfigLoader 单元测试）
 
-**位置**: `file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/YamlConfigLoaderTest.java`
+**位置**:
+`file-service/file-infrastructure/src/test/java/com/example/file/infrastructure/gateway/YamlConfigLoaderTest.java`
 
 **测试数据**: 内联 YAML 字符串
 
-| 用例 | 验证点 |
-|------|--------|
-| `loadFromYaml_基础字段` | bizType、version、errorPolicy |
-| `loadFromYaml_规范模型` | properties 6 个，tables 1 个 |
-| `loadFromYaml_校验规则` | validationRules 2 条 |
-| `loadFromYaml_拆分配置` | keys 1 个，missPolicy=FAIL |
-| `loadFromYaml_源模板` | sourceTemplates 1 个，regions 3 个 |
+| 用例                    | 验证点                             |
+|-------------------------|------------------------------------|
+| `loadFromYaml_基础字段` | bizType、version、errorPolicy      |
+| `loadFromYaml_规范模型` | properties 6 个，tables 1 个       |
+| `loadFromYaml_校验规则` | validationRules 2 条               |
+| `loadFromYaml_拆分配置` | keys 1 个，missPolicy=FAIL         |
+| `loadFromYaml_源模板`   | sourceTemplates 1 个，regions 3 个 |
 
 ### 5.3 ParseFlowIntegrationTest（端到端集成测试）
 
@@ -297,11 +307,11 @@ sourceTemplates:
 
 **测试流程**: Excel → ExcelParser.parse → CanonicalModelBuilder → DataValidator → TaskSplitter
 
-| 用例 | 验证点 |
-|------|--------|
+| 用例           | 验证点                                                                                                                      |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------|
 | `完整解析流程` | properties 6 个 KV（planNo/customerNo 等），tables.employees 3 行且字段为标准名（seq/name/idType/idNo 等，非 Excel 列代码） |
-| `校验流程` | 3 条数据行按标准字段名校验（idNo/name NOT_NULL） |
-| `拆分流程` | 按 customerNo 拆分 1 个子任务 |
+| `校验流程`     | 3 条数据行按标准字段名校验（idNo/name NOT_NULL）                                                                            |
+| `拆分流程`     | 按 customerNo 拆分 1 个子任务                                                                                               |
 
 **配置构建**: Java 代码构建 `TemplateConfig`
 
@@ -310,11 +320,13 @@ sourceTemplates:
 ## 6. 范围边界
 
 ### 在范围内
+
 - 完善 `ExcelParserImpl` 的 3 个场景（KV 多组、多行表头、结束标记）
 - 完善 `YamlConfigLoader` 的 YAML → TemplateConfig 完整映射
 - 3 个测试类（15 个测试用例）
 
 ### 不在范围内
+
 - 不修改 domain 层的值对象和领域服务（已有字段足够）
 - 不做 Spring Boot 集成测试（不启动 ApplicationContext）
 - 不做数据库集成测试（不涉及 Repository）

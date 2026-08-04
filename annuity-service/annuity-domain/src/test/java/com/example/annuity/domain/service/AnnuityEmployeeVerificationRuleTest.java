@@ -3,7 +3,7 @@ package com.example.annuity.domain.service;
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ class AnnuityEmployeeVerificationRuleTest {
   void verify_invalidIdCardFormat() {
     AnnuityEmployeeDetail detail = createDetail("123", 35, 10000L, 500L);
     assertThat(rule.verify(detail)).isPresent()
-        .hasValueSatisfying(msg -> assertThat(msg).contains("身份证格式错误"));
+      .hasValueSatisfying(msg -> assertThat(msg).contains("身份证格式错误"));
   }
 
   @Test
@@ -27,7 +27,7 @@ class AnnuityEmployeeVerificationRuleTest {
   void verify_ageBelowMinimum() {
     AnnuityEmployeeDetail detail = createDetail("110101199001011234", 17, 10000L, 500L);
     assertThat(rule.verify(detail)).isPresent()
-        .hasValueSatisfying(msg -> assertThat(msg).contains("年龄不在合法区间"));
+      .hasValueSatisfying(msg -> assertThat(msg).contains("年龄不在合法区间"));
   }
 
   @Test
@@ -35,7 +35,7 @@ class AnnuityEmployeeVerificationRuleTest {
   void verify_ageAboveMaximum() {
     AnnuityEmployeeDetail detail = createDetail("110101199001011234", 71, 10000L, 500L);
     assertThat(rule.verify(detail)).isPresent()
-        .hasValueSatisfying(msg -> assertThat(msg).contains("年龄不在合法区间"));
+      .hasValueSatisfying(msg -> assertThat(msg).contains("年龄不在合法区间"));
   }
 
   @Test
@@ -43,7 +43,7 @@ class AnnuityEmployeeVerificationRuleTest {
   void verify_zeroSalary() {
     AnnuityEmployeeDetail detail = createDetail("110101199001011234", 35, 0L, 500L);
     assertThat(rule.verify(detail)).isPresent()
-        .hasValueSatisfying(msg -> assertThat(msg).contains("月薪必须为正数"));
+      .hasValueSatisfying(msg -> assertThat(msg).contains("月薪必须为正数"));
   }
 
   @Test
@@ -51,7 +51,7 @@ class AnnuityEmployeeVerificationRuleTest {
   void verify_zeroContribution() {
     AnnuityEmployeeDetail detail = createDetail("110101199001011234", 35, 10000L, 0L);
     assertThat(rule.verify(detail)).isPresent()
-        .hasValueSatisfying(msg -> assertThat(msg).contains("月缴费必须为正数"));
+      .hasValueSatisfying(msg -> assertThat(msg).contains("月缴费必须为正数"));
   }
 
   @Test
@@ -63,9 +63,9 @@ class AnnuityEmployeeVerificationRuleTest {
 
   private AnnuityEmployeeDetail createDetail(String idCard, int age, long salary, long contribution) {
     return new AnnuityEmployeeDetail(
-        AnnuityEmployeeDetailId.of("D-001"),
-        AnnuityEmployeeBatchId.of("B-001"),
-        "张三", idCard, age, salary, contribution, UserNo.of("U-TEST")
+      AnnuityEmployeeDetailId.of("D-001"),
+      AnnuityEmployeeBatchId.of("B-001"),
+      "张三", idCard, age, salary, contribution, UserNo.of("U-TEST")
     );
   }
 }

@@ -1,16 +1,9 @@
 package com.example.shared.event.jackson;
 
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.Identifier;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.DeserializationConfig;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -89,11 +82,21 @@ public class DddJacksonModule extends SimpleModule {
    * 不会调用 {@link #deserialize}，因此 record 字段为 null 时无需特殊处理。
    */
   public static class IdentifierDeserializer extends JsonDeserializer<Identifier<?>>
-      implements ContextualDeserializer {
+    implements ContextualDeserializer {
 
     private static final ConcurrentHashMap<Class<?>, Constructor<?>> CTOR_CACHE = new ConcurrentHashMap<>();
 
     private Class<?> targetClass;
+
+    private static Constructor<?> findConstructor(Class<?> clazz) {
+      try {
+        // record canonical constructor: public XxxId(String value)
+        return clazz.getDeclaredConstructor(String.class);
+      } catch (NoSuchMethodException e) {
+        throw new IllegalStateException(
+          "Identifier class " + clazz.getName() + " must have a String-argument constructor", e);
+      }
+    }
 
     @Override
     public Identifier<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
@@ -125,16 +128,6 @@ public class DddJacksonModule extends SimpleModule {
         copy.targetClass = this.targetClass;
       }
       return copy;
-    }
-
-    private static Constructor<?> findConstructor(Class<?> clazz) {
-      try {
-        // record canonical constructor: public XxxId(String value)
-        return clazz.getDeclaredConstructor(String.class);
-      } catch (NoSuchMethodException e) {
-        throw new IllegalStateException(
-            "Identifier class " + clazz.getName() + " must have a String-argument constructor", e);
-      }
     }
   }
 }

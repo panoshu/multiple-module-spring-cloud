@@ -34,27 +34,27 @@ import java.util.List;
 @HttpExchange("/core/application")
 public interface BusinessApplicationApi {
 
-    /**
-     * 查询申请单列表(按批次 ID)。
-     */
-    @PostExchange("/list")
-    ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query);
+  /**
+   * 查询申请单列表(按批次 ID)。
+   */
+  @PostExchange("/list")
+  ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query);
 
-    /**
-     * 查询申请单详情。
-     */
-    @PostExchange("/detail")
-    ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query);
+  /**
+   * 查询申请单详情。
+   */
+  @PostExchange("/detail")
+  ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query);
 
-    /**
-     * 推进申请单到下一节点。
-     */
-    @PostExchange("/advance")
-    ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command);
+  /**
+   * 推进申请单到下一节点。
+   */
+  @PostExchange("/advance")
+  ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command);
 
-    /**
-     * 提交申请单(触发审批判断)。
-     */
-    @PostExchange("/submit")
-    ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command);
+  /**
+   * 提交申请单(触发审批判断)。
+   */
+  @PostExchange("/submit")
+  ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command);
 }

@@ -9,7 +9,7 @@ import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -117,7 +117,8 @@ public interface SubTaskDataConverter {
       return BusinessContext.empty();
     }
     try {
-      Map<String, Object> variables = OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+      Map<String, Object> variables = OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {
+      });
       return new BusinessContext(variables);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化业务上下文失败", e);
@@ -141,7 +142,8 @@ public interface SubTaskDataConverter {
       return Map.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化Map失败", e);
     }
@@ -164,7 +166,8 @@ public interface SubTaskDataConverter {
       return Map.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, List<Map<String, Object>>>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, List<Map<String, Object>>>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化表格数据失败", e);
     }
@@ -187,7 +190,8 @@ public interface SubTaskDataConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationError>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationError>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化校验错误列表失败", e);
     }

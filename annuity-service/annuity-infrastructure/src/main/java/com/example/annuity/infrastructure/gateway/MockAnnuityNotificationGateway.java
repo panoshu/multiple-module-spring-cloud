@@ -2,7 +2,7 @@ package com.example.annuity.infrastructure.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.NotificationType;
 import com.example.annuity.domain.gateway.AnnuityNotificationGateway;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;

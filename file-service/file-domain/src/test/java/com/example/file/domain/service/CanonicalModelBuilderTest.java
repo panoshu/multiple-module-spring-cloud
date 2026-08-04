@@ -21,16 +21,16 @@ class CanonicalModelBuilderTest {
   @Test
   void should_build_canonical_data_from_kv_and_table_regions() {
     List<RegionDef> defs = List.of(
-        new RegionDef("header", RegionType.KEY_VALUE, "properties", null,
-            new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3)),
-        new RegionDef("items", RegionType.TABLE, "items", null,
-            new TableStrategy(1, 0, null, Map.of(), null, 0, null))
+      new RegionDef("header", RegionType.KEY_VALUE, "properties", null,
+        new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3)),
+      new RegionDef("items", RegionType.TABLE, "items", null,
+        new TableStrategy(1, 0, null, Map.of(), null, 0, null))
     );
     List<RegionParseResult> regions = List.of(
-        new KvRegionResult("header", Map.of("applicant", "张三", "idCard", "110")),
-        new TableRegionResult("items", List.of("code", "qty"), List.of(
-            Map.of("code", "A1", "qty", "5"),
-            Map.of("code", "A2", "qty", "10")))
+      new KvRegionResult("header", Map.of("applicant", "张三", "idCard", "110")),
+      new TableRegionResult("items", List.of("code", "qty"), List.of(
+        Map.of("code", "A1", "qty", "5"),
+        Map.of("code", "A2", "qty", "10")))
     );
 
     CanonicalModelBuilder builder = new CanonicalModelBuilder();
@@ -45,11 +45,11 @@ class CanonicalModelBuilderTest {
   @Test
   void should_skip_region_without_bindTo() {
     List<RegionDef> defs = List.of(
-        new RegionDef("header", RegionType.KEY_VALUE, null, null,
-            new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3))
+      new RegionDef("header", RegionType.KEY_VALUE, null, null,
+        new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3))
     );
     List<RegionParseResult> regions = List.of(
-        new KvRegionResult("header", Map.of("k", "v"))
+      new KvRegionResult("header", Map.of("k", "v"))
     );
 
     CanonicalModelBuilder builder = new CanonicalModelBuilder();

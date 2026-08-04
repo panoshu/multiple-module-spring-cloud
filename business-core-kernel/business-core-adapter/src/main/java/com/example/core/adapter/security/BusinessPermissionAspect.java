@@ -26,20 +26,20 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BusinessPermissionAspect {
 
-    private final SessionContextResolver sessionContextResolver;
+  private final SessionContextResolver sessionContextResolver;
 
-    /**
-     * 校验功能权限。
-     */
-    @Around("@annotation(requirePermission)")
-    public Object checkPermission(ProceedingJoinPoint joinPoint, RequireBusinessPermission requirePermission) throws Throwable {
-        String requiredCode = requirePermission.value();
-        SessionContext session = sessionContextResolver.require();
-        if (session.permissionCodes() == null || !session.permissionCodes().contains(requiredCode)) {
-            throw new BusinessException(CommonError.FORBIDDEN)
-                .withUserDetail("无功能权限")
-                .withLogDetail("requiredPermission=%s, owned=%s".formatted(requiredCode, session.permissionCodes()));
-        }
-        return joinPoint.proceed();
+  /**
+   * 校验功能权限。
+   */
+  @Around("@annotation(requirePermission)")
+  public Object checkPermission(ProceedingJoinPoint joinPoint, RequireBusinessPermission requirePermission) throws Throwable {
+    String requiredCode = requirePermission.value();
+    SessionContext session = sessionContextResolver.require();
+    if (session.permissionCodes() == null || !session.permissionCodes().contains(requiredCode)) {
+      throw new BusinessException(CommonError.FORBIDDEN)
+        .withUserDetail("无功能权限")
+        .withLogDetail("requiredPermission=%s, owned=%s".formatted(requiredCode, session.permissionCodes()));
     }
+    return joinPoint.proceed();
+  }
 }

@@ -1,21 +1,26 @@
 # 年金服务 SPI 完整实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:
+> executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在 annuity-service 中完整实现 kernel 预留的 `StepActionHandler` 与 `StepExtensionAction` SPI,演示完整端到端业务链路。
 
-**Architecture:** 业务规则集中在 annuity-domain 层(`@DomainService`),编排节点在 annuity-application 层(Handler/Action 注入 domain service 委托执行)。annuity-service 拥有独立聚合根 `AnnuityEmployeeBatch`(含 `AnnuityEmployeeDetail` 实体),通过 ID 引用 kernel 的 `BusinessApplication`。kernel 修改仅限 `BusinessApplication` 新增 3 个公开 accessor 方法,消除 annuity-service 中的反射访问。
+**Architecture:** 业务规则集中在 annuity-domain 层 (`@DomainService`),编排节点在 annuity-application 层 (Handler/Action
+注入 domain service 委托执行)。annuity-service 拥有独立聚合根 `AnnuityEmployeeBatch`(含 `AnnuityEmployeeDetail` 实体),通过
+ID 引用 kernel 的 `BusinessApplication`。kernel 修改仅限 `BusinessApplication` 新增 3 个公开 accessor 方法,消除
+annuity-service 中的反射访问。
 
-**Tech Stack:** Java 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, H2(PostgreSQL 兼容模式,测试), JUnit 5 + Mockito, Jackson 多态。
+**Tech Stack:** Java 25 (preview), Spring Boot 3.5.14, MyBatis-Flex 1.11.5, H2 (PostgreSQL 兼容模式,测试), JUnit 5 +
+Mockito, Jackson 多态。
 
 ## Global Constraints
 
-- JDK 25 启用 `--enable-preview`,所有 `mvn` 命令需带该参数(项目已全局配置)
+- JDK 25 启用 `--enable-preview`,所有 `mvn` 命令需带该参数 (项目已全局配置)
 - DDD 七层架构:types → domain → api → application → adapter → infrastructure → starter
 - domain 层禁止依赖 Spring/MyBatis/Jackson 注解,只能使用 `com.example.core.domain.annotation.DomainService`
 - 所有 DTO 转换通过 MapStruct `@Mapper(componentModel = "spring")`
-- API 接口必须使用 `@HttpExchange`,但本计划不新增 API(Controller),仅扩展内部 SPI
-- 数据库 schema 必须提供三套:PostgreSQL(`schema-pg.sql`)、MySQL(`schema-mysql.sql`)、H2(`schema-h2.sql`)
+- API 接口必须使用 `@HttpExchange`,但本计划不新增 API (Controller),仅扩展内部 SPI
+- 数据库 schema 必须提供三套:PostgreSQL (`schema-pg.sql`)、MySQL (`schema-mysql.sql`)、H2 (`schema-h2.sql`)
 - H2 用 `TEXT` 替代 `JSONB`,用 `INT DEFAULT 0` 替代 `BOOLEAN DEFAULT FALSE`(MyBatis-Flex 逻辑删除兼容)
 - 测试遵循 TDD:先写失败测试,再写实现,再验证通过,每个 Task 末尾提交
 - 提交信息使用 `feat(scope):` / `fix(scope):` / `test(scope):` / `chore(scope):` 前缀
@@ -26,14 +31,19 @@
 
 ## File Structure
 
-### kernel 修改(1 文件)
-- `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/root/BusinessApplication.java` — 新增 3 个公开 accessor
+### kernel 修改 (1 文件)
 
-### annuity-types(2 新增)
+-
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/root/BusinessApplication.java` —
+新增 3 个公开 accessor
+
+### annuity-types (2 新增)
+
 - `annuity-types/.../AnnuityEmployeeBatchId.java` — 批次 ID
 - `annuity-types/.../AnnuityEmployeeDetailId.java` — 明细 ID
 
-### annuity-domain(13 新增,2 修改)
+### annuity-domain (13 新增,2 修改)
+
 - `annuity-domain/.../aggregate/root/AnnuityEmployeeBatch.java` — 聚合根
 - `annuity-domain/.../aggregate/entity/AnnuityEmployeeDetail.java` — 实体
 - `annuity-domain/.../aggregate/valueobject/AnnuityEmployeeMaterial.java` — 材料值对象
@@ -53,10 +63,12 @@
 - `annuity-domain/.../errorcode/AnnuityDomainErrorCode.java` — **修改**:扩展错误码
 - `annuity-domain/.../extractor/AnnuityFactExtractor.java` — **修改**:移除反射,改用 Resolver
 
-### annuity-api(1 新增)
+### annuity-api (1 新增)
+
 - `annuity-api/.../dto/AnnuityEmployeeDTO.java` — 员工明细 JSON DTO
 
-### annuity-application(9 新增)
+### annuity-application (9 新增)
+
 - `annuity-application/.../handler/AnnuityDataVerificationHandler.java` — StepActionHandler 实现
 - `annuity-application/.../extension/AnnuityDetailIngestionAction.java` — 继承 AbstractJsonStreamIngestionAction
 - `annuity-application/.../extension/AnnuityEmployeeCountValidationAction.java` — 员工数校验
@@ -67,7 +79,8 @@
 - `annuity-application/.../extension/AnnuityMaterialPreparedNotificationAction.java` — 通知
 - `annuity-application/.../extension/AnnuityAuditLogAction.java` — 审计
 
-### annuity-infrastructure(11 新增,3 修改)
+### annuity-infrastructure (11 新增,3 修改)
+
 - `annuity-infrastructure/.../entity/AnnuityEmployeeBatchDO.java`
 - `annuity-infrastructure/.../entity/AnnuityEmployeeDetailDO.java`
 - `annuity-infrastructure/.../mapper/AnnuityEmployeeBatchMapper.java`
@@ -81,12 +94,13 @@
 - `annuity-infrastructure/src/main/resources/schema-mysql.sql` — **修改**:追加 2 表
 - `annuity-infrastructure/.../converter/KernelAggregateReflector.java` — **修改**:移除 `readExtension()`
 
-### annuity-starter(2 修改)
+### annuity-starter (2 修改)
+
 - `annuity-starter/src/test/resources/schema-h2.sql` — **修改**:追加 2 表
 - `annuity-starter/src/test/java/com/example/annuity/AnnuityEndToEndTest.java` — **修改**:新增 4 个测试用例
 - `annuity-starter/src/main/resources/config/step-routes.json` — **修改**:更新路由配置
 
-**合计:37 文件(32 新增 + 5 修改)**
+**合计:37 文件 (32 新增 + 5 修改)**
 
 ---
 
@@ -111,16 +125,21 @@ Phase E (Task E1-E2)      — annuity-starter 端到端(依赖 B,C,D)
 ## Task A1: BusinessApplication 开放 accessor
 
 **Files:**
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/root/BusinessApplication.java`
+
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/aggregate/root/BusinessApplication.java`
 
 **Interfaces:**
-- Produces: `BusinessApplication.businessExtension()` → `BusinessExtension`(供 annuity-domain 的 AnnuityExtensionResolver 调用)
+
+- Produces: `BusinessApplication.businessExtension()` → `BusinessExtension`(供 annuity-domain 的
+  AnnuityExtensionResolver 调用)
 - Produces: `BusinessApplication.operatorInfo()` → `OperatorInfo`(供 annuity-application 的通知 Action 调用)
 - Produces: `BusinessApplication.businessContext()` → `BusinessContext`(供 annuity-application 的客户画像 Action 调用)
 
 - [ ] **Step 1: 编写失败测试**
 
-Create: `business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/aggregate/root/BusinessApplicationAccessorTest.java`
+Create:
+`business-core-kernel/business-core-domain/src/test/java/com/example/core/domain/aggregate/root/BusinessApplicationAccessorTest.java`
 
 ```java
 package com.example.core.domain.aggregate.root;
@@ -189,12 +208,14 @@ class BusinessApplicationAccessorTest {
 
 - [ ] **Step 2: 运行测试验证失败**
 
-Run: `mvn -pl business-core-kernel/business-core-domain test -Dtest=BusinessApplicationAccessorTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: FAIL with "method businessExtension() not found" / "method operatorInfo() not found" / "method businessContext() not found"
+Run:
+`mvn -pl business-core-kernel/business-core-domain test -Dtest=BusinessApplicationAccessorTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: FAIL with "method businessExtension () not found" / "method operatorInfo () not found" / "method
+businessContext () not found"
 
 - [ ] **Step 3: 在 BusinessApplication 新增 3 个公开 accessor**
 
-在 `BusinessApplication.java` 的 `getBatchId()` 方法之前(约 line 259),新增以下 3 个方法:
+在 `BusinessApplication.java` 的 `getBatchId()` 方法之前 (约 line 259),新增以下 3 个方法:
 
 ```java
   /**
@@ -234,8 +255,9 @@ Expected: FAIL with "method businessExtension() not found" / "method operatorInf
 
 - [ ] **Step 4: 运行测试验证通过**
 
-Run: `mvn -pl business-core-kernel/business-core-domain test -Dtest=BusinessApplicationAccessorTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: PASS(3 个测试)
+Run:
+`mvn -pl business-core-kernel/business-core-domain test -Dtest=BusinessApplicationAccessorTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: PASS (3 个测试)
 
 - [ ] **Step 5: 运行 kernel 全量测试确认无回归**
 
@@ -257,10 +279,12 @@ git commit -m "feat(core-domain): BusinessApplication 开放 businessExtension/o
 ## Task B1: annuity-types 新增 ID 类型
 
 **Files:**
+
 - Create: `annuity-service/annuity-types/src/main/java/com/example/annuity/types/AnnuityEmployeeBatchId.java`
 - Create: `annuity-service/annuity-types/src/main/java/com/example/annuity/types/AnnuityEmployeeDetailId.java`
 
 **Interfaces:**
+
 - Produces: `AnnuityEmployeeBatchId(String value)` 构造器, `value()` 返回 String
 - Produces: `AnnuityEmployeeDetailId(String value)` 构造器, `value()` 返回 String
 
@@ -352,18 +376,27 @@ git commit -m "feat(annuity-types): 新增 AnnuityEmployeeBatchId 和 AnnuityEmp
 ## Task B2: annuity-domain 枚举与值对象
 
 **Files:**
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeBatchStatus.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeDetailStatus.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeMaterial.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/CustomerProfile.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/NotificationType.java`
+
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeBatchStatus.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeDetailStatus.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/AnnuityEmployeeMaterial.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/CustomerProfile.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/valueobject/NotificationType.java`
 
 **Interfaces:**
-- Produces: `AnnuityEmployeeBatchStatus` 枚举(PENDING/PROCESSING/COMPLETED/FAILED)
-- Produces: `AnnuityEmployeeDetailStatus` 枚举(PENDING/VERIFIED/ANOMALY/MATERIAL_READY)
-- Produces: `AnnuityEmployeeMaterial(String materialCode, String materialName, boolean required, boolean uploaded, String description)` record
+
+- Produces: `AnnuityEmployeeBatchStatus` 枚举 (PENDING/PROCESSING/COMPLETED/FAILED)
+- Produces: `AnnuityEmployeeDetailStatus` 枚举 (PENDING/VERIFIED/ANOMALY/MATERIAL_READY)
+- Produces:
+  `AnnuityEmployeeMaterial(String materialCode, String materialName, boolean required, boolean uploaded, String description)`
+  record
 - Produces: `CustomerProfile(CustomerNo customerNo, String riskLevel, List<String> relatedCompanies)` record
-- Produces: `NotificationType` 枚举(MATERIAL_READY/ANOMALY_DETECTED)
+- Produces: `NotificationType` 枚举 (MATERIAL_READY/ANOMALY_DETECTED)
 
 - [ ] **Step 1: 创建 AnnuityEmployeeBatchStatus**
 
@@ -523,20 +556,27 @@ git commit -m "feat(annuity-domain): 新增批次/明细状态枚举、材料值
 ## Task B3: AnnuityEmployeeBatch 聚合根与 AnnuityEmployeeDetail 实体
 
 **Files:**
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/entity/AnnuityEmployeeDetail.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/root/AnnuityEmployeeBatch.java`
+
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/entity/AnnuityEmployeeDetail.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/aggregate/root/AnnuityEmployeeBatch.java`
 
 **Interfaces:**
+
 - Consumes: `AnnuityEmployeeBatchId`, `AnnuityEmployeeDetailId`(from Task B1)
 - Consumes: `AnnuityEmployeeBatchStatus`, `AnnuityEmployeeDetailStatus`, `AnnuityEmployeeMaterial`(from Task B2)
 - Consumes: `ApplicationId` from kernel
 - Produces: `AnnuityEmployeeBatch.create(...)` 工厂方法
-- Produces: `AnnuityEmployeeBatch.addDetail/markDetailProcessed/markDetailAnomaly/complete/fail/isAllProcessed/pendingDetails/verifiedDetails/attachDetail/findDetail` 方法
+- Produces:
+  `AnnuityEmployeeBatch.addDetail/markDetailProcessed/markDetailAnomaly/complete/fail/isAllProcessed/pendingDetails/verifiedDetails/attachDetail/findDetail`
+  方法
 - Produces: `AnnuityEmployeeDetail.verify/markAnomaly/assignMaterials/isMaterialSatisfied` 方法
 
 - [ ] **Step 1: 编写 AnnuityEmployeeDetail 失败测试**
 
-Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/aggregate/entity/AnnuityEmployeeDetailTest.java`
+Create:
+`annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/aggregate/entity/AnnuityEmployeeDetailTest.java`
 
 ```java
 package com.example.annuity.domain.aggregate.entity;
@@ -637,8 +677,9 @@ class AnnuityEmployeeDetailTest {
 
 - [ ] **Step 2: 运行测试验证失败**
 
-Run: `mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeDetailTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: FAIL(类不存在)
+Run:
+`mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeDetailTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: FAIL (类不存在)
 
 - [ ] **Step 3: 创建 AnnuityEmployeeDetail 实体**
 
@@ -787,12 +828,14 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
 
 - [ ] **Step 4: 运行测试验证通过**
 
-Run: `mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeDetailTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: PASS(6 个测试)
+Run:
+`mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeDetailTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: PASS (6 个测试)
 
 - [ ] **Step 5: 编写 AnnuityEmployeeBatch 失败测试**
 
-Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/aggregate/root/AnnuityEmployeeBatchTest.java`
+Create:
+`annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/aggregate/root/AnnuityEmployeeBatchTest.java`
 
 ```java
 package com.example.annuity.domain.aggregate.root;
@@ -917,8 +960,9 @@ class AnnuityEmployeeBatchTest {
 
 - [ ] **Step 6: 运行测试验证失败**
 
-Run: `mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeBatchTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: FAIL(类不存在)
+Run:
+`mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeBatchTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: FAIL (类不存在)
 
 - [ ] **Step 7: 创建 AnnuityEmployeeBatch 聚合根**
 
@@ -1108,8 +1152,9 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
 
 - [ ] **Step 8: 运行测试验证通过**
 
-Run: `mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeBatchTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: PASS(8 个测试)
+Run:
+`mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityEmployeeBatchTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: PASS (8 个测试)
 
 - [ ] **Step 9: 提交**
 
@@ -1124,14 +1169,19 @@ git commit -m "feat(annuity-domain): 新增 AnnuityEmployeeBatch 聚合根与 An
 ## Task B4: Gateway 接口与 Repository 接口
 
 **Files:**
+
 - Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/gateway/AnnuityCustomerGateway.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/gateway/AnnuityNotificationGateway.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/repository/AnnuityEmployeeBatchRepository.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/gateway/AnnuityNotificationGateway.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/repository/AnnuityEmployeeBatchRepository.java`
 
 **Interfaces:**
+
 - Produces: `AnnuityCustomerGateway.queryCustomer(CustomerNo)` → `CustomerProfile`
 - Produces: `AnnuityNotificationGateway.notifyOperator(UserNo, NotificationType, String)` → void
-- Produces: `AnnuityEmployeeBatchRepository.save(AnnuityEmployeeBatch)` / `findByApplicationId(ApplicationId)` / `load(AnnuityEmployeeBatchId)`
+- Produces: `AnnuityEmployeeBatchRepository.save(AnnuityEmployeeBatch)` / `findByApplicationId(ApplicationId)` /
+  `load(AnnuityEmployeeBatchId)`
 
 - [ ] **Step 1: 创建 AnnuityCustomerGateway 接口**
 
@@ -1236,31 +1286,42 @@ git commit -m "feat(annuity-domain): 新增 AnnuityCustomerGateway、AnnuityNoti
 
 ---
 
-## Task B5: Domain Service 实现(规则引擎与 Resolver)
+## Task B5: Domain Service 实现 (规则引擎与 Resolver)
 
 **Files:**
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityExtensionResolver.java`
+
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityExtensionResolver.java`
 - Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityContributionRule.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityForeignInvestmentRule.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityEmployeeVerificationRule.java`
-- Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityEmployeeMaterialRule.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityForeignInvestmentRule.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityEmployeeVerificationRule.java`
+- Create:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityEmployeeMaterialRule.java`
 - Create: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/service/AnnuityEmployeeMapper.java`
-- Modify: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/errorcode/AnnuityDomainErrorCode.java` — 扩展错误码
-- Modify: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extractor/AnnuityFactExtractor.java` — 移除反射,改用 Resolver
+- Modify:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/errorcode/AnnuityDomainErrorCode.java` —
+  扩展错误码
+- Modify:
+  `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extractor/AnnuityFactExtractor.java` —
+  移除反射,改用 Resolver
 
 **Interfaces:**
+
 - Consumes: `BusinessApplication.businessExtension()`(from Task A1)
 - Consumes: `AnnuityApplicationExtension`(已存在)
 - Produces: `AnnuityExtensionResolver.resolve(BusinessApplication)` → `AnnuityApplicationExtension`
 - Produces: `AnnuityContributionRule.validate(AnnuityApplicationExtension)` → `Optional<String>`
 - Produces: `AnnuityForeignInvestmentRule.validate(AnnuityApplicationExtension, CustomerProfile)` → `Optional<String>`
 - Produces: `AnnuityEmployeeVerificationRule.verify(AnnuityEmployeeDetail)` → `Optional<String>`
-- Produces: `AnnuityEmployeeMaterialRule.calculate(AnnuityEmployeeDetail, BusinessMetaContext)` → `List<AnnuityEmployeeMaterial>`
+- Produces: `AnnuityEmployeeMaterialRule.calculate(AnnuityEmployeeDetail, BusinessMetaContext)` →
+  `List<AnnuityEmployeeMaterial>`
 - Produces: `AnnuityEmployeeMapper.mapToEntity(AnnuityEmployeeDTO, ApplicationId, int)` → `AnnuityEmployeeDetail`
 
 - [ ] **Step 1: 扩展 AnnuityDomainErrorCode**
 
-在现有枚举中追加以下条目(在 `INVALID_EXTENSION_DATA` 之后):
+在现有枚举中追加以下条目 (在 `INVALID_EXTENSION_DATA` 之后):
 
 ```java
   EMPLOYEE_VERIFICATION_FAILED("300009", "[员工明细核查失败]{}"),
@@ -1541,7 +1602,9 @@ public class AnnuityEmployeeMapper {
 }
 ```
 
-注:`AnnuityEmployeeDTO` 需先在 annuity-api 创建(Task C1 会定义),此处引用。为避免编译错误,本 Task 先创建一个临时 placeholder,Task C1 完成后替换。实际上,根据依赖关系,应将 `AnnuityEmployeeDTO` 的创建移到本 Task 之前。调整:在 Step 7 之前先创建 `AnnuityEmployeeDTO`。
+注:`AnnuityEmployeeDTO` 需先在 annuity-api 创建 (Task C1 会定义),此处引用。为避免编译错误,本 Task 先创建一个临时
+placeholder,Task C1 完成后替换。实际上,根据依赖关系,应将 `AnnuityEmployeeDTO` 的创建移到本 Task 之前。调整:在 Step 7 之前先创建
+`AnnuityEmployeeDTO`。
 
 - [ ] **Step 8: 在 annuity-api 创建 AnnuityEmployeeDTO**
 
@@ -1584,7 +1647,8 @@ public record AnnuityEmployeeDTO(
 
 - [ ] **Step 9: 编写 Domain Service 测试**
 
-Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityContributionRuleTest.java`
+Create:
+`annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityContributionRuleTest.java`
 
 ```java
 package com.example.annuity.domain.service;
@@ -1643,18 +1707,22 @@ class AnnuityContributionRuleTest {
 
 - [ ] **Step 10: 运行测试验证通过**
 
-Run: `mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityContributionRuleTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: PASS(4 个测试)
+Run:
+`mvn -pl annuity-service/annuity-domain test -Dtest=AnnuityContributionRuleTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: PASS (4 个测试)
 
 - [ ] **Step 11: 修改 AnnuityFactExtractor 移除反射**
 
 Modify: `annuity-service/annuity-domain/src/main/java/com/example/annuity/domain/extractor/AnnuityFactExtractor.java`
 
-替换 `readExtension` 方法和相关字段,改为通过 `AnnuityExtensionResolver` 注入(注意:由于 `AnnuityFactExtractor` 是 `@DomainService`,不能直接构造注入,需要改为接收 `AnnuityExtensionResolver` 作为方法参数或字段)。
+替换 `readExtension` 方法和相关字段,改为通过 `AnnuityExtensionResolver` 注入 (注意:由于 `AnnuityFactExtractor` 是
+`@DomainService`,不能直接构造注入,需要改为接收 `AnnuityExtensionResolver` 作为方法参数或字段)。
 
-由于 `@DomainService` 类被 infrastructure 层的 `DomainServiceConfiguration` 扫描注册为 Bean,可以添加 `final` 字段并通过构造函数注入(需要 infrastructure 层的 `DomainServiceBeanRegistrar` 支持构造注入,或改为字段注入)。
+由于 `@DomainService` 类被 infrastructure 层的 `DomainServiceConfiguration` 扫描注册为 Bean,可以添加 `final` 字段并通过构造函数注入
+(需要 infrastructure 层的 `DomainServiceBeanRegistrar` 支持构造注入,或改为字段注入)。
 
-查看 kernel 的 `DomainServiceConfiguration` 注册机制后,最简方案是让 `AnnuityExtensionResolver` 成为 `AnnuityFactExtractor` 的构造函数参数。修改 `AnnuityFactExtractor`:
+查看 kernel 的 `DomainServiceConfiguration` 注册机制后,最简方案是让 `AnnuityExtensionResolver` 成为
+`AnnuityFactExtractor` 的构造函数参数。修改 `AnnuityFactExtractor`:
 
 ```java
 package com.example.annuity.domain.extractor;
@@ -1735,7 +1803,7 @@ public class AnnuityFactExtractor implements BusinessFactExtractor {
 - [ ] **Step 12: 验证编译和测试**
 
 Run: `mvn -pl annuity-service/annuity-domain test`
-Expected: PASS(所有现有测试 + 新增测试)
+Expected: PASS (所有现有测试 + 新增测试)
 
 - [ ] **Step 13: 提交**
 
@@ -1749,10 +1817,15 @@ git commit -m "feat(annuity-domain): 新增 6 个 domain service 规则引擎与
 ## Task B6: Domain Service 单元测试补全
 
 **Files:**
-- Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityForeignInvestmentRuleTest.java`
-- Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityEmployeeVerificationRuleTest.java`
-- Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityEmployeeMaterialRuleTest.java`
-- Create: `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityExtensionResolverTest.java`
+
+- Create:
+  `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityForeignInvestmentRuleTest.java`
+- Create:
+  `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityEmployeeVerificationRuleTest.java`
+- Create:
+  `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityEmployeeMaterialRuleTest.java`
+- Create:
+  `annuity-service/annuity-domain/src/test/java/com/example/annuity/domain/service/AnnuityExtensionResolverTest.java`
 
 - [ ] **Step 1: 创建 AnnuityForeignInvestmentRuleTest**
 
@@ -2047,7 +2120,7 @@ class AnnuityExtensionResolverTest {
 - [ ] **Step 5: 运行全部 domain 层测试**
 
 Run: `mvn -pl annuity-service/annuity-domain test`
-Expected: PASS(所有测试)
+Expected: PASS (所有测试)
 
 - [ ] **Step 6: 提交**
 
@@ -2060,19 +2133,24 @@ git commit -m "test(annuity-domain): 补全 4 个 domain service 单元测试(�
 
 # Phase C: annuity-application Handler/Action 实现
 
-## Task C1: AnnuityDataVerificationHandler(StepActionHandler)
+## Task C1: AnnuityDataVerificationHandler (StepActionHandler)
 
 **Files:**
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/handler/AnnuityDataVerificationHandler.java`
+
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/handler/AnnuityDataVerificationHandler.java`
 
 **Interfaces:**
-- Consumes: `AnnuityExtensionResolver`, `AnnuityEmployeeVerificationRule`, `AnnuityEmployeeBatchRepository`(from Phase B)
+
+- Consumes: `AnnuityExtensionResolver`, `AnnuityEmployeeVerificationRule`, `AnnuityEmployeeBatchRepository`(from Phase
+  B)
 - Produces: `AnnuityDataVerificationHandler.handlerName()` = `"annuityDataVerificationHandler"`
 - Produces: `AnnuityDataVerificationHandler.execute(BusinessApplication, BusinessMetaContext)` → `StepExecutionStatus`
 
 - [ ] **Step 1: 编写失败测试**
 
-Create: `annuity-service/annuity-application/src/test/java/com/example/annuity/application/handler/AnnuityDataVerificationHandlerTest.java`
+Create:
+`annuity-service/annuity-application/src/test/java/com/example/annuity/application/handler/AnnuityDataVerificationHandlerTest.java`
 
 ```java
 package com.example.annuity.application.handler;
@@ -2138,8 +2216,9 @@ class AnnuityDataVerificationHandlerTest {
 
 - [ ] **Step 2: 运行测试验证失败**
 
-Run: `mvn -pl annuity-service/annuity-application test -Dtest=AnnuityDataVerificationHandlerTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: FAIL(类不存在)
+Run:
+`mvn -pl annuity-service/annuity-application test -Dtest=AnnuityDataVerificationHandlerTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: FAIL (类不存在)
 
 - [ ] **Step 3: 创建 AnnuityDataVerificationHandler**
 
@@ -2224,7 +2303,8 @@ public class AnnuityDataVerificationHandler implements StepActionHandler {
 
 - [ ] **Step 4: 运行测试验证通过**
 
-Run: `mvn -pl annuity-service/annuity-application test -Dtest=AnnuityDataVerificationHandlerTest -Dsurefire.failIfNoSpecifiedTests=false`
+Run:
+`mvn -pl annuity-service/annuity-application test -Dtest=AnnuityDataVerificationHandlerTest -Dsurefire.failIfNoSpecifiedTests=false`
 Expected: PASS
 
 - [ ] **Step 5: 提交**
@@ -2237,12 +2317,16 @@ git commit -m "feat(annuity-application): 新增 AnnuityDataVerificationHandler 
 
 ---
 
-## Task C2: 校验类 StepExtensionAction(3 个)
+## Task C2: 校验类 StepExtensionAction (3 个)
 
 **Files:**
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityContributionValidationAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityForeignInvestmentValidationAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityEmployeeCountValidationAction.java`
+
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityContributionValidationAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityForeignInvestmentValidationAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityEmployeeCountValidationAction.java`
 
 - [ ] **Step 1: 创建 AnnuityContributionValidationAction**
 
@@ -2384,7 +2468,8 @@ public class AnnuityEmployeeCountValidationAction implements StepExtensionAction
 
 - [ ] **Step 4: 编写单元测试**
 
-Create: `annuity-service/annuity-application/src/test/java/com/example/annuity/application/extension/AnnuityContributionValidationActionTest.java`
+Create:
+`annuity-service/annuity-application/src/test/java/com/example/annuity/application/extension/AnnuityContributionValidationActionTest.java`
 
 ```java
 package com.example.annuity.application.extension;
@@ -2450,7 +2535,8 @@ class AnnuityContributionValidationActionTest {
 
 - [ ] **Step 5: 运行测试**
 
-Run: `mvn -pl annuity-service/annuity-application test -Dtest=AnnuityContributionValidationActionTest -Dsurefire.failIfNoSpecifiedTests=false`
+Run:
+`mvn -pl annuity-service/annuity-application test -Dtest=AnnuityContributionValidationActionTest -Dsurefire.failIfNoSpecifiedTests=false`
 Expected: PASS
 
 - [ ] **Step 6: 提交**
@@ -2465,14 +2551,20 @@ git commit -m "feat(annuity-application): 新增 3 个校验类 StepExtensionAct
 
 ---
 
-## Task C3: 丰富/摄入/明细材料/通知/审计类 Action(5 个)
+## Task C3: 丰富/摄入/明细材料/通知/审计类 Action (5 个)
 
 **Files:**
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityCustomerProfileEnrichmentAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityDetailIngestionAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityEmployeeMaterialAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityMaterialPreparedNotificationAction.java`
-- Create: `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityAuditLogAction.java`
+
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityCustomerProfileEnrichmentAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityDetailIngestionAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityEmployeeMaterialAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityMaterialPreparedNotificationAction.java`
+- Create:
+  `annuity-service/annuity-application/src/main/java/com/example/annuity/application/extension/AnnuityAuditLogAction.java`
 
 - [ ] **Step 1: 创建 AnnuityCustomerProfileEnrichmentAction**
 
@@ -2776,7 +2868,8 @@ git commit -m "feat(annuity-application): 新增 5 个 StepExtensionAction(丰�
 
 - [ ] **Step 1: 创建 AnnuityEmployeeMaterialActionTest**
 
-Create: `annuity-service/annuity-application/src/test/java/com/example/annuity/application/extension/AnnuityEmployeeMaterialActionTest.java`
+Create:
+`annuity-service/annuity-application/src/test/java/com/example/annuity/application/extension/AnnuityEmployeeMaterialActionTest.java`
 
 ```java
 package com.example.annuity.application.extension;
@@ -2857,10 +2950,15 @@ git commit -m "test(annuity-application): 补全 AnnuityEmployeeMaterialAction �
 ## Task D1: DO 实体与 Mapper
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/AnnuityEmployeeBatchDO.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/AnnuityEmployeeDetailDO.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/AnnuityEmployeeBatchMapper.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/AnnuityEmployeeDetailMapper.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/AnnuityEmployeeBatchDO.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/entity/AnnuityEmployeeDetailDO.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/AnnuityEmployeeBatchMapper.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/mapper/AnnuityEmployeeDetailMapper.java`
 
 - [ ] **Step 1: 创建 AnnuityEmployeeBatchDO**
 
@@ -3007,10 +3105,16 @@ git commit -m "feat(annuity-infrastructure): 新增批次与明细 DO 及 Mapper
 ## Task D2: Data Converter 与 Repository 实现
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/AnnuityEmployeeBatchDataConverter.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/AnnuityEmployeeDetailDataConverter.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/AnnuityEmployeeBatchRepositoryImpl.java`
-- Modify: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/KernelAggregateReflector.java` — 移除 readExtension 方法
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/AnnuityEmployeeBatchDataConverter.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/AnnuityEmployeeDetailDataConverter.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/repository/AnnuityEmployeeBatchRepositoryImpl.java`
+- Modify:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/converter/KernelAggregateReflector.java` —
+  移除 readExtension 方法
 
 - [ ] **Step 1: 创建 AnnuityEmployeeBatchDataConverter**
 
@@ -3240,7 +3344,8 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
 
 - [ ] **Step 4: 修改 KernelAggregateReflector 移除 readExtension**
 
-读取当前 `KernelAggregateReflector.java`,移除 `readExtension(BusinessApplication)` 方法及相关 import,因为 kernel 已通过 Task A1 开放 `businessExtension()` accessor。
+读取当前 `KernelAggregateReflector.java`,移除 `readExtension(BusinessApplication)` 方法及相关 import,因为 kernel 已通过
+Task A1 开放 `businessExtension()` accessor。
 
 - [ ] **Step 5: 验证编译**
 
@@ -3261,8 +3366,11 @@ git commit -m "feat(annuity-infrastructure): 新增批次/明细 Converter 与 R
 ## Task D3: Mock Gateway 实现
 
 **Files:**
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockAnnuityCustomerGateway.java`
-- Create: `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockAnnuityNotificationGateway.java`
+
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockAnnuityCustomerGateway.java`
+- Create:
+  `annuity-service/annuity-infrastructure/src/main/java/com/example/annuity/infrastructure/gateway/MockAnnuityNotificationGateway.java`
 
 - [ ] **Step 1: 创建 MockAnnuityCustomerGateway**
 
@@ -3335,7 +3443,7 @@ public class MockAnnuityNotificationGateway implements AnnuityNotificationGatewa
 
   @Override
   public void notifyOperator(UserNo operatorNo, NotificationType type, String content) {
-    log.info("[Mock] 发送通知, operator={}, type={}, content={}", operatorNo.value(), type, content);
+    log.info("[Mock] 发送通知, operator={}, IdentityType={}, content={}", operatorNo.value(), type, content);
     sentNotifications.add(new NotificationRecord(operatorNo, type, content));
   }
 
@@ -3369,6 +3477,7 @@ git commit -m "feat(annuity-infrastructure): 新增 Mock 客户网关与通知�
 ## Task D4: Schema 文件更新
 
 **Files:**
+
 - Modify: `annuity-service/annuity-infrastructure/src/main/resources/schema-pg.sql` — 追加 2 表
 - Modify: `annuity-service/annuity-infrastructure/src/main/resources/schema-mysql.sql` — 追加 2 表
 - Modify: `annuity-service/annuity-starter/src/test/resources/schema-h2.sql` — 追加 2 表
@@ -3427,7 +3536,7 @@ CREATE INDEX IF NOT EXISTS idx_annuity_detail_status ON t_annuity_employee_detai
 CREATE UNIQUE INDEX IF NOT EXISTS uk_annuity_detail_idcard ON t_annuity_employee_detail(batch_id, id_card_no);
 ```
 
-- [ ] **Step 2: 在 schema-mysql.sql 末尾追加同结构,类型映射 JSONB→JSON, BOOLEAN→TINYINT(1), TIMESTAMP→DATETIME**
+- [ ] **Step 2: 在 schema-mysql.sql 末尾追加同结构,类型映射 JSONB→JSON, BOOLEAN→TINYINT (1), TIMESTAMP→DATETIME**
 
 - [ ] **Step 3: 在 schema-h2.sql 末尾追加 H2 兼容版**
 
@@ -3498,6 +3607,7 @@ git commit -m "feat(annuity-infrastructure): 新增员工批次与明细表 sche
 ## Task E1: 更新 step-routes.json 与端到端测试
 
 **Files:**
+
 - Modify: `annuity-service/annuity-infrastructure/src/main/resources/config/step-routes.json` — 更新路由配置
 - Modify: `annuity-service/annuity-starter/src/test/java/com/example/annuity/AnnuityEndToEndTest.java` — 新增 4 个测试用例
 
@@ -3637,8 +3747,9 @@ git commit -m "feat(annuity-infrastructure): 新增员工批次与明细表 sche
 
 - [ ] **Step 3: 运行端到端测试**
 
-Run: `mvn -pl annuity-service/annuity-starter -am test -Dtest=AnnuityEndToEndTest -Dsurefire.failIfNoSpecifiedTests=false`
-Expected: PASS(8 个测试)
+Run:
+`mvn -pl annuity-service/annuity-starter -am test -Dtest=AnnuityEndToEndTest -Dsurefire.failIfNoSpecifiedTests=false`
+Expected: PASS (8 个测试)
 
 - [ ] **Step 4: 提交**
 
@@ -3659,7 +3770,7 @@ git commit -m "feat(annuity-starter): 更新 step-routes.json 4 插槽配置并�
 - [ ] **Step 1: 全量编译验证**
 
 Run: `mvn clean compile -DskipTests`
-Expected: BUILD SUCCESS,所有模块编译通过(含 kernel 与 annuity-service 七层)
+Expected: BUILD SUCCESS,所有模块编译通过 (含 kernel 与 annuity-service 七层)
 
 - [ ] **Step 2: 运行 annuity-service 全量测试**
 
@@ -3684,39 +3795,41 @@ git commit -m "chore(annuity): 全量构建验证通过"
 
 ## 1. Spec Coverage
 
-| Spec 要求 | 实现位置 | 状态 |
-|----------|---------|------|
-| 实现 `StepActionHandler` SPI | Task C1 `AnnuityDataVerificationHandler` | ✅ |
-| 实现 `StepExtensionAction` SPI | Task C2-C4 共 8 个 Action | ✅ |
-| 业务规则在 domain 层 | Task B3-B6 共 4 个 `@DomainService` | ✅ |
-| Handler/Action 在 application 层做编排 | Task C1-C4 委托 domain service | ✅ |
-| 业务服务定义自己的聚合根 | Task B1 `AnnuityEmployeeBatch` | ✅ |
-| 通过 ID 引用 kernel 聚合根 | Task B1 `ApplicationId` 字段 | ✅ |
-| 消除强制类型转换 | Task B3 `AnnuityExtensionResolver` | ✅ |
-| 消除反射访问 | Task A1 `businessExtension()` accessor + Task D2 移除 `readExtension` | ✅ |
-| 完整端到端业务链路演示 | Task E1 5 步路由 + 8 个测试用例 | ✅ |
-| kernel 4 插槽设计 | Task E1 `step-routes.json` 使用 `preValidations`/`mainProcessor`/`detailProcessors`/`sideEffects` | ✅ |
-| 复用 kernel `PlanMaterialPreparationHandler` | Task E1 MATERIAL_PREPARATION 步骤 `mainProcessor` | ✅ |
-| 三套 schema(pg/mysql/h2) | Task D4 | ✅ |
-| Mock Gateway 演示 | Task D3 两个 Mock 实现 | ✅ |
+| Spec 要求                                    | 实现位置                                                                                          | 状态 |
+|----------------------------------------------|---------------------------------------------------------------------------------------------------|------|
+| 实现 `StepActionHandler` SPI                 | Task C1 `AnnuityDataVerificationHandler`                                                          | ✅   |
+| 实现 `StepExtensionAction` SPI               | Task C2-C4 共 8 个 Action                                                                         | ✅   |
+| 业务规则在 domain 层                         | Task B3-B6 共 4 个 `@DomainService`                                                               | ✅   |
+| Handler/Action 在 application 层做编排       | Task C1-C4 委托 domain service                                                                    | ✅   |
+| 业务服务定义自己的聚合根                     | Task B1 `AnnuityEmployeeBatch`                                                                    | ✅   |
+| 通过 ID 引用 kernel 聚合根                   | Task B1 `ApplicationId` 字段                                                                      | ✅   |
+| 消除强制类型转换                             | Task B3 `AnnuityExtensionResolver`                                                                | ✅   |
+| 消除反射访问                                 | Task A1 `businessExtension()` accessor + Task D2 移除 `readExtension`                             | ✅   |
+| 完整端到端业务链路演示                       | Task E1 5 步路由 + 8 个测试用例                                                                   | ✅   |
+| kernel 4 插槽设计                            | Task E1 `step-routes.json` 使用 `preValidations`/`mainProcessor`/`detailProcessors`/`sideEffects` | ✅   |
+| 复用 kernel `PlanMaterialPreparationHandler` | Task E1 MATERIAL_PREPARATION 步骤 `mainProcessor`                                                 | ✅   |
+| 三套 schema(pg/mysql/h2)                     | Task D4                                                                                           | ✅   |
+| Mock Gateway 演示                            | Task D3 两个 Mock 实现                                                                            | ✅   |
 
 ## 2. Placeholder Scan
 
 - ✅ 无 "TBD" / "TODO" / "implement later"
 - ✅ 所有代码步骤包含完整代码块
 - ✅ 所有测试步骤包含具体断言
-- ✅ Task D4 Step 2 指明了 MySQL 与 PG 的类型差异映射规则,虽未完整粘贴但规则明确(JSONB→JSON, BOOLEAN→TINYINT(1), TIMESTAMP→DATETIME)
+- ✅ Task D4 Step 2 指明了 MySQL 与 PG 的类型差异映射规则,虽未完整粘贴但规则明确 (JSONB→JSON, BOOLEAN→TINYINT (1),
+  TIMESTAMP→DATETIME)
 - ✅ 所有 commit 命令包含具体 message
 
 ## 3. Type Consistency
 
 - `AnnuityEmployeeBatchId` / `AnnuityEmployeeDetailId` 在 types 层定义,在 domain/application/infrastructure 层引用 ✅
-- `AnnuityEmployeeBatchStatus` / `AnnuityEmployeeDetailStatus` 枚举在 domain 层定义,在 application 和 infrastructure 层引用 ✅
+- `AnnuityEmployeeBatchStatus` / `AnnuityEmployeeDetailStatus` 枚举在 domain 层定义,在 application 和 infrastructure 层引用
+  ✅
 - `AnnuityExtensionResolver` 返回 `AnnuityApplicationExtension`,在 8 个 Action 中通过构造函数注入 ✅
 - `AnnuityEmployeeBatchRepository` 接口在 domain 层定义,`AnnuityEmployeeBatchRepositoryImpl` 在 infrastructure 层实现 ✅
 - `AnnuityCustomerGateway` / `AnnuityNotificationGateway` 接口在 domain 层定义,Mock 实现在 infrastructure 层 ✅
 - `AnnuityEmployeeBatchDataConverter` / `AnnuityEmployeeDetailDataConverter` 在 infrastructure 层,被 Repository 注入 ✅
-- Handler `handlerName()` 返回值与 `step-routes.json` 的 `mainProcessor` 字段一致(`annuityDataVerificationHandler`) ✅
+- Handler `handlerName()` 返回值与 `step-routes.json` 的 `mainProcessor` 字段一致 (`annuityDataVerificationHandler`) ✅
 - Action `actionName()` 返回值与 `step-routes.json` 的 `beanName` 字段一致 ✅
 - kernel `BusinessApplication.businessExtension()` 在 Task A1 新增,在 Task C 的 Action 中使用 ✅
 

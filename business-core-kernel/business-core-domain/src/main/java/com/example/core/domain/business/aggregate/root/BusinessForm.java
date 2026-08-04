@@ -2,17 +2,17 @@ package com.example.core.domain.business.aggregate.root;
 
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.BatchId;
+import com.example.shared.identifier.id.FormId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,8 +79,8 @@ public class BusinessForm extends AggregateRoot<FormId> {
       return;
     }
     if (this.formStatus != FormStatus.UPLOADED
-        && this.formStatus != FormStatus.PARSED
-        && this.formStatus != FormStatus.WAITING_UPLOAD) {
+      && this.formStatus != FormStatus.PARSED
+      && this.formStatus != FormStatus.WAITING_UPLOAD) {
       throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
         .withLogDetail("只有已上传/已解析/待上传的表单才能删除, FormId: %s, status: %s"
           .formatted(this.id().value(), this.formStatus));

@@ -7,8 +7,8 @@ import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.repository.FormRepository;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.FormId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.FormId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,8 +87,8 @@ public class FormRepositoryImpl implements FormRepository {
   @Override
   public List<BusinessForm> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -108,13 +108,13 @@ public class FormRepositoryImpl implements FormRepository {
       return Optional.empty();
     }
     FormDO aDo = mapper.selectOneByQuery(
-        QueryWrapper.create()
-            .where(FORM_DO.ID.in(
-                QueryWrapper.create()
-                    .select(APPLICATION_DO.FORM_ID)
-                    .from(APPLICATION_DO)
-                    .where(APPLICATION_DO.ID.eq(applicationId.value()))
-            ))
+      QueryWrapper.create()
+        .where(FORM_DO.ID.in(
+          QueryWrapper.create()
+            .select(APPLICATION_DO.FORM_ID)
+            .from(APPLICATION_DO)
+            .where(APPLICATION_DO.ID.eq(applicationId.value()))
+        ))
     );
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
@@ -123,7 +123,7 @@ public class FormRepositoryImpl implements FormRepository {
    * 发布聚合根内部注册的领域事件
    */
   private void publishDomainEvents(BusinessForm form) {
-    List<DomainEvent> events = form.getDomainEvents();
+    List<DomainEvent> events = form.domainEvents();
     if (events.isEmpty()) {
       return;
     }
@@ -131,10 +131,10 @@ public class FormRepositoryImpl implements FormRepository {
       try {
         eventPublisher.publishEvent(event);
         log.debug("发布领域事件: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName());
+          event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {
         log.error("发布领域事件失败: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName(), e);
+          event.eventId(), event.getClass().getSimpleName(), e);
       }
     }
     form.clearDomainEvents();

@@ -30,27 +30,27 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("/core/form")
 public interface BusinessFormApi {
 
-    /**
-     * 申请文件上传临时凭证。
-     */
-    @PostExchange("/upload-token")
-    ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command);
+  /**
+   * 申请文件上传临时凭证。
+   */
+  @PostExchange("/upload-token")
+  ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command);
 
-    /**
-     * 确认文件已上传(前端直传文件服务后回调)。
-     */
-    @PostExchange("/confirm-upload")
-    ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command);
+  /**
+   * 确认文件已上传(前端直传文件服务后回调)。
+   */
+  @PostExchange("/confirm-upload")
+  ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command);
 
-    /**
-     * 删除已上传的表单。
-     */
-    @PostExchange("/delete")
-    ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command);
+  /**
+   * 删除已上传的表单。
+   */
+  @PostExchange("/delete")
+  ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command);
 
-    /**
-     * 查询表单状态。
-     */
-    @PostExchange("/status")
-    ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query);
+  /**
+   * 查询表单状态。
+   */
+  @PostExchange("/status")
+  ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query);
 }

@@ -11,13 +11,13 @@
 
 ## 服务端口规划
 
-| 服务 | 端口 | Nacos 服务名 |
-|------|------|--------------|
-| demo-gateway | 18080 | gateway |
-| approval-service | 18081 | approval-service |
-| file-service | 18082 | file-service |
-| integration-service | 18083 | integration |
-| annuity-service | 18090 | annuity-service |
+| 服务                | 端口  | Nacos 服务名     |
+|---------------------|-------|------------------|
+| demo-gateway        | 18080 | gateway          |
+| approval-service    | 18081 | approval-service |
+| file-service        | 18082 | file-service     |
+| integration-service | 18083 | integration      |
+| annuity-service     | 18090 | annuity-service  |
 
 ## 启动顺序
 
@@ -50,7 +50,8 @@ curl -X POST http://localhost:18080/annuity/api/annuity/test/link-approval \
   -d '{"approver": "test-user"}'
 ```
 
-**预期响应**：返回 `ApiResult<Object>`，data 为 approval-service 的待审批列表查询结果（即使列表为空，只要返回了 ApiResult 结构即说明链路连通）。
+**预期响应**：返回 `ApiResult<Object>`，data 为 approval-service 的待审批列表查询结果（即使列表为空，只要返回了 ApiResult
+结构即说明链路连通）。
 
 ---
 
@@ -164,18 +165,19 @@ curl -X POST http://localhost:18080/integration/api/v1/trade/portfolio/balance \
 
 ## 链路覆盖矩阵
 
-| 编号 | 链路 | 验证点 |
-|------|------|--------|
-| 1 | 网关 → annuity | 网关路由配置 + annuity 服务启动 |
-| 2 | 网关 → annuity → approval | @HttpExchange 客户端 + LoadBalancer + approval 服务 |
-| 3 | 网关 → annuity → file | @HttpExchange 客户端 + LoadBalancer + file 服务 |
-| 4 | 网关 → annuity → integration | @HttpExchange 客户端 + LoadBalancer + integration 服务 |
-| 5 | 网关 → approval | 网关路由 + approval 服务直接访问 |
-| 6 | 网关 → file | 网关路由 + file 服务直接访问 |
-| 7 | 网关 → integration | 网关路由 + integration 服务直接访问 |
+| 编号 | 链路                         | 验证点                                                 |
+|------|------------------------------|--------------------------------------------------------|
+| 1    | 网关 → annuity               | 网关路由配置 + annuity 服务启动                        |
+| 2    | 网关 → annuity → approval    | @HttpExchange 客户端 + LoadBalancer + approval 服务    |
+| 3    | 网关 → annuity → file        | @HttpExchange 客户端 + LoadBalancer + file 服务        |
+| 4    | 网关 → annuity → integration | @HttpExchange 客户端 + LoadBalancer + integration 服务 |
+| 5    | 网关 → approval              | 网关路由 + approval 服务直接访问                       |
+| 6    | 网关 → file                  | 网关路由 + file 服务直接访问                           |
+| 7    | 网关 → integration           | 网关路由 + integration 服务直接访问                    |
 
 ## 测试说明
 
-- 命令 2/3/4 的返回数据来自下游服务，即使下游查不到数据（如 fileTaskId 不存在），只要返回了 `ApiResult` 结构（code/message/data 字段）即说明链路连通。
+- 命令 2/3/4 的返回数据来自下游服务，即使下游查不到数据（如 fileTaskId 不存在），只要返回了 `ApiResult` 结构（code/message/data
+  字段）即说明链路连通。
 - 命令 5 会真实创建审批流记录，重复执行会生成多条数据。
 - 所有命令通过网关（18080）访问，网关通过 StripPrefix=1 去除路径前缀后转发到对应服务。

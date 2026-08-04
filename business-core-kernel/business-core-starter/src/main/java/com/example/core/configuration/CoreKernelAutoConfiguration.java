@@ -42,21 +42,21 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = "com.example.core")
 public class CoreKernelAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public SessionContextResolver sessionContextResolver(ObjectMapper objectMapper) {
-        return new SessionContextResolver(objectMapper);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public SessionContextResolver sessionContextResolver(ObjectMapper objectMapper) {
+    return new SessionContextResolver(objectMapper);
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public BusinessMetaContextAssembler businessMetaContextAssembler() {
-        return new BusinessMetaContextAssembler();
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  public BusinessMetaContextAssembler businessMetaContextAssembler() {
+    return new BusinessMetaContextAssembler();
+  }
 
-    @Bean
-    @ConditionalOnMissingBean(BusinessAccessGuard.class)
-    public BusinessAccessGuard defaultBusinessAccessGuard() {
-        return new DefaultBusinessAccessGuard();
-    }
+  @Bean
+  @ConditionalOnMissingBean(BusinessAccessGuard.class)
+  public BusinessAccessGuard defaultBusinessAccessGuard() {
+    return new DefaultBusinessAccessGuard();
+  }
 }

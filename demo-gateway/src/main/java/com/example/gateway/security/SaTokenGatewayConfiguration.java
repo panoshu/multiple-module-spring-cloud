@@ -42,13 +42,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SaTokenGatewayConfiguration {
 
-  /** 错误码:未登录或登录已过期 */
+  /**
+   * 错误码:未登录或登录已过期
+   */
   private static final String CODE_NOT_LOGIN = "COMMON.0002";
 
-  /** 错误码:无权限访问 */
+  /**
+   * 错误码:无权限访问
+   */
   private static final String CODE_NO_PERMISSION = "COMMON.0003";
 
-  /** 错误码:系统内部错误 */
+  /**
+   * 错误码:系统内部错误
+   */
   private static final String CODE_INTERNAL_ERROR = "COMMON.0050";
 
   /**
@@ -72,38 +78,38 @@ public class SaTokenGatewayConfiguration {
   @Order(FILTER_ORDER_AUTH)
   public SaReactorFilter saReactorFilter() {
     return new SaReactorFilter()
-        .addInclude("/**")
-        .addExclude(
-            // actuator 监控端点
-            "/actuator/**",
-            "/actuator",
-            // 静态资源
-            "/favicon.ico",
-            // 三渠道登录接口(无需登录即可访问)
-            "/internet/auth/login",
-            "/hq/auth/login",
-            "/branch/auth/login",
-            // 网点二次授权发起/确认(经办人未登录场景)
-            "/branch/auth/secondary-auth/initiate",
-            "/branch/auth/secondary-auth/confirm",
-            "/branch/auth/secondary-auth/status/**"
-        )
-        .setAuth(obj -> {
-          // 1. 渠道识别 + 登录校验(基于路径前缀分派到对应 StpLogic)
-          ChannelType channel = channelAwareSaRouter.matchAndCheckLogin();
-          if (channel == null) {
-            // 公共接口(非 /internet, /hq, /branch 前缀),跳过路由级校验
-            return;
-          }
+      .addInclude("/**")
+      .addExclude(
+        // actuator 监控端点
+        "/actuator/**",
+        "/actuator",
+        // 静态资源
+        "/favicon.ico",
+        // 三渠道登录接口(无需登录即可访问)
+        "/internet/auth/login",
+        "/hq/auth/login",
+        "/branch/auth/login",
+        // 网点二次授权发起/确认(经办人未登录场景)
+        "/branch/auth/secondary-auth/initiate",
+        "/branch/auth/secondary-auth/confirm",
+        "/branch/auth/secondary-auth/status/**"
+      )
+      .setAuth(obj -> {
+        // 1. 渠道识别 + 登录校验(基于路径前缀分派到对应 StpLogic)
+        ChannelType channel = channelAwareSaRouter.matchAndCheckLogin();
+        if (channel == null) {
+          // 公共接口(非 /internet, /hq, /branch 前缀),跳过路由级校验
+          return;
+        }
 
-          // 2. 动态路由权限校验:加载 RouteRule,按 priority 倒序匹配
-          List<RouteRule> rules = routeRuleLoader.loadRules();
-          StpLogic stpLogic = channelAwareSaRouter.getStpLogic(channel);
-          for (RouteRule rule : rules) {
-            SaRouter.match(rule.routePattern()).check(r -> applyRuleCheck(rule, channel, stpLogic));
-          }
-        })
-        .setError(this::handleError);
+        // 2. 动态路由权限校验:加载 RouteRule,按 priority 倒序匹配
+        List<RouteRule> rules = routeRuleLoader.loadRules();
+        StpLogic stpLogic = channelAwareSaRouter.getStpLogic(channel);
+        for (RouteRule rule : rules) {
+          SaRouter.match(rule.routePattern()).check(r -> applyRuleCheck(rule, channel, stpLogic));
+        }
+      })
+      .setError(this::handleError);
   }
 
   /**
@@ -130,7 +136,7 @@ public class SaTokenGatewayConfiguration {
       case "CHANNEL" -> checkChannel(channel, rule.checkValue());
       case "SKIP" -> { /* 白名单,不校验 */ }
       default -> log.warn("[SaTokenGateway] 未知 checkType,跳过: rule={}, checkType={}",
-          rule.routePattern(), rule.checkType());
+        rule.routePattern(), rule.checkType());
     }
   }
 

@@ -15,8 +15,8 @@ import com.example.core.api.application.response.SubmitResponse;
 import com.example.core.api.context.SessionContext;
 import com.example.core.application.business.service.BusinessApplicationAppService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.ApplicationId;
+import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,55 +46,55 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BusinessApplicationController implements BusinessApplicationApi {
 
-    private final BusinessApplicationAppService applicationAppService;
-    private final ApplicationConverter converter;
-    private final SessionContextResolver sessionResolver;
+  private final BusinessApplicationAppService applicationAppService;
+  private final ApplicationConverter converter;
+  private final SessionContextResolver sessionResolver;
 
-    @Override
-    @RequireBusinessPermission("APPLICATION_VIEW")
-    public ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query) {
-        SessionContext session = sessionResolver.require();
-        log.info("查询申请单列表: batchId={}, status={}, userNo={}",
-            query.batchId(), query.status(), session.userNo());
+  @Override
+  @RequireBusinessPermission("APPLICATION_VIEW")
+  public ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query) {
+    SessionContext session = sessionResolver.require();
+    log.info("查询申请单列表: batchId={}, status={}, userNo={}",
+      query.batchId(), query.status(), session.userNo());
 
-        List<BusinessApplication> apps = applicationAppService.findByBatchId(new BatchId(query.batchId()));
-        List<ApplicationSummaryResponse> responses = apps.stream()
-            .map(converter::toSummaryResponse)
-            .toList();
-        return ApiResult.success(responses);
-    }
+    List<BusinessApplication> apps = applicationAppService.findByBatchId(new BatchId(query.batchId()));
+    List<ApplicationSummaryResponse> responses = apps.stream()
+      .map(converter::toSummaryResponse)
+      .toList();
+    return ApiResult.success(responses);
+  }
 
-    @Override
-    @RequireBusinessPermission("APPLICATION_VIEW")
-    public ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query) {
-        SessionContext session = sessionResolver.require();
-        log.info("查询申请单详情: applicationId={}, userNo={}", query.applicationId(), session.userNo());
+  @Override
+  @RequireBusinessPermission("APPLICATION_VIEW")
+  public ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query) {
+    SessionContext session = sessionResolver.require();
+    log.info("查询申请单详情: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
-        BusinessApplication app = applicationAppService.loadOrThrow(new ApplicationId(query.applicationId()));
-        return ApiResult.success(converter.toDetailResponse(app));
-    }
+    BusinessApplication app = applicationAppService.loadOrThrow(new ApplicationId(query.applicationId()));
+    return ApiResult.success(converter.toDetailResponse(app));
+  }
 
-    @Override
-    @RequireBusinessPermission("APPLICATION_ADVANCE")
-    public ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command) {
-        SessionContext session = sessionResolver.require();
-        log.info("推进申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
+  @Override
+  @RequireBusinessPermission("APPLICATION_ADVANCE")
+  public ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command) {
+    SessionContext session = sessionResolver.require();
+    log.info("推进申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
 
-        ApplicationId appId = new ApplicationId(command.applicationId());
-        applicationAppService.advanceStep(appId);
-        // 推进后重新加载聚合根以获取最新步骤
-        BusinessApplication app = applicationAppService.loadOrThrow(appId);
-        return ApiResult.success(converter.toAdvanceStepResponse(app));
-    }
+    ApplicationId appId = new ApplicationId(command.applicationId());
+    applicationAppService.advanceStep(appId);
+    // 推进后重新加载聚合根以获取最新步骤
+    BusinessApplication app = applicationAppService.loadOrThrow(appId);
+    return ApiResult.success(converter.toAdvanceStepResponse(app));
+  }
 
-    @Override
-    @RequireBusinessPermission("APPLICATION_SUBMIT")
-    public ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command) {
-        SessionContext session = sessionResolver.require();
-        log.info("提交申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
+  @Override
+  @RequireBusinessPermission("APPLICATION_SUBMIT")
+  public ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command) {
+    SessionContext session = sessionResolver.require();
+    log.info("提交申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
 
-        ApplicationId appId = new ApplicationId(command.applicationId());
-        applicationAppService.submit(appId);
-        return ApiResult.success(converter.toSubmitResponse(appId));
-    }
+    ApplicationId appId = new ApplicationId(command.applicationId());
+    applicationAppService.submit(appId);
+    return ApiResult.success(converter.toSubmitResponse(appId));
+  }
 }

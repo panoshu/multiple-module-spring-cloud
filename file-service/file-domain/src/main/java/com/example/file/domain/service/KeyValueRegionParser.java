@@ -1,6 +1,5 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.enums.KvValuePosition;
 import com.example.file.domain.model.enums.RegionType;
 import com.example.file.domain.model.valueobject.RawRowStream;
@@ -9,6 +8,7 @@ import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.domain.model.valueobject.parse.KvRegionResult;
 import com.example.file.domain.model.valueobject.parse.RawRow;
 import com.example.file.domain.model.valueobject.parse.RegionParseResult;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,7 +18,9 @@ import java.util.Map;
 public class KeyValueRegionParser implements RegionParser {
 
   @Override
-  public RegionType supportedType() { return RegionType.KEY_VALUE; }
+  public RegionType supportedType() {
+    return RegionType.KEY_VALUE;
+  }
 
   @Override
   public RegionParseResult parse(RawRowStream stream, RegionDef regionDef, ParseContext ctx) {

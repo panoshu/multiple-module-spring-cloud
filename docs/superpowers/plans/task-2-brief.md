@@ -1,17 +1,27 @@
 # Task 2: 权限校验 SPI 与业务类型注册
 
 **Files:**
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/BusinessAccessGuard.java`
-- Create: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/DefaultBusinessAccessGuard.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/registrar/BusinessTypeRegistrar.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/validator/SupportedBusinessTypeValidator.java`
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/errorcode/CoreDomainErrorCode.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/guard/DefaultBusinessAccessGuardTest.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/validator/SupportedBusinessTypeValidatorTest.java`
+
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/BusinessAccessGuard.java`
+- Create:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/business/guard/DefaultBusinessAccessGuard.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/registrar/BusinessTypeRegistrar.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/validator/SupportedBusinessTypeValidator.java`
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/errorcode/CoreDomainErrorCode.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/business/guard/DefaultBusinessAccessGuardTest.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/validator/SupportedBusinessTypeValidatorTest.java`
 
 **Interfaces:**
+
 - Consumes: `SessionContext`, `BusinessMetaContext` (api 层), `BusinessException`, `CommonError`
-- Produces: `BusinessAccessGuard` SPI (application 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean, `SupportedBusinessTypeValidator` bean
+- Produces: `BusinessAccessGuard` SPI (application 层), `DefaultBusinessAccessGuard` bean, `BusinessTypeRegistrar` bean,
+  `SupportedBusinessTypeValidator` bean
 
 ## Step 1: 扩展 CoreDomainErrorCode 新增 UNSUPPORTED_BUSINESS_TYPE
 
@@ -24,9 +34,10 @@ PROXY_FORBIDDEN("CORE.DOMAIN.0006", "无代办权限"),
 SECONDARY_AUTH_REQUIRED("CORE.DOMAIN.0007", "需要二次授权"),
 ```
 
-## Step 2: 编写 BusinessAccessGuard SPI 接口(application 层)
+## Step 2: 编写 BusinessAccessGuard SPI 接口 (application 层)
 
-> **设计决策**:`BusinessAccessGuard` 放在 application 层(而非 domain 层 gateway),因为它依赖 api 层的 `SessionContext` / `BusinessMetaContext` DTO,符合依赖规则 `application → api + domain`。
+> **设计决策**:`BusinessAccessGuard` 放在 application 层 (而非 domain 层 gateway),因为它依赖 api 层的 `SessionContext` /
+> `BusinessMetaContext` DTO,符合依赖规则 `application → api + domain`。
 
 ```java
 package com.example.core.application.business.guard;

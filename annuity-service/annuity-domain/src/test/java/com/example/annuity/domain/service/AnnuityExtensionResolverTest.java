@@ -9,12 +9,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.AnnuityCh
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +26,7 @@ class AnnuityExtensionResolverTest {
   void resolve_nullExtensionThrows() {
     BusinessApplication app = createApp();
     assertThatThrownBy(() -> resolver.resolve(app))
-        .isInstanceOf(DomainException.class);
+      .isInstanceOf(DomainException.class);
   }
 
   @Test
@@ -42,7 +37,7 @@ class AnnuityExtensionResolverTest {
     var field = BusinessApplication.class.getDeclaredField("businessExtension");
     field.setAccessible(true);
     field.set(app, new AnnuityApplicationExtension(
-        BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false
+      BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false
     ));
 
     AnnuityApplicationExtension ext = resolver.resolve(app);
@@ -52,17 +47,17 @@ class AnnuityExtensionResolverTest {
 
   private BusinessApplication createApp() {
     BusinessContext context = new BusinessContext(
-        BusinessType.ACC_PLAN_CREATE,
-        CustomerNo.of("C-001"), "客户",
-        ProductNo.of("P-001"), "产品",
-        PlanNo.of("PL-001"), "方案",
-        OperationModel.Single_Trustee, AccountManager.CJP
+      BusinessType.ACC_PLAN_CREATE,
+      CustomerNo.of("C-001"), "客户",
+      ProductNo.of("P-001"), "产品",
+      PlanNo.of("PL-001"), "方案",
+      OperationModel.Single_Trustee, AccountManager.CJP
     );
     OperatorInfo operator = new OperatorInfo(
-        AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
+      AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
     );
     return BusinessApplication.createFromForm(
-        new ApplicationId("APP-001"), context, operator, new FileId("FILE-001")
+      new ApplicationId("APP-001"), context, operator, new FileId("FILE-001")
     );
   }
 }

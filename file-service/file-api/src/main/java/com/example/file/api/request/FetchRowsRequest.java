@@ -3,9 +3,9 @@ package com.example.file.api.request;
 import jakarta.validation.constraints.NotBlank;
 
 public record FetchRowsRequest(
-    @NotBlank String subTaskId,
-    int page,
-    int size
+  @NotBlank String subTaskId,
+  int page,
+  int size
 ) {
   public FetchRowsRequest {
     if (page <= 0) page = 1;

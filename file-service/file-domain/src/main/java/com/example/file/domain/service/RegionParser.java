@@ -7,5 +7,6 @@ import com.example.file.domain.model.valueobject.parse.RegionParseResult;
 
 public interface RegionParser {
   RegionType supportedType();
+
   RegionParseResult parse(RawRowStream stream, RegionDef regionDef, ParseContext ctx);
 }

@@ -34,29 +34,29 @@ import java.util.Optional;
 @HttpExchange("/core/batch")
 public interface BusinessBatchApi {
 
-    /**
-     * 查询指定计划+业务类型的未完成/处理中批次。
-     */
-    @PostExchange("/active")
-    ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query);
+  /**
+   * 查询指定计划+业务类型的未完成/处理中批次。
+   */
+  @PostExchange("/active")
+  ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query);
 
-    /**
-     * 创建新批次。
-     *
-     * <p>前端只传 businessType + planNo,后端从 SessionContext 组装完整元数据。
-     */
-    @PostExchange("/create")
-    ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command);
+  /**
+   * 创建新批次。
+   *
+   * <p>前端只传 businessType + planNo,后端从 SessionContext 组装完整元数据。
+   */
+  @PostExchange("/create")
+  ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command);
 
-    /**
-     * 查询批次详情(含表单/申请单摘要)。
-     */
-    @PostExchange("/detail")
-    ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query);
+  /**
+   * 查询批次详情(含表单/申请单摘要)。
+   */
+  @PostExchange("/detail")
+  ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query);
 
-    /**
-     * 取消未提交批次。
-     */
-    @PostExchange("/cancel")
-    ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command);
+  /**
+   * 取消未提交批次。
+   */
+  @PostExchange("/cancel")
+  ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command);
 }

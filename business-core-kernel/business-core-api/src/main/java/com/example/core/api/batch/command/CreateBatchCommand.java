@@ -11,8 +11,8 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record CreateBatchCommand(
-    @NotBlank(message = "业务类型不能为空") String businessType,
-    @NotBlank(message = "计划编号不能为空") String planNo,
-    String operatorRemark
+  @NotBlank(message = "业务类型不能为空") String businessType,
+  @NotBlank(message = "计划编号不能为空") String planNo,
+  String operatorRemark
 ) {
 }

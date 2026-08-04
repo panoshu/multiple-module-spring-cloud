@@ -4,8 +4,8 @@ import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.annuity.domain.service.AnnuityContributionRule;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
+import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,16 +22,19 @@ import static org.mockito.Mockito.when;
 @DisplayName("AnnuityContributionValidationAction")
 class AnnuityContributionValidationActionTest {
 
-  @Mock private AnnuityExtensionResolver extensionResolver;
-  @Mock private AnnuityContributionRule contributionRule;
-  @InjectMocks private AnnuityContributionValidationAction action;
+  @Mock
+  private AnnuityExtensionResolver extensionResolver;
+  @Mock
+  private AnnuityContributionRule contributionRule;
+  @InjectMocks
+  private AnnuityContributionValidationAction action;
 
   @Test
   @DisplayName("规则校验通过 - 返回 success")
   void execute_rulePassesReturnsSuccess() {
     BusinessApplication app = org.mockito.Mockito.mock(BusinessApplication.class);
     AnnuityApplicationExtension ext = new AnnuityApplicationExtension(
-        BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false
+      BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false
     );
     when(extensionResolver.resolve(app)).thenReturn(ext);
     when(contributionRule.validate(ext)).thenReturn(Optional.empty());
@@ -46,7 +49,7 @@ class AnnuityContributionValidationActionTest {
   void execute_ruleFailsReturnsFailure() {
     BusinessApplication app = org.mockito.Mockito.mock(BusinessApplication.class);
     AnnuityApplicationExtension ext = new AnnuityApplicationExtension(
-        BusinessType.ACC_PLAN_CREATE, "NEW", -100L, false
+      BusinessType.ACC_PLAN_CREATE, "NEW", -100L, false
     );
     when(extensionResolver.resolve(app)).thenReturn(ext);
     when(contributionRule.validate(ext)).thenReturn(Optional.of("缴费金额不能为负"));

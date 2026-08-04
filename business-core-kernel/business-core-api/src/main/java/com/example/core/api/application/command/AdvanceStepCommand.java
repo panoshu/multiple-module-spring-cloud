@@ -12,7 +12,7 @@ import java.util.Map;
  * @author panoshu
  */
 public record AdvanceStepCommand(
-    @NotBlank(message = "申请单ID不能为空") String applicationId,
-    Map<String, Object> actionPayload
+  @NotBlank(message = "申请单ID不能为空") String applicationId,
+  Map<String, Object> actionPayload
 ) {
 }

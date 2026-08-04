@@ -40,9 +40,9 @@ public interface FieldAction {
   /**
    * 处理字段值。
    *
-   * @param fieldName  字段名
-   * @param pathStack  从根到当前字段父级的路径栈（正序：root → parent，不含当前字段名）
-   * @param value      原始值（不会为 null）
+   * @param fieldName 字段名
+   * @param pathStack 从根到当前字段父级的路径栈（正序：root → parent，不含当前字段名）
+   * @param value     原始值（不会为 null）
    * @return 处理后的值；返回 null 表示不修改（保留原值）；返回非 null 会替换原值（类型变为字符串）
    */
   String process(String fieldName, List<String> pathStack, String value);

@@ -9,7 +9,7 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,23 +69,23 @@ public interface AnnuityEmployeeDetailDataConverter {
       return null;
     }
     return new AnnuityEmployeeDetail(
-        aDo.getId() != null ? AnnuityEmployeeDetailId.of(aDo.getId()) : null,
-        aDo.getBatchId() != null ? AnnuityEmployeeBatchId.of(aDo.getBatchId()) : null,
-        aDo.getEmployeeName(),
-        aDo.getIdCardNo(),
-        aDo.getAge(),
-        aDo.getMonthlySalary(),
-        aDo.getMonthlyContribution(),
-        aDo.getDetailStatus() != null ? AnnuityEmployeeDetailStatus.valueOf(aDo.getDetailStatus()) : null,
-        aDo.getAnomalyReason(),
-        jsonToMaterials(aDo.getMaterials()),
-        aDo.getVerifiedAt(),
-        aDo.getMaterialPreparedAt(),
-        aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-        aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
-        aDo.getCreateTime(),
-        aDo.getUpdateTime(),
-        aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial()
+      aDo.getId() != null ? AnnuityEmployeeDetailId.of(aDo.getId()) : null,
+      aDo.getBatchId() != null ? AnnuityEmployeeBatchId.of(aDo.getBatchId()) : null,
+      aDo.getEmployeeName(),
+      aDo.getIdCardNo(),
+      aDo.getAge(),
+      aDo.getMonthlySalary(),
+      aDo.getMonthlyContribution(),
+      aDo.getDetailStatus() != null ? AnnuityEmployeeDetailStatus.valueOf(aDo.getDetailStatus()) : null,
+      aDo.getAnomalyReason(),
+      jsonToMaterials(aDo.getMaterials()),
+      aDo.getVerifiedAt(),
+      aDo.getMaterialPreparedAt(),
+      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
+      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreateTime(),
+      aDo.getUpdateTime(),
+      aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial()
     );
   }
 
@@ -97,7 +97,7 @@ public interface AnnuityEmployeeDetailDataConverter {
       return OBJECT_MAPPER.writeValueAsString(materials);
     } catch (JsonProcessingException e) {
       throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
-          .withLogDetail("序列化材料清单失败: " + e.getMessage());
+        .withLogDetail("序列化材料清单失败: " + e.getMessage());
     }
   }
 
@@ -106,10 +106,11 @@ public interface AnnuityEmployeeDetailDataConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+      });
     } catch (JsonProcessingException e) {
       throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
-          .withLogDetail("反序列化材料清单失败: " + e.getMessage());
+        .withLogDetail("反序列化材料清单失败: " + e.getMessage());
     }
   }
 }

@@ -13,8 +13,12 @@ import java.util.Optional;
 
 public interface SubTaskDataRepository extends Repository<SubTaskData, SubTaskId> {
   Optional<SubTaskData> findById(SubTaskId id);
+
   void save(SubTaskData subTask);
+
   PagedRows findPagedRows(SubTaskId id, FetchPagination pagination);
+
   List<SubTaskSummary> findSummariesByTask(FileTaskId taskId);
+
   void markExpiredBefore(java.time.LocalDateTime now);
 }

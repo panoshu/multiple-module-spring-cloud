@@ -4,8 +4,8 @@ import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.domain.annotation.DomainService;
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +35,12 @@ public class AnnuityFactExtractor implements BusinessFactExtractor {
     this.extensionResolver = extensionResolver;
   }
 
+  private static void putIfNotNull(Map<String, Object> facts, String key, Object value) {
+    if (value != null) {
+      facts.put(key, value);
+    }
+  }
+
   @Override
   public String extractorName() {
     return EXTRACTOR_NAME;
@@ -47,13 +53,13 @@ public class AnnuityFactExtractor implements BusinessFactExtractor {
     BusinessMetaContext metaContext = businessApplication.buildConfigQueryContext();
     if (metaContext != null) {
       putIfNotNull(facts, FACT_BUSINESS_TYPE,
-          metaContext.businessType() != null ? metaContext.businessType().name() : null);
+        metaContext.businessType() != null ? metaContext.businessType().name() : null);
       putIfNotNull(facts, FACT_CUSTOMER_NO,
-          metaContext.customerNo() != null ? metaContext.customerNo().value() : null);
+        metaContext.customerNo() != null ? metaContext.customerNo().value() : null);
       putIfNotNull(facts, FACT_PRODUCT_NO,
-          metaContext.productNo() != null ? metaContext.productNo().value() : null);
+        metaContext.productNo() != null ? metaContext.productNo().value() : null);
       putIfNotNull(facts, FACT_PLAN_NO,
-          metaContext.planNo() != null ? metaContext.planNo().value() : null);
+        metaContext.planNo() != null ? metaContext.planNo().value() : null);
     }
 
     AnnuityApplicationExtension ext = extensionResolver.resolve(businessApplication);
@@ -62,11 +68,5 @@ public class AnnuityFactExtractor implements BusinessFactExtractor {
     facts.put(FACT_HAS_FOREIGN_INVESTMENT, ext.hasForeignInvestment());
 
     return facts;
-  }
-
-  private static void putIfNotNull(Map<String, Object> facts, String key, Object value) {
-    if (value != null) {
-      facts.put(key, value);
-    }
   }
 }

@@ -10,13 +10,14 @@ import com.example.file.api.FileTaskApi;
 import com.example.file.api.request.GetFileTaskRequest;
 import com.example.integration.api.core.trade.api.TradeQueryApi;
 import com.example.integration.api.core.trade.dto.PortfolioQueryDTO;
-import com.example.shared.primitives.page.Pagination;
+import com.example.shared.page.Pagination;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageQuery;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /**
  * 跨服务链路调用测试应用服务
@@ -50,8 +51,8 @@ public class LinkTestService {
   public ApiResult<Object> linkApproval(LinkApprovalRequest request) {
     log.info("链路测试: annuity -> approval, approver={}", request.approver());
     var approvalRequest = new ListMyPendingApprovalsRequest(
-        request.approver(),
-        Pagination.of(0, 10)
+      request.approver(),
+      Pagination.of(0, 10)
     );
     ApiResult<?> result = approvalInstanceApi.listMyPending(approvalRequest);
     log.info("链路测试: annuity -> approval 完成, code={}", result.code());
@@ -75,10 +76,10 @@ public class LinkTestService {
   public ApiResult<Object> linkIntegration(LinkIntegrationRequest request) {
     log.info("链路测试: annuity -> integration, enterpriseCustomerNo={}", request.enterpriseCustomerNo());
     var queryDTO = new PortfolioQueryDTO(
-        request.channel(), request.tellerNo(), request.tellerName(),
-        request.enterpriseCustomerNo(), request.enterprisePlanNo(),
-        request.annuityProductNo(), null,
-        PageQuery.firstPage(10)
+      request.channel(), request.tellerNo(), request.tellerName(),
+      request.enterpriseCustomerNo(), request.enterprisePlanNo(),
+      request.annuityProductNo(), null,
+      PageQuery.firstPage(10)
     );
     ApiResult<?> result = tradeQueryApi.queryBalance5564(queryDTO);
     log.info("链路测试: annuity -> integration 完成, code={}", result.code());

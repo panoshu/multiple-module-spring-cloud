@@ -1,11 +1,11 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.enums.RegionType;
 import com.example.file.domain.model.valueobject.RawRowStream;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.domain.model.valueobject.parse.RawRow;
 import com.example.file.domain.model.valueobject.parse.RegionParseResult;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;

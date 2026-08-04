@@ -34,6 +34,15 @@ import java.util.Set;
 @Configuration
 public class CryptoConfiguration {
 
+  private static Set<String> collectFieldNames(CryptoProperties properties) {
+    Set<String> names = new HashSet<>();
+    for (Map.Entry<String, CryptoProperties.FieldConfig> entry : properties.fields().entrySet()) {
+      names.add(entry.getKey());
+      names.addAll(entry.getValue().aliases());
+    }
+    return names;
+  }
+
   @Bean
   @ConditionalOnProperty(prefix = "gateway.crypto", name = "enabled", havingValue = "true")
   public Encryptor sm4Encryptor(CryptoProperties properties) {
@@ -61,15 +70,6 @@ public class CryptoConfiguration {
   @Bean
   public CryptoPolicy cryptoPolicy(Encryptor encryptor) {
     return new Sm4CryptoPolicy(encryptor);
-  }
-
-  private static Set<String> collectFieldNames(CryptoProperties properties) {
-    Set<String> names = new HashSet<>();
-    for (Map.Entry<String, CryptoProperties.FieldConfig> entry : properties.fields().entrySet()) {
-      names.add(entry.getKey());
-      names.addAll(entry.getValue().aliases());
-    }
-    return names;
   }
 
   /**

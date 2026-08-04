@@ -9,8 +9,8 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -83,9 +83,17 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo);
   }
 
-  public void markParsing() { this.status = TaskStatus.PARSING; }
-  public void markSplitting() { this.status = TaskStatus.SPLITTING; }
-  public void markValidating() { this.status = TaskStatus.VALIDATING; }
+  public void markParsing() {
+    this.status = TaskStatus.PARSING;
+  }
+
+  public void markSplitting() {
+    this.status = TaskStatus.SPLITTING;
+  }
+
+  public void markValidating() {
+    this.status = TaskStatus.VALIDATING;
+  }
 
   public void bindTemplate(TemplateCode code) {
     this.templateCode = code;
@@ -125,19 +133,63 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   }
 
   // Getters
-  public BizType bizType() { return bizType; }
-  public TemplateCode templateCode() { return templateCode; }
-  public String sourceFileName() { return sourceFileName; }
-  public FileId sourceFileId() { return sourceFileId; }
-  public TaskStatus status() { return status; }
-  public ErrorPolicy errorPolicy() { return errorPolicy; }
-  public List<String> splitKeys() { return splitKeys; }
-  public int totalRows() { return totalRows; }
-  public int subTaskCount() { return subTaskCount; }
-  public int validCount() { return validCount; }
-  public int invalidCount() { return invalidCount; }
-  public List<SubTaskSummary> subTaskSummaries() { return List.copyOf(subTaskSummaries); }
-  public List<TaskError> errors() { return List.copyOf(errors); }
-  public LocalDateTime startedAt() { return startedAt; }
-  public LocalDateTime finishedAt() { return finishedAt; }
+  public BizType bizType() {
+    return bizType;
+  }
+
+  public TemplateCode templateCode() {
+    return templateCode;
+  }
+
+  public String sourceFileName() {
+    return sourceFileName;
+  }
+
+  public FileId sourceFileId() {
+    return sourceFileId;
+  }
+
+  public TaskStatus status() {
+    return status;
+  }
+
+  public ErrorPolicy errorPolicy() {
+    return errorPolicy;
+  }
+
+  public List<String> splitKeys() {
+    return splitKeys;
+  }
+
+  public int totalRows() {
+    return totalRows;
+  }
+
+  public int subTaskCount() {
+    return subTaskCount;
+  }
+
+  public int validCount() {
+    return validCount;
+  }
+
+  public int invalidCount() {
+    return invalidCount;
+  }
+
+  public List<SubTaskSummary> subTaskSummaries() {
+    return List.copyOf(subTaskSummaries);
+  }
+
+  public List<TaskError> errors() {
+    return List.copyOf(errors);
+  }
+
+  public LocalDateTime startedAt() {
+    return startedAt;
+  }
+
+  public LocalDateTime finishedAt() {
+    return finishedAt;
+  }
 }

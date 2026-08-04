@@ -1,42 +1,68 @@
 -- PostgreSQL DDL
 SELECT current_database();
-SET search_path TO schema_demo;
-SHOW search_path;
+SET
+search_path TO schema_demo;
+SHOW
+search_path;
 -- 启用 UUID 扩展（可选，如果 correlation_id 是 UUID 类型）
 -- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS http_exchange_log
 (
   -- 核心关联ID，必须唯一以支持 ON CONFLICT
-  correlation_id   VARCHAR(64) NOT NULL PRIMARY KEY,
-  service_name     VARCHAR(100),
+  correlation_id
+  VARCHAR
+(
+  64
+) NOT NULL PRIMARY KEY,
+  service_name VARCHAR
+(
+  100
+),
   -- 时间字段，Postgres 推荐使用 TIMESTAMPTZ
-  created_time     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  request_time     TIMESTAMPTZ,
-  response_time    TIMESTAMPTZ,
-  duration_millis  BIGINT,
+  created_time TIMESTAMPTZ NOT NULL DEFAULT NOW
+(
+),
+  request_time TIMESTAMPTZ,
+  response_time TIMESTAMPTZ,
+  duration_millis BIGINT,
   -- 请求信息
-  method           VARCHAR(10),
-  uri              TEXT, -- Postgres TEXT 性能优异，无长度限制烦恼
-  remote           VARCHAR(45),
+  method VARCHAR
+(
+  10
+),
+  uri TEXT, -- Postgres TEXT 性能优异，无长度限制烦恼
+  remote VARCHAR
+(
+  45
+),
   -- 【关键】使用 JSONB 存储结构化数据
-  request_headers  JSONB,
-  request_content  JSONB,
-  content_type     VARCHAR(100),
+  request_headers JSONB,
+  request_content JSONB,
+  content_type VARCHAR
+(
+  100
+),
   -- 响应信息
-  status_code      INTEGER,
+  status_code INTEGER,
   response_headers JSONB,
   response_content JSONB,
   -- 客户端信息
-  client_info      TEXT,
-  ip               VARCHAR(45),
-  user_agent       TEXT,
+  client_info TEXT,
+  ip VARCHAR
+(
+  45
+),
+  user_agent TEXT,
   -- 状态
-  truncated        BOOLEAN              DEFAULT FALSE,
-  complete         BOOLEAN              DEFAULT FALSE,
+  truncated BOOLEAN DEFAULT FALSE,
+  complete BOOLEAN DEFAULT FALSE,
   -- 约束
-  CONSTRAINT uq_correlation_id UNIQUE (correlation_id)
-);
+  CONSTRAINT uq_correlation_id UNIQUE
+(
+  correlation_id
+)
+  );
 
 -- 索引优化
 -- 1. 基础查询索引

@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record GetBatchProgressQuery(
-    @NotBlank(message = "批次ID不能为空") String batchId
+  @NotBlank(message = "批次ID不能为空") String batchId
 ) {
 }

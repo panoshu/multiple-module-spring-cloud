@@ -3,7 +3,8 @@ package com.example.shared.domain.event;
 public interface EventDispatcher {
   /**
    * 分发事件
-   * @param domainEvent 领域事件（本地分发使用）
+   *
+   * @param domainEvent      领域事件（本地分发使用）
    * @param integrationEvent 集成事件（远程分发使用，可能为 null 降级为领域事件）
    */
   void dispatch(DomainEvent domainEvent, Object integrationEvent);

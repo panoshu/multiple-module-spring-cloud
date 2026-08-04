@@ -3,7 +3,7 @@ package com.example.annuity.domain.repository;
 import com.example.annuity.domain.aggregate.root.AnnuityEmployeeBatch;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.shared.identifier.id.ApplicationId;
 
 import java.util.Optional;
 

@@ -1,7 +1,6 @@
 package com.example.shared.json.matcher;
 
 import com.example.shared.json.path.PathMatcher;
-import com.example.shared.json.path.RulePath;
 
 import java.util.List;
 import java.util.Map;

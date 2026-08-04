@@ -1,24 +1,39 @@
 # Task 6: BusinessFormApi 接口与实现
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/BusinessFormApi.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/ApplyUploadTokenCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/ConfirmUploadCommand.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/DeleteFormCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/ApplyUploadTokenCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/ConfirmUploadCommand.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/command/DeleteFormCommand.java`
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/query/GetFormStatusQuery.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/response/UploadTokenResponse.java`
-- Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/response/FormStatusResponse.java`
-- Modify: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessForm.java` (新增 markAsDeleted、getFormStatus getter)
-- Modify: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/engine/step/service/BusinessFormAppService.java` (新增 applyUploadToken、deleteForm、getFormStatus 方法)
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
-- Test: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/engine/step/service/BusinessFormAppServiceTest.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/response/UploadTokenResponse.java`
+- Create:
+  `business-core-kernel/business-core-api/src/main/java/com/example/core/api/form/response/FormStatusResponse.java`
+- Modify:
+  `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessForm.java`
+  (新增 markAsDeleted、getFormStatus getter)
+- Modify:
+  `business-core-kernel/business-core-application/src/main/java/com/example/core/application/engine/step/service/BusinessFormAppService.java`
+  (新增 applyUploadToken、deleteForm、getFormStatus 方法)
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
+- Test:
+  `business-core-kernel/business-core-application/src/test/java/com/example/core/application/engine/step/service/BusinessFormAppServiceTest.java`
 
 **Interfaces:**
-- Consumes: `BusinessFormAppService`(已存在,需扩展), `SessionContextResolver`, `FileIntegrationGateway`(已存在于 AppService)
+
+- Consumes: `BusinessFormAppService`(已存在,需扩展), `SessionContextResolver`, `FileIntegrationGateway`(已存在于
+  AppService)
 - Produces: `BusinessFormApi` 接口及配套 DTO, `BusinessFormController` bean, `FormConverter` bean
 
-## 关键设计决策(必读)
+## 关键设计决策 (必读)
 
 > 以下是对原 plan brief 的修正,实现时以本节为准:
 
@@ -26,21 +41,27 @@
 
 2. **不留 TODO**: plan brief 的 Controller 有 4 处 TODO,本任务需完整实现所有方法,不留占位代码。
 
-3. **ConfirmUploadCommand 字段扩展**: plan 的 `{batchId, formId, fileMd5}` 不足以构造 `BusinessFile`。扩展为 `{batchId, formId, fileId, fileName, fileMd5}`,因为前端直传文件服务后获得 `fileId`,确认上传时需回传。
+3. **ConfirmUploadCommand 字段扩展**: plan 的 `{batchId, formId, fileMd5}` 不足以构造 `BusinessFile`。扩展为
+   `{batchId, formId, fileId, fileName, fileMd5}`,因为前端直传文件服务后获得 `fileId`,确认上传时需回传。
 
-4. **BusinessFormAppService 扩展**: 在现有的 `engine.step.service.BusinessFormAppService` 中新增 3 个方法(`applyUploadToken`/`deleteForm`/`getFormStatus`),复用其已有的 `FileIntegrationGateway` 依赖。
+4. **BusinessFormAppService 扩展**: 在现有的 `engine.step.service.BusinessFormAppService` 中新增 3 个方法
+   (`applyUploadToken`/`deleteForm`/`getFormStatus`),复用其已有的 `FileIntegrationGateway` 依赖。
 
-5. **BusinessForm 扩展**: 新增 `markAsDeleted()` 行为(设状态为 DELETED)和 `getFormStatus()` getter。
+5. **BusinessForm 扩展**: 新增 `markAsDeleted()` 行为 (设状态为 DELETED)和 `getFormStatus()` getter。
 
-6. **FormConverter**: 使用 `default` 方法(同 Task 5 的 BatchConverter 模式),因 `BusinessForm` 继承泛型基类,MapStruct `@Mapping` 无法解析。
+6. **FormConverter**: 使用 `default` 方法 (同 Task 5 的 BatchConverter 模式),因 `BusinessForm` 继承泛型基类,MapStruct
+   `@Mapping` 无法解析。
 
-7. **UploadTokenResponse**: `FileIntegrationGateway.applyUploadToken()` 只返回 String token,无 expireTime/uploadUrl。DTO 中这两个字段设为可空(null)。
+7. **UploadTokenResponse**: `FileIntegrationGateway.applyUploadToken()` 只返回 String token,无 expireTime/uploadUrl。DTO
+   中这两个字段设为可空 (null)。
 
-8. **FormStatusResponse**: `parseProgress`/`applicationCount`/`errorMsg` 在当前聚合根中不可得(需查询解析流水),本次返回 0/null,字段保留供后续扩展。
+8. **FormStatusResponse**: `parseProgress`/`applicationCount`/`errorMsg` 在当前聚合根中不可得 (需查询解析流水),本次返回
+   0/null,字段保留供后续扩展。
 
 ## Step 1: 编写 BusinessFormApi 接口与 DTO
 
 ### BusinessFormApi.java
+
 ```java
 package com.example.core.api.form;
 
@@ -101,6 +122,7 @@ public interface BusinessFormApi {
 ```
 
 ### ApplyUploadTokenCommand.java
+
 ```java
 package com.example.core.api.form.command;
 
@@ -123,6 +145,7 @@ public record ApplyUploadTokenCommand(
 ```
 
 ### ConfirmUploadCommand.java
+
 ```java
 package com.example.core.api.form.command;
 
@@ -146,6 +169,7 @@ public record ConfirmUploadCommand(
 ```
 
 ### DeleteFormCommand.java
+
 ```java
 package com.example.core.api.form.command;
 
@@ -164,6 +188,7 @@ public record DeleteFormCommand(
 ```
 
 ### GetFormStatusQuery.java
+
 ```java
 package com.example.core.api.form.query;
 
@@ -181,6 +206,7 @@ public record GetFormStatusQuery(
 ```
 
 ### UploadTokenResponse.java
+
 ```java
 package com.example.core.api.form.response;
 
@@ -200,6 +226,7 @@ public record UploadTokenResponse(
 ```
 
 ### FormStatusResponse.java
+
 ```java
 package com.example.core.api.form.response;
 
@@ -220,9 +247,10 @@ public record FormStatusResponse(
 
 ## Step 2: 扩展 BusinessForm 聚合根
 
-文件: `business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessForm.java`
+文件:
+`business-core-kernel/business-core-domain/src/main/java/com/example/core/domain/business/aggregate/root/BusinessForm.java`
 
-在现有类中新增以下内容(保留所有已有方法不变):
+在现有类中新增以下内容 (保留所有已有方法不变):
 
 ```java
   /**
@@ -255,15 +283,18 @@ public record FormStatusResponse(
 ```
 
 **注意**:
-- 需要新增 import: `com.example.core.domain.business.errorcode.CoreDomainErrorCode` 和 `com.example.shared.exception.DomainException`(如未导入)
+
+- 需要新增 import: `com.example.core.domain.business.errorcode.CoreDomainErrorCode` 和
+  `com.example.shared.exception.DomainException`(如未导入)
 - `FormStatus` 已导入
 - 保留所有已有方法不变
 
 ## Step 3: 扩展 BusinessFormAppService
 
-文件: `business-core-kernel/business-core-application/src/main/java/com/example/core/application/engine/step/service/BusinessFormAppService.java`
+文件:
+`business-core-kernel/business-core-application/src/main/java/com/example/core/application/engine/step/service/BusinessFormAppService.java`
 
-在现有类中新增以下方法(保留已有方法不变):
+在现有类中新增以下方法 (保留已有方法不变):
 
 ```java
   /**
@@ -310,6 +341,7 @@ public record FormStatusResponse(
 ```
 
 **注意**:
+
 - `fileIntegrationGateway` 已是现有类的依赖,直接使用
 - `formRepository` 已是现有类的依赖
 - `eventBus` 已是现有类的依赖
@@ -317,7 +349,8 @@ public record FormStatusResponse(
 
 ## Step 4: 编写 FormConverter
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/converter/FormConverter.java`
 
 ```java
 package com.example.core.adapter.form.converter;
@@ -369,7 +402,8 @@ public interface FormConverter {
 
 ## Step 5: 编写 BusinessFormController
 
-文件: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
+文件:
+`business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/form/BusinessFormController.java`
 
 ```java
 package com.example.core.adapter.form;
@@ -487,7 +521,8 @@ public class BusinessFormController implements BusinessFormApi {
 
 ## Step 6: 编写 BusinessFormAppService 单元测试
 
-文件: `business-core-kernel/business-core-application/src/test/java/com/example/core/application/engine/step/service/BusinessFormAppServiceTest.java`
+文件:
+`business-core-kernel/business-core-application/src/test/java/com/example/core/application/engine/step/service/BusinessFormAppServiceTest.java`
 
 ```java
 package com.example.core.application.engine.step.service;
@@ -507,8 +542,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -524,66 +557,66 @@ import static org.mockito.Mockito.*;
  */
 class BusinessFormAppServiceTest {
 
-    private FormRepository formRepository;
-    private ApplicationRepository applicationRepository;
-    private BusinessConfigGateway configGateway;
-    private FileIntegrationGateway fileIntegrationGateway;
-    private EventBus eventBus;
-    private IdService idService;
-    private BusinessFormAppService appService;
+  private FormRepository formRepository;
+  private ApplicationRepository applicationRepository;
+  private BusinessConfigGateway configGateway;
+  private FileIntegrationGateway fileIntegrationGateway;
+  private EventBus eventBus;
+  private IdService idService;
+  private BusinessFormAppService appService;
 
-    @BeforeEach
-    void setUp() {
-        formRepository = mock(FormRepository.class);
-        applicationRepository = mock(ApplicationRepository.class);
-        configGateway = mock(BusinessConfigGateway.class);
-        fileIntegrationGateway = mock(FileIntegrationGateway.class);
-        eventBus = mock(EventBus.class);
-        idService = mock(IdService.class);
-        appService = new BusinessFormAppService(
-            formRepository, applicationRepository, configGateway,
-            fileIntegrationGateway, eventBus, idService
-        );
-    }
+  @BeforeEach
+  void setUp() {
+    formRepository = mock(FormRepository.class);
+    applicationRepository = mock(ApplicationRepository.class);
+    configGateway = mock(BusinessConfigGateway.class);
+    fileIntegrationGateway = mock(FileIntegrationGateway.class);
+    eventBus = mock(EventBus.class);
+    idService = mock(IdService.class);
+    appService = new BusinessFormAppService(
+        formRepository, applicationRepository, configGateway,
+        fileIntegrationGateway, eventBus, idService
+    );
+  }
 
-    @Test
-    void should_apply_upload_token_via_gateway() {
-        String clientIp = "127.0.0.1";
-        String userId = "U001";
-        long fileSize = 1024L;
-        when(fileIntegrationGateway.applyUploadToken(clientIp, userId, fileSize))
-            .thenReturn("token-abc-123");
+  @Test
+  void should_apply_upload_token_via_gateway() {
+    String clientIp = "127.0.0.1";
+    String userId = "U001";
+    long fileSize = 1024L;
+    when(fileIntegrationGateway.applyUploadToken(clientIp, userId, fileSize))
+        .thenReturn("token-abc-123");
 
-        String token = appService.applyUploadToken(clientIp, userId, fileSize);
+    String token = appService.applyUploadToken(clientIp, userId, fileSize);
 
-        assertThat(token).isEqualTo("token-abc-123");
-        verify(fileIntegrationGateway).applyUploadToken(clientIp, userId, fileSize);
-    }
+    assertThat(token).isEqualTo("token-abc-123");
+    verify(fileIntegrationGateway).applyUploadToken(clientIp, userId, fileSize);
+  }
 
-    @Test
-    void should_delete_form_and_save() {
-        FormId formId = new FormId("FORM001");
-        BusinessForm form = mock(BusinessForm.class);
-        when(formRepository.loadOrThrow(formId)).thenReturn(form);
-        when(form.getDomainEvents()).thenReturn(java.util.List.of());
+  @Test
+  void should_delete_form_and_save() {
+    FormId formId = new FormId("FORM001");
+    BusinessForm form = mock(BusinessForm.class);
+    when(formRepository.loadOrThrow(formId)).thenReturn(form);
+    when(form.getDomainEvents()).thenReturn(java.util.List.of());
 
-        appService.deleteForm(formId);
+    appService.deleteForm(formId);
 
-        verify(form).markAsDeleted();
-        verify(formRepository).save(form);
-    }
+    verify(form).markAsDeleted();
+    verify(formRepository).save(form);
+  }
 
-    @Test
-    void should_get_form_status() {
-        FormId formId = new FormId("FORM001");
-        BusinessForm form = mock(BusinessForm.class);
-        when(formRepository.loadOrThrow(formId)).thenReturn(form);
+  @Test
+  void should_get_form_status() {
+    FormId formId = new FormId("FORM001");
+    BusinessForm form = mock(BusinessForm.class);
+    when(formRepository.loadOrThrow(formId)).thenReturn(form);
 
-        BusinessForm result = appService.getFormStatus(formId);
+    BusinessForm result = appService.getFormStatus(formId);
 
-        assertThat(result).isSameAs(form);
-        verify(formRepository).loadOrThrow(formId);
-    }
+    assertThat(result).isSameAs(form);
+    verify(formRepository).loadOrThrow(formId);
+  }
 }
 ```
 
@@ -594,7 +627,8 @@ Expected: BUILD SUCCESS
 
 ## Step 8: 运行测试
 
-Run: `mvn test -pl business-core-kernel/business-core-application -am -Dtest=BusinessFormAppServiceTest "-Dsurefire.failIfNoSpecifiedTests=false" -q`
+Run:
+`mvn test -pl business-core-kernel/business-core-application -am -Dtest=BusinessFormAppServiceTest "-Dsurefire.failIfNoSpecifiedTests=false" -q`
 Expected: PASS (3 tests)
 
 ## Step 9: 提交

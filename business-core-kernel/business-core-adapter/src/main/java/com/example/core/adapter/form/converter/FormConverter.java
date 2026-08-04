@@ -24,35 +24,35 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface FormConverter {
 
-    /**
-     * 上传 token 字符串 → 响应 DTO
-     *
-     * <p>{@code expireTime}/{@code uploadUrl} 在当前 {@code FileIntegrationGateway}
-     * 仅返回 String token 的情况下设为 null,字段保留供后续扩展。
-     */
-    default UploadTokenResponse toUploadTokenResponse(String token) {
-        if (token == null) {
-            return null;
-        }
-        return new UploadTokenResponse(token, null, null);
+  /**
+   * 上传 token 字符串 → 响应 DTO
+   *
+   * <p>{@code expireTime}/{@code uploadUrl} 在当前 {@code FileIntegrationGateway}
+   * 仅返回 String token 的情况下设为 null,字段保留供后续扩展。
+   */
+  default UploadTokenResponse toUploadTokenResponse(String token) {
+    if (token == null) {
+      return null;
     }
+    return new UploadTokenResponse(token, null, null);
+  }
 
-    /**
-     * 表单聚合根 → 状态响应 DTO
-     *
-     * <p>{@code parseProgress}/{@code applicationCount}/{@code errorMsg} 在当前聚合根中
-     * 不可得(需查询解析流水),本次返回 0/null,字段保留供后续扩展。
-     */
-    default FormStatusResponse toStatusResponse(BusinessForm form) {
-        if (form == null) {
-            return null;
-        }
-        return new FormStatusResponse(
-            form.id().value(),
-            form.getFormStatus() != null ? form.getFormStatus().name() : null,
-            0,
-            0,
-            null
-        );
+  /**
+   * 表单聚合根 → 状态响应 DTO
+   *
+   * <p>{@code parseProgress}/{@code applicationCount}/{@code errorMsg} 在当前聚合根中
+   * 不可得(需查询解析流水),本次返回 0/null,字段保留供后续扩展。
+   */
+  default FormStatusResponse toStatusResponse(BusinessForm form) {
+    if (form == null) {
+      return null;
     }
+    return new FormStatusResponse(
+      form.id().value(),
+      form.getFormStatus() != null ? form.getFormStatus().name() : null,
+      0,
+      0,
+      null
+    );
+  }
 }

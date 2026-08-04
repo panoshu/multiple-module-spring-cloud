@@ -1,8 +1,5 @@
 package com.example.file.infrastructure.gateway;
 
-import org.apache.fesod.sheet.FesodSheet;
-import org.apache.fesod.sheet.context.AnalysisContext;
-import org.apache.fesod.sheet.read.listener.ReadListener;
 import com.example.file.domain.gateway.ExcelParser;
 import com.example.file.domain.model.enums.HeaderMatching;
 import com.example.file.domain.model.enums.KvValuePosition;
@@ -12,11 +9,10 @@ import com.example.file.domain.model.valueobject.config.DataEndRule;
 import com.example.file.domain.model.valueobject.config.KvStrategy;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.domain.model.valueobject.config.TableStrategy;
-import com.example.file.domain.model.valueobject.parse.KvRegionResult;
-import com.example.file.domain.model.valueobject.parse.RawRow;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
-import com.example.file.domain.model.valueobject.parse.TableRegionResult;
-import com.example.file.domain.model.valueobject.parse.RegionSkip;
+import com.example.file.domain.model.valueobject.parse.*;
+import org.apache.fesod.sheet.FesodSheet;
+import org.apache.fesod.sheet.context.AnalysisContext;
+import org.apache.fesod.sheet.read.listener.ReadListener;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -108,8 +104,8 @@ public class ExcelParserImpl implements ExcelParser {
     if (region.trigger() == null) return true;
     if (row.isBlank()) return false;
     long matchCount = row.cells().values().stream()
-        .filter(v -> v != null && !v.trim().isEmpty())
-        .count();
+      .filter(v -> v != null && !v.trim().isEmpty())
+      .count();
     return matchCount >= region.trigger().minMatchCount();
   }
 
@@ -174,8 +170,8 @@ public class ExcelParserImpl implements ExcelParser {
     TableStrategy strategy = (TableStrategy) region.strategy();
     int headerRows = strategy.headerRows();
     int nameRowIdx = strategy.headerNameRow() == 0
-        ? headerRows - 1
-        : strategy.headerNameRow() - 1;
+      ? headerRows - 1
+      : strategy.headerNameRow() - 1;
 
     // HEADER_SNIFF 触发的行本身即为第一行表头，因此 headerStart = triggerRow
     // （原 brief 为 triggerRow + 1，会跳过含 XH/XM 等代码表头行，导致 headerAliases 无法匹配）
@@ -199,10 +195,10 @@ public class ExcelParserImpl implements ExcelParser {
             continue;
           }
           String canonical = strategy.headerAliases().entrySet().stream()
-              .filter(e -> e.getValue().contains(cellValue))
-              .map(Map.Entry::getKey)
-              .findFirst()
-              .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? "" : cellValue);
+            .filter(e -> e.getValue().contains(cellValue))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? "" : cellValue);
           headers.add(canonical);
         }
       }

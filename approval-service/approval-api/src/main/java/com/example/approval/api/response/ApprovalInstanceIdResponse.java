@@ -8,9 +8,9 @@ import com.example.approval.types.ApprovalInstanceId;
  * @author approval-service
  */
 public record ApprovalInstanceIdResponse(
-    /**
-     * 审批实例ID
-     */
-    ApprovalInstanceId instanceId
+  /**
+   * 审批实例ID
+   */
+  ApprovalInstanceId instanceId
 ) {
 }

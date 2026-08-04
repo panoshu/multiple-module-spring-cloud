@@ -5,7 +5,7 @@ import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.file.application.command.ApplyDownloadTokenCommand;
 import com.example.file.application.command.ApplyUploadTokenCommand;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.shared.primitives.identity.BatchId;
+import com.example.shared.identifier.id.BatchId;
 import org.mapstruct.Mapper;
 
 import java.time.Duration;
@@ -24,39 +24,39 @@ import java.time.Duration;
 @Mapper(componentModel = "spring")
 public interface FileAccessConverter {
 
-    /**
-     * 将 {@link ApplyUploadTokenRequest} 转换为 {@link ApplyUploadTokenCommand}。
-     *
-     * @param request 上传 token 申请请求
-     * @param ttl     token 有效期，由 adapter 从 FileTokenProperties 读取后传入
-     */
-    default ApplyUploadTokenCommand toCommand(ApplyUploadTokenRequest request, Duration ttl) {
-        return new ApplyUploadTokenCommand(
-            request.bizType(),
-            request.sourceApp(),
-            new BatchId(request.businessBatchId()),
-            new FileAccessScope(request.customerNo(), request.productNo()),
-            request.uploader(),
-            request.expiresAt(),
-            request.allowedContentTypes(),
-            request.allowedMaxSize(),
-            ttl
-        );
-    }
+  /**
+   * 将 {@link ApplyUploadTokenRequest} 转换为 {@link ApplyUploadTokenCommand}。
+   *
+   * @param request 上传 token 申请请求
+   * @param ttl     token 有效期，由 adapter 从 FileTokenProperties 读取后传入
+   */
+  default ApplyUploadTokenCommand toCommand(ApplyUploadTokenRequest request, Duration ttl) {
+    return new ApplyUploadTokenCommand(
+      request.bizType(),
+      request.sourceApp(),
+      new BatchId(request.businessBatchId()),
+      new FileAccessScope(request.customerNo(), request.productNo()),
+      request.uploader(),
+      request.expiresAt(),
+      request.allowedContentTypes(),
+      request.allowedMaxSize(),
+      ttl
+    );
+  }
 
-    /**
-     * 将 {@link ApplyDownloadTokenRequest} 转换为 {@link ApplyDownloadTokenCommand}。
-     *
-     * @param request 下载 token 申请请求
-     * @param ttl     token 有效期，由 adapter 从 FileTokenProperties 读取后传入
-     */
-    default ApplyDownloadTokenCommand toCommand(ApplyDownloadTokenRequest request, Duration ttl) {
-        return new ApplyDownloadTokenCommand(
-            request.fileId(),
-            request.sourceApp(),
-            new FileAccessScope(request.customerNo(), request.productNo()),
-            request.downloader(),
-            ttl
-        );
-    }
+  /**
+   * 将 {@link ApplyDownloadTokenRequest} 转换为 {@link ApplyDownloadTokenCommand}。
+   *
+   * @param request 下载 token 申请请求
+   * @param ttl     token 有效期，由 adapter 从 FileTokenProperties 读取后传入
+   */
+  default ApplyDownloadTokenCommand toCommand(ApplyDownloadTokenRequest request, Duration ttl) {
+    return new ApplyDownloadTokenCommand(
+      request.fileId(),
+      request.sourceApp(),
+      new FileAccessScope(request.customerNo(), request.productNo()),
+      request.downloader(),
+      ttl
+    );
+  }
 }

@@ -1,18 +1,12 @@
 package com.example.core.domain.business.aggregate.root;
 
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,17 +40,17 @@ class BusinessApplicationAccessorTest {
 
   private BusinessApplication buildTestApp() {
     BusinessContext context = new BusinessContext(
-        BusinessType.ACC_PLAN_CREATE,
-        CustomerNo.of("C-001"), "客户",
-        ProductNo.of("P-001"), "产品",
-        PlanNo.of("PL-001"), "方案",
-        OperationModel.Single_Trustee, AccountManager.CJP
+      BusinessType.ACC_PLAN_CREATE,
+      CustomerNo.of("C-001"), "客户",
+      ProductNo.of("P-001"), "产品",
+      PlanNo.of("PL-001"), "方案",
+      OperationModel.Single_Trustee, AccountManager.CJP
     );
     OperatorInfo operator = new OperatorInfo(
-        AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
+      AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
     );
     return BusinessApplication.createFromForm(
-        new ApplicationId("APP-001"), context, operator, new FileId("FILE-001")
+      new ApplicationId("APP-001"), context, operator, new FileId("FILE-001")
     );
   }
 }

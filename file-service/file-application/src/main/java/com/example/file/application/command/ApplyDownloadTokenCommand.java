@@ -1,8 +1,8 @@
 package com.example.file.application.command;
 
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.Duration;
 
@@ -19,9 +19,10 @@ import java.time.Duration;
  * @param ttl         token 有效期（必传，调用方从 FileTokenProperties 读取后传入）
  */
 public record ApplyDownloadTokenCommand(
-    FileId fileId,
-    String sourceApp,
-    FileAccessScope accessScope,
-    UserNo downloader,
-    Duration ttl
-) {}
+  FileId fileId,
+  String sourceApp,
+  FileAccessScope accessScope,
+  UserNo downloader,
+  Duration ttl
+) {
+}

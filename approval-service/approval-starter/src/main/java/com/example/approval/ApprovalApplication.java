@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @MapperScan("com.example.approval.infrastructure.mapper")
 public class ApprovalApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(ApprovalApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(ApprovalApplication.class, args);
+  }
 }

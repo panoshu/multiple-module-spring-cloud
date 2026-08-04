@@ -11,22 +11,22 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
  */
 public record FlowName(String value) implements ValueObject {
 
-    public FlowName {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("审批流名称不能为空");
-        }
-        if (value.length() < 1 || value.length() > 100) {
-            throw new IllegalArgumentException("审批流名称长度必须在1-100字符之间");
-        }
+  public FlowName {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("审批流名称不能为空");
     }
+    if (value.length() < 1 || value.length() > 100) {
+      throw new IllegalArgumentException("审批流名称长度必须在1-100字符之间");
+    }
+  }
 
-    /**
-     * 静态工厂方法
-     *
-     * @param value 名称值
-     * @return FlowName 实例
-     */
-    public static FlowName of(String value) {
-        return new FlowName(value);
-    }
+  /**
+   * 静态工厂方法
+   *
+   * @param value 名称值
+   * @return FlowName 实例
+   */
+  public static FlowName of(String value) {
+    return new FlowName(value);
+  }
 }

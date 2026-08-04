@@ -7,7 +7,7 @@ import com.example.file.domain.model.valueobject.ValidationResult;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -52,17 +52,17 @@ class SubTaskDataTest {
   @Test
   void isExpired_should_be_true_after_expires_at() {
     SubTaskData sub = SubTaskData.create(SubTaskId.of("sub1"), FileTaskId.of("tsk1"),
-        BizType.of("import_declare"), "RD_DEPT", BusinessContext.empty(),
-        Map.of(), Map.of("detailList", List.of()), 0,
-        UserNo.of("u1"), java.time.LocalDateTime.now().minusDays(31));
+      BizType.of("import_declare"), "RD_DEPT", BusinessContext.empty(),
+      Map.of(), Map.of("detailList", List.of()), 0,
+      UserNo.of("u1"), java.time.LocalDateTime.now().minusDays(31));
     assertThat(sub.isExpired()).isTrue();
   }
 
   private SubTaskData newSubTask() {
     return SubTaskData.create(SubTaskId.of("sub1"), FileTaskId.of("tsk1"),
-        BizType.of("import_declare"), "RD_DEPT", BusinessContext.empty(),
-        Map.of("enterpriseName", "ABC"),
-        Map.of("detailList", List.of(Map.of("itemNo", "A1"), Map.of("itemNo", "A2"))),
-        2, UserNo.of("u1"), null);
+      BizType.of("import_declare"), "RD_DEPT", BusinessContext.empty(),
+      Map.of("enterpriseName", "ABC"),
+      Map.of("detailList", List.of(Map.of("itemNo", "A1"), Map.of("itemNo", "A2"))),
+      2, UserNo.of("u1"), null);
   }
 }

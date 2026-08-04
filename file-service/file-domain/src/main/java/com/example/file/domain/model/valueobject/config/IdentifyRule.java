@@ -6,7 +6,7 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import java.util.List;
 
 public record IdentifyRule(
-    IdentifyMode mode, List<String> fingerprint
+  IdentifyMode mode, List<String> fingerprint
 ) implements ValueObject {
   public IdentifyRule {
     if (mode == null) mode = IdentifyMode.AUTO;

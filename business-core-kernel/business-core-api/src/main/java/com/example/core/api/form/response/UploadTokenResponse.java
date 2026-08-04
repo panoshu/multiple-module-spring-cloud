@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
  * @author panoshu
  */
 public record UploadTokenResponse(
-    String token,
-    LocalDateTime expireTime,
-    String uploadUrl
+  String token,
+  LocalDateTime expireTime,
+  String uploadUrl
 ) {
 }

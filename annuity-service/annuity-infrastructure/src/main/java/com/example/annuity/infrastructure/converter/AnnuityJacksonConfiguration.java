@@ -55,15 +55,15 @@ public class AnnuityJacksonConfiguration {
    * {@code businessType} 属性定位具体子类型。
    */
   @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.EXISTING_PROPERTY,
-      property = "businessType",
-      visible = true
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "businessType",
+    visible = true
   )
   @JsonSubTypes({
-      @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_CREATE"),
-      @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_MODIFY"),
-      @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_DELETE")
+    @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_CREATE"),
+    @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_MODIFY"),
+    @JsonSubTypes.Type(value = AnnuityApplicationExtension.class, name = "ACC_PLAN_DELETE")
   })
   public interface AnnuityExtensionMixIn extends BusinessExtensionMixIn {
   }

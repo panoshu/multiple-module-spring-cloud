@@ -44,11 +44,11 @@ spring:
             - Path=/business/**
           filters:
             - StripPrefix=1
-        # ============ customer-service(客户服务) ============
-        - id: customer-service-route
-          uri: lb://customer-service
+        # ============ product-service(客户服务) ============
+        - id: product-service-route
+          uri: lb://product-service
           predicates:
-            - Path=/customer/**
+            - Path=/product/**
           filters:
             - StripPrefix=1
         # ============ 其他业务服务 ============

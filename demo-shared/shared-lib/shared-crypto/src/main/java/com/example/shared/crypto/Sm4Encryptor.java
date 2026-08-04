@@ -49,11 +49,11 @@ public class Sm4Encryptor implements Encryptor {
       this.secretKey = Base64.getDecoder().decode(secretKey);
     } catch (IllegalArgumentException e) {
       throw new SystemException(CryptoErrorCode.SECRET_KEY_INVALID, e)
-          .withLogDetail("密钥 Base64 解码失败");
+        .withLogDetail("密钥 Base64 解码失败");
     }
     if (this.secretKey.length != IV_LENGTH) {
       throw new SystemException(CryptoErrorCode.SECRET_KEY_INVALID)
-          .withLogDetail("SM4 密钥长度必须为 16 字节，实际: " + this.secretKey.length);
+        .withLogDetail("SM4 密钥长度必须为 16 字节，实际: " + this.secretKey.length);
     }
   }
 
@@ -77,7 +77,7 @@ public class Sm4Encryptor implements Encryptor {
       return Base64.getUrlEncoder().withoutPadding().encodeToString(output);
     } catch (Exception e) {
       throw new SystemException(CryptoErrorCode.ENCRYPT_FAILED, e)
-          .withLogDetail("SM4 加密失败: " + e.getMessage());
+        .withLogDetail("SM4 加密失败: " + e.getMessage());
     }
   }
 
@@ -96,7 +96,7 @@ public class Sm4Encryptor implements Encryptor {
       return new String(decrypted, StandardCharsets.UTF_8);
     } catch (Exception e) {
       throw new SystemException(CryptoErrorCode.DECRYPT_FAILED, e)
-          .withLogDetail("SM4 解密失败: " + e.getMessage());
+        .withLogDetail("SM4 解密失败: " + e.getMessage());
     }
   }
 }

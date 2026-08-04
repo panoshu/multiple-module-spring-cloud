@@ -2,7 +2,7 @@ package com.example.annuity.infrastructure.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.CustomerProfile;
 import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
-import com.example.shared.primitives.identity.CustomerNo;
+import com.example.shared.identifier.id.CustomerNo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -26,9 +26,9 @@ public class MockAnnuityCustomerGateway implements AnnuityCustomerGateway {
   public CustomerProfile queryCustomer(CustomerNo customerNo) {
     log.info("[Mock] 查询客户画像, customerNo={}", customerNo.value());
     return new CustomerProfile(
-        customerNo,
-        "LOW",
-        List.of("CJ-PENSION-LTD")
+      customerNo,
+      "LOW",
+      List.of("CJ-PENSION-LTD")
     );
   }
 }

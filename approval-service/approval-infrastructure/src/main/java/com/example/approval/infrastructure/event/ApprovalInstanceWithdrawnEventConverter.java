@@ -15,26 +15,26 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ApprovalInstanceWithdrawnEventConverter
-        implements IntegrationEventConverter<ApprovalInstanceWithdrawn> {
+  implements IntegrationEventConverter<ApprovalInstanceWithdrawn> {
 
-    @Override
-    public Class<ApprovalInstanceWithdrawn> supportedEventType() {
-        return ApprovalInstanceWithdrawn.class;
-    }
+  @Override
+  public Class<ApprovalInstanceWithdrawn> supportedEventType() {
+    return ApprovalInstanceWithdrawn.class;
+  }
 
-    @Override
-    public Object toIntegrationEvent(ApprovalInstanceWithdrawn event) {
-        return new ApprovalInstanceWithdrawnEventDTO(
-                event.eventId().value(),
-                String.valueOf(event.instanceId().value()),
-                event.businessNo(),
-                event.businessType(),
-                event.occurredOn()
-        );
-    }
+  @Override
+  public Object toIntegrationEvent(ApprovalInstanceWithdrawn event) {
+    return new ApprovalInstanceWithdrawnEventDTO(
+      event.eventId().value(),
+      String.valueOf(event.instanceId().value()),
+      event.businessNo(),
+      event.businessType(),
+      event.occurredOn()
+    );
+  }
 
-    @Override
-    public String integrationEventType() {
-        return IntegrationEventTypes.APPROVAL_INSTANCE_WITHDRAWN;
-    }
+  @Override
+  public String integrationEventType() {
+    return IntegrationEventTypes.APPROVAL_INSTANCE_WITHDRAWN;
+  }
 }

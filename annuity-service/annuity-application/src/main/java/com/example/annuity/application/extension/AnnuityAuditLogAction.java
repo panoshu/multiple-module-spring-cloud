@@ -29,9 +29,9 @@ public class AnnuityAuditLogAction implements StepExtensionAction {
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
     log.info("[审计] applicationId={}, step={}, operator={}",
-        app.id().value(),
-        app.currentStep(),
-        app.operatorInfo() != null ? app.operatorInfo().operatorId().value() : "UNKNOWN");
+      app.id().value(),
+      app.currentStep(),
+      app.operatorInfo() != null ? app.operatorInfo().operatorId().value() : "UNKNOWN");
     return ExtensionExecutionResult.success();
   }
 }

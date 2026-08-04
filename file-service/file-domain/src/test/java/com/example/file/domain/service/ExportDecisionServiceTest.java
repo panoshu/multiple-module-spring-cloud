@@ -1,7 +1,6 @@
 package com.example.file.domain.service;
 
 import com.example.file.domain.gateway.ExcelExporter;
-import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.FieldType;
 import com.example.file.domain.model.enums.ValidationScope;
 import com.example.file.domain.model.valueobject.SplitUnit;
@@ -64,7 +63,7 @@ class ExportDecisionServiceTest {
     // given: 校验失败 (idNo 为空)
     SplitUnit unit = new SplitUnit("身份证", Map.of("seq", "1"));
     ValidationResult invalidResult = new ValidationResult(List.of(
-        new ValidationError("idNo", "证件编号不能为空", "idNo != null")));
+      new ValidationError("idNo", "证件编号不能为空", "idNo != null")));
     InputStream template = new ByteArrayInputStream(new byte[]{});
     OutputStream out = new ByteArrayOutputStream();
 
@@ -84,16 +83,17 @@ class ExportDecisionServiceTest {
   @DisplayName("ValidationResult 为 null 时抛 IllegalArgumentException")
   void should_throw_when_result_is_null() {
     SplitUnit unit = new SplitUnit("default", Map.of());
-    ExcelExporter spyExporter = (u, t, o) -> {};
+    ExcelExporter spyExporter = (u, t, o) -> {
+    };
 
     ExportDecisionService service = new ExportDecisionService();
 
     assertThatThrownBy(() ->
-        service.exportIfValid(unit, null, spyExporter,
-            new ByteArrayInputStream(new byte[]{}),
-            new ByteArrayOutputStream()))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("ValidationResult");
+      service.exportIfValid(unit, null, spyExporter,
+        new ByteArrayInputStream(new byte[]{}),
+        new ByteArrayOutputStream()))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("ValidationResult");
   }
 
   @Test
@@ -102,16 +102,16 @@ class ExportDecisionServiceTest {
     // 验证 ExportDecisionService 不修改 ValidationResult，决策仅基于 isValid()
     SplitUnit unit = new SplitUnit("default", Map.of());
     ValidationRule rule = new ValidationRule("idNo", ValidationScope.ROW,
-        "idNo != null", "证件编号不能为空", FieldType.STRING);
+      "idNo != null", "证件编号不能为空", FieldType.STRING);
     ValidationResult result = new ValidationResult(List.of(
-        new ValidationError(rule.field(), rule.message(), rule.expr())));
+      new ValidationError(rule.field(), rule.message(), rule.expr())));
 
     AtomicInteger callCount = new AtomicInteger(0);
     ExportDecisionService service = new ExportDecisionService();
 
     service.exportIfValid(unit, result, spyNoOp(callCount),
-        new ByteArrayInputStream(new byte[]{}),
-        new ByteArrayOutputStream());
+      new ByteArrayInputStream(new byte[]{}),
+      new ByteArrayOutputStream());
 
     assertThat(callCount.get()).isZero();
     assertThat(result.isValid()).isFalse();

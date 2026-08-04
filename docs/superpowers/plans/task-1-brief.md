@@ -1,16 +1,25 @@
 # Task 1: 会话上下文基础设施
 
 **Files:**
+
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/context/SessionContext.java`
 - Create: `business-core-kernel/business-core-api/src/main/java/com/example/core/api/context/BusinessMetaContext.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/SessionContextResolver.java`
-- Create: `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/BusinessMetaContextAssembler.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/SessionContextResolverTest.java`
-- Test: `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/BusinessMetaContextAssemblerTest.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/SessionContextResolver.java`
+- Create:
+  `business-core-kernel/business-core-adapter/src/main/java/com/example/core/adapter/context/BusinessMetaContextAssembler.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/SessionContextResolverTest.java`
+- Test:
+  `business-core-kernel/business-core-adapter/src/test/java/com/example/core/adapter/context/BusinessMetaContextAssemblerTest.java`
 
 **Interfaces:**
-- Consumes: `com.example.shared.web.core.api.ApiResult`, `com.example.shared.exception.BusinessException`, `com.example.shared.exception.CommonError`
-- Produces: `SessionContext` record, `BusinessMetaContext` record (api 层,与 domain 层 `com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext` 区分), `SessionContextResolver` bean, `BusinessMetaContextAssembler` bean
+
+- Consumes: `com.example.shared.web.core.api.ApiResult`, `com.example.shared.exception.BusinessException`,
+  `com.example.shared.exception.CommonError`
+- Produces: `SessionContext` record, `BusinessMetaContext` record (api 层,与 domain 层
+  `com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext` 区分), `SessionContextResolver` bean,
+  `BusinessMetaContextAssembler` bean
 
 ## Step 1: 编写 SessionContext record
 
@@ -63,7 +72,7 @@ public record SessionContext(
 }
 ```
 
-## Step 2: 编写 BusinessMetaContext record(api 层)
+## Step 2: 编写 BusinessMetaContext record (api 层)
 
 ```java
 package com.example.core.api.context;
@@ -180,7 +189,9 @@ Expected: FAIL (SessionContextResolver 不存在)
 
 ## Step 5: 编写 SessionContextResolver 实现
 
-> **设计决策**:为保持 API 接口契约纯净(`BusinessBatchApi` 等接口的方法签名不含 `HttpServletRequest`),`SessionContextResolver` 不接受 `HttpServletRequest` 参数,而是通过 Spring 的 `RequestContextHolder` 获取当前请求上下文。Controller 方法签名与 API 接口完全一致。
+> **设计决策**:为保持 API 接口契约纯净 (`BusinessBatchApi` 等接口的方法签名不含 `HttpServletRequest`),
+> `SessionContextResolver` 不接受 `HttpServletRequest` 参数,而是通过 Spring 的 `RequestContextHolder` 获取当前请求上下文。Controller
+> 方法签名与 API 接口完全一致。
 
 ```java
 package com.example.core.adapter.context;
@@ -435,7 +446,8 @@ Expected: PASS (2 tests)
 
 ## Step 11: 检查 adapter pom.xml 依赖
 
-确认 `business-core-adapter/pom.xml` 已包含 `shared-exception`(通过 `business-core-api` 传递)与 `jackson-databind`(通过 spring-web)。如缺少 jackson,在 `business-core-adapter/pom.xml` 添加:
+确认 `business-core-adapter/pom.xml` 已包含 `shared-exception`(通过 `business-core-api` 传递)与 `jackson-databind`(通过
+spring-web)。如缺少 jackson,在 `business-core-adapter/pom.xml` 添加:
 
 ```xml
 <dependency>
