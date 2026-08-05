@@ -227,6 +227,7 @@ public class Session extends AggregateRoot<SessionId> {
     if (this.secondaryAuthSessionId != null) {
       throw new DomainException(SecondaryAuthErrorCode.ACTIVE_SESSION_EXISTS);
     }
+    EffectiveIdentity previousIdentity = this.effectiveIdentity;
     this.secondaryAuthSessionId = sessionId;
     this.effectiveIdentity = identity;
     markUpdated(operator);
@@ -234,7 +235,7 @@ public class Session extends AggregateRoot<SessionId> {
       SessionIdentityElevated.of(
         id(),
         this.primaryAccountId,
-        null,
+        previousIdentity,
         identity,
         operator
       )
