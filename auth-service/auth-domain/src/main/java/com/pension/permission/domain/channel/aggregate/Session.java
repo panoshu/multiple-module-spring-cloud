@@ -5,11 +5,14 @@ package com.pension.permission.domain.channel.aggregate;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.enumeration.SessionStatus;
+import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
 import com.pension.permission.domain.channel.event.*;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
+import com.pension.permission.types.SecondaryAuthSessionId;
 import com.pension.permission.types.SessionId;
 
 import java.time.Duration;
@@ -25,6 +28,11 @@ public class Session extends AggregateRoot<SessionId> {
    * 当前有效身份
    */
   private EffectiveIdentity effectiveIdentity;
+
+  /**
+   * 当前绑定的二次授权会话 ID（仅网点渠道柜员有效）
+   */
+  private SecondaryAuthSessionId secondaryAuthSessionId;
 
   /**
    * 当前选择办理的计划
@@ -229,6 +237,64 @@ public class Session extends AggregateRoot<SessionId> {
         operator
       )
     );
+  }
+
+  /**
+   * 应用二次授权结果.
+   *
+   * <p>监听 SecondaryAuthCompleted 事件后调用，将柜员会话与二次授权会话绑定。
+   * 仅网点渠道允许调用此方法。</p>
+   *
+   * @param sessionId 二次授权会话 ID
+   * @param identity 有效身份
+   * @param operator 操作人
+   */
+  public void applySecondaryAuth(
+    SecondaryAuthSessionId sessionId,
+    EffectiveIdentity identity,
+    UserNo operator
+  ) {
+    if (this.channel != AnnuityChannel.BANK_BRANCH) {
+      throw new DomainException(SecondaryAuthErrorCode.CHANNEL_NOT_SUPPORTED);
+    }
+    if (this.secondaryAuthSessionId != null) {
+      throw new DomainException(SecondaryAuthErrorCode.ACTIVE_SESSION_EXISTS);
+    }
+    this.secondaryAuthSessionId = sessionId;
+    this.effectiveIdentity = identity;
+    markUpdated(operator);
+    registerDomainEvent(
+      SessionIdentityElevated.of(
+        id(),
+        this.primaryAccountId,
+        null,
+        identity,
+        operator
+      )
+    );
+  }
+
+  /**
+   * 清除二次授权引用.
+   *
+   * <p>监听 SecondaryAuthRevoked 事件后调用。不产生独立事件，撤销事件由 SecondaryAuthSession 发起。</p>
+   *
+   * @param operator 操作人
+   */
+  public void clearSecondaryAuth(UserNo operator) {
+    if (this.channel != AnnuityChannel.BANK_BRANCH) {
+      return;
+    }
+    this.secondaryAuthSessionId = null;
+    this.effectiveIdentity = EffectiveIdentity.direct(this.primaryAccountId);
+    markUpdated(operator);
+  }
+
+  /**
+   * 获取当前绑定的二次授权会话 ID.
+   */
+  public SecondaryAuthSessionId secondaryAuthSessionId() {
+    return secondaryAuthSessionId;
   }
 
 
