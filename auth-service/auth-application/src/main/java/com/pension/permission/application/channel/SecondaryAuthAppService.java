@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 /**
@@ -43,6 +44,8 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class SecondaryAuthAppService {
+
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
   private final SecondaryAuthSessionRepository sessionRepository;
   private final VerificationCodeHasher codeHasher;
@@ -158,7 +161,7 @@ public class SecondaryAuthAppService {
     int length = config.getVerificationCodeLength();
     StringBuilder sb = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
-      sb.append((int) (Math.random() * 10));
+      sb.append(SECURE_RANDOM.nextInt(10));
     }
     return sb.toString();
   }
