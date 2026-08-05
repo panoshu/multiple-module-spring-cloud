@@ -16,6 +16,7 @@ import lombok.Getter;
 public enum RoleError implements ErrorDefinition {
 
   ROLE_TEMPLATE_NOT_FOUND("AUTH-001", "角色不存在"),
+  UNSUPPORTED_SCOPE_DIMENSION("AUTH-002", "不支持的范围维度"),
 
   ;
 

@@ -1,11 +1,13 @@
 package com.pension.permission.domain.assignment.service;
 
 import com.example.shared.domain.annotation.DomainService;
+import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.pension.permission.domain.assignment.aggregate.AgentIdentityAssignment;
+import com.pension.permission.domain.assignment.errorcode.RoleError;
 import com.pension.permission.domain.assignment.repository.AssignmentRepository;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.domain.authorization.enumeration.*;
@@ -129,7 +131,7 @@ public final class EffectivePermissionService {
       case PLAN -> ScopeDimension.PLAN;
       case CUSTOMER -> ScopeDimension.CUSTOMER;
       case PRODUCT -> ScopeDimension.PRODUCT;
-      default -> throw new IllegalStateException("不支持的范围维度: " + assignment.scopeDimension());
+      case GLOBAL -> throw new DomainException(RoleError.UNSUPPORTED_SCOPE_DIMENSION);
     };
     ScopeRule scopeRule = new ScopeRule(dimension, assignment.scopeValue(), assignment.isInheritable());
     GrantSubject subject = new UserListSubject(Set.of(identity));
