@@ -149,11 +149,13 @@ public class SessionApplicationService {
    * 或其 Repository 实现）需在事务内调用 {@code eventBus.publish(...)} 才能触发本监听。</p>
    */
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional
   public void onSecondaryAuthCompleted(SecondaryAuthCompleted event) {
     Session session = sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
       .orElseThrow(() -> new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_FOUND));
     session.applySecondaryAuth(event.sessionId(), event.effectiveIdentity(), event.tellerAccountId());
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
   }
 
   /**
@@ -163,11 +165,13 @@ public class SessionApplicationService {
    * 二次授权绑定，恢复为柜员直接身份。柜员无活跃会话时静默跳过。</p>
    */
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional
   public void onSecondaryAuthRevoked(SecondaryAuthRevoked event) {
     sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
       .ifPresent(session -> {
         session.clearSecondaryAuth(event.createdBy());
         sessionRepository.save(session);
+        session.domainEvents().forEach(eventBus::publish);
       });
   }
 }
