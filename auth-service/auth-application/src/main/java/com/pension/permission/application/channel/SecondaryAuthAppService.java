@@ -1,6 +1,7 @@
 package com.pension.permission.application.channel;
 
 import com.example.shared.contactinfo.Mobile;
+import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.UserNo;
@@ -51,6 +52,7 @@ public class SecondaryAuthAppService {
   private final VerificationCodeHasher codeHasher;
   private final SecondaryAuthConfig config;
   private final IdService idService;
+  private final EventBus eventBus;
 
   /**
    * 柜员发起二次授权.
@@ -83,6 +85,7 @@ public class SecondaryAuthAppService {
     SecondaryAuthSession session = SecondaryAuthSession.initiate(ctx);
 
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
     return id;
   }
 
@@ -107,6 +110,7 @@ public class SecondaryAuthAppService {
 
     session.authorize(cmd.rawCode(), snapshot, identity, codeHasher, cmd.operator());
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
   }
 
   /**
@@ -121,6 +125,7 @@ public class SecondaryAuthAppService {
       hashedCode, LocalDateTime.now(), config.getPendingTimeout(), config.getVerificationMaxAttempts());
     session.resendVerificationCode(newCode, cmd.operator());
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
   }
 
   /**
@@ -131,6 +136,7 @@ public class SecondaryAuthAppService {
     SecondaryAuthSession session = sessionRepository.loadOrThrow(cmd.sessionId());
     session.revoke(cmd.operator(), cmd.reason());
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
   }
 
   /**
@@ -141,6 +147,7 @@ public class SecondaryAuthAppService {
     SecondaryAuthSession session = sessionRepository.loadOrThrow(cmd.sessionId());
     session.close(cmd.operator());
     sessionRepository.save(session);
+    session.domainEvents().forEach(eventBus::publish);
   }
 
   /**
@@ -154,6 +161,7 @@ public class SecondaryAuthAppService {
       .forEach(session -> {
         session.revoke(approverAccountId, "账号冻结紧急收权");
         sessionRepository.save(session);
+        session.domainEvents().forEach(eventBus::publish);
       });
   }
 
