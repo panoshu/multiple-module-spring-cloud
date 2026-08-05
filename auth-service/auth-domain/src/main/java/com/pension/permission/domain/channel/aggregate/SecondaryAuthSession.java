@@ -159,6 +159,33 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   }
 
   /**
+   * 从持久化数据重建聚合根.
+   *
+   * <p>不产生领域事件，仅恢复状态。</p>
+   */
+  public static SecondaryAuthSession reconstitute(
+    SecondaryAuthSessionId id,
+    UserNo createdBy, UserNo updatedBy,
+    LocalDateTime createdAt, LocalDateTime updatedAt, Version version,
+    UserNo tellerAccountId, UserNo approverAccountId,
+    CredentialOwner credentialOwner, Mobile approverMobile,
+    PlanNo planId,
+    VerificationCode verificationCode,
+    EffectiveIdentity effectiveIdentity,
+    PermissionSnapshot permissionSnapshot,
+    SecondaryAuthStatus status,
+    LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime authorizedAt,
+    LocalDateTime expiresAt, String revokeReason
+  ) {
+    return new SecondaryAuthSession(
+      id, createdBy, updatedBy, createdAt, updatedAt, version,
+      tellerAccountId, approverAccountId,
+      credentialOwner, approverMobile, planId,
+      verificationCode, effectiveIdentity, permissionSnapshot,
+      status, initiatedAt, pendingExpiresAt, authorizedAt, expiresAt, revokeReason);
+  }
+
+  /**
    * 柜员输入验证码确认（PENDING → AUTHORIZED）.
    *
    * <p>验证码校验通过后：
