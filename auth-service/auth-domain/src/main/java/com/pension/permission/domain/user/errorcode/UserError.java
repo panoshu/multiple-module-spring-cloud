@@ -14,13 +14,12 @@ public enum UserError
    * 用户基础信息
    */
   USER_ID_REQUIRED(
-    "USER-001",
+    "SERVICE.AUTH.0601",
     "用户编号不能为空"
   ),
 
-
   USER_TYPE_REQUIRED(
-    "USER-002",
+    "SERVICE.AUTH.0602",
     "用户类型不能为空"
   ),
 
@@ -29,19 +28,18 @@ public enum UserError
    * 身份证件
    */
   IDENTITY_DOCUMENT_REQUIRED(
-    "USER-101",
+    "SERVICE.AUTH.0611",
     "用户证件信息不能为空"
   ),
 
 
   ONLY_ID_CARD_SUPPORTED(
-    "USER-102",
+    "SERVICE.AUTH.0612",
     "当前用户仅支持居民身份证"
   ),
 
-
   IDENTITY_DOCUMENT_INVALID(
-    "USER-103",
+    "SERVICE.AUTH.0613",
     "用户证件信息无效"
   ),
 
@@ -50,13 +48,13 @@ public enum UserError
    * 联系方式
    */
   MOBILE_REQUIRED(
-    "USER-201",
+    "SERVICE.AUTH.0621",
     "用户手机号不能为空"
   ),
 
 
   EMAIL_INVALID(
-    "USER-202",
+    "SERVICE.AUTH.0622",
     "用户邮箱格式无效"
   ),
 
@@ -65,25 +63,24 @@ public enum UserError
    * 用户状态
    */
   USER_STATUS_REQUIRED(
-    "USER-301",
+    "SERVICE.AUTH.0631",
     "用户状态不能为空"
   ),
 
 
   USER_ALREADY_FROZEN(
-    "USER-302",
+    "SERVICE.AUTH.0632",
     "用户已经被冻结"
   ),
 
 
   USER_ALREADY_ACTIVE(
-    "USER-303",
+    "SERVICE.AUTH.0633",
     "用户已经是激活状态"
   ),
 
-
   USER_STATUS_CHANGE_NOT_ALLOWED(
-    "USER-304",
+    "SERVICE.AUTH.0634",
     "用户状态不允许变更"
   ),
 
@@ -92,13 +89,13 @@ public enum UserError
    * 用户身份
    */
   USER_IDENTITY_NOT_FOUND(
-    "USER-401",
+    "SERVICE.AUTH.0641",
     "用户身份不存在"
   ),
 
 
   USER_IDENTITY_CONFLICT(
-    "USER-402",
+    "SERVICE.AUTH.0642",
     "用户身份存在冲突"
   );
 

@@ -15,7 +15,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RoleError implements ErrorDefinition {
 
-  ROLE_TEMPLATE_NOT_FOUND("AUTH-001", "角色不存在"),
+  ROLE_TEMPLATE_NOT_FOUND("SERVICE.AUTH.0301", "角色不存在"),
 
   ;
 

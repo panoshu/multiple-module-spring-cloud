@@ -9,9 +9,9 @@ import lombok.RequiredArgsConstructor;
 public enum ProductError
   implements ErrorDefinition {
 
-  PLAN_NOT_FOUND("PRODUCT-001", "计划不存在"),
-  CUSTOMER_NOT_FOUND("PRODUCT-002", "客户不存在"),
-  PRODUCT_NOT_FOUND("PRODUCT-003", "产品不存在"),
+  PLAN_NOT_FOUND("SERVICE.AUTH.0701", "计划不存在"),
+  CUSTOMER_NOT_FOUND("SERVICE.AUTH.0702", "客户不存在"),
+  PRODUCT_NOT_FOUND("SERVICE.AUTH.0703", "产品不存在"),
 
   ;
 
