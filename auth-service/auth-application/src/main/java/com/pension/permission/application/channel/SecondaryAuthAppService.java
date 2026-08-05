@@ -98,7 +98,7 @@ public class SecondaryAuthAppService {
 
     EffectiveIdentity identity = new EffectiveIdentity(
       session.approverAccountId(),
-      cmd.operator(),
+      session.tellerAccountId(),
       true);
 
     session.authorize(cmd.rawCode(), snapshot, identity, codeHasher, cmd.operator());

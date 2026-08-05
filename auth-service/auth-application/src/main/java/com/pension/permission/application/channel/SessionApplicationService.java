@@ -13,7 +13,6 @@ import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
 import com.pension.permission.domain.channel.repository.SessionRepository;
 import com.pension.permission.domain.channel.service.IdentityResolutionService;
 import com.pension.permission.domain.channel.service.PlanSelectionStrategy;
-import com.pension.permission.domain.channel.service.SecondaryAuthService;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.SelectablePlanScope;
 import com.pension.permission.types.SessionId;
@@ -44,7 +43,6 @@ public class SessionApplicationService {
 
   private final SessionRepository sessionRepository;
   private final IdentityResolutionService identityResolutionService;
-  private final SecondaryAuthService secondaryAuthService;
   private final LoginTokenService loginTokenService;
   private final Map<AnnuityChannel, PlanSelectionStrategy> strategiesByChannel;
   private final IdService  idService;
@@ -97,24 +95,6 @@ public class SessionApplicationService {
     loginTokenService.invalidateToken(command.sessionId().value());
     // Session记录本身可以留给自然过期/定期清理，不强制在这里同步删除，
     // 避免把"登出"这个轻量操作也绑进数据库事务。
-  }
-
-  /**
-   * 网点渠道二次授权：柜员用凭证(经办本人的，或客户/计划级企业UKey+经办手机号)
-   * 完成身份提升，会话的有效身份变成解析出来的经办，同时保留柜员本人作为acting账号。
-   */
-  @Transactional
-  public void performSecondaryAuth(SecondaryAuthCommand command) {
-    Session session = requireSession(command.sessionId());
-
-    EffectiveIdentity elevated = secondaryAuthService.elevate(
-      session.primaryAccountId(), command.credentialOwner(),
-      command.proof(), command.phoneNumber());
-
-    session.elevateIdentity(elevated, command.operator());
-    sessionRepository.save(session);
-
-    session.domainEvents().forEach(eventBus::publish);
   }
 
   public SelectablePlanScope listSelectablePlans(SessionId sessionId) {

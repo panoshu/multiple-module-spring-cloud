@@ -205,39 +205,6 @@ public class Session extends AggregateRoot<SessionId> {
   public EffectiveIdentity effectiveIdentity() {
     return this.effectiveIdentity;
   }
-  /**
-   * 网点渠道二次授权成功后，
-   * 将有效身份提升为被授权经办人
-   */
-  public void elevateIdentity(
-    EffectiveIdentity newIdentity,
-    UserNo operator
-  ) {
-
-    if (newIdentity == null) {
-      throw new IllegalArgumentException(
-        "EffectiveIdentity cannot be null."
-      );
-    }
-
-
-    EffectiveIdentity oldIdentity =
-      this.effectiveIdentity;
-
-
-    this.effectiveIdentity = newIdentity;
-
-
-    registerDomainEvent(
-      SessionIdentityElevated.of(
-        this.id(),
-        this.primaryAccountId,
-        oldIdentity,
-        newIdentity,
-        operator
-      )
-    );
-  }
 
   /**
    * 应用二次授权结果.

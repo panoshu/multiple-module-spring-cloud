@@ -30,7 +30,9 @@ CREATE TABLE t_auth_secondary_auth_session (
     update_time                 DATETIME     NOT NULL,
     deleted                     TINYINT(1)   NOT NULL DEFAULT 0,
     version                     INT          NOT NULL DEFAULT 0,
+    active_teller_key           VARCHAR(32)  GENERATED ALWAYS AS (CASE WHEN deleted = 0 AND status IN ('PENDING','AUTHORIZED') THEN teller_account_id ELSE NULL END) STORED COMMENT '活跃柜员唯一键(生成列)',
     PRIMARY KEY (id),
+    UNIQUE KEY uk_auth_secondary_auth_teller_active (active_teller_key),
     KEY idx_teller_account (teller_account_id, status, deleted),
     KEY idx_approver_pending (approver_account_id, status, deleted),
     KEY idx_approver_authorized (approver_account_id, status, deleted),
@@ -38,8 +40,32 @@ CREATE TABLE t_auth_secondary_auth_session (
     KEY idx_plan (plan_id, status, deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='二次授权会话表';
 
+-- ========== Session 基表 ==========
+-- t_auth_session 基表骨架，由 Session 聚合根字段推导；二次授权字段由下方 ALTER 增量添加
+
+CREATE TABLE IF NOT EXISTS t_auth_session (
+    id                          VARCHAR(32)  NOT NULL                  COMMENT '会话ID',
+    primary_account_id          VARCHAR(32)  NOT NULL                  COMMENT '主账号ID',
+    channel                     VARCHAR(32)  NOT NULL                  COMMENT '渠道',
+    effective_identity_id       VARCHAR(32)                            COMMENT '有效身份-经办ID',
+    effective_identity_acting   VARCHAR(32)                            COMMENT '有效身份-柜员ID',
+    effective_via_secondary     TINYINT(1)   NOT NULL DEFAULT 0        COMMENT '是否经二次授权',
+    selected_plan_id            VARCHAR(32)                            COMMENT '已选计划ID',
+    expires_at                  DATETIME     NOT NULL                  COMMENT '会话过期时间',
+    status                      VARCHAR(16)  NOT NULL                  COMMENT '会话状态',
+    created_by                  VARCHAR(64)  NOT NULL,
+    create_time                 DATETIME     NOT NULL,
+    updated_by                  VARCHAR(64)  NOT NULL,
+    update_time                 DATETIME     NOT NULL,
+    deleted                     TINYINT(1)   NOT NULL DEFAULT 0,
+    version                     INT          NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_auth_session_primary_account (primary_account_id, deleted),
+    KEY idx_auth_session_status (status, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='渠道会话表';
+
 -- ========== Session 表增量字段 ==========
--- Assumes t_auth_session base table exists; created by the Session infrastructure task
+-- 基表 t_auth_session 已由上方 CREATE TABLE 创建；此处仅追加二次授权相关字段
 
 ALTER TABLE t_auth_session
 ADD COLUMN secondary_auth_session_id VARCHAR(32) COMMENT '二次授权会话ID';

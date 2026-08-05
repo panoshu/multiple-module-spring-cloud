@@ -57,8 +57,40 @@ CREATE INDEX idx_auth_secondary_auth_plan
     ON t_auth_secondary_auth_session (plan_id, status)
     WHERE deleted = FALSE;
 
+-- ========== Session 基表 ==========
+-- t_auth_session 基表骨架，由 Session 聚合根字段推导；二次授权字段由下方 ALTER 增量添加
+
+CREATE TABLE IF NOT EXISTS t_auth_session (
+    id                          VARCHAR(32)  NOT NULL,
+    primary_account_id          VARCHAR(32)  NOT NULL,
+    channel                     VARCHAR(32)  NOT NULL,
+    effective_identity_id       VARCHAR(32),
+    effective_identity_acting   VARCHAR(32),
+    effective_via_secondary     BOOLEAN      NOT NULL DEFAULT FALSE,
+    selected_plan_id            VARCHAR(32),
+    expires_at                  TIMESTAMP    NOT NULL,
+    status                      VARCHAR(16)  NOT NULL,
+    created_by                  VARCHAR(64)  NOT NULL,
+    create_time                 TIMESTAMP    NOT NULL,
+    updated_by                  VARCHAR(64)  NOT NULL,
+    update_time                 TIMESTAMP    NOT NULL,
+    deleted                     BOOLEAN      NOT NULL DEFAULT FALSE,
+    version                     INT          NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_auth_session IS '渠道会话表';
+
+CREATE INDEX idx_auth_session_primary_account
+    ON t_auth_session (primary_account_id)
+    WHERE deleted = FALSE;
+
+CREATE INDEX idx_auth_session_status
+    ON t_auth_session (status)
+    WHERE deleted = FALSE;
+
 -- ========== Session 表增量字段 ==========
--- Assumes t_auth_session base table exists; created by the Session infrastructure task
+-- 基表 t_auth_session 已由上方 CREATE TABLE 创建；此处仅追加二次授权相关字段
 
 ALTER TABLE t_auth_session
 ADD COLUMN IF NOT EXISTS secondary_auth_session_id VARCHAR(32);
