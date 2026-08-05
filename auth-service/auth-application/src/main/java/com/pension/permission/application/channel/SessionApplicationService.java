@@ -2,10 +2,14 @@ package com.pension.permission.application.channel;
 
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
+import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.spi.LoginTokenService;
 import com.pension.permission.domain.channel.aggregate.Session;
+import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
+import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
+import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
 import com.pension.permission.domain.channel.repository.SessionRepository;
 import com.pension.permission.domain.channel.service.IdentityResolutionService;
 import com.pension.permission.domain.channel.service.PlanSelectionStrategy;
@@ -16,6 +20,8 @@ import com.pension.permission.types.SessionId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
 import java.util.Map;
@@ -130,5 +136,38 @@ public class SessionApplicationService {
 
   private Session requireSession(SessionId id) {
     return sessionRepository.loadOrThrow(id);
+  }
+
+  /**
+   * 二次授权完成事件监听.
+   *
+   * <p>在 {@code SecondaryAuthAppService#confirm} 提交事务后触发，将柜员的渠道会话与
+   * 二次授权会话绑定，使其有效身份提升为经办身份。</p>
+   *
+   * <p>注意：本监听依赖 {@link EventBus} 通过 {@code SpringEventDispatcher} 委派给
+   * Spring 的 {@code ApplicationEventPublisher}；事件发布侧（{@code SecondaryAuthAppService}
+   * 或其 Repository 实现）需在事务内调用 {@code eventBus.publish(...)} 才能触发本监听。</p>
+   */
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onSecondaryAuthCompleted(SecondaryAuthCompleted event) {
+    Session session = sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
+      .orElseThrow(() -> new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_FOUND));
+    session.applySecondaryAuth(event.sessionId(), event.effectiveIdentity(), event.tellerAccountId());
+    sessionRepository.save(session);
+  }
+
+  /**
+   * 二次授权撤销事件监听.
+   *
+   * <p>在 {@code SecondaryAuthAppService#revoke} 提交事务后触发，清除柜员渠道会话上的
+   * 二次授权绑定，恢复为柜员直接身份。柜员无活跃会话时静默跳过。</p>
+   */
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onSecondaryAuthRevoked(SecondaryAuthRevoked event) {
+    sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
+      .ifPresent(session -> {
+        session.clearSecondaryAuth(event.createdBy());
+        sessionRepository.save(session);
+      });
   }
 }
