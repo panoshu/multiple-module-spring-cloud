@@ -6,7 +6,6 @@ import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.identifier.id.UserNo;
 
 import com.pension.permission.domain.credential.valueobject.owner.CredentialOwner;
-import com.pension.permission.domain.shared.Channel;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import lombok.RequiredArgsConstructor;
 

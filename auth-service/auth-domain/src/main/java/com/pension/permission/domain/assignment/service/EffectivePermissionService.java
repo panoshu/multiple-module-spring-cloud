@@ -129,6 +129,7 @@ public final class EffectivePermissionService {
       case PLAN -> ScopeDimension.PLAN;
       case CUSTOMER -> ScopeDimension.CUSTOMER;
       case PRODUCT -> ScopeDimension.PRODUCT;
+      default -> throw new IllegalStateException("不支持的范围维度: " + assignment.scopeDimension());
     };
     ScopeRule scopeRule = new ScopeRule(dimension, assignment.scopeValue(), assignment.isInheritable());
     GrantSubject subject = new UserListSubject(Set.of(identity));

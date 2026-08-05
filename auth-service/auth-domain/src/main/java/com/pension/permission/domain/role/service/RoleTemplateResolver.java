@@ -51,6 +51,7 @@ public final class RoleTemplateResolver {
         .or(() -> firstMatch(candidates, RoleTemplateScopeDimension.GLOBAL, null));
       case PRODUCT -> firstMatch(candidates, RoleTemplateScopeDimension.PRODUCT, scopeValue)
         .or(() -> firstMatch(candidates, RoleTemplateScopeDimension.GLOBAL, null));
+      case GLOBAL -> firstMatch(candidates, RoleTemplateScopeDimension.GLOBAL, null);
     };
   }
 
