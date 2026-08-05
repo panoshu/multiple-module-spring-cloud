@@ -131,7 +131,8 @@ public class SessionApplicationService {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   @Transactional
   public void onSecondaryAuthCompleted(SecondaryAuthCompleted event) {
-    Session session = sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
+    Session session = sessionRepository.findActiveByPrimaryAccountIdAndChannel(
+        event.tellerAccountId(), AnnuityChannel.BANK_BRANCH)
       .orElseThrow(() -> new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_FOUND));
     session.applySecondaryAuth(event.sessionId(), event.effectiveIdentity(), event.tellerAccountId());
     sessionRepository.save(session);
@@ -147,7 +148,8 @@ public class SessionApplicationService {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   @Transactional
   public void onSecondaryAuthRevoked(SecondaryAuthRevoked event) {
-    sessionRepository.findByPrimaryAccountId(event.tellerAccountId())
+    sessionRepository.findActiveByPrimaryAccountIdAndChannel(
+        event.tellerAccountId(), AnnuityChannel.BANK_BRANCH)
       .ifPresent(session -> {
         session.clearSecondaryAuth(event.createdBy());
         sessionRepository.save(session);
