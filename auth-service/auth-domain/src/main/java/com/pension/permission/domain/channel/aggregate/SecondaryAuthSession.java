@@ -8,9 +8,12 @@ import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.enumeration.SecondaryAuthStatus;
 import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
+import com.pension.permission.domain.channel.event.SecondaryAuthClosed;
 import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
+import com.pension.permission.domain.channel.event.SecondaryAuthExpired;
 import com.pension.permission.domain.channel.event.SecondaryAuthInitiated;
 import com.pension.permission.domain.channel.event.SecondaryAuthRejected;
+import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.PermissionSnapshot;
@@ -255,6 +258,74 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     registerDomainEvent(SecondaryAuthInitiated.of(
       id(), tellerAccountId, approverAccountId, operator));
     markUpdated(operator);
+  }
+
+  /**
+   * 撤销授权（AUTHORIZED → REVOKED）.
+   *
+   * <p>经办人主动撤销或紧急收权时调用。</p>
+   *
+   * @param revoker 撤销人
+   * @param reason 撤销原因
+   */
+  public void revoke(UserNo revoker, String reason) {
+    Objects.requireNonNull(revoker, "revoker");
+    Objects.requireNonNull(reason, "reason");
+    if (status != SecondaryAuthStatus.AUTHORIZED) {
+      throw new DomainException(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED);
+    }
+    this.status = SecondaryAuthStatus.REVOKED;
+    this.revokeReason = reason;
+    registerDomainEvent(SecondaryAuthRevoked.of(
+      id(), tellerAccountId, approverAccountId, reason, revoker));
+    markUpdated(revoker);
+  }
+
+  /**
+   * 柜员登出（AUTHORIZED → CLOSED）.
+   *
+   * @param operator 操作人
+   */
+  public void close(UserNo operator) {
+    Objects.requireNonNull(operator, "operator");
+    if (status != SecondaryAuthStatus.AUTHORIZED) {
+      throw new DomainException(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED);
+    }
+    this.status = SecondaryAuthStatus.CLOSED;
+    registerDomainEvent(SecondaryAuthClosed.of(id(), tellerAccountId, operator));
+    markUpdated(operator);
+  }
+
+  /**
+   * 超时过期（PENDING → EXPIRED / AUTHORIZED → EXPIRED）.
+   *
+   * <p>仅活跃态（PENDING/AUTHORIZED）会检查超时，终态不做任何事。
+   * PENDING 检查 pendingExpiresAt（5 分钟待授权窗口，不随验证码重发延期），
+   * AUTHORIZED 检查 expiresAt 和 snapshot.expiresAt。</p>
+   *
+   * @param now 当前时间
+   */
+  public void expireIfTimeout(LocalDateTime now) {
+    Objects.requireNonNull(now, "now");
+    if (status.isTerminal()) {
+      return;
+    }
+    boolean shouldExpire = false;
+    if (status == SecondaryAuthStatus.PENDING) {
+      if (pendingExpiresAt.isBefore(now)) {
+        shouldExpire = true;
+      }
+    } else if (status == SecondaryAuthStatus.AUTHORIZED) {
+      if (expiresAt.isBefore(now) || (permissionSnapshot != null && permissionSnapshot.isExpired(now))) {
+        shouldExpire = true;
+      }
+    }
+    if (!shouldExpire) {
+      return;
+    }
+    this.status = SecondaryAuthStatus.EXPIRED;
+    registerDomainEvent(SecondaryAuthExpired.of(id(), tellerAccountId, tellerAccountId));
+    markUpdated(tellerAccountId);
   }
 
   @Override
