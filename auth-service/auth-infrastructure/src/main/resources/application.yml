@@ -1,0 +1,24 @@
+# NOTE: Should be moved to auth-starter when that module is created (project convention: application.yml lives in xxx-starter).
+
+auth:
+  secondary-auth:
+    # 授权策略（sms-code / face-recognition / ukey-signature）
+    strategy: sms-code
+
+    # 待授权超时时间（默认 5 分钟）
+    pending-timeout: 5m
+
+    # 授权后会话过期时间（默认 2 小时）
+    session-timeout: 2h
+
+    # 权限快照 TTL（默认 30 秒）
+    snapshot-ttl: 30s
+
+    # 验证码长度（默认 6 位）
+    verification-code-length: 6
+
+    # 验证码最大重试次数（默认 3 次）
+    verification-max-attempts: 3
+
+    # 短信发送开关（测试环境可关闭）
+    sms-enabled: true
