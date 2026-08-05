@@ -65,7 +65,7 @@ class SecondaryAuthSessionTest {
   }
 
   private SecondaryAuthSession newPendingSession(LocalDateTime now) {
-    return SecondaryAuthSession.initiate(
+    return SecondaryAuthSession.initiate(new SecondaryAuthSession.InitiateContext(
       new SecondaryAuthSessionId("s-1"),
       UserNo.of("teller-1"),
       owner(),
@@ -75,7 +75,7 @@ class SecondaryAuthSessionTest {
       code(now),
       Duration.ofMinutes(5),
       Duration.ofHours(2),
-      UserNo.of("teller-1"));
+      UserNo.of("teller-1")));
   }
 
   private SecondaryAuthSession newAuthorizedSession(LocalDateTime now) {
@@ -116,16 +116,17 @@ class SecondaryAuthSessionTest {
     @DisplayName("柜员账号为 null 时应当抛异常")
     void should_throw_when_teller_null() {
       assertThatThrownBy(() -> SecondaryAuthSession.initiate(
-        new SecondaryAuthSessionId("s-1"),
-        null,
-        owner(),
-        UserNo.of("approver-1"),
-        mobile(),
-        null,
-        code(LocalDateTime.now()),
-        Duration.ofMinutes(5),
-        Duration.ofHours(2),
-        UserNo.of("teller-1")))
+        new SecondaryAuthSession.InitiateContext(
+          new SecondaryAuthSessionId("s-1"),
+          null,
+          owner(),
+          UserNo.of("approver-1"),
+          mobile(),
+          null,
+          code(LocalDateTime.now()),
+          Duration.ofMinutes(5),
+          Duration.ofHours(2),
+          UserNo.of("teller-1"))))
         .isInstanceOf(NullPointerException.class);
     }
 
@@ -133,16 +134,17 @@ class SecondaryAuthSessionTest {
     @DisplayName("验证码为 null 时应当抛异常")
     void should_throw_when_code_null() {
       assertThatThrownBy(() -> SecondaryAuthSession.initiate(
-        new SecondaryAuthSessionId("s-1"),
-        UserNo.of("teller-1"),
-        owner(),
-        UserNo.of("approver-1"),
-        mobile(),
-        null,
-        null,
-        Duration.ofMinutes(5),
-        Duration.ofHours(2),
-        UserNo.of("teller-1")))
+        new SecondaryAuthSession.InitiateContext(
+          new SecondaryAuthSessionId("s-1"),
+          UserNo.of("teller-1"),
+          owner(),
+          UserNo.of("approver-1"),
+          mobile(),
+          null,
+          null,
+          Duration.ofMinutes(5),
+          Duration.ofHours(2),
+          UserNo.of("teller-1"))))
         .isInstanceOf(NullPointerException.class);
     }
   }

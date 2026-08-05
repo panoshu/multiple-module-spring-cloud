@@ -113,21 +113,12 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   }
 
   /**
-   * 柜员发起二次授权（PENDING）.
+   * 发起二次授权的参数对象.
    *
-   * @param id 会话 ID
-   * @param tellerAccountId 柜员账号
-   * @param credentialOwner 发起时使用的凭证持有者
-   * @param approverAccountId 经办人账号
-   * @param approverMobile 经办人手机号
-   * @param planId 目标计划（可为 null，用于非计划场景）
-   * @param verificationCode 验证码值对象
-   * @param pendingTimeout 待授权超时时间（默认 5 分钟）
-   * @param sessionTimeout 会话过期时间（默认 2 小时）
-   * @param operator 操作人（柜员）
-   * @return SecondaryAuthSession 实例
+   * <p>封装 {@link #initiate(InitiateContext)} 所需的全部入参，避免方法参数超标
+   * （规则 04 §10.1：单个方法参数不超过 5 个）。</p>
    */
-  public static SecondaryAuthSession initiate(
+  public record InitiateContext(
     SecondaryAuthSessionId id,
     UserNo tellerAccountId,
     CredentialOwner credentialOwner,
@@ -138,35 +129,19 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     Duration pendingTimeout,
     Duration sessionTimeout,
     UserNo operator
-  ) {
-    Objects.requireNonNull(tellerAccountId, "tellerAccountId");
-    Objects.requireNonNull(credentialOwner, "credentialOwner");
-    Objects.requireNonNull(approverAccountId, "approverAccountId");
-    Objects.requireNonNull(approverMobile, "approverMobile");
-    Objects.requireNonNull(verificationCode, "verificationCode");
-    Objects.requireNonNull(pendingTimeout, "pendingTimeout");
-    Objects.requireNonNull(sessionTimeout, "sessionTimeout");
-    Objects.requireNonNull(operator, "operator");
-    LocalDateTime now = LocalDateTime.now();
-    LocalDateTime pendingExpiresAt = now.plus(pendingTimeout);
-    return new SecondaryAuthSession(
-      id, operator,
-      tellerAccountId, approverAccountId,
-      credentialOwner, approverMobile,
-      planId, verificationCode,
-      now, pendingExpiresAt, now.plus(sessionTimeout),
-      SecondaryAuthStatus.PENDING);
-  }
+  ) {}
 
   /**
-   * 从持久化数据重建聚合根.
+   * 从持久化数据重建聚合根的快照参数对象.
    *
-   * <p>不产生领域事件，仅恢复状态。</p>
+   * <p>封装 {@link #reconstitute(ReconstituteSnapshot)} 所需的全部持久化字段，
+   * 避免 20 个参数散传导致顺序错配。</p>
    */
-  public static SecondaryAuthSession reconstitute(
+  public record ReconstituteSnapshot(
     SecondaryAuthSessionId id,
     UserNo createdBy, UserNo updatedBy,
-    LocalDateTime createdAt, LocalDateTime updatedAt, Version version,
+    LocalDateTime createdAt, LocalDateTime updatedAt,
+    Version version,
     UserNo tellerAccountId, UserNo approverAccountId,
     CredentialOwner credentialOwner, Mobile approverMobile,
     PlanNo planId,
@@ -176,13 +151,53 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     SecondaryAuthStatus status,
     LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime authorizedAt,
     LocalDateTime expiresAt, String revokeReason
-  ) {
+  ) {}
+
+  /**
+   * 柜员发起二次授权（PENDING）.
+   *
+   * @param ctx 发起上下文（封装全部发起参数）
+   * @return SecondaryAuthSession 实例
+   */
+  public static SecondaryAuthSession initiate(InitiateContext ctx) {
+    Objects.requireNonNull(ctx, "ctx");
+    Objects.requireNonNull(ctx.id(), "id");
+    Objects.requireNonNull(ctx.tellerAccountId(), "tellerAccountId");
+    Objects.requireNonNull(ctx.credentialOwner(), "credentialOwner");
+    Objects.requireNonNull(ctx.approverAccountId(), "approverAccountId");
+    Objects.requireNonNull(ctx.approverMobile(), "approverMobile");
+    Objects.requireNonNull(ctx.verificationCode(), "verificationCode");
+    Objects.requireNonNull(ctx.pendingTimeout(), "pendingTimeout");
+    Objects.requireNonNull(ctx.sessionTimeout(), "sessionTimeout");
+    Objects.requireNonNull(ctx.operator(), "operator");
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime pendingExpiresAt = now.plus(ctx.pendingTimeout());
     return new SecondaryAuthSession(
-      id, createdBy, updatedBy, createdAt, updatedAt, version,
-      tellerAccountId, approverAccountId,
-      credentialOwner, approverMobile, planId,
-      verificationCode, effectiveIdentity, permissionSnapshot,
-      status, initiatedAt, pendingExpiresAt, authorizedAt, expiresAt, revokeReason);
+      ctx.id(), ctx.operator(),
+      ctx.tellerAccountId(), ctx.approverAccountId(),
+      ctx.credentialOwner(), ctx.approverMobile(),
+      ctx.planId(), ctx.verificationCode(),
+      now, pendingExpiresAt, now.plus(ctx.sessionTimeout()),
+      SecondaryAuthStatus.PENDING);
+  }
+
+  /**
+   * 从持久化数据重建聚合根.
+   *
+   * <p>不产生领域事件，仅恢复状态。</p>
+   *
+   * @param snapshot 持久化快照（封装全部重建字段）
+   */
+  public static SecondaryAuthSession reconstitute(ReconstituteSnapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot");
+    return new SecondaryAuthSession(
+      snapshot.id(), snapshot.createdBy(), snapshot.updatedBy(),
+      snapshot.createdAt(), snapshot.updatedAt(), snapshot.version(),
+      snapshot.tellerAccountId(), snapshot.approverAccountId(),
+      snapshot.credentialOwner(), snapshot.approverMobile(), snapshot.planId(),
+      snapshot.verificationCode(), snapshot.effectiveIdentity(), snapshot.permissionSnapshot(),
+      snapshot.status(), snapshot.initiatedAt(), snapshot.pendingExpiresAt(),
+      snapshot.authorizedAt(), snapshot.expiresAt(), snapshot.revokeReason());
   }
 
   /**

@@ -72,11 +72,12 @@ public class SecondaryAuthAppService {
 
     // 创建会话
     SecondaryAuthSessionId id = idService.nextId(SecondaryAuthSessionId.class);
-    SecondaryAuthSession session = SecondaryAuthSession.initiate(
+    SecondaryAuthSession.InitiateContext ctx = new SecondaryAuthSession.InitiateContext(
       id, cmd.tellerAccountId(), cmd.credentialOwner(),
       cmd.approverAccountId(), approverMobile, cmd.planId(),
       code, config.getPendingTimeout(), config.getSessionTimeout(),
       cmd.tellerAccountId());
+    SecondaryAuthSession session = SecondaryAuthSession.initiate(ctx);
 
     sessionRepository.save(session);
     return id;
