@@ -34,16 +34,38 @@ public record VerificationCode(
   /**
    * 创建验证码（应用层先哈希明文，再传入此方法）.
    *
+   * <p>使用默认最大重试次数 3。适用于不关心重试次数的测试或固定 3 次重试的场景。
+   * 需要自定义重试次数时请使用 {@link #of(String, LocalDateTime, Duration, int)}。</p>
+   *
    * @param hashedCode 已哈希的验证码字符串
    * @param sentAt 发送时间
    * @param timeout 超时时间
    * @return VerificationCode 实例
    */
   public static VerificationCode of(String hashedCode, LocalDateTime sentAt, Duration timeout) {
+    return of(hashedCode, sentAt, timeout, 3);
+  }
+
+  /**
+   * 创建验证码并指定最大重试次数.
+   *
+   * <p>应用层应从 {@code SecondaryAuthConfig.getVerificationMaxAttempts()} 读取配置传入此方法，
+   * 避免硬编码重试次数导致配置失效。</p>
+   *
+   * @param hashedCode 已哈希的验证码字符串
+   * @param sentAt 发送时间
+   * @param timeout 超时时间
+   * @param maxAttempts 最大重试次数（初始剩余次数）
+   * @return VerificationCode 实例
+   */
+  public static VerificationCode of(String hashedCode, LocalDateTime sentAt, Duration timeout, int maxAttempts) {
     Objects.requireNonNull(hashedCode, "hashedCode");
     Objects.requireNonNull(sentAt, "sentAt");
     Objects.requireNonNull(timeout, "timeout");
-    return new VerificationCode(hashedCode, sentAt, sentAt.plus(timeout), 3);
+    if (maxAttempts < 0) {
+      throw new IllegalArgumentException("maxAttempts must not be negative");
+    }
+    return new VerificationCode(hashedCode, sentAt, sentAt.plus(timeout), maxAttempts);
   }
 
   /**

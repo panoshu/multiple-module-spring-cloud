@@ -91,5 +91,34 @@ class VerificationCodeTest {
       VerificationCode exhausted = code.onAttemptFailed().onAttemptFailed().onAttemptFailed();
       assertThat(exhausted.isExhausted()).isTrue();
     }
+
+    @Test
+    @DisplayName("4 参数 of 应当使用自定义 maxAttempts 作为初始剩余次数")
+    void should_use_custom_max_attempts_when_provided() {
+      LocalDateTime now = LocalDateTime.now();
+      VerificationCode code = VerificationCode.of("123456", now, Duration.ofMinutes(5), 5);
+      assertThat(code.remainingAttempts()).isEqualTo(5);
+      assertThat(code.expiresAt()).isEqualTo(now.plusMinutes(5));
+    }
+
+    @Test
+    @DisplayName("4 参数 of 当 maxAttempts 为负数时应当抛异常")
+    void should_throw_when_max_attempts_negative() {
+      assertThatThrownBy(() -> VerificationCode.of("123456", LocalDateTime.now(), Duration.ofMinutes(5), -1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("maxAttempts");
+    }
+
+    @Test
+    @DisplayName("自定义 maxAttempts 下失败 4 次后才耗尽")
+    void should_exhaust_after_custom_max_attempts_failures() {
+      VerificationCode code = VerificationCode.of("123456", LocalDateTime.now(), Duration.ofMinutes(5), 5);
+      VerificationCode after4Fails = code.onAttemptFailed().onAttemptFailed().onAttemptFailed().onAttemptFailed();
+      assertThat(after4Fails.remainingAttempts()).isEqualTo(1);
+      assertThat(after4Fails.isExhausted()).isFalse();
+      VerificationCode exhausted = after4Fails.onAttemptFailed();
+      assertThat(exhausted.remainingAttempts()).isEqualTo(0);
+      assertThat(exhausted.isExhausted()).isTrue();
+    }
   }
 }

@@ -68,7 +68,7 @@ public class SecondaryAuthAppService {
     String rawCode = generateCode();
     String hashedCode = codeHasher.hash(rawCode);
     VerificationCode code = VerificationCode.of(
-      hashedCode, LocalDateTime.now(), config.getPendingTimeout());
+      hashedCode, LocalDateTime.now(), config.getPendingTimeout(), config.getVerificationMaxAttempts());
 
     // 创建会话
     SecondaryAuthSessionId id = idService.nextId(SecondaryAuthSessionId.class);
@@ -114,7 +114,7 @@ public class SecondaryAuthAppService {
     String rawCode = generateCode();
     String hashedCode = codeHasher.hash(rawCode);
     VerificationCode newCode = VerificationCode.of(
-      hashedCode, LocalDateTime.now(), config.getPendingTimeout());
+      hashedCode, LocalDateTime.now(), config.getPendingTimeout(), config.getVerificationMaxAttempts());
     session.resendVerificationCode(newCode, cmd.operator());
     sessionRepository.save(session);
   }
