@@ -25,7 +25,9 @@ public enum SecondaryAuthErrorCode implements ErrorDefinition {
   APPROVER_NOT_FOUND("SERVICE.AUTH.0111", "经办人不存在"),
   APPROVER_NOT_ASSIGNED("SERVICE.AUTH.0112", "经办人在该计划上无生效的身份分配"),
   SMS_SEND_FAILED("SERVICE.AUTH.0113", "短信发送失败"),
-  CHANNEL_NOT_SUPPORTED("SERVICE.AUTH.0114", "当前渠道不支持二次授权");
+  CHANNEL_NOT_SUPPORTED("SERVICE.AUTH.0114", "当前渠道不支持二次授权"),
+  INVALID_DATA("SERVICE.AUTH.0115", "二次授权会话数据校验失败"),
+  SESSION_INVALID_STATE("SERVICE.AUTH.0116", "二次授权会话状态不一致");
 
   private final String code;
   private final String message;

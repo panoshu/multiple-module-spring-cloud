@@ -358,38 +358,49 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   @Override
   protected void validateInvariants() {
     if (tellerAccountId == null) {
-      throw new IllegalStateException("tellerAccountId cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("tellerAccountId cannot be null");
     }
     if (credentialOwner == null) {
-      throw new IllegalStateException("credentialOwner cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("credentialOwner cannot be null");
     }
     if (approverMobile == null) {
-      throw new IllegalStateException("approverMobile cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("approverMobile cannot be null");
     }
     if (status == null) {
-      throw new IllegalStateException("status cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("status cannot be null");
     }
     if (initiatedAt == null) {
-      throw new IllegalStateException("initiatedAt cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("initiatedAt cannot be null");
     }
     if (pendingExpiresAt == null) {
-      throw new IllegalStateException("pendingExpiresAt cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("pendingExpiresAt cannot be null");
     }
     if (expiresAt == null) {
-      throw new IllegalStateException("expiresAt cannot be null");
+      throw new DomainException(SecondaryAuthErrorCode.INVALID_DATA)
+        .withLogDetail("expiresAt cannot be null");
     }
     if (status == SecondaryAuthStatus.PENDING && verificationCode == null) {
-      throw new IllegalStateException("verificationCode cannot be null when PENDING");
+      throw new DomainException(SecondaryAuthErrorCode.SESSION_INVALID_STATE)
+        .withLogDetail("verificationCode cannot be null when PENDING");
     }
     if (status == SecondaryAuthStatus.AUTHORIZED) {
       if (effectiveIdentity == null) {
-        throw new IllegalStateException("effectiveIdentity cannot be null when AUTHORIZED");
+        throw new DomainException(SecondaryAuthErrorCode.SESSION_INVALID_STATE)
+          .withLogDetail("effectiveIdentity cannot be null when AUTHORIZED");
       }
       if (permissionSnapshot == null) {
-        throw new IllegalStateException("permissionSnapshot cannot be null when AUTHORIZED");
+        throw new DomainException(SecondaryAuthErrorCode.SESSION_INVALID_STATE)
+          .withLogDetail("permissionSnapshot cannot be null when AUTHORIZED");
       }
       if (approverAccountId == null) {
-        throw new IllegalStateException("approverAccountId cannot be null when AUTHORIZED");
+        throw new DomainException(SecondaryAuthErrorCode.SESSION_INVALID_STATE)
+          .withLogDetail("approverAccountId cannot be null when AUTHORIZED");
       }
     }
   }
