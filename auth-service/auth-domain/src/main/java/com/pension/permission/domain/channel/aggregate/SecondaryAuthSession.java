@@ -43,6 +43,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   private PermissionSnapshot permissionSnapshot;
   private SecondaryAuthStatus status;
   private final LocalDateTime initiatedAt;
+  private final LocalDateTime pendingExpiresAt;
   private LocalDateTime authorizedAt;
   private final LocalDateTime expiresAt;
   private String revokeReason;
@@ -53,7 +54,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     CredentialOwner credentialOwner, Mobile approverMobile,
     PlanNo planId,
     VerificationCode verificationCode,
-    LocalDateTime initiatedAt, LocalDateTime expiresAt,
+    LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime expiresAt,
     SecondaryAuthStatus status
   ) {
     super(id, creator);
@@ -64,6 +65,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     this.planId = planId;
     this.verificationCode = verificationCode;
     this.initiatedAt = initiatedAt;
+    this.pendingExpiresAt = pendingExpiresAt;
     this.expiresAt = expiresAt;
     this.status = status;
     validateInvariants();
@@ -81,7 +83,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     EffectiveIdentity effectiveIdentity,
     PermissionSnapshot permissionSnapshot,
     SecondaryAuthStatus status,
-    LocalDateTime initiatedAt, LocalDateTime authorizedAt,
+    LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime authorizedAt,
     LocalDateTime expiresAt, String revokeReason
   ) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
@@ -95,6 +97,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     this.permissionSnapshot = permissionSnapshot;
     this.status = status;
     this.initiatedAt = initiatedAt;
+    this.pendingExpiresAt = pendingExpiresAt;
     this.authorizedAt = authorizedAt;
     this.expiresAt = expiresAt;
     this.revokeReason = revokeReason;
@@ -137,12 +140,13 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     Objects.requireNonNull(sessionTimeout, "sessionTimeout");
     Objects.requireNonNull(operator, "operator");
     LocalDateTime now = LocalDateTime.now();
+    LocalDateTime pendingExpiresAt = now.plus(pendingTimeout);
     return new SecondaryAuthSession(
       id, operator,
       tellerAccountId, approverAccountId,
       credentialOwner, approverMobile,
       planId, verificationCode,
-      now, now.plus(sessionTimeout),
+      now, pendingExpiresAt, now.plus(sessionTimeout),
       SecondaryAuthStatus.PENDING);
   }
 
@@ -162,6 +166,9 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     }
     if (initiatedAt == null) {
       throw new IllegalStateException("initiatedAt cannot be null");
+    }
+    if (pendingExpiresAt == null) {
+      throw new IllegalStateException("pendingExpiresAt cannot be null");
     }
     if (expiresAt == null) {
       throw new IllegalStateException("expiresAt cannot be null");
@@ -194,6 +201,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   public EffectiveIdentity effectiveIdentity() { return effectiveIdentity; }
   public PermissionSnapshot permissionSnapshot() { return permissionSnapshot; }
   public LocalDateTime initiatedAt() { return initiatedAt; }
+  public LocalDateTime pendingExpiresAt() { return pendingExpiresAt; }
   public LocalDateTime authorizedAt() { return authorizedAt; }
   public LocalDateTime expiresAt() { return expiresAt; }
   public String revokeReason() { return revokeReason; }

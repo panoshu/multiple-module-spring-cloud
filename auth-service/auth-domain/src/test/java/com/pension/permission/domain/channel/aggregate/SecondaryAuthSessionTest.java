@@ -32,6 +32,20 @@ class SecondaryAuthSessionTest {
     return new Mobile("+8613800138000");
   }
 
+  private SecondaryAuthSession newPendingSession(LocalDateTime now) {
+    return SecondaryAuthSession.initiate(
+      new SecondaryAuthSessionId("s-1"),
+      UserNo.of("teller-1"),
+      owner(),
+      UserNo.of("approver-1"),
+      mobile(),
+      null,
+      code(now),
+      Duration.ofMinutes(5),
+      Duration.ofHours(2),
+      UserNo.of("teller-1"));
+  }
+
   @Nested
   @DisplayName("initiate 发起授权")
   class InitiateTest {
@@ -39,36 +53,14 @@ class SecondaryAuthSessionTest {
     @Test
     @DisplayName("发起后状态应当为 PENDING")
     void should_be_pending_when_initiated() {
-      LocalDateTime now = LocalDateTime.now();
-      SecondaryAuthSession session = SecondaryAuthSession.initiate(
-        new SecondaryAuthSessionId("s-1"),
-        UserNo.of("teller-1"),
-        owner(),
-        UserNo.of("approver-1"),
-        mobile(),
-        null,
-        code(now),
-        Duration.ofMinutes(5),
-        Duration.ofHours(2),
-        UserNo.of("teller-1"));
+      SecondaryAuthSession session = newPendingSession(LocalDateTime.now());
       assertThat(session.status()).isEqualTo(SecondaryAuthStatus.PENDING);
     }
 
     @Test
     @DisplayName("发起后应当注册 SecondaryAuthInitiated 事件")
     void should_register_initiated_event() {
-      LocalDateTime now = LocalDateTime.now();
-      SecondaryAuthSession session = SecondaryAuthSession.initiate(
-        new SecondaryAuthSessionId("s-1"),
-        UserNo.of("teller-1"),
-        owner(),
-        UserNo.of("approver-1"),
-        mobile(),
-        null,
-        code(now),
-        Duration.ofMinutes(5),
-        Duration.ofHours(2),
-        UserNo.of("teller-1"));
+      SecondaryAuthSession session = newPendingSession(LocalDateTime.now());
       assertThat(session.domainEvents())
         .anyMatch(e -> "SecondaryAuthInitiated".equals(e.eventType()));
     }
