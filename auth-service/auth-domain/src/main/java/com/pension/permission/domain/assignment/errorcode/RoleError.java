@@ -15,8 +15,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RoleError implements ErrorDefinition {
 
-  ROLE_TEMPLATE_NOT_FOUND("AUTH-001", "角色不存在"),
-  UNSUPPORTED_SCOPE_DIMENSION("AUTH-002", "不支持的范围维度"),
+  ROLE_TEMPLATE_NOT_FOUND("SERVICE.AUTH.0202", "角色不存在"),
+  UNSUPPORTED_SCOPE_DIMENSION("SERVICE.AUTH.0201", "不支持的范围维度"),
 
   ;
 
