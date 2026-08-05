@@ -6,8 +6,9 @@ import com.pension.permission.domain.credential.valueobject.owner.CredentialOwne
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 
 /**
- * @deprecated 已被 {@link SecondaryAuthStrategy} 替代，将在后续版本移除。
- *     新代码请使用 SecondaryAuthStrategy SPI。
+ * @deprecated 旧的二次授权 SPI，已被 {@code SecondaryAuthAppService} +
+ *     {@code SecondaryAuthSession} 聚合根的发起/确认两段式流程替代，将在后续版本移除。
+ *     新代码请直接使用应用服务编排二次授权会话。
  */
 @Deprecated
 public interface SecondaryAuthService {
