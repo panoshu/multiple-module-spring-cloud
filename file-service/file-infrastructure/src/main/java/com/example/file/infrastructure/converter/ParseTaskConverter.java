@@ -65,7 +65,6 @@ public interface ParseTaskConverter {
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "domainEvents", ignore = true)
   ParseTask toDomain(ParseTaskDO aDo);
 
   @Named("toFileTaskId")

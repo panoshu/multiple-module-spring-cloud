@@ -59,7 +59,6 @@ public interface SubTaskDataConverter {
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "domainEvents", ignore = true)
   SubTaskData toDomain(SubTaskDataDO aDo);
 
   @Named("toSubTaskId")
