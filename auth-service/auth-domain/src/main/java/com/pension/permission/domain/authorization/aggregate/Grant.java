@@ -178,6 +178,30 @@ public class Grant extends AggregateRoot<GrantId> {
     return Set.copyOf(permissions);
   }
 
+  public GrantType grantType() {
+    return grantType;
+  }
+
+  public GrantOrigin origin() {
+    return origin;
+  }
+
+  public GrantStatus status() {
+    return status;
+  }
+
+  public ValidityPeriod validityPeriod() {
+    return validityPeriod;
+  }
+
+  public PlanNo sourcePlanNo() {
+    return sourcePlanNo;
+  }
+
+  public PlanNo targetPlanNo() {
+    return targetPlanNo;
+  }
+
   public void approve(UserNo approver) {
     requireStatus(GrantStatus.PENDING_APPROVAL);
     this.status = GrantStatus.EFFECTIVE;

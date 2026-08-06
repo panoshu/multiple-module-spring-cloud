@@ -1,9 +1,11 @@
 package com.pension.permission.domain.credential.aggregate;
 
 import com.example.shared.annuity.AnnuityChannel;
+import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.enumeration.CredentialStatus;
 import com.pension.permission.domain.credential.enumeration.CredentialType;
 import com.pension.permission.domain.credential.errorcode.CredentialError;
 import com.pension.permission.domain.credential.event.UKeyRotated;
@@ -11,6 +13,7 @@ import com.pension.permission.domain.credential.valueobject.owner.CredentialOwne
 import com.pension.permission.types.CredentialId;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
 
@@ -75,10 +78,87 @@ public final class UKeyCredential
   }
 
 
+  /**
+   * Repository 重建入口，不产生领域事件.
+   */
+  public static UKeyCredential reconstitute(
+    CredentialId id,
+    CredentialOwner owner,
+    Set<AnnuityChannel> applicableChannels,
+    CredentialStatus status,
+    ValidityPeriod validityPeriod,
+    UserNo createdBy,
+    LocalDateTime createdAt,
+    UserNo updatedBy,
+    LocalDateTime updatedAt,
+    Version version,
+    String keySerial
+  ) {
+
+    return new UKeyCredential(
+      id,
+      owner,
+      applicableChannels,
+      status,
+      validityPeriod,
+      createdBy,
+      createdAt,
+      updatedBy,
+      updatedAt,
+      version,
+      keySerial
+    );
+
+  }
+
+
+  private UKeyCredential(
+    CredentialId id,
+    CredentialOwner owner,
+    Set<AnnuityChannel> applicableChannels,
+    CredentialStatus status,
+    ValidityPeriod validityPeriod,
+    UserNo createdBy,
+    LocalDateTime createdAt,
+    UserNo updatedBy,
+    LocalDateTime updatedAt,
+    Version version,
+    String keySerial
+  ) {
+
+    super(
+      id,
+      owner,
+      applicableChannels,
+      status,
+      validityPeriod,
+      createdBy,
+      createdAt,
+      updatedBy,
+      updatedAt,
+      version
+    );
+
+    this.keySerial =
+      Objects.requireNonNull(keySerial);
+
+  }
+
+
   @Override
   public CredentialType type() {
 
     return CredentialType.U_KEY;
+
+  }
+
+
+  /**
+   * 暴露 UKey 序列号给 Converter 重建使用（只读）.
+   */
+  public String keySerial() {
+
+    return keySerial;
 
   }
 

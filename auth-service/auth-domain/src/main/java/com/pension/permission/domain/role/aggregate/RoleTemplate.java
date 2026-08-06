@@ -151,10 +151,24 @@ public class RoleTemplate extends AggregateRoot<RoleTemplateId> {
   // ==========================================
 
   /**
+   * 获取当前模板的角色编码
+   */
+  public RoleCode roleCode() {
+    return this.roleCode;
+  }
+
+  /**
    * 获取当前模板的作用域维度
    */
   public RoleTemplateScopeDimension scopeDimension() {
     return this.scopeDimension;
+  }
+
+  /**
+   * 获取当前模板的状态
+   */
+  public RoleTemplateStatus status() {
+    return this.status;
   }
 
   /**

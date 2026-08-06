@@ -54,7 +54,7 @@ public class AssignmentApplicationService {
 
   public void changeRole(ChangeAssignmentRoleCommand command) {
 
-    AgentIdentityAssignment assignment = assignmentRepository.findById(command.assignmentId())
+    AgentIdentityAssignment assignment = assignmentRepository.load(command.assignmentId())
       .orElseThrow(() -> new IllegalArgumentException(
         "身份分配不存在: " + command.assignmentId().value()));
     grantProvisioningService.onAssignmentRoleChanged(assignment, command.newRoleCode());
@@ -64,7 +64,7 @@ public class AssignmentApplicationService {
 
   @Transactional
   public void deactivate(DeactivateAssignmentCommand command) {
-    AgentIdentityAssignment assignment = assignmentRepository.findById(command.assignmentId())
+    AgentIdentityAssignment assignment = assignmentRepository.load(command.assignmentId())
       .orElseThrow(() -> new IllegalArgumentException(
         "身份分配不存在: " + command.assignmentId().value()));
 

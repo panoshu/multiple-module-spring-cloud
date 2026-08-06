@@ -1,20 +1,24 @@
 package com.pension.permission.domain.authorization.repository;
 
+import com.example.shared.domain.repository.Repository;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.types.GrantId;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Grant的仓储端口。真实实现(数据库查询/索引/缓存)属于基础设施层，
  * 这里只定义领域层需要的查询能力。
- * 注意：不再有findByDerivedFrom——角色模板派生的权限已经改成实时解析、不落库，
- * 所以Grant不会再有"由某个身份分配派生而来"这种关联需要按来源反查。
+ *
+ * <p>继承泛型 {@link Repository} 接口获得标准 CRUD 能力（load/save/delete/loadAll 等），
+ * 同时保留按业务语义查询的自定义方法。</p>
+ *
+ * <p>注意：不再有findByDerivedFrom——角色模板派生的权限已经改成实时解析、不落库，
+ * 所以Grant不会再有"由某个身份分配派生而来"这种关联需要按来源反查。</p>
  */
-public interface GrantRepository {
+public interface GrantRepository extends Repository<Grant, GrantId> {
 
   /**
    * 能力层：全局配置，量级小，可整体查出常驻内存
@@ -28,8 +32,4 @@ public interface GrantRepository {
    * 再补上该身份所在计划的PLAN_ALL_MEMBERS / PLAN_ROLE类型的Grant。
    */
   List<Grant> findCandidateSubjectGrants(UserNo identity, LocalDateTime at);
-
-  Optional<Grant> findById(GrantId id);
-
-  void save(Grant grant);
 }

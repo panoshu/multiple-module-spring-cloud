@@ -3,7 +3,6 @@ package com.pension.permission.application.channel;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.spi.LoginTokenService;
 import com.pension.permission.domain.channel.aggregate.Session;
@@ -45,7 +44,6 @@ public class SessionApplicationService {
   private final IdentityResolutionService identityResolutionService;
   private final LoginTokenService loginTokenService;
   private final Map<AnnuityChannel, PlanSelectionStrategy> strategiesByChannel;
-  private final IdService  idService;
   private final EventBus eventBus;
 
   /**
@@ -71,8 +69,11 @@ public class SessionApplicationService {
 
   private SessionId buildSession(UserNo accountId, AnnuityChannel channel) {
     String token = loginTokenService.issueToken(accountId, channel);
+    // Session.id 直接等于 Sa-Token 签发的 tokenValue，二者合一，
+    // 使得"给定 token 找会话"无需额外映射表，sessionRepository.load(new SessionId(token)) 即可。
+    SessionId sessionId = new SessionId(token);
     Session session = Session.create(
-      idService.nextId(SessionId.class),
+      sessionId,
       accountId,
       accountId,
       channel,

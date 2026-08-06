@@ -61,6 +61,7 @@
     <kona-crypto.version>1.0.15</kona-crypto.version>
     <sa-token.version>1.45.0</sa-token.version>
     <commons-pool2.version>2.12.1</commons-pool2.version>
+    <spring-security-crypto.version>6.5.1</spring-security-crypto.version>
   </properties>
 
   <dependencyManagement>
@@ -392,6 +393,12 @@
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-redis-template</artifactId>
         <version>${sa-token.version}</version>
+      </dependency>
+      <!-- spring-security-crypto: BCrypt 密码哈希 (auth-service 使用) -->
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-crypto</artifactId>
+        <version>${spring-security-crypto.version}</version>
       </dependency>
       <!-- Redis 连接池 -->
       <dependency>

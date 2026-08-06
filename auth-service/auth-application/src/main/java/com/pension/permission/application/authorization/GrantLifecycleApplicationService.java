@@ -40,7 +40,7 @@ public class GrantLifecycleApplicationService {
   }
 
   private void mutate(GrantId grantId, Consumer<Grant> action) {
-    Grant grant = grantRepository.findById(grantId)
+    Grant grant = grantRepository.load(grantId)
       .orElseThrow(() -> new IllegalArgumentException("Grant不存在: " + grantId.value()));
     action.accept(grant);
     grantRepository.save(grant);

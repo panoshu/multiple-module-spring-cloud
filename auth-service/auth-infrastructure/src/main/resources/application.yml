@@ -1,5 +1,29 @@
 # NOTE: Should be moved to auth-starter when that module is created (project convention: application.yml lives in xxx-starter).
 
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+mybatis-flex:
+  global-config:
+    logic-delete-field: deleted
+    logic-delete-value: "true"
+    logic-not-delete-value: "false"
+
+sa-token:
+  token-name: Authorization
+  timeout: 28800
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
 auth:
   secondary-auth:
     # 授权策略（sms-code / face-recognition / ukey-signature）

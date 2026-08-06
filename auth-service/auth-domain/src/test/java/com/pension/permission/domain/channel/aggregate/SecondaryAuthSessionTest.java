@@ -7,6 +7,7 @@ import com.pension.permission.domain.authorization.valueobject.ActionCode;
 import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.channel.enumeration.SecondaryAuthStatus;
+import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.PermissionSnapshot;
@@ -163,7 +164,8 @@ class SecondaryAuthSessionTest {
 
       assertThatThrownBy(() -> session.authorize(
         "wrong-code", snap, effectiveId, rejectHasher, UserNo.of("teller-1")))
-        .isInstanceOf(DomainException.class);
+        .isInstanceOfSatisfying(DomainException.class, e ->
+          assertThat(e.code()).isEqualTo(SecondaryAuthErrorCode.INVALID_VERIFICATION_CODE.getCode()));
       assertThat(session.status()).isEqualTo(SecondaryAuthStatus.PENDING);
     }
 
@@ -186,7 +188,7 @@ class SecondaryAuthSessionTest {
     }
 
     @Test
-    @DisplayName("非 PENDING 状态调用 authorize 应当抛异常")
+    @DisplayName("非 PENDING 状态调用 authorize 应当抛 SESSION_NOT_PENDING")
     void should_throw_when_not_pending() {
       LocalDateTime now = LocalDateTime.now();
       SecondaryAuthSession session = newPendingSession(now);
@@ -197,7 +199,8 @@ class SecondaryAuthSessionTest {
 
       assertThatThrownBy(() -> session.authorize(
         "123456", snap, effectiveId, acceptHasher, UserNo.of("teller-1")))
-        .isInstanceOf(DomainException.class);
+        .isInstanceOfSatisfying(DomainException.class, e ->
+          assertThat(e.code()).isEqualTo(SecondaryAuthErrorCode.SESSION_NOT_PENDING.getCode()));
     }
   }
 
@@ -220,13 +223,14 @@ class SecondaryAuthSessionTest {
     }
 
     @Test
-    @DisplayName("非 AUTHORIZED 状态调用 revoke 应当抛异常")
+    @DisplayName("非 AUTHORIZED 状态调用 revoke 应当抛 SESSION_NOT_AUTHORIZED")
     void should_throw_when_revoke_not_authorized() {
       LocalDateTime now = LocalDateTime.now();
       SecondaryAuthSession session = newPendingSession(now);
 
       assertThatThrownBy(() -> session.revoke(UserNo.of("approver-1"), "测试"))
-        .isInstanceOf(DomainException.class);
+        .isInstanceOfSatisfying(DomainException.class, e ->
+          assertThat(e.code()).isEqualTo(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED.getCode()));
     }
   }
 
@@ -245,6 +249,17 @@ class SecondaryAuthSessionTest {
       assertThat(session.status()).isEqualTo(SecondaryAuthStatus.CLOSED);
       assertThat(session.domainEvents())
         .anyMatch(e -> "SecondaryAuthClosed".equals(e.eventType()));
+    }
+
+    @Test
+    @DisplayName("非 AUTHORIZED 状态调用 close 应当抛 SESSION_NOT_AUTHORIZED")
+    void should_throw_when_close_not_authorized() {
+      LocalDateTime now = LocalDateTime.now();
+      SecondaryAuthSession session = newPendingSession(now);
+
+      assertThatThrownBy(() -> session.close(UserNo.of("teller-1")))
+        .isInstanceOfSatisfying(DomainException.class, e ->
+          assertThat(e.code()).isEqualTo(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED.getCode()));
     }
   }
 
@@ -288,6 +303,47 @@ class SecondaryAuthSessionTest {
 
       // 仍然 CLOSED
       assertThat(session.status()).isEqualTo(SecondaryAuthStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("AUTHORIZED 状态下权限快照过期时应当流转到 EXPIRED")
+    void should_expire_when_snapshot_expired() {
+      LocalDateTime now = LocalDateTime.now();
+      SecondaryAuthSession session = newAuthorizedSession(now);
+
+      // 快照 TTL 为 30 秒，会话 TTL 为 2 小时
+      // 快照已过期但会话未过期
+      session.expireIfTimeout(now.plusSeconds(31));
+
+      assertThat(session.status()).isEqualTo(SecondaryAuthStatus.EXPIRED);
+      assertThat(session.domainEvents())
+        .anyMatch(e -> "SecondaryAuthExpired".equals(e.eventType()));
+    }
+
+    @Test
+    @DisplayName("AUTHORIZED 状态下会话超时应当流转到 EXPIRED")
+    void should_expire_when_session_timeout() {
+      LocalDateTime now = LocalDateTime.now();
+      SecondaryAuthSession session = newAuthorizedSession(now);
+
+      // 会话 TTL 为 2 小时
+      session.expireIfTimeout(now.plusHours(3));
+
+      assertThat(session.status()).isEqualTo(SecondaryAuthStatus.EXPIRED);
+      assertThat(session.domainEvents())
+        .anyMatch(e -> "SecondaryAuthExpired".equals(e.eventType()));
+    }
+
+    @Test
+    @DisplayName("AUTHORIZED 状态未超时不应当流转状态")
+    void should_not_expire_when_authorized_not_timeout() {
+      LocalDateTime now = LocalDateTime.now();
+      SecondaryAuthSession session = newAuthorizedSession(now);
+
+      // 快照 TTL 30 秒，会话 TTL 2 小时，均未过期
+      session.expireIfTimeout(now.plusSeconds(10));
+
+      assertThat(session.status()).isEqualTo(SecondaryAuthStatus.AUTHORIZED);
     }
   }
 }

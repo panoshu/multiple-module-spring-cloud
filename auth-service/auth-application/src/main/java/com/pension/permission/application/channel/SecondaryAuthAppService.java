@@ -1,6 +1,5 @@
 package com.pension.permission.application.channel;
 
-import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
@@ -16,7 +15,6 @@ import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
 import com.pension.permission.domain.channel.repository.SecondaryAuthSessionRepository;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
-import com.pension.permission.domain.channel.valueobject.PermissionSnapshot;
 import com.pension.permission.domain.channel.valueobject.VerificationCode;
 import com.pension.permission.types.SecondaryAuthSessionId;
 import lombok.RequiredArgsConstructor;
@@ -57,12 +55,11 @@ public class SecondaryAuthAppService {
   /**
    * 柜员发起二次授权.
    *
-   * @param cmd 发起命令
-   * @param approverMobile 经办人手机号（应用层从经办人账号查询）
+   * @param cmd 发起命令（含经办人手机号）
    * @return 会话 ID
    */
   @Transactional
-  public SecondaryAuthSessionId initiate(InitiateSecondaryAuthCommand cmd, Mobile approverMobile) {
+  public SecondaryAuthSessionId initiate(InitiateSecondaryAuthCommand cmd) {
     // 校验柜员活跃会话唯一性
     sessionRepository.findActiveByTeller(cmd.tellerAccountId())
       .ifPresent(s -> {
@@ -79,7 +76,7 @@ public class SecondaryAuthAppService {
     SecondaryAuthSessionId id = idService.nextId(SecondaryAuthSessionId.class);
     SecondaryAuthSession.InitiateContext ctx = new SecondaryAuthSession.InitiateContext(
       id, cmd.tellerAccountId(), cmd.credentialOwner(),
-      cmd.approverAccountId(), approverMobile, cmd.planId(),
+      cmd.approverAccountId(), cmd.approverMobile(), cmd.planId(),
       code, config.getPendingTimeout(), config.getSessionTimeout(),
       cmd.tellerAccountId());
     SecondaryAuthSession session = SecondaryAuthSession.initiate(ctx);
@@ -92,15 +89,23 @@ public class SecondaryAuthAppService {
   /**
    * 柜员输入验证码确认.
    *
-   * @param cmd 确认命令
-   * @param snapshot 权限快照（由 PermissionResolver 预先解析）
+   * @param cmd 确认命令（含权限快照）
    */
   @Transactional
-  public void confirm(ConfirmSecondaryAuthCommand cmd, PermissionSnapshot snapshot) {
+  public void confirm(ConfirmSecondaryAuthCommand cmd) {
     SecondaryAuthSession session = sessionRepository.loadOrThrow(cmd.sessionId());
 
-    if (session.status().isTerminal()) {
-      throw new BusinessException(SecondaryAuthErrorCode.SESSION_EXPIRED);
+    switch (session.status()) {
+      case PENDING -> { /* 正常路径，继续授权 */ }
+      case AUTHORIZED -> throw new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_PENDING)
+        .withUserDetail("会话已授权，请勿重复确认");
+      case REJECTED -> throw new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_PENDING)
+        .withUserDetail("会话已被拒绝");
+      case EXPIRED -> throw new BusinessException(SecondaryAuthErrorCode.SESSION_EXPIRED);
+      case REVOKED -> throw new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED)
+        .withUserDetail("会话已被撤销");
+      case CLOSED -> throw new BusinessException(SecondaryAuthErrorCode.SESSION_NOT_AUTHORIZED)
+        .withUserDetail("会话已关闭");
     }
 
     EffectiveIdentity identity = new EffectiveIdentity(
@@ -108,7 +113,7 @@ public class SecondaryAuthAppService {
       session.tellerAccountId(),
       true);
 
-    session.authorize(cmd.rawCode(), snapshot, identity, codeHasher, cmd.operator());
+    session.authorize(cmd.rawCode(), cmd.snapshot(), identity, codeHasher, cmd.operator());
     sessionRepository.save(session);
     session.domainEvents().forEach(eventBus::publish);
   }
@@ -156,7 +161,7 @@ public class SecondaryAuthAppService {
    * @param approverAccountId 经办人账号
    */
   @Transactional
-  public void revokeAllByApprover(UserNo approverAccountId) {
+  public void revokeAllAuthorizedByApprover(UserNo approverAccountId) {
     sessionRepository.findAuthorizedByApprover(approverAccountId)
       .forEach(session -> {
         session.revoke(approverAccountId, "账号冻结紧急收权");

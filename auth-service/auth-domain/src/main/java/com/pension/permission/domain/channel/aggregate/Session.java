@@ -104,7 +104,9 @@ public class Session extends AggregateRoot<SessionId> {
     AnnuityChannel channel,
     EffectiveIdentity effectiveIdentity,
     PlanNo selectedPlanId,
-    LocalDateTime expiresAt
+    LocalDateTime expiresAt,
+    SessionStatus status,
+    SecondaryAuthSessionId secondaryAuthSessionId
   ) {
 
     super(
@@ -121,6 +123,8 @@ public class Session extends AggregateRoot<SessionId> {
     this.effectiveIdentity = effectiveIdentity;
     this.selectedPlanId = selectedPlanId;
     this.expiresAt = expiresAt;
+    this.status = status;
+    this.secondaryAuthSessionId = secondaryAuthSessionId;
 
     validateInvariants();
   }
@@ -170,7 +174,9 @@ public class Session extends AggregateRoot<SessionId> {
     AnnuityChannel channel,
     EffectiveIdentity effectiveIdentity,
     PlanNo selectedPlanId,
-    LocalDateTime expiresAt
+    LocalDateTime expiresAt,
+    SessionStatus status,
+    SecondaryAuthSessionId secondaryAuthSessionId
   ) {
 
     return new Session(
@@ -185,7 +191,9 @@ public class Session extends AggregateRoot<SessionId> {
       channel,
       effectiveIdentity,
       selectedPlanId,
-      expiresAt
+      expiresAt,
+      status,
+      secondaryAuthSessionId
     );
   }
 
@@ -263,6 +271,27 @@ public class Session extends AggregateRoot<SessionId> {
    */
   public SecondaryAuthSessionId secondaryAuthSessionId() {
     return secondaryAuthSessionId;
+  }
+
+  /**
+   * 获取当前选择办理的计划 ID.
+   */
+  public PlanNo selectedPlanId() {
+    return selectedPlanId;
+  }
+
+  /**
+   * 获取会话状态.
+   */
+  public SessionStatus status() {
+    return status;
+  }
+
+  /**
+   * 获取会话过期时间.
+   */
+  public LocalDateTime expiresAt() {
+    return expiresAt;
   }
 
 
@@ -353,6 +382,13 @@ public class Session extends AggregateRoot<SessionId> {
     if (effectiveIdentity == null) {
       throw new IllegalStateException(
         "Effective identity cannot be null."
+      );
+    }
+
+
+    if (status == null) {
+      throw new IllegalStateException(
+        "Status cannot be null."
       );
     }
   }

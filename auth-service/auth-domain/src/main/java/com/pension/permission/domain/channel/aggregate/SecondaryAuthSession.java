@@ -41,6 +41,9 @@ import java.util.Objects;
  */
 public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> {
 
+  /** 系统触发的操作（如超时过期）使用的操作人标识. */
+  private static final UserNo SYSTEM_OPERATOR = UserNo.of("SYSTEM");
+
   private final UserNo tellerAccountId;
   private UserNo approverAccountId;
   private final CredentialOwner credentialOwner;
@@ -259,31 +262,6 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   }
 
   /**
-   * 记录一次校验失败（PENDING，剩余次数减 1，耗尽则自动 REJECTED）.
-   *
-   * <p>此方法用于应用层在 authorize 抛异常后显式记录失败（如需独立追踪）。
-   * authorize 方法内部已自动调用 onAttemptFailed，因此通常无需手动调用此方法。</p>
-   *
-   * @param operator 操作人
-   */
-  public void recordFailedAttempt(UserNo operator) {
-    Objects.requireNonNull(operator, "operator");
-    if (status != SecondaryAuthStatus.PENDING) {
-      throw new DomainException(SecondaryAuthErrorCode.SESSION_NOT_PENDING);
-    }
-    if (verificationCode == null) {
-      throw new DomainException(SecondaryAuthErrorCode.VERIFICATION_CODE_EXPIRED);
-    }
-    this.verificationCode = verificationCode.onAttemptFailed();
-    if (this.verificationCode.isExhausted()) {
-      this.status = SecondaryAuthStatus.REJECTED;
-      registerDomainEvent(SecondaryAuthRejected.of(
-        id(), tellerAccountId, approverAccountId, operator));
-    }
-    markUpdated(operator);
-  }
-
-  /**
    * 重发验证码（PENDING，重置 verificationCode）.
    *
    * @param newCode 新的验证码值对象（应用层已哈希）
@@ -366,8 +344,8 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
       return;
     }
     this.status = SecondaryAuthStatus.EXPIRED;
-    registerDomainEvent(SecondaryAuthExpired.of(id(), tellerAccountId, tellerAccountId));
-    markUpdated(tellerAccountId);
+    registerDomainEvent(SecondaryAuthExpired.of(id(), tellerAccountId, SYSTEM_OPERATOR));
+    markUpdated(SYSTEM_OPERATOR);
   }
 
   @Override

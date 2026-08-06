@@ -267,4 +267,8 @@ public class AgentIdentityAssignment extends AggregateRoot<AssignmentId> {
   public boolean isInheritable() {
     return this.inheritable;
   }
+
+  public UserNo userNo() {
+    return this.userNo;
+  }
 }
