@@ -52,6 +52,11 @@
         <artifactId>auth-types</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>permission-sdk</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

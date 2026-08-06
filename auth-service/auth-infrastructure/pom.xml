@@ -18,6 +18,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>permission-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-id-starter</artifactId>
     </dependency>
     <dependency>
