@@ -1,6 +1,7 @@
 package com.pension.permission.domain.channel.service;
 
 import com.example.shared.annuity.AnnuityChannel;
+import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.PlanNo;
@@ -8,6 +9,7 @@ import com.pension.permission.domain.channel.aggregate.CustomerChannelEntitlemen
 import com.pension.permission.domain.channel.errorcode.ChannelErrorCode;
 import com.pension.permission.domain.channel.repository.CustomerChannelEntitlementRepository;
 import com.pension.permission.domain.product.ProductGateway;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -18,20 +20,15 @@ import java.util.List;
  * 所有渠道均视为未开通，拒绝登录/二次授权。</p>
  *
  * <p>本服务为无状态领域服务，依赖 {@link CustomerChannelEntitlementRepository}
- * 和 {@link ProductGateway} 两个 SPI。由应用层/基础设施层负责装配。</p>
+ * 和 {@link ProductGateway} 两个 SPI。通过 {@link DomainService} 注解由基础设施层
+ * （{@code AuthorizationInfrastructureConfig}）扫描注册为 Spring Bean。</p>
  */
+@DomainService
+@RequiredArgsConstructor
 public class ChannelAccessPolicy {
 
   private final CustomerChannelEntitlementRepository entitlementRepository;
   private final ProductGateway productGateway;
-
-  public ChannelAccessPolicy(
-    CustomerChannelEntitlementRepository entitlementRepository,
-    ProductGateway productGateway
-  ) {
-    this.entitlementRepository = entitlementRepository;
-    this.productGateway = productGateway;
-  }
 
   /**
    * 判断客户是否已开通指定渠道.

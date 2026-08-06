@@ -1,10 +1,13 @@
 package com.pension.permission.application.channel;
 
+import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.application.channel.command.CloseSecondaryAuthCommand;
 import com.pension.permission.application.channel.command.ConfirmSecondaryAuthCommand;
@@ -18,6 +21,7 @@ import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.channel.aggregate.SecondaryAuthSession;
 import com.pension.permission.domain.channel.enumeration.SecondaryAuthStatus;
 import com.pension.permission.domain.channel.repository.SecondaryAuthSessionRepository;
+import com.pension.permission.domain.channel.service.ChannelAccessPolicy;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.PermissionSnapshot;
@@ -68,6 +72,7 @@ class SecondaryAuthAppServiceTest {
   @Mock private VerificationCodeHasher codeHasher;
   @Mock private SecondaryAuthConfig config;
   @Mock private IdService idService;
+  @Mock private ChannelAccessPolicy channelAccessPolicy;
   @Mock private EventBus eventBus;
 
   private SecondaryAuthAppService service;
@@ -90,8 +95,11 @@ class SecondaryAuthAppServiceTest {
     lenient().when(config.getSessionTimeout()).thenReturn(SESSION_TIMEOUT);
     lenient().when(config.getVerificationMaxAttempts()).thenReturn(VERIFICATION_MAX_ATTEMPTS);
     lenient().when(config.getVerificationCodeLength()).thenReturn(VERIFICATION_CODE_LENGTH);
+    // 默认：渠道准入校验通过（无操作）
+    lenient().doNothing().when(channelAccessPolicy)
+      .requireEnabledForPlan(any(), any());
     service = new SecondaryAuthAppService(
-      sessionRepository, codeHasher, config, idService, eventBus);
+      sessionRepository, codeHasher, config, idService, channelAccessPolicy, eventBus);
   }
 
   private CredentialOwner owner() {
@@ -184,6 +192,58 @@ class SecondaryAuthAppServiceTest {
       assertThat(saved.approverAccountId()).isEqualTo(APPROVER_NO);
 
       verify(eventBus, atLeastOnce()).publish(any(DomainEvent.class));
+    }
+
+    @Test
+    @DisplayName("未指定 planId 时不应调用渠道准入校验")
+    void shouldNotInvokeChannelAccessPolicyWhenPlanIdIsNull() {
+      InitiateSecondaryAuthCommand cmd = new InitiateSecondaryAuthCommand(
+        TELLER_NO, owner(), APPROVER_NO, MOBILE, null);
+      when(sessionRepository.findActiveByTeller(TELLER_NO)).thenReturn(Optional.empty());
+      when(codeHasher.hash(anyString())).thenReturn("hashed-code");
+      when(idService.nextId(SecondaryAuthSessionId.class)).thenReturn(SESSION_ID);
+
+      service.initiate(cmd);
+
+      verify(channelAccessPolicy, never())
+        .requireEnabledForPlan(any(), any());
+    }
+
+    @Test
+    @DisplayName("指定 planId 且客户已开通网点渠道时应通过校验并创建会话")
+    void shouldPassChannelAccessCheckWhenChannelEnabled() {
+      PlanNo planId = PlanNo.of("plan-001");
+      InitiateSecondaryAuthCommand cmd = new InitiateSecondaryAuthCommand(
+        TELLER_NO, owner(), APPROVER_NO, MOBILE, planId);
+      when(sessionRepository.findActiveByTeller(TELLER_NO)).thenReturn(Optional.empty());
+      when(codeHasher.hash(anyString())).thenReturn("hashed-code");
+      when(idService.nextId(SecondaryAuthSessionId.class)).thenReturn(SESSION_ID);
+
+      SecondaryAuthSessionId result = service.initiate(cmd);
+
+      assertThat(result).isEqualTo(SESSION_ID);
+      verify(channelAccessPolicy).requireEnabledForPlan(planId, AnnuityChannel.BANK_BRANCH);
+      verify(sessionRepository).save(any(SecondaryAuthSession.class));
+    }
+
+    @Test
+    @DisplayName("指定 planId 但客户未开通网点渠道时应抛 DomainException 并不创建会话")
+    void shouldThrowWhenChannelNotEnabledForPlan() {
+      PlanNo planId = PlanNo.of("plan-001");
+      InitiateSecondaryAuthCommand cmd = new InitiateSecondaryAuthCommand(
+        TELLER_NO, owner(), APPROVER_NO, MOBILE, planId);
+      when(sessionRepository.findActiveByTeller(TELLER_NO)).thenReturn(Optional.empty());
+      org.mockito.Mockito.doThrow(new DomainException(
+        com.pension.permission.domain.channel.errorcode.ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED))
+        .when(channelAccessPolicy).requireEnabledForPlan(planId, AnnuityChannel.BANK_BRANCH);
+
+      assertThatThrownBy(() -> service.initiate(cmd))
+        .isInstanceOf(DomainException.class);
+
+      verify(channelAccessPolicy).requireEnabledForPlan(planId, AnnuityChannel.BANK_BRANCH);
+      verify(idService, never()).nextId(any(Class.class));
+      verify(sessionRepository, never()).save(any(SecondaryAuthSession.class));
+      verify(eventBus, never()).publish(any(DomainEvent.class));
     }
   }
 

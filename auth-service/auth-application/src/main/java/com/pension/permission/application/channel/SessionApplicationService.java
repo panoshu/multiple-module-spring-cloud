@@ -3,6 +3,7 @@ package com.pension.permission.application.channel;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
+import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.spi.LoginTokenService;
 import com.pension.permission.domain.channel.aggregate.Session;
@@ -10,9 +11,11 @@ import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
 import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
 import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
 import com.pension.permission.domain.channel.repository.SessionRepository;
+import com.pension.permission.domain.channel.service.ChannelAccessPolicy;
 import com.pension.permission.domain.channel.service.IdentityResolutionService;
 import com.pension.permission.domain.channel.service.PlanSelectionStrategy;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
+import com.pension.permission.domain.channel.valueobject.EnumeratedPlans;
 import com.pension.permission.domain.channel.valueobject.SelectablePlanScope;
 import com.pension.permission.types.SessionId;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +48,7 @@ public class SessionApplicationService {
   private final IdentityResolutionService identityResolutionService;
   private final LoginTokenService loginTokenService;
   private final Map<AnnuityChannel, PlanSelectionStrategy> strategiesByChannel;
+  private final ChannelAccessPolicy channelAccessPolicy;
   private final EventBus eventBus;
 
   /**
@@ -104,7 +109,27 @@ public class SessionApplicationService {
     if (strategy == null) {
       throw new IllegalStateException("该渠道未注册对应的计划选择策略: " + session.channel());
     }
-    return strategy.listSelectablePlans(session.effectiveIdentity());
+    SelectablePlanScope scope = strategy.listSelectablePlans(session.effectiveIdentity());
+    return filterByCustomerChannel(scope, session.channel());
+  }
+
+  /**
+   * 按客户渠道开通记录过滤可选计划.
+   *
+   * <p>仅对 {@link EnumeratedPlans}（网上渠道/网点二次授权后）生效：保留所属客户
+   * 已开通当前登录渠道的计划，剔除未开通的计划。{@link com.pension.permission.domain.channel.valueobject.AllPlans}
+   * （总部渠道）不做过滤——总部可办理任意计划，准入由 AuthorizationEngine 二层校验。</p>
+   *
+   * @param scope   策略返回的可选计划范围
+   * @param channel 当前会话渠道
+   * @return 过滤后的可选计划范围
+   */
+  private SelectablePlanScope filterByCustomerChannel(SelectablePlanScope scope, AnnuityChannel channel) {
+    if (!(scope instanceof EnumeratedPlans enumerated)) {
+      return scope;
+    }
+    List<PlanNo> filtered = channelAccessPolicy.filterPlansByChannel(enumerated.plans(), channel);
+    return new EnumeratedPlans(filtered);
   }
 
   @Transactional

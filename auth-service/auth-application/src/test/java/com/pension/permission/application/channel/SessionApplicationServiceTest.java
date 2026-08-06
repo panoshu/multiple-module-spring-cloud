@@ -5,16 +5,19 @@ import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
+import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.aggregate.Session;
 import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
 import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
 import com.pension.permission.domain.channel.repository.SessionRepository;
+import com.pension.permission.domain.channel.service.ChannelAccessPolicy;
 import com.pension.permission.domain.channel.service.IdentityResolutionService;
 import com.pension.permission.domain.channel.service.PlanSelectionStrategy;
 import com.pension.permission.domain.channel.spi.LoginTokenService;
 import com.pension.permission.domain.channel.valueobject.AllPlans;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
+import com.pension.permission.domain.channel.valueobject.EnumeratedPlans;
 import com.pension.permission.domain.channel.valueobject.SelectablePlanScope;
 import com.pension.permission.domain.credential.valueobject.owner.CredentialOwner;
 import com.pension.permission.domain.credential.valueobject.owner.UserCredentialOwner;
@@ -30,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -59,6 +63,7 @@ class SessionApplicationServiceTest {
   @Mock private LoginTokenService loginTokenService;
   @Mock private EventBus eventBus;
   @Mock private PlanSelectionStrategy netappStrategy;
+  @Mock private ChannelAccessPolicy channelAccessPolicy;
 
   private SessionApplicationService service;
 
@@ -71,7 +76,12 @@ class SessionApplicationServiceTest {
       identityResolutionService,
       loginTokenService,
       strategiesByChannel,
+      channelAccessPolicy,
       eventBus);
+    // 默认：渠道过滤器原样返回输入（模拟客户已开通所有渠道）
+    org.mockito.Mockito.lenient()
+      .when(channelAccessPolicy.filterPlansByChannel(any(), any()))
+      .thenAnswer(inv -> inv.getArgument(0));
   }
 
   private Session activeSession(UserNo accountId, AnnuityChannel channel) {
@@ -184,8 +194,8 @@ class SessionApplicationServiceTest {
   class ListSelectablePlansTest {
 
     @Test
-    @DisplayName("应委托已注册的策略查询")
-    void shouldDelegateToRegisteredStrategy() {
+    @DisplayName("AllPlans 范围应原样返回，不经过渠道过滤")
+    void shouldReturnAllPlansAsIsWithoutChannelFilter() {
       Session session = activeSession(OPERATOR_NO, ONLINE_CHANNEL);
       when(sessionRepository.loadOrThrow(SESSION_ID)).thenReturn(session);
       SelectablePlanScope scope = new AllPlans();
@@ -195,6 +205,27 @@ class SessionApplicationServiceTest {
 
       assertThat(result).isSameAs(scope);
       verify(netappStrategy).listSelectablePlans(session.effectiveIdentity());
+      verify(channelAccessPolicy, never()).filterPlansByChannel(any(), any());
+    }
+
+    @Test
+    @DisplayName("EnumeratedPlans 范围应经渠道过滤器过滤")
+    void shouldFilterEnumeratedPlansByChannel() {
+      Session session = activeSession(OPERATOR_NO, ONLINE_CHANNEL);
+      when(sessionRepository.loadOrThrow(SESSION_ID)).thenReturn(session);
+      List<PlanNo> rawPlans = List.of(
+        PlanNo.of("plan-1"), PlanNo.of("plan-2"), PlanNo.of("plan-3"));
+      when(netappStrategy.listSelectablePlans(session.effectiveIdentity()))
+        .thenReturn(new EnumeratedPlans(rawPlans));
+      List<PlanNo> filteredPlans = List.of(PlanNo.of("plan-1"), PlanNo.of("plan-2"));
+      when(channelAccessPolicy.filterPlansByChannel(rawPlans, ONLINE_CHANNEL))
+        .thenReturn(filteredPlans);
+
+      SelectablePlanScope result = service.listSelectablePlans(SESSION_ID);
+
+      assertThat(result).isInstanceOf(EnumeratedPlans.class);
+      assertThat(((EnumeratedPlans) result).plans()).containsExactlyElementsOf(filteredPlans);
+      verify(channelAccessPolicy).filterPlansByChannel(rawPlans, ONLINE_CHANNEL);
     }
 
     @Test

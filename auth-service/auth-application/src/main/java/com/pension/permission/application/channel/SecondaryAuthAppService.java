@@ -1,8 +1,10 @@
 package com.pension.permission.application.channel;
 
+import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.application.channel.command.CloseSecondaryAuthCommand;
 import com.pension.permission.application.channel.command.ConfirmSecondaryAuthCommand;
@@ -13,6 +15,7 @@ import com.pension.permission.application.channel.config.SecondaryAuthConfig;
 import com.pension.permission.domain.channel.aggregate.SecondaryAuthSession;
 import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
 import com.pension.permission.domain.channel.repository.SecondaryAuthSessionRepository;
+import com.pension.permission.domain.channel.service.ChannelAccessPolicy;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.VerificationCode;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 二次授权应用服务.
@@ -39,6 +43,11 @@ import java.time.LocalDateTime;
  *
  * <p>注意：本类不直接生成权限快照，快照由 PermissionResolver 端口提供（未来 Task）。
  * 当前实现中 confirm 方法的快照参数由调用方传入，应用服务仅负责编排。</p>
+ *
+ * <p>渠道准入校验：发起二次授权时若指定了 {@code planId}，通过
+ * {@link ChannelAccessPolicy#requireEnabledForPlan(PlanNo, AnnuityChannel)}
+ * 校验计划所属客户已开通 {@link AnnuityChannel#BANK_BRANCH} 渠道，
+ * 确保只有客户已开通网点渠道的计划才能进行网点二次授权。</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -50,10 +59,14 @@ public class SecondaryAuthAppService {
   private final VerificationCodeHasher codeHasher;
   private final SecondaryAuthConfig config;
   private final IdService idService;
+  private final ChannelAccessPolicy channelAccessPolicy;
   private final EventBus eventBus;
 
   /**
    * 柜员发起二次授权.
+   *
+   * <p>若命令携带 {@code planId}，会先校验该计划所属客户已开通网点渠道
+   * （{@link AnnuityChannel#BANK_BRANCH}），未开通则抛 {@link com.example.shared.exception.DomainException}。</p>
    *
    * @param cmd 发起命令（含经办人手机号）
    * @return 会话 ID
@@ -65,6 +78,11 @@ public class SecondaryAuthAppService {
       .ifPresent(s -> {
         throw new BusinessException(SecondaryAuthErrorCode.ACTIVE_SESSION_EXISTS);
       });
+
+    // 渠道准入校验：若指定了目标计划，校验计划所属客户已开通网点渠道
+    if (Objects.nonNull(cmd.planId())) {
+      channelAccessPolicy.requireEnabledForPlan(cmd.planId(), AnnuityChannel.BANK_BRANCH);
+    }
 
     // 生成验证码（明文，仅在此方法作用域内）
     String rawCode = generateCode();

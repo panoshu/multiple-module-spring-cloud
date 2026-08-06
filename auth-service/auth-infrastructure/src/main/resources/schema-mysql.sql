@@ -237,3 +237,22 @@ CREATE TABLE IF NOT EXISTS t_auth_permission_item (
     KEY idx_permission_item_category (category),
     KEY idx_permission_item_group (category_group)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限点元数据表';
+
+-- ========== CustomerChannelEntitlement 表 ==========
+-- 客户渠道开通记录聚合根 CustomerChannelEntitlement 持久化
+-- 记录客户开通了哪些登录渠道（网上/网点等），用于登录/二次授权准入校验
+
+CREATE TABLE IF NOT EXISTS t_auth_customer_channel_entitlement (
+    id                VARCHAR(32)   NOT NULL                  COMMENT '开通记录ID(ULID)',
+    customer_no       VARCHAR(32)   NOT NULL                  COMMENT '客户编号',
+    enabled_channels  JSON          NOT NULL                  COMMENT '已开通渠道集合 JSON 数组（AnnuityChannel.name）',
+    created_by        VARCHAR(64)   NOT NULL,
+    create_time       DATETIME      NOT NULL,
+    updated_by        VARCHAR(64),
+    update_time       DATETIME,
+    deleted           TINYINT(1)    NOT NULL DEFAULT 0,
+    version           INT           NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_t_auth_customer_channel_entitlement_customer (customer_no, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户渠道开通记录表';
+

@@ -358,3 +358,29 @@ CREATE INDEX idx_permission_item_category
 CREATE INDEX idx_permission_item_group
     ON t_auth_permission_item (category_group)
     WHERE deleted = FALSE AND category_group IS NOT NULL;
+
+-- ========== CustomerChannelEntitlement 表 ==========
+-- 客户渠道开通记录聚合根 CustomerChannelEntitlement 持久化
+-- 记录客户开通了哪些登录渠道（网上/网点等），用于登录/二次授权准入校验
+
+CREATE TABLE IF NOT EXISTS t_auth_customer_channel_entitlement (
+    id                VARCHAR(32)   NOT NULL,
+    customer_no       VARCHAR(32)   NOT NULL,
+    enabled_channels  JSONB         NOT NULL,
+    created_by        VARCHAR(64)   NOT NULL,
+    create_time       TIMESTAMP     NOT NULL,
+    updated_by        VARCHAR(64),
+    update_time       TIMESTAMP,
+    deleted           BOOLEAN       NOT NULL DEFAULT FALSE,
+    version           INT           NOT NULL DEFAULT 0,
+    CONSTRAINT pk_t_auth_customer_channel_entitlement PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_auth_customer_channel_entitlement IS '客户渠道开通记录表';
+COMMENT ON COLUMN t_auth_customer_channel_entitlement.customer_no IS '客户编号';
+COMMENT ON COLUMN t_auth_customer_channel_entitlement.enabled_channels IS '已开通渠道集合 JSON 数组（AnnuityChannel.name）';
+
+CREATE UNIQUE INDEX uk_t_auth_customer_channel_entitlement_customer
+    ON t_auth_customer_channel_entitlement (customer_no)
+    WHERE deleted = FALSE;
+
