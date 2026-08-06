@@ -25,6 +25,18 @@ sa-token:
   is-log: false
 
 auth:
+  # 三渠道会话时效独立配置
+  # - netapp: 互联网渠道（NETAPP），默认 2 小时
+  # - teller: 总行柜员渠道（TELLER），默认 8 小时
+  # - bank-branch: 分行柜员渠道（BANK_BRANCH），默认 8 小时
+  channel-session:
+    netapp:
+      timeout: 2h
+    teller:
+      timeout: 8h
+    bank-branch:
+      timeout: 8h
+
   secondary-auth:
     # 授权策略（sms-code / face-recognition / ukey-signature）
     strategy: sms-code
