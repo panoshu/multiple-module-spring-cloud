@@ -1,13 +1,11 @@
 package com.pension.permission.domain.assignment.service;
 
 import com.example.shared.domain.annotation.DomainService;
-import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.pension.permission.domain.assignment.aggregate.AgentIdentityAssignment;
-import com.pension.permission.domain.assignment.errorcode.RoleError;
 import com.pension.permission.domain.assignment.repository.AssignmentRepository;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.domain.authorization.enumeration.*;
@@ -25,6 +23,7 @@ import com.pension.permission.domain.product.PlanSnapshot;
 import com.pension.permission.domain.product.ProductGateway;
 import com.pension.permission.domain.role.aggregate.RoleTemplate;
 import com.pension.permission.domain.role.service.RoleTemplateResolver;
+import com.pension.permission.types.AssignmentScopeDimension;
 import com.pension.permission.types.GrantId;
 
 import java.time.LocalDateTime;
@@ -103,6 +102,56 @@ public final class EffectivePermissionService {
   }
 
   /**
+   * 平台管理权限判定：跳过能力层，主体层用 GLOBAL 规则匹配。
+   * 不依赖 planId。仅匹配 scopeRules 为空或全部 GLOBAL 的 Grant。
+   */
+  public boolean checkPlatformPermission(UserNo identity, Permission permission, LocalDateTime at) {
+    List<Grant> persistedMatched = grantRepository.findCandidateSubjectGrants(identity, at).stream()
+      .filter(g -> g.isActiveAt(at))
+      .filter(g -> isGlobalScope(g.scopeRules()))
+      .filter(g -> g.subject().covers(identity, membershipLookup))
+      .filter(g -> g.grants(permission))
+      .toList();
+
+    List<Grant> liveMatched = resolveLiveGlobalRoleTemplateGrants(identity, at);
+
+    List<Grant> matched = Stream.concat(persistedMatched.stream(), liveMatched.stream())
+      .filter(g -> g.grants(permission))
+      .toList();
+
+    return effectResolver.resolve(matched);
+  }
+
+  private boolean isGlobalScope(List<ScopeRule> rules) {
+    if (rules.isEmpty()) {
+      return true;
+    }
+    return rules.stream().allMatch(r -> r.dimension() == ScopeDimension.GLOBAL);
+  }
+
+  private List<Grant> resolveLiveGlobalRoleTemplateGrants(UserNo identity, LocalDateTime at) {
+    return assignmentRepository.findActiveByAccount(identity).stream()
+      .filter(a -> a.scopeDimension() == AssignmentScopeDimension.GLOBAL)
+      .map(a -> toGlobalVirtualGrant(identity, a, at))
+      .toList();
+  }
+
+  private Grant toGlobalVirtualGrant(UserNo identity, AgentIdentityAssignment assignment, LocalDateTime at) {
+    RoleTemplate template = roleTemplateResolver.resolveOrThrow(
+      assignment.scopeDimension(), assignment.scopeValue(), assignment.roleCode());
+
+    GrantSubject subject = new UserListSubject(Set.of(identity));
+    return Grant.create(
+      idService.nextId(GrantId.class), identity, subject,
+      List.of(),
+      template.permissions(), GrantType.BASE,
+      GrantOrigin.ROLE_TEMPLATE, Effect.ALLOW, GrantStatus.EFFECTIVE,
+      ValidityPeriod.sinceNow(),
+      null, null
+    );
+  }
+
+  /**
    * 最终判定：能力层 AND 主体层
    */
   public boolean checkPermission(UserNo identity, PlanNo planId, Permission permission, LocalDateTime at) {
@@ -127,20 +176,21 @@ public final class EffectivePermissionService {
     RoleTemplate template = roleTemplateResolver.resolveOrThrow(
       assignment.scopeDimension(), assignment.scopeValue(), assignment.roleCode());
 
-    ScopeDimension dimension = switch (assignment.scopeDimension()) {
-      case PLAN -> ScopeDimension.PLAN;
-      case CUSTOMER -> ScopeDimension.CUSTOMER;
-      case PRODUCT -> ScopeDimension.PRODUCT;
-      case GLOBAL -> throw new DomainException(RoleError.UNSUPPORTED_SCOPE_DIMENSION);
+    List<ScopeRule> scopeRules = switch (assignment.scopeDimension()) {
+      case PLAN -> List.of(new ScopeRule(ScopeDimension.PLAN, assignment.scopeValue(), assignment.isInheritable()));
+      case CUSTOMER -> List.of(new ScopeRule(ScopeDimension.CUSTOMER, assignment.scopeValue(), assignment.isInheritable()));
+      case PRODUCT -> List.of(new ScopeRule(ScopeDimension.PRODUCT, assignment.scopeValue(), assignment.isInheritable()));
+      case GLOBAL -> List.of();
     };
-    ScopeRule scopeRule = new ScopeRule(dimension, assignment.scopeValue(), assignment.isInheritable());
     GrantSubject subject = new UserListSubject(Set.of(identity));
 
+    PlanNo planNo = assignment.scopeDimension() == AssignmentScopeDimension.GLOBAL
+      ? null : PlanNo.of(assignment.scopeValue());
+
     return Grant.create(
-      idService.nextId(GrantId.class), identity, subject, List.of(scopeRule), template.permissions(), GrantType.BASE,
-      GrantOrigin.ROLE_TEMPLATE, Effect.ALLOW, GrantStatus.EFFECTIVE, ValidityPeriod.sinceNow(),
-      // 这里的传参需要审核
-      PlanNo.of(assignment.scopeValue()), PlanNo.of(assignment.scopeValue())
+      idService.nextId(GrantId.class), identity, subject, scopeRules, template.permissions(),
+      GrantType.BASE, GrantOrigin.ROLE_TEMPLATE, Effect.ALLOW, GrantStatus.EFFECTIVE,
+      ValidityPeriod.sinceNow(), planNo, planNo
     );
   }
 

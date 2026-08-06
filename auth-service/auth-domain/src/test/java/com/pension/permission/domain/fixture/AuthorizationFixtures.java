@@ -163,4 +163,44 @@ public final class AuthorizationFixtures {
   public static PlanMembershipLookup mockMembershipLookup() {
     return mock(PlanMembershipLookup.class);
   }
+
+  // ===== GLOBAL / 平台权限 =====
+
+  /**
+   * 创建一个 GLOBAL 范围的 EFFECTIVE ALLOW 授权（平台管理权限）。
+   */
+  public static Grant effectiveGlobalAllowGrant(String business, String action) {
+    return Grant.create(
+      new GrantId("g-global-allow-1"),
+      UserNo.of("creator-1"),
+      userListSubject("U-001"),
+      List.of(),
+      Set.of(permission(business, action)),
+      GrantType.BASE,
+      GrantOrigin.HQ_CONFIG,
+      Effect.ALLOW,
+      GrantStatus.EFFECTIVE,
+      ValidityPeriod.infinite(),
+      null,
+      null);
+  }
+
+  /**
+   * 创建一个 GLOBAL 范围的 EFFECTIVE DENY 授权（紧急收权）。
+   */
+  public static Grant effectiveGlobalDenyGrant(String business, String action) {
+    return Grant.create(
+      new GrantId("g-global-deny-1"),
+      UserNo.of("creator-1"),
+      userListSubject("U-001"),
+      List.of(),
+      Set.of(permission(business, action)),
+      GrantType.BASE,
+      GrantOrigin.HQ_CONFIG,
+      Effect.DENY,
+      GrantStatus.EFFECTIVE,
+      ValidityPeriod.infinite(),
+      null,
+      null);
+  }
 }
