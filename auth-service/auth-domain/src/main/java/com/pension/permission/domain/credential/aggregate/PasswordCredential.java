@@ -68,6 +68,8 @@ public final class PasswordCredential
       Objects.requireNonNull(passwordHash);
 
 
+    validateInvariants();
+
   }
 
 
@@ -164,6 +166,8 @@ public final class PasswordCredential
 
     this.passwordHash =
       Objects.requireNonNull(passwordHash);
+
+    validateInvariants();
 
   }
 

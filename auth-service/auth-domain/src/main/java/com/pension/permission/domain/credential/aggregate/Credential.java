@@ -75,7 +75,9 @@ public sealed abstract class Credential
       CredentialStatus.ACTIVE;
 
 
-    validateInvariants();
+    // 不在此处调用 validateInvariants()，遵循 Entity 基类约定：
+    // 父类构造函数执行时子类字段尚未初始化，调用可被重写的 validateInvariants()
+    // 会导致子类校验必然失败。子类必须在自己的构造函数末尾显式调用。
 
   }
 
@@ -124,7 +126,8 @@ public sealed abstract class Credential
       Objects.requireNonNull(validityPeriod);
 
 
-    validateInvariants();
+    // 不在此处调用 validateInvariants()，遵循 Entity 基类约定：
+    // 子类在自己的构造函数末尾显式调用。
 
   }
 

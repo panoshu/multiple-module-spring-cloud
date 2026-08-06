@@ -54,6 +54,8 @@ public final class UKeyCredential
       );
 
 
+    validateInvariants();
+
   }
 
 
@@ -141,6 +143,8 @@ public final class UKeyCredential
 
     this.keySerial =
       Objects.requireNonNull(keySerial);
+
+    validateInvariants();
 
   }
 
