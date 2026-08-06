@@ -311,3 +311,50 @@ CREATE INDEX idx_t_auth_grant_source_plan
 CREATE INDEX idx_t_auth_grant_target_plan
     ON t_auth_grant (target_plan_no)
     WHERE deleted = FALSE AND target_plan_no IS NOT NULL;
+
+-- ========== PermissionItem 表 ==========
+-- 权限点元数据聚合根 PermissionItem 持久化
+-- 由 PermissionScanner 自动扫描 @RequirePermission 注解 upsert 写入
+
+CREATE TABLE IF NOT EXISTS t_auth_permission_item (
+    id              VARCHAR(32)   NOT NULL,
+    business_code   VARCHAR(64)   NOT NULL,
+    action_code     VARCHAR(64),
+    category        VARCHAR(16)   NOT NULL,
+    source          VARCHAR(16)   NOT NULL,
+    controller      VARCHAR(255),
+    method          VARCHAR(255),
+    http_method     VARCHAR(16),
+    path            VARCHAR(512),
+    display_name    VARCHAR(128),
+    description     VARCHAR(512),
+    category_group  VARCHAR(64),
+    sort_order      INT           NOT NULL DEFAULT 0,
+    auto_registered BOOLEAN       NOT NULL DEFAULT TRUE,
+    created_by      VARCHAR(64)   NOT NULL,
+    create_time     TIMESTAMP     NOT NULL,
+    updated_by      VARCHAR(64),
+    update_time     TIMESTAMP,
+    deleted         BOOLEAN       NOT NULL DEFAULT FALSE,
+    version         INT           NOT NULL DEFAULT 0,
+    CONSTRAINT pk_t_auth_permission_item PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_auth_permission_item IS '权限点元数据表';
+COMMENT ON COLUMN t_auth_permission_item.business_code IS '业务编码';
+COMMENT ON COLUMN t_auth_permission_item.action_code IS '操作编码（NULL=整个业务）';
+COMMENT ON COLUMN t_auth_permission_item.category IS '权限类别: BUSINESS/PLATFORM';
+COMMENT ON COLUMN t_auth_permission_item.source IS '来源: API/MANUAL';
+COMMENT ON COLUMN t_auth_permission_item.auto_registered IS '是否自动注册（被扫描器标记为 stale 时置 false）';
+
+CREATE UNIQUE INDEX uk_permission_item_biz_action
+    ON t_auth_permission_item (business_code, action_code)
+    WHERE deleted = FALSE;
+
+CREATE INDEX idx_permission_item_category
+    ON t_auth_permission_item (category)
+    WHERE deleted = FALSE;
+
+CREATE INDEX idx_permission_item_group
+    ON t_auth_permission_item (category_group)
+    WHERE deleted = FALSE AND category_group IS NOT NULL;

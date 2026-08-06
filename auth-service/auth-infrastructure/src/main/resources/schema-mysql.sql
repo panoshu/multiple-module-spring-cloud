@@ -206,3 +206,34 @@ CREATE TABLE IF NOT EXISTS t_auth_grant (
     KEY idx_t_auth_grant_source_plan (source_plan_no, deleted),
     KEY idx_t_auth_grant_target_plan (target_plan_no, deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='授权策略主记录表';
+
+-- ========== PermissionItem 表 ==========
+-- 权限点元数据聚合根 PermissionItem 持久化
+-- 由 PermissionScanner 自动扫描 @RequirePermission 注解 upsert 写入
+
+CREATE TABLE IF NOT EXISTS t_auth_permission_item (
+    id              VARCHAR(32)   NOT NULL                  COMMENT '权限点ID(ULID)',
+    business_code   VARCHAR(64)   NOT NULL                  COMMENT '业务编码',
+    action_code     VARCHAR(64)                             COMMENT '操作编码（NULL=整个业务）',
+    category        VARCHAR(16)   NOT NULL                  COMMENT '权限类别: BUSINESS/PLATFORM',
+    source          VARCHAR(16)   NOT NULL                  COMMENT '来源: API/MANUAL',
+    controller      VARCHAR(255)                            COMMENT '控制器类名',
+    method          VARCHAR(255)                            COMMENT '方法名',
+    http_method     VARCHAR(16)                             COMMENT 'HTTP方法',
+    path            VARCHAR(512)                            COMMENT '请求路径',
+    display_name    VARCHAR(128)                            COMMENT '展示名称',
+    description     VARCHAR(512)                            COMMENT '描述',
+    category_group  VARCHAR(64)                             COMMENT '分类分组',
+    sort_order      INT           NOT NULL DEFAULT 0        COMMENT '排序序号',
+    auto_registered TINYINT(1)    NOT NULL DEFAULT 1        COMMENT '是否自动注册（被扫描器标记为 stale 时置 0）',
+    created_by      VARCHAR(64)   NOT NULL,
+    create_time     DATETIME      NOT NULL,
+    updated_by      VARCHAR(64),
+    update_time     DATETIME,
+    deleted         TINYINT(1)    NOT NULL DEFAULT 0,
+    version         INT           NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_permission_item_biz_action (business_code, action_code),
+    KEY idx_permission_item_category (category),
+    KEY idx_permission_item_group (category_group)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限点元数据表';
