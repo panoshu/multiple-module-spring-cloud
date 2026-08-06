@@ -112,6 +112,26 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>business-core-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>business-core-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>business-core-infrastructure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>iam-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>integration-service-api</artifactId>
         <version>${project.version}</version>
       </dependency>
