@@ -3473,6 +3473,24 @@ git commit -m "test: 最终集成验证通过" --allow-empty
 
 ---
 
+## Execution Status (2026-08-06)
+
+All 22 tasks (1-21 + 10.5) completed and committed on branch `feature/auth`.
+
+**Final verification:**
+- `mvn clean compile -DskipTests` → BUILD SUCCESS (all 77 modules)
+- `mvn test` → BUILD SUCCESS (all tests pass, 0 failures)
+
+**Pre-existing issues fixed during Task 21 integration verification (unrelated to auth-service refactor):**
+- `build(shared-types)`: 补充 lombok 依赖（IdentityType 使用 @Getter/@AllArgsConstructor 但 pom.xml 未声明依赖）
+- `fix(file-infrastructure)`: 移除 ParseTaskConverter/SubTaskDataConverter/TemplateConfigConverter 中多余的 `@Mapping(target = "domainEvents", ignore = true)`（MapStruct 无法识别 AggregateRoot.domainEvents() 作为标准属性，DO 类无此字段）
+
+**Key deliverables:**
+- Task 18: `GrantEventRefreshListener` — 监听 GrantApproved/GrantRevoked 事件，根据 GrantSubject 类型精确失效权限缓存（UserListSubject 精确失效，其他类型依赖 TTL 兜底）
+- Task 19: `application.yml` — 新增 `auth.channel-session.{netapp,teller,bank-branch}.timeout` 三渠道独立时效配置
+
+---
+
 ## Execution Handoff
 
 Plan complete and saved to `docs/superpowers/plans/2026-08-06-auth-session-management-refactor.md`. Two execution options:
