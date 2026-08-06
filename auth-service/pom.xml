@@ -13,15 +13,22 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>auth-types</module>
     <module>auth-domain</module>
+    <module>auth-api</module>
     <module>auth-application</module>
+    <module>auth-adapter</module>
     <module>auth-infrastructure</module>
     <module>permission-sdk</module>
-    <module>auth-types</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>auth-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>auth-adapter</artifactId>
