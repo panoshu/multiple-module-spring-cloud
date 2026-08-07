@@ -132,15 +132,22 @@ public class PermissionItemRepositoryImpl implements PermissionItemRepository {
   }
 
   @Override
-  public void upsertAll(List<PermissionItem> items, UserNo scanner) {
+  public int upsertAll(List<PermissionItem> items, UserNo scanner) {
+    int upserted = 0;
     for (PermissionItem item : items) {
       Optional<PermissionItem> existing = findByBusinessAndAction(item.businessCode(), item.actionCode());
       if (existing.isEmpty()) {
         save(item);
+        upserted++;
         log.debug("新增权限点: business={}, action={}", item.businessCode().value(),
           item.actionCode() != null ? item.actionCode().value() : "(whole)");
       } else {
         PermissionItem persisted = existing.get();
+        if (isUnchanged(persisted, item)) {
+          log.debug("权限点未变化: business={}, action={}", item.businessCode().value(),
+            item.actionCode() != null ? item.actionCode().value() : "(whole)");
+          continue;
+        }
         PermissionItem merged = PermissionItem.reconstitute(
           persisted.id().value(),
           item.businessCode().value(),
@@ -153,10 +160,23 @@ public class PermissionItemRepositoryImpl implements PermissionItemRepository {
           persisted.createdBy(), scanner,
           persisted.createdAt(), LocalDateTime.now());
         save(merged);
+        upserted++;
         log.debug("更新权限点来源字段: business={}, action={}", item.businessCode().value(),
           item.actionCode() != null ? item.actionCode().value() : "(whole)");
       }
     }
+    return upserted;
+  }
+
+  /**
+   * 判断权限点来源字段是否未变化.
+   */
+  private boolean isUnchanged(PermissionItem persisted, PermissionItem incoming) {
+    return java.util.Objects.equals(persisted.controller(), incoming.controller())
+      && java.util.Objects.equals(persisted.method(), incoming.method())
+      && java.util.Objects.equals(persisted.httpMethod(), incoming.httpMethod())
+      && java.util.Objects.equals(persisted.path(), incoming.path())
+      && persisted.category() == incoming.category();
   }
 
   @Override

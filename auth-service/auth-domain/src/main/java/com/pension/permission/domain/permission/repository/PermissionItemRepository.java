@@ -25,7 +25,14 @@ public interface PermissionItemRepository extends Repository<PermissionItem, Per
 
   List<PermissionItem> loadAllItems();
 
-  void upsertAll(List<PermissionItem> items, UserNo scanner);
+  /**
+   * 批量 upsert 权限点。
+   *
+   * @param items   权限点列表
+   * @param scanner 扫描者标识
+   * @return 实际新增或更新的数量（与现有记录字段无变化时返回 0）
+   */
+  int upsertAll(List<PermissionItem> items, UserNo scanner);
 
   void markStaleForUnscanned(Set<PermissionItemId> scannedIds, UserNo scanner);
 }
