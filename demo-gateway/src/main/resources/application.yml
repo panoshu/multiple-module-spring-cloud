@@ -126,20 +126,20 @@ sa-token:
   # 是否输出操作日志
   is-log: false
 
-## 网关层 IAM 配置(路由规则加载、白名单等)
-iam:
+## 网关层 auth 配置（白名单等）
+auth:
   gateway:
-    # 路由规则缓存刷新间隔(秒),默认 5 分钟
-    route-rule-cache-timeout: 300
-    # 单页加载最大条数
-    route-rule-page-size: 100
-    # 公共白名单路径(无需登录校验)
+    # 公共白名单路径(无需登录校验)——被 GatewayProperties 消费，替代硬编码 addExclude
     public-paths:
       - /actuator/**
+      - /actuator
+      - /favicon.ico
       - /internet/auth/login
       - /hq/auth/login
       - /branch/auth/login
       - /branch/auth/secondary-auth/initiate
       - /branch/auth/secondary-auth/confirm
       - /branch/auth/secondary-auth/status/**
+      # 管理后台登录接口
+      - /admin/auth/login
 
