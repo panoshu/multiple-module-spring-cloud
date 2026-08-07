@@ -1,6 +1,6 @@
 package com.example.auth.api;
 
-import com.example.auth.api.command.ListPermissionItemsRequest;
+import com.example.auth.api.query.ListPermissionItemsRequest;
 import com.example.auth.api.dto.PermissionGroupResponse;
 import com.example.auth.api.dto.PermissionItemResponse;
 import com.example.shared.web.core.api.ApiResult;

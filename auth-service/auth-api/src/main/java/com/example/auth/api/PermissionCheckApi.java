@@ -1,8 +1,8 @@
 package com.example.auth.api;
 
-import com.example.auth.api.command.DataScopeRequest;
-import com.example.auth.api.command.PermissionCheckBatchRequest;
-import com.example.auth.api.command.PermissionCheckRequest;
+import com.example.auth.api.query.DataScopeRequest;
+import com.example.auth.api.query.PermissionCheckBatchRequest;
+import com.example.auth.api.query.PermissionCheckRequest;
 import com.example.auth.api.dto.DataScopeResponse;
 import com.example.auth.api.dto.PermissionCheckBatchResponse;
 import com.example.auth.api.dto.PermissionCheckResponse;

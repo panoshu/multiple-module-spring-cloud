@@ -1,7 +1,7 @@
 package com.example.shared.permission;
 
 import com.example.auth.api.PermissionCheckApi;
-import com.example.auth.api.command.PermissionCheckRequest;
+import com.example.auth.api.query.PermissionCheckRequest;
 import com.example.auth.api.dto.PermissionCheckResponse;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;

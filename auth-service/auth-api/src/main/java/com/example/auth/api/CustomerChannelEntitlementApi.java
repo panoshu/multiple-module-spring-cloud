@@ -2,7 +2,7 @@ package com.example.auth.api;
 
 import com.example.auth.api.command.DisableChannelRequest;
 import com.example.auth.api.command.EnableChannelRequest;
-import com.example.auth.api.command.GetEntitlementRequest;
+import com.example.auth.api.query.GetEntitlementRequest;
 import com.example.auth.api.command.ReplaceChannelsRequest;
 import com.example.auth.api.dto.CustomerChannelEntitlementResponse;
 import com.example.shared.web.core.api.ApiResult;

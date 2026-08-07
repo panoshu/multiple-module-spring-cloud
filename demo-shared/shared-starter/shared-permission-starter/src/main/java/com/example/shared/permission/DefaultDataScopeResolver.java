@@ -1,7 +1,7 @@
 package com.example.shared.permission;
 
 import com.example.auth.api.PermissionCheckApi;
-import com.example.auth.api.command.DataScopeRequest;
+import com.example.auth.api.query.DataScopeRequest;
 import com.example.auth.api.dto.DataScope;
 import com.example.auth.api.dto.DataScopeResponse;
 import com.example.shared.web.core.api.ApiResult;

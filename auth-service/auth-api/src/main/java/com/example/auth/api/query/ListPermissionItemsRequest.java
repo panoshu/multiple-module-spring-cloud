@@ -1,4 +1,4 @@
-package com.example.auth.api.command;
+package com.example.auth.api.query;
 
 /**
  * 查询权限项列表请求.

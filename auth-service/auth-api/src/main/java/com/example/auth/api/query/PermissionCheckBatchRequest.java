@@ -1,4 +1,4 @@
-package com.example.auth.api.command;
+package com.example.auth.api.query;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

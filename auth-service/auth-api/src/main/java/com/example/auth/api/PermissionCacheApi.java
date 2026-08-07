@@ -1,7 +1,7 @@
 package com.example.auth.api;
 
-import com.example.auth.api.command.GetBusinessPermissionsRequest;
-import com.example.auth.api.command.GetPlatformPermissionsRequest;
+import com.example.auth.api.query.GetBusinessPermissionsRequest;
+import com.example.auth.api.query.GetPlatformPermissionsRequest;
 import com.example.auth.api.dto.PermissionResponse;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
