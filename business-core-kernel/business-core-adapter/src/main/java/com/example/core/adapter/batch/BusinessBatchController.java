@@ -3,7 +3,6 @@ package com.example.core.adapter.batch;
 import com.example.core.adapter.batch.converter.BatchConverter;
 import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
-import com.example.core.adapter.security.RequireBusinessPermission;
 import com.example.core.adapter.validator.SupportedBusinessTypeValidator;
 import com.example.core.api.batch.BusinessBatchApi;
 import com.example.core.api.batch.command.CancelBatchCommand;
@@ -26,6 +25,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.identifier.id.*;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ import java.util.Optional;
  * <p>后续新增 Controller 方法流程:
  * <ol>
  *   <li>在 API 层接口新增方法签名</li>
- *   <li>在本类实现方法,标注 @RequireBusinessPermission(功能权限码)</li>
+ *   <li>在本类实现方法,标注 @RequirePermission(功能权限码)</li>
  *   <li>入口完成上述五步,通过 MapStruct Converter 完成 DTO 转换</li>
  * </ol>
  *
@@ -71,7 +71,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   private final BusinessAccessGuard accessGuard;
 
   @Override
-  @RequireBusinessPermission("BATCH_VIEW")
+  @RequirePermission(business = "BATCH", action = "VIEW")
   public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
     typeValidator.validate(query.businessType());
     SessionContext session = sessionResolver.require();
@@ -86,7 +86,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   @Override
-  @RequireBusinessPermission("BATCH_CREATE")
+  @RequirePermission(business = "BATCH", action = "CREATE")
   public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
     typeValidator.validate(command.businessType());
     SessionContext session = sessionResolver.require();
@@ -103,7 +103,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   @Override
-  @RequireBusinessPermission("BATCH_VIEW")
+  @RequirePermission(business = "BATCH", action = "VIEW")
   public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query) {
     SessionContext session = sessionResolver.require();
     log.info("查询批次详情: batchId={}, userNo={}", query.batchId(), session.userNo());
@@ -112,7 +112,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   @Override
-  @RequireBusinessPermission("BATCH_CANCEL")
+  @RequirePermission(business = "BATCH", action = "CANCEL")
   public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("取消批次: batchId={}, userNo={}", command.batchId(), session.userNo());

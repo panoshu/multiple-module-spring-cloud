@@ -2,7 +2,6 @@ package com.example.core.adapter.progress;
 
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.progress.converter.ProgressConverter;
-import com.example.core.adapter.security.RequireBusinessPermission;
 import com.example.core.api.context.SessionContext;
 import com.example.core.api.progress.BusinessProgressApi;
 import com.example.core.api.progress.query.GetBatchProgressQuery;
@@ -11,6 +10,7 @@ import com.example.core.application.business.service.BusinessProgressAppService;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>后续新增 Controller 方法流程:
  * <ol>
  *   <li>在 API 层接口新增方法签名</li>
- *   <li>在本类实现方法,标注 @RequireBusinessPermission(功能权限码)</li>
+ *   <li>在本类实现方法,标注 @RequirePermission(功能权限码)</li>
  *   <li>通过 ProgressConverter 完成 DTO 转换</li>
  * </ol>
  *
@@ -42,7 +42,7 @@ public class BusinessProgressController implements BusinessProgressApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
-  @RequireBusinessPermission("PROGRESS_VIEW")
+  @RequirePermission(business = "PROGRESS", action = "VIEW")
   public ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query) {
     SessionContext session = sessionResolver.require();
     log.info("查询批次进度: batchId={}, userNo={}", query.batchId(), session.userNo());

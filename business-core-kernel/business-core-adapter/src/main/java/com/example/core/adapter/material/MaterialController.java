@@ -2,7 +2,6 @@ package com.example.core.adapter.material;
 
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.material.converter.MaterialConverter;
-import com.example.core.adapter.security.RequireBusinessPermission;
 import com.example.core.api.context.SessionContext;
 import com.example.core.api.material.MaterialAppApi;
 import com.example.core.api.material.command.BindIndividualMaterialCommand;
@@ -18,6 +17,7 @@ import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.shared.identifier.id.ApplicationId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ import java.util.Map;
  * <p>后续新增 Controller 方法流程:
  * <ol>
  *   <li>在 API 层接口新增方法签名</li>
- *   <li>在本类实现方法,标注 @RequireBusinessPermission(功能权限码)</li>
+ *   <li>在本类实现方法,标注 @RequirePermission(功能权限码)</li>
  *   <li>通过 MaterialConverter 完成 DTO 转换</li>
  * </ol>
  *
@@ -52,7 +52,7 @@ public class MaterialController implements MaterialAppApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
-  @RequireBusinessPermission("MATERIAL_BIND")
+  @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("逐个绑定材料: applicationId={}, materialCode={}, userNo={}",
@@ -73,7 +73,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
-  @RequireBusinessPermission("MATERIAL_BIND")
+  @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("打包绑定材料: applicationId={}, fileId={}, userNo={}",
@@ -93,7 +93,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
-  @RequireBusinessPermission("MATERIAL_UNBIND")
+  @RequirePermission(business = "MATERIAL", action = "UNBIND")
   public ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("解绑材料: applicationId={}, materialCode={}, fileId={}, userNo={}",
@@ -108,7 +108,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
-  @RequireBusinessPermission("MATERIAL_VIEW")
+  @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query) {
     SessionContext session = sessionResolver.require();
     log.info("查询材料列表: applicationId={}, userNo={}", query.applicationId(), session.userNo());
@@ -120,7 +120,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
-  @RequireBusinessPermission("MATERIAL_VIEW")
+  @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query) {
     SessionContext session = sessionResolver.require();
     log.info("校验材料完整性: applicationId={}, userNo={}", query.applicationId(), session.userNo());

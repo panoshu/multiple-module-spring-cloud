@@ -19,9 +19,11 @@ import org.springframework.context.annotation.ComponentScan;
  *   <li>SessionContextResolver / BusinessMetaContextAssembler(会话基础设施)</li>
  *   <li>DefaultBusinessAccessGuard(默认权限守门人,业务服务可覆盖)</li>
  *   <li>5 类公共 API 的 Controller(Batch/Form/Application/Material/Progress)</li>
- *   <li>@RequireBusinessPermission 的 AOP 切面</li>
  *   <li>SupportedBusinessTypeValidator(业务类型校验)</li>
  * </ul>
+ *
+ * <p>功能权限校验由 shared-permission-starter 自动装配的 @RequirePermission AOP 切面承担,
+ * 业务服务需在 application.yml 配置 {@code permission.service.base-url} 才会启用切面。
  *
  * <p>业务服务只需:
  * <ol>
