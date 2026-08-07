@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * description
+ * 角色模板错误码（SERVICE.AUTH.03xx）.
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0
@@ -15,7 +15,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RoleError implements ErrorDefinition {
 
-  ROLE_TEMPLATE_NOT_FOUND("SERVICE.AUTH.0301", "角色不存在"),
+  ROLE_TEMPLATE_NOT_FOUND("SERVICE.AUTH.0301", "角色模板不存在"),
 
   ;
 
