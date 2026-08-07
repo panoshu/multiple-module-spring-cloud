@@ -17,6 +17,7 @@ import com.pension.permission.domain.authorization.spi.PlanMembershipLookup;
 import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.authorization.valueobject.ScopeRule;
+import com.pension.permission.domain.authorization.valueobject.VisibleScope;
 import com.pension.permission.domain.authorization.valueobject.subject.GrantSubject;
 import com.pension.permission.domain.authorization.valueobject.subject.UserListSubject;
 import com.pension.permission.domain.product.PlanSnapshot;
@@ -162,11 +163,86 @@ public final class EffectivePermissionService {
   }
 
   /**
+   * 解析当前用户在指定业务下的可见数据范围.
+   *
+   * <p>聚合所有 ALLOW/DENY Grant 的 scopeRules：
+   * <ul>
+   *   <li>GLOBAL ALLOW → globalVisible=true</li>
+   *   <li>PLAN ALLOW/DENY → 加入 visiblePlans/excludedPlans</li>
+   *   <li>CUSTOMER ALLOW（inheritable=true）→ 加入 visibleCustomers 及其子客户</li>
+   *   <li>CUSTOMER DENY → 加入 excludedCustomers</li>
+   * </ul>
+   *
+   * <p>最终 visiblePlans 减去 excludedPlans，visibleCustomers 减去 excludedCustomers。
+   *
+   * @param identity 用户标识
+   * @param business 业务编码
+   * @param at       时间点
+   * @return 聚合后的可见范围
+   */
+  public VisibleScope resolveVisibleScope(UserNo identity, BusinessCode business, LocalDateTime at) {
+    java.util.List<Grant> persisted = grantRepository.findCandidateSubjectGrants(identity, at).stream()
+      .filter(g -> g.isActiveAt(at))
+      .filter(g -> g.coversBusiness(business))
+      .toList();
+
+    java.util.List<Grant> live = resolveLiveRoleTemplateGrants(identity, at).stream()
+      .filter(g -> g.coversBusiness(business))
+      .toList();
+
+    java.util.Set<String> visiblePlans = new java.util.HashSet<>();
+    java.util.Set<String> visibleCustomers = new java.util.HashSet<>();
+    java.util.Set<String> deniedPlans = new java.util.HashSet<>();
+    java.util.Set<String> deniedCustomers = new java.util.HashSet<>();
+    boolean isGlobal = false;
+
+    for (Grant g : concat(persisted, live)) {
+      boolean isAllow = g.effect() == Effect.ALLOW;
+      for (ScopeRule rule : g.scopeRules()) {
+        switch (rule.dimension()) {
+          case GLOBAL -> { if (isAllow) isGlobal = true; }
+          case PLAN -> {
+            if (isAllow) visiblePlans.add(rule.value());
+            else deniedPlans.add(rule.value());
+          }
+          case CUSTOMER -> {
+            if (isAllow) {
+              visibleCustomers.add(rule.value());
+              if (rule.inheritable()) {
+                orgDirectory.descendantsOf(com.example.shared.identifier.id.CustomerNo.of(rule.value()))
+                  .forEach(c -> visibleCustomers.add(c.value()));
+              }
+            } else {
+              deniedCustomers.add(rule.value());
+            }
+          }
+          default -> { /* 其他维度暂不参与行级过滤 */ }
+        }
+      }
+    }
+
+    visiblePlans.removeAll(deniedPlans);
+    visibleCustomers.removeAll(deniedCustomers);
+
+    if (isGlobal) {
+      return VisibleScope.global();
+    }
+    return new VisibleScope(false, visiblePlans, visibleCustomers, deniedPlans, deniedCustomers);
+  }
+
+  private static <T> java.util.List<T> concat(java.util.List<T> a, java.util.List<T> b) {
+    java.util.List<T> result = new java.util.ArrayList<>(a.size() + b.size());
+    result.addAll(a);
+    result.addAll(b);
+    return result;
+  }
+
+  /**
    * 把该身份当前活跃的身份分配，实时解析成角色模板对应的权限，
    * 构造成不落库的"虚拟Grant"——字段形态跟真实Grant完全一致，
    * 目的是能直接复用ScopeMatcher/EffectResolver，不需要为这条特殊路径单独写一套合并逻辑。
    */
-  private List<Grant> resolveLiveRoleTemplateGrants(UserNo identity, LocalDateTime at) {
+  public List<Grant> resolveLiveRoleTemplateGrants(UserNo identity, LocalDateTime at) {
     return assignmentRepository.findActiveByAccount(identity).stream()
       .map(assignment -> toVirtualGrant(identity, assignment, at))
       .toList();
