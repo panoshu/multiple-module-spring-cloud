@@ -20,6 +20,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>auth-infrastructure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
     </dependency>
     <!-- shared-permission-starter: @RequirePermission 切面 + PermissionExecutor 接口 -->
