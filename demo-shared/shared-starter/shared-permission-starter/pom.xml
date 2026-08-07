@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>shared-starter</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>shared-permission-starter</artifactId>
+  <description>功能权限校验自动配置模块，提供 @RequirePermission 注解的 AOP 切面和 PermissionClient 自动装配</description>
+
+  <dependencies>
+    <!-- auth-api：@RequirePermission 注解、PermissionCategory 枚举、SessionSignatureUtils、PermissionCheckApi -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>auth-api</artifactId>
+    </dependency>
+
+    <!-- shared-exception：BusinessException + ErrorDefinition -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-exception</artifactId>
+    </dependency>
+
+    <!-- AOP 切面支持 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+
+    <!-- spring-web: RequestContextHolder / ServletRequestAttributes -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+
+    <!-- 自动装配 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Servlet API：DefaultAccountIdResolver 从 RequestContextHolder 读取请求头 -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- MyBatis-Flex: DataScopeQueryHelper 使用 QueryWrapper / QueryColumn -->
+    <dependency>
+      <groupId>com.mybatis-flex</groupId>
+      <artifactId>mybatis-flex-core</artifactId>
+      <version>${mybatis-flex.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>
