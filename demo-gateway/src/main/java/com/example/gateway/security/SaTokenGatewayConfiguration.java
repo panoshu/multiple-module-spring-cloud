@@ -8,6 +8,8 @@ import cn.dev33.satoken.reactor.filter.SaReactorFilter;
 import cn.dev33.satoken.stp.StpUtil;
 import com.example.gateway.order.GatewayFilterOrder;
 import com.example.shared.web.core.api.ApiResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 
 /**
  * sa-token 网关层集成配置 - 注册 SaReactorFilter 完成动态鉴权.
@@ -44,6 +49,7 @@ public class SaTokenGatewayConfiguration {
 
     private final ChannelAwareSaRouter channelAwareSaRouter;
     private final GatewayProperties gatewayProperties;
+    private final ObjectMapper objectMapper;
 
     /**
      * 启动时配置默认 StpLogic 识别所有渠道 token.
@@ -86,20 +92,45 @@ public class SaTokenGatewayConfiguration {
 
     /**
      * 统一异常处理:将 sa-token 异常转换为 ApiResult 响应.
+     *
+     * <p>直接通过 Spring 的 {@link ServerHttpResponse} 设置状态码，绕过 sa-token 1.45.0
+     * 的 {@code SaResponseForReactor.setStatus(int)} —— 该方法调用
+     * {@code ServerHttpResponse.setStatusCode(HttpStatus)}，在 Spring Framework 6.2+
+     * 中方法签名已变更为 {@code setStatusCode(HttpStatusCode)}，运行时会抛
+     * {@link NoSuchMethodError}，被 Reactor 视为致命异常导致响应无法返回（客户端超时）。
+     *
+     * <p>返回值为 JSON 字符串，由 {@code SaReactorFilter} 的 {@code writeResult} 写入响应体。
      */
     private Object handleError(Throwable e) {
+        ServerHttpResponse response = (ServerHttpResponse) SaHolder.getResponse().getSource();
+        response.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json;charset=UTF-8");
         if (e instanceof NotLoginException) {
-            SaHolder.getResponse().setStatus(401);
+            response.setStatusCode(HttpStatusCode.valueOf(401));
             log.warn("[SaTokenGateway] 未登录访问: {}", e.getMessage());
-            return ApiResult.failure(CODE_NOT_LOGIN, "未登录或登录已过期");
+            return toJson(ApiResult.failure(CODE_NOT_LOGIN, "未登录或登录已过期"));
         }
         if (e instanceof NotPermissionException || e instanceof NotRoleException) {
-            SaHolder.getResponse().setStatus(403);
+            response.setStatusCode(HttpStatusCode.valueOf(403));
             log.warn("[SaTokenGateway] 权限不足: {}", e.getMessage());
-            return ApiResult.failure(CODE_NO_PERMISSION, "无权限访问");
+            return toJson(ApiResult.failure(CODE_NO_PERMISSION, "无权限访问"));
         }
-        SaHolder.getResponse().setStatus(500);
+        response.setStatusCode(HttpStatusCode.valueOf(500));
         log.error("[SaTokenGateway] 鉴权异常", e);
-        return ApiResult.failure(CODE_INTERNAL_ERROR, "系统内部错误");
+        return toJson(ApiResult.failure(CODE_INTERNAL_ERROR, "系统内部错误"));
+    }
+
+    /**
+     * 将对象序列化为 JSON 字符串.
+     *
+     * @param obj 待序列化对象
+     * @return JSON 字符串；序列化失败时返回兜底错误 JSON
+     */
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException ex) {
+            log.error("[SaTokenGateway] 响应 JSON 序列化失败", ex);
+            return "{\"code\":\"" + CODE_INTERNAL_ERROR + "\",\"message\":\"系统内部错误\",\"data\":null}";
+        }
     }
 }

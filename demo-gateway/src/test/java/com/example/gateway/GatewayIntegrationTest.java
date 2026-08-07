@@ -44,26 +44,27 @@ class GatewayIntegrationTest {
   }
 
   @Test
-  @DisplayName("集成测试：验证 /server/xxx/xxx 路径应放行")
+  @DisplayName("集成测试：验证 /server/xxx/xxx 路径需登录（非白名单，未被 exclude-routes 拦截）")
   void testAllowPathServer() {
+    // /server/* 仅匹配单段路径，/server/xxx/xxx 不被 ExcludeRouteFilter 拦截，
+    // 进入 SaReactorFilter 后因非白名单路径要求登录，未登录返回 401。
     webClient.get().uri("/server/xxx/xxx")
       .exchange()
-      .expectStatus().isNotFound()
+      .expectStatus().isUnauthorized()
       .expectBody()
-      .jsonPath("$.status").isEqualTo(404)
-      .jsonPath("$.path").isEqualTo("/server/xxx/xxx");
-
+      .jsonPath("$.code").isEqualTo("COMMON.0002")
+      .jsonPath("$.message").isEqualTo("未登录或登录已过期");
   }
 
   @Test
-  @DisplayName("集成测试：验证普通路径应放行")
+  @DisplayName("集成测试：验证普通路径需登录（非白名单路径）")
   void testAllowNormalPath() {
-    // 请求一个未配置拦截的路径，例如 /user/1
-    // 由于没有真实的后端服务，网关可能会返回 503 Service Unavailable 或者 404 (No Route)
-    // 但关键是：它不应该返回我们在 Filter 中定义的 403。
-
+    // 网关改造后所有非白名单路径均要求登录，/user/1 未在白名单中，未登录返回 401。
     webClient.get().uri("/user/1")
       .exchange()
-      .expectStatus().is5xxServerError(); // 通常是 503，因为 lb://user-service 连不上
+      .expectStatus().isUnauthorized()
+      .expectBody()
+      .jsonPath("$.code").isEqualTo("COMMON.0002")
+      .jsonPath("$.message").isEqualTo("未登录或登录已过期");
   }
 }
