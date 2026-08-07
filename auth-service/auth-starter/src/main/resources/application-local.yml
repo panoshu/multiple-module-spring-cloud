@@ -1,0 +1,46 @@
+spring:
+  cloud:
+    nacos.discovery.server-addr: 127.0.0.1:8848
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:55432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
+    username: user_demo
+    password: passwd_demo
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# sa-token 配置（多渠道会话管理）
+sa-token:
+  token-name: Authorization
+  timeout: 28800
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+# shared-logging-starter 脱敏配置
+shared:
+  logging:
+    obfuscate:
+      global:
+        enable: false
+        replacement: "***"
+        enable-wildcard-paths: false
+      fields:
+        password:
+          aliases:
+            - $.password
+            - $.passwordHash
+          strategy: FULL
+
+logging:
+  level:
+    com.pension.permission: DEBUG
+    org.springframework.web: DEBUG
+    com.alibaba.nacos: ERROR
+    com.alibaba.cloud.nacos: ERROR

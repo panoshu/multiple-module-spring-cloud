@@ -19,7 +19,7 @@
     <module>auth-application</module>
     <module>auth-adapter</module>
     <module>auth-infrastructure</module>
-    <module>permission-sdk</module>
+    <module>auth-starter</module>
   </modules>
 
   <dependencyManagement>
@@ -57,11 +57,6 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>auth-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>permission-sdk</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

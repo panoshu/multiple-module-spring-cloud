@@ -16,9 +16,10 @@
       <groupId>com.example</groupId>
       <artifactId>auth-domain</artifactId>
     </dependency>
+    <!-- auth-api: PermissionScanner 扫描 @RequirePermission 注解 -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>permission-sdk</artifactId>
+      <artifactId>auth-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>

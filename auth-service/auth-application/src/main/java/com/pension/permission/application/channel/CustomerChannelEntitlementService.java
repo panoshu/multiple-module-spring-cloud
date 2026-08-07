@@ -1,13 +1,15 @@
 package com.pension.permission.application.channel;
 
+import com.example.auth.api.command.DisableChannelCommand;
+import com.example.auth.api.command.EnableChannelCommand;
+import com.example.auth.api.command.ReplaceChannelsCommand;
+import com.example.auth.api.dto.CustomerChannelEntitlementResponse;
+import com.example.auth.api.query.GetEntitlementQuery;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
-import com.pension.permission.api.command.DisableChannelCommand;
-import com.pension.permission.api.command.EnableChannelCommand;
-import com.pension.permission.api.command.ReplaceChannelsCommand;
-import com.pension.permission.api.dto.CustomerChannelEntitlementResponse;
-import com.pension.permission.api.query.GetEntitlementQuery;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.aggregate.CustomerChannelEntitlement;
 import com.pension.permission.domain.channel.errorcode.ChannelErrorCode;
 import com.pension.permission.domain.channel.repository.CustomerChannelEntitlementRepository;
@@ -16,9 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 客户渠道开通记录应用服务.
@@ -29,6 +31,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CustomerChannelEntitlementService {
+
+  private static final String STATUS_ACTIVE = "ACTIVE";
 
   private final CustomerChannelEntitlementRepository repository;
   private final IdService idService;
@@ -111,9 +115,9 @@ public class CustomerChannelEntitlementService {
    * 创建新的客户渠道开通记录.
    */
   private CustomerChannelEntitlement createEntitlement(
-    com.example.shared.identifier.id.CustomerNo customerNo,
+    CustomerNo customerNo,
     Set<AnnuityChannel> channels,
-    com.example.shared.identifier.id.UserNo operator
+    UserNo operator
   ) {
     CustomerChannelEntitlementId id = idService.nextId(CustomerChannelEntitlementId.class);
     return CustomerChannelEntitlement.create(
@@ -124,13 +128,13 @@ public class CustomerChannelEntitlementService {
    * 将聚合根转换为响应 DTO.
    */
   private CustomerChannelEntitlementResponse toResponse(CustomerChannelEntitlement entitlement) {
-    Set<String> channelNames = entitlement.enabledChannels().stream()
+    List<String> channelTypes = entitlement.enabledChannels().stream()
       .map(AnnuityChannel::name)
-      .collect(Collectors.toSet());
+      .toList();
     return new CustomerChannelEntitlementResponse(
-      entitlement.id().value(),
       entitlement.customerNo().value(),
-      channelNames
+      channelTypes,
+      STATUS_ACTIVE
     );
   }
 }
