@@ -6,6 +6,8 @@ public enum GatewayFilterOrder {
   IP_BLOCK(-300),
   EXCLUDE_ROUTE(-250),
   AUTH(-200),
+  // 会话上下文注入（在 AUTH 之后，签名透传下游）
+  SESSION_CONTEXT_INJECT(-150),
 
   // 流控组
   RATE_LIMIT(-100),

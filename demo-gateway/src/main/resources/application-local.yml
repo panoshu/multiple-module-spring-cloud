@@ -7,34 +7,34 @@ spring:
         enabled: true
         lower-case-service-id: true
       routes:
-        # ============ iam-service(三渠道认证授权) ============
+        # ============ auth-service(三渠道认证授权) ============
         # 网上渠道认证授权
-        - id: iam-service-internet-route
-          uri: lb://iam-service
+        - id: auth-service-internet-route
+          uri: lb://auth-service
           predicates:
             - Path=/internet/auth/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Source, demo-gateway
         # 总部渠道认证授权
-        - id: iam-service-hq-route
-          uri: lb://iam-service
+        - id: auth-service-hq-route
+          uri: lb://auth-service
           predicates:
             - Path=/hq/auth/**
           filters:
             - StripPrefix=0
         # 网点渠道认证授权
-        - id: iam-service-branch-route
-          uri: lb://iam-service
+        - id: auth-service-branch-route
+          uri: lb://auth-service
           predicates:
             - Path=/branch/auth/**
           filters:
             - StripPrefix=0
-        # iam-service 通用路由(管理接口)
-        - id: iam-service-admin-route
-          uri: lb://iam-service
+        # auth-service 通用路由(管理接口)
+        - id: auth-service-admin-route
+          uri: lb://auth-service
           predicates:
-            - Path=/iam/**
+            - Path=/auth/**
           filters:
             - StripPrefix=1
         # ============ business-core-kernel(核心业务服务) ============
@@ -92,6 +92,13 @@ gateway:
         methods: [ GET, POST ]
         status: 404
       - path: /internal/**
+
+# 会话签名配置：网关对 X-Account-Id / X-Session-Context 签名，业务服务验签防伪造
+# 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入，禁止使用此开发密钥
+permission:
+  session:
+    signature-key: dev-session-signature-key-2026
+    ttl-seconds: 300
 
 logging:
   level:

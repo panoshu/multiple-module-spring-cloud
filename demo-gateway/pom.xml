@@ -57,12 +57,12 @@
       <artifactId>redisson-spring-boot-starter</artifactId>
     </dependency>
 
-    <!-- iam-api: 网关调用 iam-service 的 RouteRuleApi 加载动态路由规则 -->
+    <!-- auth-api: 网关调用 auth-service 的 RouteRuleApi 加载动态路由规则 -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>iam-api</artifactId>
+      <artifactId>auth-api</artifactId>
     </dependency>
-    <!-- httpexchange: 注册 @HttpExchange 标注的 iam-api 接口为远程客户端 -->
+    <!-- httpexchange: 注册 @HttpExchange 标注的 auth-api 接口为远程客户端 -->
     <dependency>
       <groupId>io.github.danielliu1123</groupId>
       <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
