@@ -99,32 +99,27 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
       return chain.filter(exchange);
     }
 
-    // 2. 尝试从已登录渠道获取 loginId
+    // 2. 解析已登录渠道（渠道前缀路径用对应渠道，非渠道前缀路径遍历所有渠道）
     ChannelType channel = ChannelType.fromPath(path);
-    String loginId;
-    if (channel != null) {
-      // 渠道前缀路径：从对应渠道 StpLogic 读取
-      StpLogic stpLogic = channelAwareSaRouter.getStpLogic(channel);
-      try {
-        loginId = stpLogic.getLoginIdAsString();
-      } catch (Exception e) {
-        return chain.filter(exchange);
-      }
-    } else {
-      // 非渠道前缀路径：尝试任一渠道已登录
-      loginId = resolveAnyChannelLoginId();
+    ChannelType loginChannel = channel != null ? channel : resolveLoginChannel();
+    if (loginChannel == null) {
+      return chain.filter(exchange);
     }
 
+    // 3. 从已登录渠道获取 loginId
+    StpLogic stpLogic = channelAwareSaRouter.getStpLogic(loginChannel);
+    String loginId;
+    try {
+      loginId = stpLogic.getLoginIdAsString();
+    } catch (Exception e) {
+      return chain.filter(exchange);
+    }
     if (loginId == null || loginId.isBlank()) {
       return chain.filter(exchange);
     }
 
-    // 3. 读取 Token-Session 中的会话数据
-    ChannelType loginChannel = channel != null ? channel : resolveLoginChannel();
-    Map<String, Object> sessionContext = buildSessionContext(
-        loginChannel != null ? channelAwareSaRouter.getStpLogic(loginChannel) : null,
-        loginId,
-        loginChannel);
+    // 4. 读取 Token-Session 中的会话数据
+    Map<String, Object> sessionContext = buildSessionContext(stpLogic, loginId, loginChannel);
     String encodedContext = encodeSessionContext(sessionContext);
 
     String signatureKey = sessionProperties.signatureKey();
@@ -140,23 +135,6 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
 
     ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
     return chain.filter(mutatedExchange);
-  }
-
-  /**
-   * 遍历所有渠道，返回第一个已登录的 loginId.
-   */
-  private String resolveAnyChannelLoginId() {
-    for (ChannelType ch : ChannelType.values()) {
-      StpLogic stpLogic = channelAwareSaRouter.getStpLogic(ch);
-      try {
-        if (stpLogic.isLogin()) {
-          return stpLogic.getLoginIdAsString();
-        }
-      } catch (Exception ignored) {
-        // 该渠道未登录，继续尝试
-      }
-    }
-    return null;
   }
 
   /**
