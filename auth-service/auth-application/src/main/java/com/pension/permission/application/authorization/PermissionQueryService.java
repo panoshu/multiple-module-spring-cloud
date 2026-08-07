@@ -1,11 +1,13 @@
 package com.pension.permission.application.authorization;
 
+import com.example.auth.api.dto.DataScope;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.assignment.service.EffectivePermissionService;
 import com.pension.permission.domain.authorization.enumeration.PermissionCategory;
 import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.authorization.valueobject.ActionCode;
+import com.pension.permission.domain.authorization.valueobject.VisibleScope;
 import com.pension.permission.domain.permission.repository.PermissionItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,38 @@ public final class PermissionQueryService {
   public boolean checkPlatformPermission(UserNo identity, BusinessCode business, ActionCode action) {
     Permission permission = new Permission(business, action);
     return effectivePermissionService.checkPlatformPermission(identity, permission, LocalDateTime.now());
+  }
+
+  /**
+   * 解析数据可见范围（行级数据过滤用）.
+   *
+   * <p>委托 {@link EffectivePermissionService#resolveVisibleScope} 聚合 Grant 计算，
+   * 返回 auth-api 的 {@link DataScope} 供 shared-permission-starter 使用。
+   *
+   * <p>对 visiblePlans/visibleCustomers 减去 excludedPlans/excludedCustomers 做防御性收口：
+   * 领域层 {@code resolveVisibleScope} 已在聚合阶段完成扣减，此处对不一致输入再次收口，
+   * 保证 DENY 优先语义在应用层不会因 VisibleScope 不一致而泄漏到行级过滤条件。
+   *
+   * @param query 包含用户标识和业务编码
+   * @return 数据可见范围
+   */
+  public DataScope resolveDataScope(ResolveDataScopeQuery query) {
+    VisibleScope visible = effectivePermissionService.resolveVisibleScope(
+      query.identity(), query.business(), LocalDateTime.now());
+
+    if (visible.globalVisible()) {
+      return DataScope.global();
+    }
+    java.util.Set<String> finalVisiblePlans = new java.util.HashSet<>(visible.visiblePlans());
+    finalVisiblePlans.removeAll(visible.excludedPlans());
+    java.util.Set<String> finalVisibleCustomers = new java.util.HashSet<>(visible.visibleCustomers());
+    finalVisibleCustomers.removeAll(visible.excludedCustomers());
+    return new DataScope(
+      false,
+      finalVisiblePlans,
+      finalVisibleCustomers,
+      visible.excludedPlans(),
+      visible.excludedCustomers());
   }
 
   private PermissionCategory resolveCategory(BusinessCode business, ActionCode action) {
