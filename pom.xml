@@ -127,7 +127,7 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>iam-api</artifactId>
+        <artifactId>auth-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -253,6 +253,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>shared-crypto-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-permission-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
