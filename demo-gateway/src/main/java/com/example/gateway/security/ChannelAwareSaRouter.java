@@ -4,10 +4,12 @@ import cn.dev33.satoken.config.SaTokenConfig;
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.stp.StpLogic;
+import cn.dev33.satoken.stp.StpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -104,5 +106,54 @@ public class ChannelAwareSaRouter {
       }
     }
     return null;
+  }
+
+  /**
+   * 仅根据请求路径识别渠道，不校验登录.
+   *
+   * <p>供 SaTokenGatewayConfiguration 在 setAuth 中调用，由调用方决定是否调用 checkLogin。
+   *
+   * @param path 请求路径
+   * @return 命中的渠道类型；非渠道前缀返回 null
+   */
+  public ChannelType matchChannel(String path) {
+    return ChannelType.fromPath(path);
+  }
+
+  /**
+   * 配置默认 StpLogic 识别所有渠道 token.
+   *
+   * <p>管理类 API（非渠道前缀路径）使用默认 StpLogic 校验登录态，
+   * 默认 StpLogic 读取所有三个渠道的 Header，用户携带任一渠道 token 都能通过校验。
+   *
+   * <p>sa-token 1.45.0 的 {@link SaTokenConfig#setTokenName(String)} 仅支持单个 token 名称，
+   * 因此通过覆写 {@link StpLogic#getTokenValueNotCut()} 遍历所有渠道 Header 实现多 Header 识别。
+   *
+   * <p>在 SaTokenGatewayConfiguration 初始化时调用一次。
+   */
+  public void configureDefaultStpLogic() {
+    List<String> channelHeaders = List.of(
+        ChannelType.INTERNET.tokenHeader(),
+        ChannelType.HQ.tokenHeader(),
+        ChannelType.BRANCH.tokenHeader());
+    StpLogic defaultLogic = new StpLogic("default") {
+      @Override
+      public String getTokenValueNotCut() {
+        SaRequest request = SaHolder.getRequest();
+        for (String header : channelHeaders) {
+          String tokenValue = request.getHeader(header);
+          if (tokenValue != null && !tokenValue.isEmpty()) {
+            return tokenValue;
+          }
+        }
+        return null;
+      }
+    };
+    SaTokenConfig config = new SaTokenConfig();
+    config.setIsReadHeader(true);
+    config.setIsReadCookie(false);
+    defaultLogic.setConfig(config);
+    StpUtil.setStpLogic(defaultLogic);
+    log.info("默认 StpLogic 配置完成: 识别所有渠道 token: {}", channelHeaders);
   }
 }
