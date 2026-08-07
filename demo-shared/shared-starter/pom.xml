@@ -21,5 +21,6 @@
     <module>shared-web-starter</module>
     <module>shared-client-starter</module>
     <module>shared-pdf-starter</module>
+    <module>shared-permission-starter</module>
   </modules>
 </project>
