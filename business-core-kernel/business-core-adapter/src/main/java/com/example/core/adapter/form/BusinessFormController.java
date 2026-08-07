@@ -2,7 +2,6 @@ package com.example.core.adapter.form;
 
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.form.converter.FormConverter;
-import com.example.core.adapter.security.RequireBusinessPermission;
 import com.example.core.api.context.SessionContext;
 import com.example.core.api.form.BusinessFormApi;
 import com.example.core.api.form.command.ApplyUploadTokenCommand;
@@ -17,6 +16,7 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.FormId;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>后续新增 Controller 方法流程:
  * <ol>
  *   <li>在 API 层接口新增方法签名</li>
- *   <li>在本类实现方法,标注 @RequireBusinessPermission(功能权限码)</li>
+ *   <li>在本类实现方法,标注 @RequirePermission(功能权限码)</li>
  *   <li>通过 FormConverter 完成 DTO 转换</li>
  * </ol>
  *
@@ -48,7 +48,7 @@ public class BusinessFormController implements BusinessFormApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
-  @RequireBusinessPermission("FORM_UPLOAD")
+  @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("申请上传 token: batchId={}, fileName={}, userNo={}",
@@ -63,7 +63,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
-  @RequireBusinessPermission("FORM_UPLOAD")
+  @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("确认上传: batchId={}, formId={}, fileId={}, userNo={}",
@@ -80,7 +80,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
-  @RequireBusinessPermission("FORM_DELETE")
+  @RequirePermission(business = "FORM", action = "DELETE")
   public ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command) {
     SessionContext session = sessionResolver.require();
     log.info("删除表单: batchId={}, formId={}, userNo={}",
@@ -91,6 +91,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
+  @RequirePermission(business = "FORM", action = "VIEW")
   public ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query) {
     SessionContext session = sessionResolver.require();
     log.info("查询表单状态: formId={}, userNo={}", query.formId(), session.userNo());
