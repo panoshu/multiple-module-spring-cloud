@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @EnableAsync
 @EnableDiscoveryClient
-@EnableExchangeClients(basePackages = {"com.example.approval.api", "com.example.file.api", "com.example.integration.api"})
+@EnableExchangeClients(basePackages = {"com.example.approval.api", "com.example.file.api", "com.example.integration.api", "com.example.auth.api"})
 @SpringBootApplication(scanBasePackages = {"com.example.annuity", "com.example.core"})
 @MapperScan("com.example.annuity.infrastructure.mapper")
 public class AnnuityApplication {

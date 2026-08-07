@@ -9,6 +9,7 @@ import com.example.annuity.application.service.AnnuityAppService;
 import com.example.shared.identifier.id.ApplicationId;
 import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +38,7 @@ public class AnnuityController implements AnnuityApi {
   private final AnnuityApiConverter converter;
 
   @Override
+  @RequirePermission(business = "ANNUITY", action = "UPLOAD_FORM")
   public ApiResult<BatchStatusResponse> uploadForm(UploadFormRequest request) {
     log.info("接收年金表单上传请求: customerNo={}, planNo={}, businessType={}",
       request.customerNo(), request.planNo(), request.businessType());
@@ -46,6 +48,7 @@ public class AnnuityController implements AnnuityApi {
   }
 
   @Override
+  @RequirePermission(business = "ANNUITY", action = "VIEW")
   public ApiResult<ApplicationResponse> getApplication(ApplicationIdRequest request) {
     log.info("查询年金申请详情: applicationId={}", request.applicationId());
     ApplicationId applicationId = new ApplicationId(request.applicationId());
@@ -54,6 +57,7 @@ public class AnnuityController implements AnnuityApi {
   }
 
   @Override
+  @RequirePermission(business = "ANNUITY", action = "VIEW")
   public ApiResult<BatchStatusResponse> getBatchStatus(BatchIdRequest request) {
     log.info("查询年金批次状态: batchId={}", request.batchId());
     BatchId batchId = new BatchId(request.batchId());

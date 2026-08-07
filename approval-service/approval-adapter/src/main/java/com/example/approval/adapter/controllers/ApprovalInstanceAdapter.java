@@ -9,6 +9,8 @@ import com.example.approval.api.response.ApprovalInstanceIdResponse;
 import com.example.approval.application.service.ApprovalInstanceService;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageData;
+import com.example.auth.api.annotation.PermissionCategory;
+import com.example.auth.api.annotation.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +35,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   private final ApprovalInstanceService approvalInstanceService;
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "START", category = PermissionCategory.PLATFORM)
   public ApiResult<ApprovalInstanceIdResponse> start(StartApprovalRequest request) {
     log.info("启动审批: flowId={}, businessNo={}", request.flowId(), request.businessNo());
     var instanceId = approvalInstanceService.startApproval(request);
@@ -40,6 +43,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "APPROVE", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> approve(ApproveRequest request) {
     log.info("审批通过: instanceId={}, approver={}", request.instanceId(), request.approver());
     approvalInstanceService.approve(request);
@@ -47,6 +51,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "REJECT", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> reject(RejectRequest request) {
     log.info("审批驳回: instanceId={}, approver={}", request.instanceId(), request.approver());
     approvalInstanceService.reject(request);
@@ -54,6 +59,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "TRANSFER", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> transfer(TransferRequest request) {
     log.info("审批转交: instanceId={}, from={}, to={}",
       request.instanceId(), request.currentApprover(), request.targetApprover());
@@ -62,6 +68,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "WITHDRAW", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> withdraw(WithdrawRequest request) {
     log.info("审批撤回: instanceId={}, initiator={}", request.instanceId(), request.initiator());
     approvalInstanceService.withdraw(request);
@@ -69,6 +76,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<ApprovalInstanceDTO> get(GetApprovalInstanceRequest request) {
     log.info("查询审批实例: instanceId={}", request.instanceId());
     ApprovalInstanceDTO instanceDTO = approvalInstanceService.getApprovalInstance(request);
@@ -76,6 +84,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<PageData<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
     log.info("查询待审批列表: approver={}", request.approver());
     PageData<PendingApprovalDTO> pageResult = approvalInstanceService.listMyPendingApprovals(request);
@@ -83,6 +92,7 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   }
 
   @Override
+  @RequirePermission(business = "APPROVAL_INSTANCE", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<List<ApprovalRecordDTO>> getHistory(GetApprovalHistoryRequest request) {
     log.info("查询审批历史: instanceId={}", request.instanceId());
     List<ApprovalRecordDTO> records = approvalInstanceService.getApprovalHistory(request);

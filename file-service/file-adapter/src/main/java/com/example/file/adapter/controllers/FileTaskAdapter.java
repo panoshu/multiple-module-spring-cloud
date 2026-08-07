@@ -15,6 +15,8 @@ import com.example.file.application.usecase.GetFileTaskUseCase;
 import com.example.file.application.usecase.UploadFileUseCase;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageData;
+import com.example.auth.api.annotation.PermissionCategory;
+import com.example.auth.api.annotation.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +36,7 @@ public class FileTaskAdapter implements FileTaskApi {
   private final FileTaskConverter converter;
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "UPLOAD", category = PermissionCategory.PLATFORM)
   public ApiResult<FileTaskIdResponse> upload(UploadFileRequest request) {
     log.info("上传文件: bizType={}, fileName={}", request.bizType(), request.fileName());
     var result = uploadUseCase.execute(converter.toCommand(request));
@@ -41,12 +44,14 @@ public class FileTaskAdapter implements FileTaskApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<FileTaskDTO> get(GetFileTaskRequest request) {
     var result = getUseCase.execute(request.fileTaskId());
     return ApiResult.success(converter.toDTO(result));
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<PageData<SubTaskDTO>> listSubTasks(ListSubTasksRequest request) {
     var result = getUseCase.execute(request.fileTaskId());
     List<FileTaskDetailResult.SubTaskSummaryItem> allItems = result.subTasks();
@@ -65,6 +70,7 @@ public class FileTaskAdapter implements FileTaskApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "CANCEL", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> cancel(CancelFileTaskRequest request) {
     cancelUseCase.execute(request.fileTaskId(), request.operator());
     return ApiResult.success();

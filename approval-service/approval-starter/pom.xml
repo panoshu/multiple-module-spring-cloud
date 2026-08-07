@@ -25,6 +25,16 @@
       <groupId>com.alibaba.cloud</groupId>
       <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
     </dependency>
+    <!-- 负载均衡：支持 lb:// 服务名解析调用 auth-service -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+    <!-- HttpExchange 远程客户端：调用 auth-service 的 PermissionCheckApi -->
+    <dependency>
+      <groupId>io.github.danielliu1123</groupId>
+      <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

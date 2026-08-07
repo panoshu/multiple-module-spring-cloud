@@ -15,7 +15,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-# httpexchange 远程客户端配置：通过服务名 + LoadBalancer 调用 approval-service / file-service / integration
+# 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
 httpexchange:
   clients:
     com.example.approval.api:
@@ -24,6 +24,14 @@ httpexchange:
       url: http://file-service
     com.example.integration.api:
       url: http://integration
+    com.example.auth.api:
+      url: lb://auth-service
+
+permission:
+  # 会话签名验证：验证网关签发的 X-Account-Id / X-Session-Context 签名防伪造
+  # 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入
+  session:
+    signature-key: dev-session-signature-key-2026
 
 # shared-logging-starter 脱敏配置（最小化满足 SanitizationProperties @NotNull/@NotEmpty 校验）
 shared:

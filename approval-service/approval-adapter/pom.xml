@@ -26,6 +26,12 @@
       <artifactId>spring-web</artifactId>
     </dependency>
 
+    <!-- 功能权限校验: @RequirePermission 注解 + AOP 切面自动装配 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-permission-starter</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>

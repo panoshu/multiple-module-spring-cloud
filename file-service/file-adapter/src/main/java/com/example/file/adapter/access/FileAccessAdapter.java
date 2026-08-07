@@ -21,6 +21,8 @@ import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.ProductNo;
 import com.example.shared.identifier.id.UserNo;
+import com.example.auth.api.annotation.PermissionCategory;
+import com.example.auth.api.annotation.RequirePermission;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +92,7 @@ public class FileAccessAdapter implements FileAccessApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_ACCESS", action = "APPLY_TOKEN", category = PermissionCategory.PLATFORM)
   public ApplyUploadTokenResponse applyUploadToken(ApplyUploadTokenRequest request) {
     log.info("申请上传 Token: bizType={}, sourceApp={}, uploader={}",
       request.bizType(), request.sourceApp(), request.uploader());
@@ -99,6 +102,7 @@ public class FileAccessAdapter implements FileAccessApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_ACCESS", action = "APPLY_TOKEN", category = PermissionCategory.PLATFORM)
   public ApplyDownloadTokenResponse applyDownloadToken(ApplyDownloadTokenRequest request) {
     log.info("申请下载 Token: fileId={}, downloader={}", request.fileId(), request.downloader());
     var cmd = converter.toCommand(request, tokenProperties.getDefaultDownloadTtl());
@@ -107,6 +111,7 @@ public class FileAccessAdapter implements FileAccessApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_ACCESS", action = "UPLOAD", category = PermissionCategory.PLATFORM)
   public UploadFileResponse upload(String token, MultipartFile file) {
     HttpServletRequest httpRequest = currentRequest();
     SessionUser session = extractSession(httpRequest);
@@ -120,6 +125,7 @@ public class FileAccessAdapter implements FileAccessApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_ACCESS", action = "DOWNLOAD", category = PermissionCategory.PLATFORM)
   public ResponseEntity<StreamingResponseBody> download(String token) {
     HttpServletRequest httpRequest = currentRequest();
     SessionUser session = extractSession(httpRequest);

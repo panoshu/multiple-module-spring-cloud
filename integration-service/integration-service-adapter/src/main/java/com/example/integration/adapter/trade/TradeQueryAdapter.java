@@ -9,6 +9,8 @@ import com.example.integration.application.trade.service.TradeQueryAppService;
 import com.example.integration.domain.trade.model.TradePortfolioBalance;
 import com.example.integration.domain.trade.model.TradePortfolioQuery;
 import com.example.shared.web.core.api.ApiResult;
+import com.example.auth.api.annotation.PermissionCategory;
+import com.example.auth.api.annotation.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +32,7 @@ public class TradeQueryAdapter implements TradeQueryApi {
   private final PortfolioBalanceConverter portfolioBalanceConverter;
 
   @Override
+  @RequirePermission(business = "TRADE_QUERY", action = "QUERY_BALANCE", category = PermissionCategory.PLATFORM)
   public ApiResult<PortfolioBalanceDTO> queryBalance5564(PortfolioQueryDTO queryDTO) {
     // 1. DTO -> Domain Model
     TradePortfolioQuery domainQuery = portfolioConverter.toDomain(queryDTO);
