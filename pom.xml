@@ -21,6 +21,7 @@
     <module>annuity-service</module>
     <module>auth-service</module>
     <module>bff-shared</module>
+    <module>internet-bff</module>
   </modules>
 
   <properties>
@@ -159,6 +160,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>bff-shared</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>internet-bff-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
