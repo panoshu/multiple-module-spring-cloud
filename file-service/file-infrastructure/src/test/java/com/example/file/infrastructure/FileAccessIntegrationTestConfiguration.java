@@ -68,11 +68,12 @@ import static org.mockito.Mockito.when;
 public class FileAccessIntegrationTestConfiguration {
 
   private static RBucket<String> createSimulatedBucket() {
-    RBucket<String> bucket = mock(RBucket.class);
+    RBucket<String> bucket = mock();
     AtomicBoolean exists = new AtomicBoolean(false);
 
-    when(bucket.setIfAbsent(any(String.class), any(Duration.class)))
+    when(bucket.setIfAbsent(anyString(), any(Duration.class)))
       .thenAnswer(inv -> exists.compareAndSet(false, true));
+
     when(bucket.isExists()).thenAnswer(inv -> exists.get());
 
     return bucket;

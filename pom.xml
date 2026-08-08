@@ -260,24 +260,6 @@
         <artifactId>shared-permission-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>shared-lib</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>shared-core</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>shared-starter</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
 
       <!-- Spring Dependency -->
 

@@ -75,9 +75,9 @@ class BusinessBatchAppServiceTest {
     BusinessBatch saved = captor.getValue();
     assertThat(saved.id()).isNotNull();
     assertThat(saved.id().value()).isEqualTo("BATCH20260726001");
-    assertThat(saved.getBusinessContext()).isEqualTo(context);
-    assertThat(saved.getOperatorInfo()).isEqualTo(operator);
-    assertThat(saved.getStatus()).isEqualTo(BatchStatus.CREATED);
+    assertThat(saved.businessContext()).isEqualTo(context);
+    assertThat(saved.operatorInfo()).isEqualTo(operator);
+    assertThat(saved.status()).isEqualTo(BatchStatus.CREATED);
   }
 
   @Test

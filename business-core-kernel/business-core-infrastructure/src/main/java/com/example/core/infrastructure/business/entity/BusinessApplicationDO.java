@@ -1,4 +1,4 @@
-package com.example.annuity.infrastructure.entity;
+package com.example.core.infrastructure.business.entity;
 
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
@@ -9,24 +9,26 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 年金业务表单 DO
+ * 业务申请单 DO
  * <p>
- * 对应聚合根 {@code BusinessForm}，将 {@code BusinessContext} 和 {@code OperatorInfo}
- * 拍平为独立列；表单关联的申请单引用（{@code applicationRefs}）通过 {@code t_annuity_application}
- * 反向查询组装，不在本表持久化。表单文件信息拍平为 fileId/fileName/fileSize 三列。
+ * 对应聚合根 {@code BusinessApplication}，将 {@code BusinessContext} 和 {@code OperatorInfo}
+ * 拍平为独立列；{@code businessExtension} 通过 Jackson 多态序列化持久化为 JSON。
+ * <p>
+ * {@code planMaterials}/{@code packageFile} 为流程内内存态字段，不持久化到本表。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Data
-@Table("t_annuity_form")
-public class FormDO {
+@Table("t_business_application")
+public class BusinessApplicationDO {
 
   @Id(keyType = KeyType.None)
   private String id;
 
   // ===== 关联 ID =====
   private String batchId;
+  private String formId;
 
   // ===== BusinessContext 拍平字段 =====
   private String businessType;
@@ -45,13 +47,20 @@ public class FormDO {
   private String operatorName;
   private Boolean isProxy;
 
-  // ===== 表单文件字段 =====
-  private String formFileId;
-  private String formFileName;
-  private Long formFileSize;
+  // ===== 文件与统计字段 =====
+  private String parsedJsonFileId;
+  private Integer expectedDetailCount;
 
-  // ===== 表单状态字段 =====
-  private String formStatus;
+  // ===== 业务扩展字段（多态 JSON） =====
+  // PostgreSQL 使用 JSONB，MySQL 使用 JSON 或 TEXT
+  private String businessExtension;
+
+  // ===== 状态机字段 =====
+  private String status;
+  private String currentStep;
+
+  private LocalDateTime applyTime;
+  private LocalDateTime completeTime;
 
   // ===== 通用字段 =====
   private String createdBy;

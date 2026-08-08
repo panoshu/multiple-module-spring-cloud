@@ -49,7 +49,7 @@ public interface FormConverter {
     }
     return new FormStatusResponse(
       form.id().value(),
-      form.getFormStatus() != null ? form.getFormStatus().name() : null,
+      form.formStatus() != null ? form.formStatus().name() : null,
       0,
       0,
       null

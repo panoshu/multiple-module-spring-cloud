@@ -1,17 +1,10 @@
 -- =============================================================================
--- annuity-service - PostgreSQL Schema
+-- business-core-kernel - PostgreSQL Schema
 -- =============================================================================
--- 本文件包含两类表：
---   1. kernel 通用表（与 business-core-kernel/schema-pg.sql 保持一致）：
---      t_business_application  ←  BusinessApplication
---      t_business_batch        ←  BusinessBatch
---      t_business_form         ←  BusinessForm
---      annuity-service 已重构为复用 kernel 的 DO/Mapper/Converter，故三张聚合根
---      表沿用 kernel 表名，不再使用 t_annuity_* 前缀。
---
---   2. 年金专属表（annuity-service 自有聚合根）：
---      t_annuity_employee_batch  ←  AnnuityEmployeeBatch
---      t_annuity_employee_detail ←  AnnuityEmployeeDetail
+-- 三张表对应 kernel 的三个聚合根：
+--   t_business_application  ←  BusinessApplication
+--   t_business_batch        ←  BusinessBatch
+--   t_business_form         ←  BusinessForm
 --
 -- 设计要点：
 --   1. BusinessContext / OperatorInfo 拍平为独立列，便于 SQL 查询和索引
@@ -22,7 +15,7 @@
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 1. 业务申请单表（kernel 通用）
+-- 1. 业务申请单表
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_business_application
 (
@@ -111,7 +104,7 @@ COMMENT ON COLUMN t_business_application.deleted               IS '逻辑删除�
 COMMENT ON COLUMN t_business_application.version               IS '乐观锁版本号';
 
 -- -----------------------------------------------------------------------------
--- 2. 业务批次表（kernel 通用）
+-- 2. 业务批次表
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_business_batch
 (
@@ -182,7 +175,7 @@ COMMENT ON COLUMN t_business_batch.deleted                 IS '逻辑删除标�
 COMMENT ON COLUMN t_business_batch.version                 IS '乐观锁版本号';
 
 -- -----------------------------------------------------------------------------
--- 3. 业务表单表（kernel 通用）
+-- 3. 业务表单表
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_business_form
 (
@@ -255,167 +248,3 @@ COMMENT ON COLUMN t_business_form.create_time     IS '创建时间';
 COMMENT ON COLUMN t_business_form.update_time     IS '更新时间';
 COMMENT ON COLUMN t_business_form.deleted         IS '逻辑删除标志';
 COMMENT ON COLUMN t_business_form.version         IS '乐观锁版本号';
-
--- =============================================================================
--- 4. 年金员工明细批次表（年金专属）
--- =============================================================================
-CREATE TABLE IF NOT EXISTS t_annuity_employee_batch
-(
-  id
-  VARCHAR
-(
-  64
-) NOT NULL,
-  application_id VARCHAR
-(
-  64
-) NOT NULL,
-  batch_status VARCHAR
-(
-  32
-) NOT NULL DEFAULT 'PENDING',
-  total_employee_count INT NOT NULL DEFAULT 0,
-  processed_count INT NOT NULL DEFAULT 0,
-  anomaly_count INT NOT NULL DEFAULT 0,
-  created_by VARCHAR
-(
-  64
-) NOT NULL,
-  updated_by VARCHAR
-(
-  64
-),
-  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted BOOLEAN DEFAULT FALSE,
-  version INT DEFAULT 0,
-  PRIMARY KEY
-(
-  id
-)
-  );
-CREATE UNIQUE INDEX IF NOT EXISTS uk_annuity_emp_batch_application_id ON t_annuity_employee_batch(application_id);
-CREATE INDEX IF NOT EXISTS idx_annuity_emp_batch_status ON t_annuity_employee_batch(batch_status);
-
-COMMENT
-ON TABLE  t_annuity_employee_batch IS '年金员工明细批次表';
-COMMENT
-ON COLUMN t_annuity_employee_batch.id                   IS '批次 ID（AnnuityEmployeeBatchId）';
-COMMENT
-ON COLUMN t_annuity_employee_batch.application_id       IS '关联申请单 ID（ApplicationId）';
-COMMENT
-ON COLUMN t_annuity_employee_batch.batch_status         IS '批次状态: PENDING/PROCESSING/COMPLETED/FAILED';
-COMMENT
-ON COLUMN t_annuity_employee_batch.total_employee_count IS '员工总数';
-COMMENT
-ON COLUMN t_annuity_employee_batch.processed_count      IS '已处理数';
-COMMENT
-ON COLUMN t_annuity_employee_batch.anomaly_count        IS '异常数';
-COMMENT
-ON COLUMN t_annuity_employee_batch.created_by           IS '创建人';
-COMMENT
-ON COLUMN t_annuity_employee_batch.updated_by           IS '更新人';
-COMMENT
-ON COLUMN t_annuity_employee_batch.create_time          IS '创建时间';
-COMMENT
-ON COLUMN t_annuity_employee_batch.update_time          IS '更新时间';
-COMMENT
-ON COLUMN t_annuity_employee_batch.deleted              IS '逻辑删除标志';
-COMMENT
-ON COLUMN t_annuity_employee_batch.version              IS '乐观锁版本号';
-
--- =============================================================================
--- 5. 年金员工明细表（年金专属）
--- =============================================================================
-CREATE TABLE IF NOT EXISTS t_annuity_employee_detail
-(
-  id
-  VARCHAR
-(
-  64
-) NOT NULL,
-  batch_id VARCHAR
-(
-  64
-) NOT NULL,
-  employee_name VARCHAR
-(
-  255
-) NOT NULL,
-  id_card_no VARCHAR
-(
-  32
-) NOT NULL,
-  age INT,
-  monthly_salary BIGINT,
-  monthly_contribution BIGINT,
-  detail_status VARCHAR
-(
-  32
-) NOT NULL DEFAULT 'PENDING',
-  anomaly_reason VARCHAR
-(
-  512
-),
-  materials JSONB,
-  verified_at TIMESTAMP,
-  material_prepared_at TIMESTAMP,
-  created_by VARCHAR
-(
-  64
-) NOT NULL,
-  updated_by VARCHAR
-(
-  64
-),
-  create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted BOOLEAN DEFAULT FALSE,
-  version INT DEFAULT 0,
-  PRIMARY KEY
-(
-  id
-)
-  );
-CREATE INDEX IF NOT EXISTS idx_annuity_emp_detail_batch_id ON t_annuity_employee_detail(batch_id);
-CREATE INDEX IF NOT EXISTS idx_annuity_emp_detail_status ON t_annuity_employee_detail(detail_status);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_annuity_emp_detail_idcard ON t_annuity_employee_detail(batch_id, id_card_no);
-
-COMMENT
-ON TABLE  t_annuity_employee_detail IS '年金员工明细表';
-COMMENT
-ON COLUMN t_annuity_employee_detail.id                   IS '明细 ID（AnnuityEmployeeDetailId）';
-COMMENT
-ON COLUMN t_annuity_employee_detail.batch_id             IS '关联批次 ID';
-COMMENT
-ON COLUMN t_annuity_employee_detail.employee_name        IS '员工姓名';
-COMMENT
-ON COLUMN t_annuity_employee_detail.id_card_no           IS '身份证号';
-COMMENT
-ON COLUMN t_annuity_employee_detail.age                  IS '年龄';
-COMMENT
-ON COLUMN t_annuity_employee_detail.monthly_salary       IS '月薪（分）';
-COMMENT
-ON COLUMN t_annuity_employee_detail.monthly_contribution IS '月缴存额（分）';
-COMMENT
-ON COLUMN t_annuity_employee_detail.detail_status        IS '明细状态: PENDING/VERIFIED/ANOMALY/MATERIAL_READY';
-COMMENT
-ON COLUMN t_annuity_employee_detail.anomaly_reason       IS '异常原因';
-COMMENT
-ON COLUMN t_annuity_employee_detail.materials            IS '材料清单（JSON 数组）';
-COMMENT
-ON COLUMN t_annuity_employee_detail.verified_at          IS '核查时间';
-COMMENT
-ON COLUMN t_annuity_employee_detail.material_prepared_at IS '材料准备时间';
-COMMENT
-ON COLUMN t_annuity_employee_detail.created_by           IS '创建人';
-COMMENT
-ON COLUMN t_annuity_employee_detail.updated_by           IS '更新人';
-COMMENT
-ON COLUMN t_annuity_employee_detail.create_time          IS '创建时间';
-COMMENT
-ON COLUMN t_annuity_employee_detail.update_time          IS '更新时间';
-COMMENT
-ON COLUMN t_annuity_employee_detail.deleted              IS '逻辑删除标志';
-COMMENT
-ON COLUMN t_annuity_employee_detail.version              IS '乐观锁版本号';

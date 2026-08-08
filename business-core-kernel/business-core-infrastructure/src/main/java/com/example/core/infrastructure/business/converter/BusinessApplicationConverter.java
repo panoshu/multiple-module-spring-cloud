@@ -1,89 +1,89 @@
-package com.example.annuity.infrastructure.converter;
+package com.example.core.infrastructure.business.converter;
 
-import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
-import com.example.annuity.infrastructure.entity.ApplicationDO;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
+import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.infrastructure.business.entity.BusinessApplicationDO;
+import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.id.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
 
 /**
- * 年金业务申请单 DO ↔ 领域对象转换器
+ * 业务申请单 DO ↔ 领域对象转换器
  * <p>
- * 通过 {@link KernelAggregateReflector} 反射访问 kernel 聚合根的私有字段；
- * {@link BusinessExtension} 通过 Jackson 多态序列化持久化为 JSON 字符串。
+ * 使用 kernel 聚合根的公开访问器与 {@link BusinessApplication#reconstitute} 工厂方法，
+ * 彻底消除反射访问。{@link BusinessExtension} 通过注入的 {@link ObjectMapper} 多态序列化持久化为 JSON。
+ * <p>
+ * {@code planMaterials}/{@code packageFile} 为流程内内存态字段，不持久化到 DO。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Mapper(componentModel = "spring")
-public interface ApplicationDataConverter {
+public abstract class BusinessApplicationConverter {
 
-  /**
-   * 共享 ObjectMapper，由 {@link AnnuityJacksonConfiguration} 注册 BusinessExtension Mix-in
-   * 后注入。此处使用静态实例避免每次转换开销，Mix-in 在初始化块中注册。
-   */
-  ObjectMapper OBJECT_MAPPER = AnnuityJacksonConfiguration.configure(new ObjectMapper());
+  @Autowired
+  protected ObjectMapper objectMapper;
 
   /**
    * 领域对象 → DO
    */
-  default ApplicationDO toDO(BusinessApplication app) {
+  public BusinessApplicationDO toDO(BusinessApplication app) {
     if (app == null) {
       return null;
     }
-    ApplicationDO aDo = new ApplicationDO();
-    aDo.setId(KernelAggregateReflector.nullableId(app.id()));
+    BusinessApplicationDO aDo = new BusinessApplicationDO();
+    aDo.setId(app.id() != null ? app.id().value() : null);
 
-    BatchId batchId = KernelAggregateReflector.readBatchId(app);
-    aDo.setBatchId(batchId != null ? batchId.value() : null);
+    aDo.setBatchId(app.batchId() != null ? app.batchId().value() : null);
+    aDo.setFormId(app.formId() != null ? app.formId().value() : null);
 
-    FormId formId = KernelAggregateReflector.readFormId(app);
-    aDo.setFormId(formId != null ? formId.value() : null);
-
-    BusinessContext ctx = KernelAggregateReflector.readBusinessContext(app);
+    BusinessContext ctx = app.businessContext();
     if (ctx != null) {
-      aDo.setBusinessType(KernelAggregateReflector.enumName(ctx.businessType()));
-      aDo.setCustomerNo(KernelAggregateReflector.nullableId(ctx.customerNo()));
+      aDo.setBusinessType(ctx.businessType() != null ? ctx.businessType().name() : null);
+      aDo.setCustomerNo(ctx.customerNo() != null ? ctx.customerNo().value() : null);
       aDo.setCustomerName(ctx.customerName());
-      aDo.setProductNo(KernelAggregateReflector.nullableId(ctx.productNo()));
+      aDo.setProductNo(ctx.productNo() != null ? ctx.productNo().value() : null);
       aDo.setProductName(ctx.productName());
-      aDo.setPlanNo(KernelAggregateReflector.nullableId(ctx.planNo()));
+      aDo.setPlanNo(ctx.planNo() != null ? ctx.planNo().value() : null);
       aDo.setPlanName(ctx.planName());
-      aDo.setOperationModel(KernelAggregateReflector.enumName(ctx.operationModel()));
-      aDo.setAccountManager(KernelAggregateReflector.accountManagerValue(ctx.accountManager()));
+      aDo.setOperationModel(ctx.operationModel() != null ? ctx.operationModel().name() : null);
+      aDo.setAccountManager(ctx.accountManager() != null ? ctx.accountManager().getValue() : null);
     }
 
-    OperatorInfo op = KernelAggregateReflector.readOperatorInfo(app);
+    OperatorInfo op = app.operatorInfo();
     if (op != null) {
-      aDo.setChannel(KernelAggregateReflector.enumName(op.channel()));
-      aDo.setOperatorId(KernelAggregateReflector.nullableId(op.operatorId()));
+      aDo.setChannel(op.channel() != null ? op.channel().name() : null);
+      aDo.setOperatorId(op.operatorId() != null ? op.operatorId().value() : null);
       aDo.setOperatorName(op.operatorName());
       aDo.setIsProxy(op.isProxy());
     }
 
-    FileId parsedJsonFileId = KernelAggregateReflector.readParsedJsonFileId(app);
-    aDo.setParsedJsonFileId(parsedJsonFileId != null ? parsedJsonFileId.value() : null);
-    aDo.setExpectedDetailCount(KernelAggregateReflector.readExpectedDetailCount(app));
+    aDo.setParsedJsonFileId(app.parsedJsonFileId() != null ? app.parsedJsonFileId().value() : null);
+    aDo.setExpectedDetailCount(app.expectedDetailCount());
 
-    BusinessExtension ext = app.businessExtension();
-    aDo.setBusinessExtension(extensionToJson(ext));
+    aDo.setBusinessExtension(extensionToJson(app.businessExtension()));
 
-    aDo.setStatus(KernelAggregateReflector.enumName(KernelAggregateReflector.readStatus(app)));
-    aDo.setCurrentStep(KernelAggregateReflector.enumName(KernelAggregateReflector.readCurrentStep(app)));
-    aDo.setApplyTime(KernelAggregateReflector.readApplyTime(app));
-    aDo.setCompleteTime(KernelAggregateReflector.readCompleteTime(app));
+    aDo.setStatus(app.status() != null ? app.status().name() : null);
+    aDo.setCurrentStep(app.currentStep() != null ? app.currentStep().name() : null);
+    aDo.setApplyTime(app.applyTime());
+    aDo.setCompleteTime(app.completeTime());
 
     aDo.setCreatedBy(app.createdBy() != null ? app.createdBy().value() : null);
     aDo.setUpdatedBy(app.updatedBy() != null ? app.updatedBy().value() : null);
@@ -96,8 +96,11 @@ public interface ApplicationDataConverter {
 
   /**
    * DO → 领域对象
+   * <p>
+   * 调用 {@link BusinessApplication#reconstitute} 工厂方法重建聚合根，绕过业务校验。
+   * {@code planMaterials}/{@code packageFile} 为内存态字段，重建时置空。
    */
-  default BusinessApplication toDomain(ApplicationDO aDo) {
+  public BusinessApplication toDomain(BusinessApplicationDO aDo) {
     if (aDo == null) {
       return null;
     }
@@ -106,7 +109,7 @@ public interface ApplicationDataConverter {
     OperatorInfo operatorInfo = buildOperatorInfo(aDo);
     BusinessExtension extension = jsonToExtension(aDo.getBusinessExtension());
 
-    return KernelAggregateReflector.reconstituteApplication(
+    return BusinessApplication.reconstitute(
       new ApplicationId(aDo.getId()),
       aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
       aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
@@ -123,7 +126,9 @@ public interface ApplicationDataConverter {
       aDo.getStatus() != null ? ApplicationStatus.valueOf(aDo.getStatus()) : null,
       aDo.getCurrentStep() != null ? ApplicationFlowStep.valueOf(aDo.getCurrentStep()) : null,
       aDo.getApplyTime(),
-      aDo.getCompleteTime()
+      aDo.getCompleteTime(),
+      List.of(),
+      null
     );
   }
 
@@ -131,7 +136,7 @@ public interface ApplicationDataConverter {
   // 私有辅助方法
   // ====================================================
 
-  private BusinessContext buildBusinessContext(ApplicationDO aDo) {
+  private BusinessContext buildBusinessContext(BusinessApplicationDO aDo) {
     return new BusinessContext(
       aDo.getBusinessType() != null ? BusinessType.valueOf(aDo.getBusinessType()) : null,
       aDo.getCustomerNo() != null ? CustomerNo.of(aDo.getCustomerNo()) : null,
@@ -141,11 +146,11 @@ public interface ApplicationDataConverter {
       aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
       aDo.getPlanName(),
       aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      parseAccountManager(aDo.getAccountManager())
     );
   }
 
-  private OperatorInfo buildOperatorInfo(ApplicationDO aDo) {
+  private OperatorInfo buildOperatorInfo(BusinessApplicationDO aDo) {
     return new OperatorInfo(
       aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
       aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
@@ -159,9 +164,9 @@ public interface ApplicationDataConverter {
       return null;
     }
     try {
-      return OBJECT_MAPPER.writeValueAsString(extension);
+      return objectMapper.writeValueAsString(extension);
     } catch (JsonProcessingException e) {
-      throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
+      throw new SystemException(CoreInfraErrorCode.EXTENSION_SERIALIZATION_FAILED)
         .withLogDetail("序列化 BusinessExtension 失败: " + e.getMessage());
     }
   }
@@ -171,10 +176,31 @@ public interface ApplicationDataConverter {
       return null;
     }
     try {
-      return OBJECT_MAPPER.readValue(json, BusinessExtension.class);
+      return objectMapper.readValue(json, BusinessExtension.class);
     } catch (JsonProcessingException e) {
-      throw new SystemException(AnnuityDomainErrorCode.INVALID_EXTENSION_DATA)
+      throw new SystemException(CoreInfraErrorCode.EXTENSION_DESERIALIZATION_FAILED)
         .withLogDetail("反序列化 BusinessExtension 失败: " + e.getMessage());
     }
+  }
+
+  private AccountManager parseAccountManager(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    for (AccountManager am : AccountManager.values()) {
+      if (am.getValue().equals(value) || am.name().equals(value)) {
+        return am;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 占位：申请单引用列表目前不持久化到本 DO。
+   * 保留方法签名供未来扩展使用。
+   */
+  @SuppressWarnings("unused")
+  private List<PlanBizApplicationRef> emptyApplicationRefs() {
+    return List.of();
   }
 }

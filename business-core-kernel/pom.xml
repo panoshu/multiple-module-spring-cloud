@@ -19,7 +19,6 @@
     <module>business-core-infrastructure</module>
     <module>business-core-types</module>
     <module>business-core-application</module>
-    <module>business-core-starter</module>
   </modules>
 
   <dependencyManagement>
@@ -47,11 +46,6 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>business-core-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>business-core-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- 外部服务 API（父 pom 仅声明了 file-api，approval-api 需在此声明） -->

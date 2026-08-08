@@ -80,7 +80,7 @@ public class MaterialAppService {
   @Transactional(readOnly = true)
   public List<MaterialItem> listMaterials(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
-    return app.getPlanMaterials();
+    return app.planMaterials();
   }
 
   /**
@@ -98,7 +98,7 @@ public class MaterialAppService {
   public List<MaterialItem> checkCompleteness(ApplicationId appId, Map<String, Object> conditionContext) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     // 返回材料列表,由 Converter 结合 conditionContext 计算未满足项
-    return app.getPlanMaterials();
+    return app.planMaterials();
   }
 
   /**

@@ -23,13 +23,13 @@ public interface ProgressConverter {
     if (batch == null) {
       return null;
     }
-    int total = batch.getTotalApplicationCount();
-    int success = batch.getSuccessCount();
-    int failed = batch.getFailedCount();
+    int total = batch.totalApplicationCount();
+    int success = batch.successCount();
+    int failed = batch.failedCount();
     int pending = Math.max(0, total - success - failed);
     return new BatchProgressResponse(
       batch.id().value(),
-      batch.getStatus() != null ? batch.getStatus().name() : null,
+      batch.status() != null ? batch.status().name() : null,
       total,
       success,
       failed,

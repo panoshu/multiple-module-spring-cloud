@@ -51,7 +51,7 @@ public abstract class AbstractJsonStreamIngestionAction<D, T> implements StepExt
 
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
-    FileId jsonFileId = app.getParsedJsonFileId();
+    FileId jsonFileId = app.parsedJsonFileId();
     if (jsonFileId == null) {
       return ExtensionExecutionResult.failure("MISSING_JSON", "申请单缺少解析后的 JSON 文件凭证");
     }

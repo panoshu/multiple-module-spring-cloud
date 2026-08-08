@@ -1,4 +1,4 @@
-package com.example.annuity.infrastructure.entity;
+package com.example.core.infrastructure.business.entity;
 
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
@@ -9,24 +9,21 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 年金业务申请单 DO
+ * 业务批次 DO
  * <p>
- * 对应聚合根 {@code BusinessApplication}，将 {@code BusinessContext} 和 {@code OperatorInfo}
- * 拍平为独立列；{@code businessExtension} 通过 Jackson 多态序列化持久化为 JSON。
+ * 对应聚合根 {@code BusinessBatch}，将 {@code BusinessContext} 和 {@code OperatorInfo}
+ * 拍平为独立列；批次内关联的表单引用（{@code businessFormRefs}）通过 {@code t_business_form}
+ * 反向查询组装，不在本表持久化。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Data
-@Table("t_annuity_application")
-public class ApplicationDO {
+@Table("t_business_batch")
+public class BusinessBatchDO {
 
   @Id(keyType = KeyType.None)
   private String id;
-
-  // ===== 关联 ID =====
-  private String batchId;
-  private String formId;
 
   // ===== BusinessContext 拍平字段 =====
   private String businessType;
@@ -45,20 +42,11 @@ public class ApplicationDO {
   private String operatorName;
   private Boolean isProxy;
 
-  // ===== 文件与统计字段 =====
-  private String parsedJsonFileId;
-  private Integer expectedDetailCount;
-
-  // ===== 业务扩展字段（多态 JSON） =====
-  // PostgreSQL 使用 JSONB，MySQL 使用 JSON 或 TEXT
-  private String businessExtension;
-
-  // ===== 状态机字段 =====
+  // ===== 批次状态字段 =====
   private String status;
-  private String currentStep;
-
-  private LocalDateTime applyTime;
-  private LocalDateTime completeTime;
+  private Integer totalApplicationCount;
+  private Integer successCount;
+  private Integer failedCount;
 
   // ===== 通用字段 =====
   private String createdBy;

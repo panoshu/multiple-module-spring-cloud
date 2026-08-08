@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 /**
  * 年金服务 Jackson 配置
@@ -17,8 +18,9 @@ import org.springframework.context.annotation.Bean;
  * 作为 {@link BusinessExtension} 的多态子类型。通过 {@code businessType} 字段（取值
  * {@code ACC_PLAN_CREATE} / {@code ACC_PLAN_MODIFY} / {@code ACC_PLAN_DELETE}）作为类型标识符。
  * <p>
- * 该配置同时被 {@link ApplicationDataConverter#OBJECT_MAPPER} 静态引用，保证 DO ↔ 领域对象
- * 转换时与 Spring 上下文中的 ObjectMapper 行为一致。
+ * 该配置提供 {@code @Primary} ObjectMapper Bean，确保 kernel 的
+ * {@code BusinessApplicationConverter} 注入此 ObjectMapper，
+ * 保证 DO ↔ 领域对象转换时扩展字段的多态序列化行为一致。
  *
  * @author annuity-service
  * @since 2026/7/21
@@ -37,9 +39,14 @@ public class AnnuityJacksonConfiguration {
   }
 
   /**
-   * Spring 上下文中的 ObjectMapper Bean
+   * Spring 上下文中的 @Primary ObjectMapper Bean
+   * <p>
+   * 标注 {@code @Primary} 确保 kernel 的 {@code BusinessApplicationConverter}
+   * 通过 {@code @Autowired} 注入此 ObjectMapper（而非 Spring Boot 默认的 ObjectMapper），
+   * 使扩展字段的序列化/反序列化使用 AnnuityApplicationExtension 的 Mix-in 配置。
    */
   @Bean
+  @Primary
   public ObjectMapper annuityObjectMapper() {
     return configure(new ObjectMapper());
   }

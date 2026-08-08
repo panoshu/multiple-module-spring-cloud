@@ -66,7 +66,7 @@ public class BusinessFormAppService {
     // 防腐调用：让底层基础设施去解析 Excel 拆分出 Json
     fileIntegrationGateway.triggerAsyncParsing(
       form.id(),
-      form.getFormFile().fileId(),
+      form.formFile().fileId(),
       parsingConfig.parseTemplateId(),
       parsingConfig.splitRules()
     );
@@ -91,7 +91,7 @@ public class BusinessFormAppService {
       // 根据解析出来的计划，创建业务申请聚合根
       BusinessApplication newApp = BusinessApplication.createFromForm(
         idService.nextId(ApplicationId.class, ""),
-        form.getBusinessContext(), form.getOperatorInfo(),
+        form.businessContext(), form.operatorInfo(),
         result.jsonFileId() // 底层拆分好的明细 JSON 文件 ID
       );
 

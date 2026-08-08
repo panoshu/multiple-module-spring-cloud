@@ -1,4 +1,4 @@
-package com.example.annuity.infrastructure.entity;
+package com.example.core.infrastructure.business.entity;
 
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
@@ -9,21 +9,24 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 年金业务批次 DO
+ * 业务表单 DO
  * <p>
- * 对应聚合根 {@code BusinessBatch}，将 {@code BusinessContext} 和 {@code OperatorInfo}
- * 拍平为独立列；批次内关联的表单引用（{@code businessFormRefs}）通过 {@code t_annuity_form}
- * 反向查询组装，不在本表持久化。
+ * 对应聚合根 {@code BusinessForm}，将 {@code BusinessContext} 和 {@code OperatorInfo}
+ * 拍平为独立列；表单关联的申请单引用（{@code applicationRefs}）通过 {@code t_business_application}
+ * 反向查询组装，不在本表持久化。表单文件信息拍平为 fileId/fileName/fileSize 三列。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Data
-@Table("t_annuity_batch")
-public class BatchDO {
+@Table("t_business_form")
+public class BusinessFormDO {
 
   @Id(keyType = KeyType.None)
   private String id;
+
+  // ===== 关联 ID =====
+  private String batchId;
 
   // ===== BusinessContext 拍平字段 =====
   private String businessType;
@@ -42,11 +45,13 @@ public class BatchDO {
   private String operatorName;
   private Boolean isProxy;
 
-  // ===== 批次状态字段 =====
-  private String status;
-  private Integer totalApplicationCount;
-  private Integer successCount;
-  private Integer failedCount;
+  // ===== 表单文件字段 =====
+  private String formFileId;
+  private String formFileName;
+  private Long formFileSize;
+
+  // ===== 表单状态字段 =====
+  private String formStatus;
 
   // ===== 通用字段 =====
   private String createdBy;

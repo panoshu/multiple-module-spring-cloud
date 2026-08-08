@@ -1,63 +1,68 @@
-package com.example.annuity.infrastructure.converter;
+package com.example.core.infrastructure.business.converter;
 
-import com.example.annuity.infrastructure.entity.BatchDO;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
+import com.example.core.infrastructure.business.entity.BusinessBatchDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.*;
 import org.mapstruct.Mapper;
 
+import java.util.List;
+
 /**
- * 年金业务批次 DO ↔ 领域对象转换器
+ * 业务批次 DO ↔ 领域对象转换器
  * <p>
- * 通过 {@link KernelAggregateReflector} 反射访问 kernel 聚合根的私有字段。
+ * 使用 kernel 聚合根的公开访问器与 {@link BusinessBatch#reconstitute} 工厂方法，
+ * 彻底消除反射访问。{@code businessFormRefs} 为内存态字段，重建时置空。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Mapper(componentModel = "spring")
-public interface BatchDataConverter {
+public abstract class BusinessBatchConverter {
 
   /**
    * 领域对象 → DO
    */
-  default BatchDO toDO(BusinessBatch batch) {
+  public BusinessBatchDO toDO(BusinessBatch batch) {
     if (batch == null) {
       return null;
     }
-    BatchDO aDo = new BatchDO();
-    aDo.setId(KernelAggregateReflector.nullableId(batch.id()));
+    BusinessBatchDO aDo = new BusinessBatchDO();
+    aDo.setId(batch.id() != null ? batch.id().value() : null);
 
-    BusinessContext ctx = KernelAggregateReflector.readBusinessContext(batch);
+    BusinessContext ctx = batch.businessContext();
     if (ctx != null) {
-      aDo.setBusinessType(KernelAggregateReflector.enumName(ctx.businessType()));
-      aDo.setCustomerNo(KernelAggregateReflector.nullableId(ctx.customerNo()));
+      aDo.setBusinessType(ctx.businessType() != null ? ctx.businessType().name() : null);
+      aDo.setCustomerNo(ctx.customerNo() != null ? ctx.customerNo().value() : null);
       aDo.setCustomerName(ctx.customerName());
-      aDo.setProductNo(KernelAggregateReflector.nullableId(ctx.productNo()));
+      aDo.setProductNo(ctx.productNo() != null ? ctx.productNo().value() : null);
       aDo.setProductName(ctx.productName());
-      aDo.setPlanNo(KernelAggregateReflector.nullableId(ctx.planNo()));
+      aDo.setPlanNo(ctx.planNo() != null ? ctx.planNo().value() : null);
       aDo.setPlanName(ctx.planName());
-      aDo.setOperationModel(KernelAggregateReflector.enumName(ctx.operationModel()));
-      aDo.setAccountManager(KernelAggregateReflector.accountManagerValue(ctx.accountManager()));
+      aDo.setOperationModel(ctx.operationModel() != null ? ctx.operationModel().name() : null);
+      aDo.setAccountManager(ctx.accountManager() != null ? ctx.accountManager().getValue() : null);
     }
 
-    OperatorInfo op = KernelAggregateReflector.readOperatorInfo(batch);
+    OperatorInfo op = batch.operatorInfo();
     if (op != null) {
-      aDo.setChannel(KernelAggregateReflector.enumName(op.channel()));
-      aDo.setOperatorId(KernelAggregateReflector.nullableId(op.operatorId()));
+      aDo.setChannel(op.channel() != null ? op.channel().name() : null);
+      aDo.setOperatorId(op.operatorId() != null ? op.operatorId().value() : null);
       aDo.setOperatorName(op.operatorName());
       aDo.setIsProxy(op.isProxy());
     }
 
-    aDo.setStatus(KernelAggregateReflector.enumName(KernelAggregateReflector.readStatus(batch)));
-    aDo.setTotalApplicationCount(KernelAggregateReflector.readTotalApplicationCount(batch));
-    aDo.setSuccessCount(KernelAggregateReflector.readSuccessCount(batch));
-    aDo.setFailedCount(KernelAggregateReflector.readFailedCount(batch));
+    aDo.setStatus(batch.status() != null ? batch.status().name() : null);
+    aDo.setTotalApplicationCount(batch.totalApplicationCount());
+    aDo.setSuccessCount(batch.successCount());
+    aDo.setFailedCount(batch.failedCount());
 
     aDo.setCreatedBy(batch.createdBy() != null ? batch.createdBy().value() : null);
     aDo.setUpdatedBy(batch.updatedBy() != null ? batch.updatedBy().value() : null);
@@ -70,8 +75,11 @@ public interface BatchDataConverter {
 
   /**
    * DO → 领域对象
+   * <p>
+   * 调用 {@link BusinessBatch#reconstitute} 工厂方法重建聚合根。
+   * {@code businessFormRefs} 为内存态字段，重建时置空。
    */
-  default BusinessBatch toDomain(BatchDO aDo) {
+  public BusinessBatch toDomain(BusinessBatchDO aDo) {
     if (aDo == null) {
       return null;
     }
@@ -85,7 +93,7 @@ public interface BatchDataConverter {
       aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
       aDo.getPlanName(),
       aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      parseAccountManager(aDo.getAccountManager())
     );
 
     OperatorInfo operatorInfo = new OperatorInfo(
@@ -95,7 +103,9 @@ public interface BatchDataConverter {
       aDo.getIsProxy() != null && aDo.getIsProxy()
     );
 
-    return KernelAggregateReflector.reconstituteBatch(
+    List<BusinessFormRef> formRefs = List.of();
+
+    return BusinessBatch.reconstitute(
       BatchId.of(aDo.getId()),
       aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
       aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
@@ -107,7 +117,20 @@ public interface BatchDataConverter {
       aDo.getStatus() != null ? BatchStatus.valueOf(aDo.getStatus()) : null,
       aDo.getTotalApplicationCount() != null ? aDo.getTotalApplicationCount() : 0,
       aDo.getSuccessCount() != null ? aDo.getSuccessCount() : 0,
-      aDo.getFailedCount() != null ? aDo.getFailedCount() : 0
+      aDo.getFailedCount() != null ? aDo.getFailedCount() : 0,
+      formRefs
     );
+  }
+
+  private AccountManager parseAccountManager(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    for (AccountManager am : AccountManager.values()) {
+      if (am.getValue().equals(value) || am.name().equals(value)) {
+        return am;
+      }
+    }
+    return null;
   }
 }

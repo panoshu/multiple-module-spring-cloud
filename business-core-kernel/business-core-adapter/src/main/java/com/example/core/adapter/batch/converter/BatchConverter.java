@@ -36,16 +36,16 @@ public interface BatchConverter {
     if (batch == null) {
       return null;
     }
-    BusinessContext ctx = batch.getBusinessContext();
+    BusinessContext ctx = batch.businessContext();
     return new BatchSummaryResponse(
       batch.id().value(),
       ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
       ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
-      batch.getStatus() != null ? batch.getStatus().name() : null,
-      batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
-      batch.getTotalApplicationCount(),
-      batch.getSuccessCount(),
-      batch.getFailedCount(),
+      batch.status() != null ? batch.status().name() : null,
+      batch.businessFormRefs() != null ? batch.businessFormRefs().size() : 0,
+      batch.totalApplicationCount(),
+      batch.successCount(),
+      batch.failedCount(),
       batch.createdAt()
     );
   }
@@ -59,7 +59,7 @@ public interface BatchConverter {
     }
     return new BatchCreatedResponse(
       batch.id().value(),
-      batch.getStatus() != null ? batch.getStatus().name() : null,
+      batch.status() != null ? batch.status().name() : null,
       batch.createdAt()
     );
   }
@@ -73,18 +73,18 @@ public interface BatchConverter {
     if (batch == null) {
       return null;
     }
-    BusinessContext ctx = batch.getBusinessContext();
+    BusinessContext ctx = batch.businessContext();
     return new BatchDetailResponse(
       batch.id().value(),
       ctx != null && ctx.businessType() != null ? ctx.businessType().name() : null,
       ctx != null && ctx.planNo() != null ? ctx.planNo().value() : null,
       ctx != null && ctx.customerNo() != null ? ctx.customerNo().value() : null,
       ctx != null ? ctx.customerName() : null,
-      batch.getStatus() != null ? batch.getStatus().name() : null,
-      batch.getBusinessFormRefs() != null ? batch.getBusinessFormRefs().size() : 0,
-      batch.getTotalApplicationCount(),
-      batch.getSuccessCount(),
-      batch.getFailedCount(),
+      batch.status() != null ? batch.status().name() : null,
+      batch.businessFormRefs() != null ? batch.businessFormRefs().size() : 0,
+      batch.totalApplicationCount(),
+      batch.successCount(),
+      batch.failedCount(),
       batch.createdAt(),
       batch.updatedAt(),
       null

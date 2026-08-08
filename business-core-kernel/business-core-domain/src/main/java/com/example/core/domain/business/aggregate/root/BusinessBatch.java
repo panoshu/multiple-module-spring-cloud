@@ -60,6 +60,39 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   }
 
   /**
+   * 从数据库重建聚合根（全参工厂方法）。
+   * <p>
+   * 供 Repository 实现的 Converter 在 DO → 领域对象转换时调用，绕过业务校验直接装配所有字段。
+   * 业务代码禁止使用本方法创建新对象，新建请用 {@link #create}。
+   *
+   * @return 装配完成的聚合根实例
+   */
+  public static BusinessBatch reconstitute(
+    BatchId batchId,
+    UserNo createdBy,
+    UserNo updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BatchStatus status,
+    int totalApplicationCount,
+    int successCount,
+    int failedCount,
+    List<BusinessFormRef> businessFormRefs) {
+    BusinessBatch batch = new BusinessBatch(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
+    batch.businessContext = businessContext;
+    batch.operatorInfo = operatorInfo;
+    batch.status = status;
+    batch.totalApplicationCount = totalApplicationCount;
+    batch.successCount = successCount;
+    batch.failedCount = failedCount;
+    batch.businessFormRefs = businessFormRefs;
+    return batch;
+  }
+
+  /**
    * 行为：标记为处理中
    */
   public void markAsProcessing() {
@@ -155,33 +188,33 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, BatchStatus.CANCELLED));
   }
 
-  // ============ Getters ============
+  // ============ Accessors ============
 
-  public BusinessContext getBusinessContext() {
+  public BusinessContext businessContext() {
     return this.businessContext;
   }
 
-  public OperatorInfo getOperatorInfo() {
+  public OperatorInfo operatorInfo() {
     return this.operatorInfo;
   }
 
-  public BatchStatus getStatus() {
+  public BatchStatus status() {
     return this.status;
   }
 
-  public int getTotalApplicationCount() {
+  public int totalApplicationCount() {
     return this.totalApplicationCount;
   }
 
-  public int getSuccessCount() {
+  public int successCount() {
     return this.successCount;
   }
 
-  public int getFailedCount() {
+  public int failedCount() {
     return this.failedCount;
   }
 
-  public List<BusinessFormRef> getBusinessFormRefs() {
+  public List<BusinessFormRef> businessFormRefs() {
     return this.businessFormRefs;
   }
 

@@ -1,4 +1,4 @@
-package com.example.core.configuration;
+package com.example.core.adapter.configuration;
 
 import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
@@ -13,7 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * business-core-kernel 自动配置
  *
- * <p>业务服务引入 {@code business-core-starter} 或 {@code business-core-adapter} 后,
+ * <p>业务服务引入 {@code business-core-adapter} 后,
  * 自动注册 kernel 组件:
  * <ul>
  *   <li>SessionContextResolver / BusinessMetaContextAssembler(会话基础设施)</li>

@@ -66,7 +66,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   @Override
   public void triggerAsyncParsing(BusinessForm businessForm, BusinessMetaContext businessMetaContext) {
-    BusinessFile formFile = businessForm.getFormFile();
+    BusinessFile formFile = businessForm.formFile();
     if (formFile == null) {
       log.warn("表单尚未上传文件，跳过异步解析, formId={}", businessForm.id());
       return;
@@ -207,8 +207,8 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   }
 
   private String resolveUploader(BusinessForm businessForm) {
-    return businessForm.getOperatorInfo() != null
-      ? businessForm.getOperatorInfo().operatorId().value()
+    return businessForm.operatorInfo() != null
+      ? businessForm.operatorInfo().operatorId().value()
       : "system";
   }
 

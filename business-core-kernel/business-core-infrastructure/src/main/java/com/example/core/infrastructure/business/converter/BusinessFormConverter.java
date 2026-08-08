@@ -1,71 +1,75 @@
-package com.example.annuity.infrastructure.converter;
+package com.example.core.infrastructure.business.converter;
 
-import com.example.annuity.infrastructure.entity.FormDO;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
+import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
+import com.example.core.infrastructure.business.entity.BusinessFormDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.*;
 import org.mapstruct.Mapper;
 
+import java.util.List;
+
 /**
- * 年金业务表单 DO ↔ 领域对象转换器
+ * 业务表单 DO ↔ 领域对象转换器
  * <p>
- * 通过 {@link KernelAggregateReflector} 反射访问 kernel 聚合根的私有字段。
+ * 使用 kernel 聚合根的公开访问器与 {@link BusinessForm#reconstitute} 工厂方法，
+ * 彻底消除反射访问。{@code applicationRefs} 为内存态字段，重建时置空。
  *
- * @author annuity-service
- * @since 2026/7/21
+ * @author core-kernel
+ * @since 2026/8/8
  */
 @Mapper(componentModel = "spring")
-public interface FormDataConverter {
+public abstract class BusinessFormConverter {
 
   /**
    * 领域对象 → DO
    */
-  default FormDO toDO(BusinessForm form) {
+  public BusinessFormDO toDO(BusinessForm form) {
     if (form == null) {
       return null;
     }
-    FormDO aDo = new FormDO();
-    aDo.setId(KernelAggregateReflector.nullableId(form.id()));
+    BusinessFormDO aDo = new BusinessFormDO();
+    aDo.setId(form.id() != null ? form.id().value() : null);
 
-    BatchId batchId = KernelAggregateReflector.readBatchId(form);
-    aDo.setBatchId(batchId != null ? batchId.value() : null);
+    aDo.setBatchId(form.batchId() != null ? form.batchId().value() : null);
 
-    BusinessContext ctx = KernelAggregateReflector.readBusinessContext(form);
+    BusinessContext ctx = form.businessContext();
     if (ctx != null) {
-      aDo.setBusinessType(KernelAggregateReflector.enumName(ctx.businessType()));
-      aDo.setCustomerNo(KernelAggregateReflector.nullableId(ctx.customerNo()));
+      aDo.setBusinessType(ctx.businessType() != null ? ctx.businessType().name() : null);
+      aDo.setCustomerNo(ctx.customerNo() != null ? ctx.customerNo().value() : null);
       aDo.setCustomerName(ctx.customerName());
-      aDo.setProductNo(KernelAggregateReflector.nullableId(ctx.productNo()));
+      aDo.setProductNo(ctx.productNo() != null ? ctx.productNo().value() : null);
       aDo.setProductName(ctx.productName());
-      aDo.setPlanNo(KernelAggregateReflector.nullableId(ctx.planNo()));
+      aDo.setPlanNo(ctx.planNo() != null ? ctx.planNo().value() : null);
       aDo.setPlanName(ctx.planName());
-      aDo.setOperationModel(KernelAggregateReflector.enumName(ctx.operationModel()));
-      aDo.setAccountManager(KernelAggregateReflector.accountManagerValue(ctx.accountManager()));
+      aDo.setOperationModel(ctx.operationModel() != null ? ctx.operationModel().name() : null);
+      aDo.setAccountManager(ctx.accountManager() != null ? ctx.accountManager().getValue() : null);
     }
 
-    OperatorInfo op = KernelAggregateReflector.readOperatorInfo(form);
+    OperatorInfo op = form.operatorInfo();
     if (op != null) {
-      aDo.setChannel(KernelAggregateReflector.enumName(op.channel()));
-      aDo.setOperatorId(KernelAggregateReflector.nullableId(op.operatorId()));
+      aDo.setChannel(op.channel() != null ? op.channel().name() : null);
+      aDo.setOperatorId(op.operatorId() != null ? op.operatorId().value() : null);
       aDo.setOperatorName(op.operatorName());
       aDo.setIsProxy(op.isProxy());
     }
 
-    BusinessFile formFile = KernelAggregateReflector.readFormFile(form);
+    BusinessFile formFile = form.formFile();
     if (formFile != null) {
       aDo.setFormFileId(formFile.fileId() != null ? formFile.fileId().value() : null);
       aDo.setFormFileName(formFile.fileName());
       aDo.setFormFileSize(formFile.fileSizeBytes());
     }
 
-    aDo.setFormStatus(KernelAggregateReflector.enumName(KernelAggregateReflector.readFormStatus(form)));
+    aDo.setFormStatus(form.formStatus() != null ? form.formStatus().name() : null);
 
     aDo.setCreatedBy(form.createdBy() != null ? form.createdBy().value() : null);
     aDo.setUpdatedBy(form.updatedBy() != null ? form.updatedBy().value() : null);
@@ -78,8 +82,11 @@ public interface FormDataConverter {
 
   /**
    * DO → 领域对象
+   * <p>
+   * 调用 {@link BusinessForm#reconstitute} 工厂方法重建聚合根。
+   * {@code applicationRefs} 为内存态字段，重建时置空。
    */
-  default BusinessForm toDomain(FormDO aDo) {
+  public BusinessForm toDomain(BusinessFormDO aDo) {
     if (aDo == null) {
       return null;
     }
@@ -93,7 +100,7 @@ public interface FormDataConverter {
       aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
       aDo.getPlanName(),
       aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
-      KernelAggregateReflector.parseAccountManager(aDo.getAccountManager())
+      parseAccountManager(aDo.getAccountManager())
     );
 
     OperatorInfo operatorInfo = new OperatorInfo(
@@ -113,7 +120,9 @@ public interface FormDataConverter {
       );
     }
 
-    return KernelAggregateReflector.reconstituteForm(
+    List<PlanBizApplicationRef> applicationRefs = List.of();
+
+    return BusinessForm.reconstitute(
       new FormId(aDo.getId()),
       aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
       aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
@@ -124,7 +133,20 @@ public interface FormDataConverter {
       businessContext,
       operatorInfo,
       formFile,
-      aDo.getFormStatus() != null ? FormStatus.valueOf(aDo.getFormStatus()) : null
+      aDo.getFormStatus() != null ? FormStatus.valueOf(aDo.getFormStatus()) : null,
+      applicationRefs
     );
+  }
+
+  private AccountManager parseAccountManager(String value) {
+    if (value == null || value.isBlank()) {
+      return null;
+    }
+    for (AccountManager am : AccountManager.values()) {
+      if (am.getValue().equals(value) || am.name().equals(value)) {
+        return am;
+      }
+    }
+    return null;
   }
 }

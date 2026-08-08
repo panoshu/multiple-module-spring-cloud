@@ -36,8 +36,8 @@ public interface ApplicationConverter {
     }
     return new ApplicationSummaryResponse(
       app.id().value(),
-      app.getBatchId() != null ? app.getBatchId().value() : null,
-      app.getStatus() != null ? app.getStatus().name() : null,
+      app.batchId() != null ? app.batchId().value() : null,
+      app.status() != null ? app.status().name() : null,
       app.currentStep() != null ? app.currentStep().name() : null,
       app.createdAt(),
       app.updatedAt()
@@ -53,14 +53,14 @@ public interface ApplicationConverter {
     }
     return new ApplicationDetailResponse(
       app.id().value(),
-      app.getBatchId() != null ? app.getBatchId().value() : null,
-      app.getStatus() != null ? app.getStatus().name() : null,
+      app.batchId() != null ? app.batchId().value() : null,
+      app.status() != null ? app.status().name() : null,
       app.currentStep() != null ? app.currentStep().name() : null,
-      app.getParsedJsonFileId() != null ? app.getParsedJsonFileId().value() : null,
-      app.getPackageFile() != null && app.getPackageFile().fileId() != null
-        ? app.getPackageFile().fileId().value() : null,
-      app.getApplyTime(),
-      app.getCompleteTime(),
+      app.parsedJsonFileId() != null ? app.parsedJsonFileId().value() : null,
+      app.packageFile() != null && app.packageFile().fileId() != null
+        ? app.packageFile().fileId().value() : null,
+      app.applyTime(),
+      app.completeTime(),
       app.createdAt(),
       app.updatedAt()
     );
@@ -79,7 +79,7 @@ public interface ApplicationConverter {
     return new AdvanceStepResponse(
       app.id().value(),
       app.currentStep() != null ? app.currentStep().name() : null,
-      app.getStatus() != null ? app.getStatus().name() : null
+      app.status() != null ? app.status().name() : null
     );
   }
 

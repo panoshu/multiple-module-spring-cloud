@@ -60,14 +60,14 @@ public class DefaultFormParsingHandler implements StepActionHandler {
 
     // 3. 跨上下文防腐调用：触发底层异步解析
     fileIntegrationGateway.triggerAsyncParsing(
-      app.bindedFormId(),
+      app.formId(),
       targetFile,
       parsingConfig.parseTemplateId(),
       parsingConfig.splitRules()
     );
 
     log.info("已成功向底层文件服务派发表单解析任务, formId={}, templateId={}",
-      app.bindedFormId(), parsingConfig.parseTemplateId());
+      app.formId(), parsingConfig.parseTemplateId());
 
     // 4. 【核心机制】：向引擎返回异步挂起状态。
     // 引擎收到此状态后，会退出当前线程、提交事务。
