@@ -1,8 +1,6 @@
 package com.example.shared.identity;
 
 import com.example.shared.enumeration.CodeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 /**
  * IdentityType
@@ -11,8 +9,6 @@ import lombok.Getter;
  * @since 2026/8/1 17:35
  */
 
-@Getter
-@AllArgsConstructor
 public enum IdentityType implements CodeEnum<String> {
 
   ID_CARD("01", "居民身份证"),
@@ -21,6 +17,20 @@ public enum IdentityType implements CodeEnum<String> {
   TAIWAN_PERMIT("04", "台湾居民通行证");
 
   private final String code;
-  private final String label;
+  private final String description;
 
+  IdentityType(String code, String description) {
+    this.code = code;
+    this.description = description;
+  }
+
+  @Override
+  public String getCode() {
+    return code;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
 }
