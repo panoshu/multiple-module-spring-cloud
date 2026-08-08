@@ -1,0 +1,107 @@
+package com.example.bff.internet.application.service;
+
+import com.example.bff.internet.api.dto.BatchOverviewResponse;
+import com.example.bff.internet.api.dto.BffBatchOverviewRequest;
+import com.example.bff.shared.registry.KernelApiRegistry;
+import com.example.bff.shared.route.BusinessTypeRouter;
+import com.example.core.api.application.BusinessApplicationApi;
+import com.example.core.api.application.response.ApplicationSummaryResponse;
+import com.example.core.api.batch.BusinessBatchApi;
+import com.example.core.api.batch.response.BatchDetailResponse;
+import com.example.core.api.progress.BusinessProgressApi;
+import com.example.core.api.progress.response.BatchProgressResponse;
+import com.example.shared.web.core.api.ApiResult;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class BffAggregationServiceTest {
+
+    @Mock
+    private BusinessTypeRouter router;
+    @Mock
+    private KernelApiRegistry kernelApiRegistry;
+    @Mock
+    private BusinessBatchApi batchApi;
+    @Mock
+    private BusinessProgressApi progressApi;
+    @Mock
+    private BusinessApplicationApi applicationApi;
+
+    @InjectMocks
+    private BffAggregationService aggregationService;
+
+    @Test
+    @DisplayName("getBatchOverview 聚合批次详情/进度/申请单列表")
+    void getBatchOverview_aggregatesThreeApis() {
+        BffBatchOverviewRequest request = new BffBatchOverviewRequest("ACC_PLAN_CREATE", "batch-123");
+
+        when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
+        when(kernelApiRegistry.getBatchApi("annuity-service")).thenReturn(batchApi);
+        when(kernelApiRegistry.getProgressApi("annuity-service")).thenReturn(progressApi);
+        when(kernelApiRegistry.getApplicationApi("annuity-service")).thenReturn(applicationApi);
+
+        BatchDetailResponse batchDetail = new BatchDetailResponse(
+                "batch-123", "ACC_PLAN_CREATE", "PLAN001", "C001", "客户A",
+                "PROCESSING", 10, 5, 3, 2,
+                LocalDateTime.now(), LocalDateTime.now(), List.of()
+        );
+        BatchProgressResponse progress = new BatchProgressResponse(
+                "batch-123", "PROCESSING", 5, 3, 2, 0
+        );
+        List<ApplicationSummaryResponse> applications = List.of(
+                new ApplicationSummaryResponse("app-1", "batch-123", "SUBMITTED", "STEP1",
+                        LocalDateTime.now(), LocalDateTime.now())
+        );
+
+        when(batchApi.detail(any())).thenReturn(ApiResult.success(batchDetail));
+        when(progressApi.batchProgress(any())).thenReturn(ApiResult.success(progress));
+        when(applicationApi.list(any())).thenReturn(ApiResult.success(applications));
+
+        ApiResult<BatchOverviewResponse> result = aggregationService.getBatchOverview(request);
+
+        assertTrue(result.isSuccess());
+        assertEquals(batchDetail, result.data().batchDetail());
+        assertEquals(progress, result.data().progress());
+        assertEquals(applications, result.data().applications());
+    }
+
+    @Test
+    @DisplayName("getBatchOverview 下游返回失败时聚合结果仍包含成功部分")
+    void getBatchOverview_partialFailure() {
+        BffBatchOverviewRequest request = new BffBatchOverviewRequest("ACC_PLAN_CREATE", "batch-456");
+
+        when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
+        when(kernelApiRegistry.getBatchApi("annuity-service")).thenReturn(batchApi);
+        when(kernelApiRegistry.getProgressApi("annuity-service")).thenReturn(progressApi);
+        when(kernelApiRegistry.getApplicationApi("annuity-service")).thenReturn(applicationApi);
+
+        BatchDetailResponse batchDetail = new BatchDetailResponse(
+                "batch-456", "ACC_PLAN_CREATE", "PLAN001", "C001", "客户A",
+                "PROCESSING", 10, 5, 3, 2,
+                LocalDateTime.now(), LocalDateTime.now(), List.of()
+        );
+
+        when(batchApi.detail(any())).thenReturn(ApiResult.success(batchDetail));
+        when(progressApi.batchProgress(any())).thenReturn(ApiResult.failure("SERVICE.BFF.0002", "下游服务调用失败"));
+        when(applicationApi.list(any())).thenReturn(ApiResult.success(List.of()));
+
+        ApiResult<BatchOverviewResponse> result = aggregationService.getBatchOverview(request);
+
+        assertTrue(result.isSuccess());
+        assertNotNull(result.data().batchDetail());
+        assertNull(result.data().progress());
+        assertTrue(result.data().applications().isEmpty());
+    }
+}
