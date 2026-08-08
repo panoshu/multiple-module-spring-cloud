@@ -1,0 +1,21 @@
+server:
+  port: 18090
+  servlet:
+    context-path: /internet-bff
+
+spring:
+  application:
+    name: internet-bff
+  threads:
+    virtual:
+      enabled: true
+  profiles:
+    active: local
+
+# BFF 渠道范围
+bff:
+  channel-scope: INTERNET
+
+logging:
+  level:
+    com.example.bff: DEBUG
