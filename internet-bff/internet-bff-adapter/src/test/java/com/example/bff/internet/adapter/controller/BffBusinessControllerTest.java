@@ -1,20 +1,14 @@
 package com.example.bff.internet.adapter.controller;
 
-import com.example.bff.internet.api.BffBusinessApi;
 import com.example.bff.internet.api.dto.*;
 import com.example.bff.internet.application.service.BffAggregationService;
 import com.example.bff.shared.registry.KernelApiRegistry;
 import com.example.bff.shared.route.BusinessTypeRouter;
 import com.example.core.api.application.BusinessApplicationApi;
-import com.example.core.api.application.response.ApplicationDetailResponse;
 import com.example.core.api.application.response.SubmitResponse;
 import com.example.core.api.batch.BusinessBatchApi;
 import com.example.core.api.batch.response.BatchCreatedResponse;
 import com.example.core.api.batch.response.BatchDetailResponse;
-import com.example.core.api.form.BusinessFormApi;
-import com.example.core.api.form.response.UploadTokenResponse;
-import com.example.core.api.material.MaterialAppApi;
-import com.example.core.api.material.response.MaterialItemResponse;
 import com.example.shared.web.core.api.ApiResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -51,11 +45,7 @@ class BffBusinessControllerTest {
     @MockitoBean
     private BusinessBatchApi batchApi;
     @MockitoBean
-    private BusinessFormApi formApi;
-    @MockitoBean
     private BusinessApplicationApi applicationApi;
-    @MockitoBean
-    private MaterialAppApi materialApi;
 
     @Test
     @DisplayName("POST /bff/batch/create 路由到 kernel BusinessBatchApi.create")

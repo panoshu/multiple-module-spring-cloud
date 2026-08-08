@@ -4,7 +4,6 @@ import com.example.bff.shared.errorcode.BffErrorCode;
 import com.example.shared.exception.BusinessException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +26,7 @@ public class BusinessTypeRouter {
 
     public BusinessTypeRouter(
             BffRouteConfigRepository routeRepo,
-            @Value("${bff.channel-scope:ALL}") String channelScope) {
+            String channelScope) {
         this.routeRepo = routeRepo;
         this.currentScope = ChannelScope.valueOf(channelScope);
         this.routeCache = Caffeine.newBuilder()

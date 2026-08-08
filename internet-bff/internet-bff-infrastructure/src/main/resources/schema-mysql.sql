@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS t_bff_route_config (
 );
 
 CREATE UNIQUE INDEX uk_bff_route_business_channel
-    ON t_bff_route_config(business_type, channel_scope);
+    ON t_bff_route_config(business_type, channel_scope, deleted);
