@@ -16,6 +16,14 @@ spring:
 bff:
   channel-scope: INTERNET
 
+trace:
+  context:
+    mapping:
+      OrderId: X-Order-Id
+      UserId: X-User-Id
+      BizId: X-Biz-Id
+      BatchId: X-Batch-Id
+
 logging:
   level:
     com.example.bff: DEBUG
