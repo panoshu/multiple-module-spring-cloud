@@ -15,8 +15,6 @@ import com.pension.permission.application.channel.CustomerChannelEntitlementServ
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
-
 /**
  * 客户渠道开通记录 Controller.
  *
@@ -34,9 +32,9 @@ public class CustomerChannelEntitlementController implements CustomerChannelEnti
 
   @Override
   @RequirePermission(business = "CHANNEL_ENTITLEMENT", action = "VIEW", category = PermissionCategory.PLATFORM)
-  public ApiResult<Optional<CustomerChannelEntitlementResponse>> get(GetEntitlementRequest request) {
+  public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
     CustomerChannelEntitlementResponse response = service.getEntitlement(converter.toQuery(request));
-    return ApiResult.success(Optional.ofNullable(response));
+    return ApiResult.success(response);
   }
 
   @Override

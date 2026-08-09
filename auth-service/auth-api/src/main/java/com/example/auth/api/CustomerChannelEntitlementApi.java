@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import java.util.Optional;
-
 /**
  * 客户渠道开通管理 API.
  *
@@ -31,5 +29,5 @@ public interface CustomerChannelEntitlementApi {
     ApiResult<CustomerChannelEntitlementResponse> replace(@RequestBody @Valid ReplaceChannelsRequest request);
 
     @PostExchange("/get")
-    ApiResult<Optional<CustomerChannelEntitlementResponse>> get(@RequestBody @Valid GetEntitlementRequest request);
+    ApiResult<CustomerChannelEntitlementResponse> get(@RequestBody @Valid GetEntitlementRequest request);
 }
