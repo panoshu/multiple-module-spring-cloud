@@ -9,8 +9,6 @@ import com.example.auth.api.query.GetEntitlementRequest;
 import com.example.shared.web.core.api.ApiResult;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 /**
  * 渠道开通管理服务
  *
@@ -39,7 +37,7 @@ public class ChannelManagementService {
         return channelEntitlementApi.replace(request);
     }
 
-    public ApiResult<Optional<CustomerChannelEntitlementResponse>> get(GetEntitlementRequest request) {
+    public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
         return channelEntitlementApi.get(request);
     }
 }

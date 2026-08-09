@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import java.util.Optional;
-
 /**
  * 客户渠道开通管理 BFF API
  *
@@ -33,5 +31,5 @@ public interface BffChannelApi {
     ApiResult<CustomerChannelEntitlementResponse> replace(@Valid @RequestBody ReplaceChannelsRequest request);
 
     @PostExchange("/get")
-    ApiResult<Optional<CustomerChannelEntitlementResponse>> get(@Valid @RequestBody GetEntitlementRequest request);
+    ApiResult<CustomerChannelEntitlementResponse> get(@Valid @RequestBody GetEntitlementRequest request);
 }

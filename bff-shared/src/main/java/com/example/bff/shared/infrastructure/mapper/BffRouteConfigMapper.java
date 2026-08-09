@@ -1,6 +1,6 @@
-package com.example.bff.intranet.infrastructure.mapper;
+package com.example.bff.shared.infrastructure.mapper;
 
-import com.example.bff.intranet.infrastructure.entity.BffRouteConfigDO;
+import com.example.bff.shared.infrastructure.entity.BffRouteConfigDO;
 import com.mybatisflex.core.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 

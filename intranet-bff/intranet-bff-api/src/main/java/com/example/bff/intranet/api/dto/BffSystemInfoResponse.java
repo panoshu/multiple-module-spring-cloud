@@ -13,7 +13,7 @@ package com.example.bff.intranet.api.dto;
 public record BffSystemInfoResponse(
     String channelScope,
     String serviceName,
-    String port,
+    int port,
     String contextPath
 ) {
 }

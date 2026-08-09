@@ -52,7 +52,7 @@ public class BffAggregationService {
                 ApiResult<BatchDetailResponse> result = kernelApiRegistry.getBatchApi(serviceName)
                         .detail(request.toBatchDetailQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用批次详情降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }
@@ -62,7 +62,7 @@ public class BffAggregationService {
                 ApiResult<BatchProgressResponse> result = kernelApiRegistry.getProgressApi(serviceName)
                         .batchProgress(request.toProgressQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用批次进度降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }
@@ -72,7 +72,7 @@ public class BffAggregationService {
                 ApiResult<List<ApplicationSummaryResponse>> result = kernelApiRegistry.getApplicationApi(serviceName)
                         .list(request.toApplicationListQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用申请单列表降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }

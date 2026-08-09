@@ -71,4 +71,13 @@ public interface BffRouteConfigRepository {
      * @return 路由配置列表
      */
     List<BffRouteConfig> findAll();
+
+    /**
+     * 查询全部路由配置（含禁用的，不含已删除的），并携带主键 ID。
+     *
+     * <p>供管理接口列表使用，使前端能按 ID 进行 update/delete。
+     *
+     * @return 路由配置条目列表
+     */
+    List<BffRouteConfigEntry> findAllWithId();
 }

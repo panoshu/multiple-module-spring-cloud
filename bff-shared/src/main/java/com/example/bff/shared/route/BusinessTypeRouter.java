@@ -2,6 +2,7 @@ package com.example.bff.shared.route;
 
 import com.example.bff.shared.errorcode.BffErrorCode;
 import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.SystemException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -28,10 +29,19 @@ public class BusinessTypeRouter {
             BffRouteConfigRepository routeRepo,
             String channelScope) {
         this.routeRepo = routeRepo;
-        this.currentScope = ChannelScope.valueOf(channelScope);
+        this.currentScope = parseChannelScope(channelScope);
         this.routeCache = Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
+    }
+
+    private static ChannelScope parseChannelScope(String channelScope) {
+        try {
+            return ChannelScope.valueOf(channelScope);
+        } catch (IllegalArgumentException e) {
+            throw new SystemException(BffErrorCode.INVALID_CHANNEL_SCOPE)
+                    .withUserDetail("无效的渠道范围配置: " + channelScope);
+        }
     }
 
     /**

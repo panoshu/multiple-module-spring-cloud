@@ -419,12 +419,6 @@
         <artifactId>sa-token-redis-template</artifactId>
         <version>${sa-token.version}</version>
       </dependency>
-      <!-- spring-security-crypto: BCrypt 密码哈希 (auth-service 使用) -->
-      <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-crypto</artifactId>
-        <version>${spring-security-crypto.version}</version>
-      </dependency>
       <!-- Redis 连接池 -->
       <dependency>
         <groupId>org.apache.commons</groupId>

@@ -42,7 +42,8 @@ public class BffAggregationService {
      * 获取批次概览：聚合批次详情 + 进度 + 申请单列表。
      *
      * <p>三个调用并发执行，各自独立成功/失败，失败的部分设为 null。
-     * 传输异常（下游宕机/超时）同样降级为 null，避免单个下游故障导致整个聚合请求 500。
+     * 传输/业务异常（下游宕机/超时）同样降级为 null，避免单个下游故障导致整个聚合请求 500；
+     * 仅捕获 {@link RuntimeException}，避免吞掉 Error 等不可恢复异常。
      */
     public ApiResult<BatchOverviewResponse> getBatchOverview(BffBatchOverviewRequest request) {
         String serviceName = router.resolveServiceName(request.businessType());
@@ -52,7 +53,7 @@ public class BffAggregationService {
                 ApiResult<BatchDetailResponse> result = kernelApiRegistry.getBatchApi(serviceName)
                         .detail(request.toBatchDetailQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用批次详情降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }
@@ -62,7 +63,7 @@ public class BffAggregationService {
                 ApiResult<BatchProgressResponse> result = kernelApiRegistry.getProgressApi(serviceName)
                         .batchProgress(request.toProgressQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用批次进度降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }
@@ -72,7 +73,7 @@ public class BffAggregationService {
                 ApiResult<List<ApplicationSummaryResponse>> result = kernelApiRegistry.getApplicationApi(serviceName)
                         .list(request.toApplicationListQuery());
                 return result.isSuccess() ? result.data() : null;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("聚合调用申请单列表降级: serviceName={}, batchId={}", serviceName, request.batchId(), e);
                 return null;
             }

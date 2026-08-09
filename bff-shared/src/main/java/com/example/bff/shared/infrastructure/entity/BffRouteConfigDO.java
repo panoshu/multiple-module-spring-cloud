@@ -1,4 +1,4 @@
-package com.example.bff.intranet.infrastructure.entity;
+package com.example.bff.shared.infrastructure.entity;
 
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
@@ -50,6 +50,6 @@ public class BffRouteConfigDO {
     @Column("deleted")
     private Boolean deleted;
 
-    @Column("version")
+    @Column(version = true)
     private Integer version;
 }

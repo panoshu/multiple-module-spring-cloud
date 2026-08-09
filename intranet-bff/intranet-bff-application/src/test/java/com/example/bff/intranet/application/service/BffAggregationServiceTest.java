@@ -120,4 +120,27 @@ class BffAggregationServiceTest {
         assertNull(result.data().progress());
         assertTrue(result.data().applications().isEmpty());
     }
+
+    @Test
+    @DisplayName("getBatchOverview 下游抛运行时异常时该部分降级为 null")
+    void getBatchOverview_downstreamExceptionDegrades() {
+        BffBatchOverviewRequest request = new BffBatchOverviewRequest("ACC_PLAN_CREATE", "batch-789");
+
+        when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
+        when(kernelApiRegistry.getBatchApi("annuity-service")).thenReturn(batchApi);
+        when(kernelApiRegistry.getProgressApi("annuity-service")).thenReturn(progressApi);
+        when(kernelApiRegistry.getApplicationApi("annuity-service")).thenReturn(applicationApi);
+
+        when(batchApi.detail(any())).thenThrow(new IllegalStateException("下游连接超时"));
+        when(progressApi.batchProgress(any())).thenReturn(ApiResult.success(
+                new BatchProgressResponse("batch-789", "PROCESSING", 5, 3, 2, 0)));
+        when(applicationApi.list(any())).thenReturn(ApiResult.success(List.of()));
+
+        ApiResult<BatchOverviewResponse> result = aggregationService.getBatchOverview(request);
+
+        assertTrue(result.isSuccess());
+        assertNull(result.data().batchDetail());
+        assertEquals(5, result.data().progress().totalApplicationCount());
+        assertTrue(result.data().applications().isEmpty());
+    }
 }

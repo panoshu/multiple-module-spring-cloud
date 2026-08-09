@@ -40,7 +40,7 @@ class BffSystemControllerTest {
     @DisplayName("POST /management/system/info 返回 BFF 系统信息")
     void getInfo_returnsSystemInfo() throws Exception {
         BffSystemInfoResponse response = new BffSystemInfoResponse(
-                "INTRANET", "intranet-bff", "18091", "/intranet-bff");
+                "INTRANET", "intranet-bff", 18091, "/intranet-bff");
         when(systemManagementService.getInfo()).thenReturn(ApiResult.success(response));
 
         mockMvc.perform(post("/management/system/info")
@@ -48,7 +48,7 @@ class BffSystemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.channelScope").value("INTRANET"))
                 .andExpect(jsonPath("$.data.serviceName").value("intranet-bff"))
-                .andExpect(jsonPath("$.data.port").value("18091"))
+                .andExpect(jsonPath("$.data.port").value(18091))
                 .andExpect(jsonPath("$.data.contextPath").value("/intranet-bff"));
     }
 

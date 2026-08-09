@@ -34,7 +34,7 @@ public class SystemManagementService {
         BffSystemInfoResponse response = new BffSystemInfoResponse(
                 environment.getProperty("bff.channel-scope", "ALL"),
                 environment.getProperty("spring.application.name", "unknown"),
-                environment.getProperty("server.port", "0"),
+                environment.getProperty("server.port", Integer.class, 0),
                 environment.getProperty("server.servlet.context-path", "/")
         );
         return ApiResult.success(response);

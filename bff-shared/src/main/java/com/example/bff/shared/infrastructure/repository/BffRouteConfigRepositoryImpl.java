@@ -1,8 +1,9 @@
-package com.example.bff.intranet.infrastructure.repository;
+package com.example.bff.shared.infrastructure.repository;
 
-import com.example.bff.intranet.infrastructure.entity.BffRouteConfigDO;
-import com.example.bff.intranet.infrastructure.mapper.BffRouteConfigMapper;
+import com.example.bff.shared.infrastructure.entity.BffRouteConfigDO;
+import com.example.bff.shared.infrastructure.mapper.BffRouteConfigMapper;
 import com.example.bff.shared.route.BffRouteConfig;
+import com.example.bff.shared.route.BffRouteConfigEntry;
 import com.example.bff.shared.route.BffRouteConfigRepository;
 import com.example.bff.shared.route.ChannelScope;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.example.bff.intranet.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO;
+import static com.example.bff.shared.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO;
 
 /**
  * BFF 路由配置 Repository 实现
@@ -127,6 +128,18 @@ public class BffRouteConfigRepositoryImpl implements BffRouteConfigRepository {
                         .orderBy(BFF_ROUTE_CONFIG_DO.ID.asc())
         );
         return records.stream().map(this::toRouteConfig).toList();
+    }
+
+    @Override
+    public List<BffRouteConfigEntry> findAllWithId() {
+        List<BffRouteConfigDO> records = mapper.selectListByQuery(
+                QueryWrapper.create()
+                        .where(BFF_ROUTE_CONFIG_DO.DELETED.eq(false))
+                        .orderBy(BFF_ROUTE_CONFIG_DO.ID.asc())
+        );
+        return records.stream()
+                .map(record -> new BffRouteConfigEntry(record.getId(), toRouteConfig(record)))
+                .toList();
     }
 
     private BffRouteConfig toRouteConfig(BffRouteConfigDO record) {

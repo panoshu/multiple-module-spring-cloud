@@ -1,6 +1,7 @@
 package com.example.bff.intranet.infrastructure.repository;
 
 import com.example.bff.intranet.infrastructure.TestApplication;
+import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
 import com.example.bff.shared.route.BffRouteConfig;
 import com.example.bff.shared.route.ChannelScope;
 import org.junit.jupiter.api.DisplayName;

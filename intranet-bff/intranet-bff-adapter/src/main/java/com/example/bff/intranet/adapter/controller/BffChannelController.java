@@ -10,8 +10,6 @@ import com.example.bff.intranet.application.service.ChannelManagementService;
 import com.example.shared.web.core.api.ApiResult;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
-
 /**
  * 渠道开通管理 Controller
  *
@@ -44,7 +42,7 @@ public class BffChannelController implements BffChannelApi {
     }
 
     @Override
-    public ApiResult<Optional<CustomerChannelEntitlementResponse>> get(GetEntitlementRequest request) {
+    public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
         return channelManagementService.get(request);
     }
 }

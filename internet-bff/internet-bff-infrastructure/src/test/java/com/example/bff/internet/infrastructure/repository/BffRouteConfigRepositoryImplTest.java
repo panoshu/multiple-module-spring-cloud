@@ -1,8 +1,9 @@
 package com.example.bff.internet.infrastructure.repository;
 
 import com.example.bff.internet.infrastructure.TestApplication;
-import com.example.bff.internet.infrastructure.entity.BffRouteConfigDO;
-import com.example.bff.internet.infrastructure.mapper.BffRouteConfigMapper;
+import com.example.bff.shared.infrastructure.entity.BffRouteConfigDO;
+import com.example.bff.shared.infrastructure.mapper.BffRouteConfigMapper;
+import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
 import com.example.bff.shared.route.BffRouteConfig;
 import com.example.bff.shared.route.ChannelScope;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.example.bff.shared.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = TestApplication.class)
@@ -65,7 +67,7 @@ class BffRouteConfigRepositoryImplTest {
         insertRoute("DISABLED_TYPE", "some-service", "ALL");
         BffRouteConfigDO record = mapper.selectOneByQuery(
                 com.mybatisflex.core.query.QueryWrapper.create()
-                        .where(com.example.bff.internet.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO.BUSINESS_TYPE.eq("DISABLED_TYPE")));
+                        .where(BFF_ROUTE_CONFIG_DO.BUSINESS_TYPE.eq("DISABLED_TYPE")));
         record.setEnabled(false);
         mapper.update(record);
 
