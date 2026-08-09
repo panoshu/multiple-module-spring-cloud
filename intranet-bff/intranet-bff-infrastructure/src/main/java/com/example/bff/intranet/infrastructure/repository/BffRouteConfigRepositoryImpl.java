@@ -8,7 +8,9 @@ import com.example.bff.shared.route.ChannelScope;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,7 +55,7 @@ public class BffRouteConfigRepositoryImpl implements BffRouteConfigRepository {
 
     @Override
     public Set<String> findAllServiceNames() {
-        java.util.List<BffRouteConfigDO> records = mapper.selectListByQuery(
+        List<BffRouteConfigDO> records = mapper.selectListByQuery(
                 QueryWrapper.create()
                         .select(BFF_ROUTE_CONFIG_DO.SERVICE_NAME)
                         .where(BFF_ROUTE_CONFIG_DO.ENABLED.eq(true))
@@ -64,6 +66,67 @@ public class BffRouteConfigRepositoryImpl implements BffRouteConfigRepository {
             names.add(record.getServiceName());
         }
         return names;
+    }
+
+    @Override
+    public Long save(BffRouteConfig config, String createdBy) {
+        BffRouteConfigDO record = new BffRouteConfigDO();
+        record.setBusinessType(config.businessType());
+        record.setServiceName(config.serviceName());
+        record.setChannelScope(config.channelScope().name());
+        record.setEnabled(true);
+        record.setCreatedBy(createdBy);
+        record.setCreateTime(LocalDateTime.now());
+        record.setDeleted(false);
+        record.setVersion(0);
+        mapper.insert(record);
+        return record.getId();
+    }
+
+    @Override
+    public void update(Long id, BffRouteConfig config, String updatedBy) {
+        BffRouteConfigDO record = mapper.selectOneById(id);
+        if (record == null) {
+            return;
+        }
+        record.setBusinessType(config.businessType());
+        record.setServiceName(config.serviceName());
+        record.setChannelScope(config.channelScope().name());
+        record.setUpdatedBy(updatedBy);
+        record.setUpdateTime(LocalDateTime.now());
+        mapper.update(record);
+    }
+
+    @Override
+    public void delete(Long id, String updatedBy) {
+        BffRouteConfigDO record = mapper.selectOneById(id);
+        if (record == null) {
+            return;
+        }
+        record.setDeleted(true);
+        record.setUpdatedBy(updatedBy);
+        record.setUpdateTime(LocalDateTime.now());
+        mapper.update(record);
+    }
+
+    @Override
+    public Optional<BffRouteConfig> findById(Long id) {
+        BffRouteConfigDO record = mapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .where(BFF_ROUTE_CONFIG_DO.ID.eq(id))
+                        .and(BFF_ROUTE_CONFIG_DO.DELETED.eq(false))
+        );
+        return Optional.ofNullable(record).map(this::toRouteConfig);
+    }
+
+    @Override
+    public List<BffRouteConfig> findAll() {
+        List<BffRouteConfigDO> records = mapper.selectListByQuery(
+                QueryWrapper.create()
+                        .where(BFF_ROUTE_CONFIG_DO.DELETED.eq(false))
+                        .orderBy(BFF_ROUTE_CONFIG_DO.ID.asc())
+        );
+        return records.stream().map(this::toRouteConfig).toList();
     }
 
     private BffRouteConfig toRouteConfig(BffRouteConfigDO record) {

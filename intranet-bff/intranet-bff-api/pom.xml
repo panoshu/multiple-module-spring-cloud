@@ -17,6 +17,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>bff-shared</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>business-core-api</artifactId>
     </dependency>
     <dependency>
