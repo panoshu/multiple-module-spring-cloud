@@ -12,7 +12,6 @@
   <description>Parent project for Spring Cloud microservices</description>
 
   <modules>
-    <module>gateway-shared</module>
     <module>internet-gateway</module>
     <module>intranet-gateway</module>
     <module>demo-gateway</module>
@@ -23,7 +22,6 @@
     <module>file-service</module>
     <module>annuity-service</module>
     <module>auth-service</module>
-    <module>bff-shared</module>
     <module>internet-bff</module>
     <module>intranet-bff</module>
   </modules>
