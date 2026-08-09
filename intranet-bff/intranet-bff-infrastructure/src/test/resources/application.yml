@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bff-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      schema-locations: classpath:schema-h2.sql
+      mode: always
+  autoconfigure:
+    exclude:
+      # BffAutoConfiguration 创建 KernelApiRegistry 需要 @LoadBalanced RestClient.Builder，
+      # infrastructure 集成测试仅需 Repository，无需 BFF 路由/代理注册
+      - com.example.bff.shared.config.BffAutoConfiguration
+
+mybatis-flex:
+  mapper-locations: classpath*:mapper/*.xml
+
+bff:
+  channel-scope: INTRANET
+
+logging:
+  level:
+    com.example.bff: DEBUG
