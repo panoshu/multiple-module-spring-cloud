@@ -16,21 +16,31 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum PermissionErrorCode implements ErrorDefinition {
 
-    /** 权限不足，拒绝访问 */
-    PERMISSION_DENIED("SHARED.PERM.0001", "无权限访问"),
+  /**
+   * 权限不足，拒绝访问
+   */
+  PERMISSION_DENIED("SHARED.PERM.0001", "无权限访问"),
 
-    /** 权限校验服务不可达，fail-closed 拒绝 */
-    PERMISSION_SERVICE_UNAVAILABLE("SHARED.PERM.0002", "权限校验服务暂不可用"),
+  /**
+   * 权限校验服务不可达，fail-closed 拒绝
+   */
+  PERMISSION_SERVICE_UNAVAILABLE("SHARED.PERM.0002", "权限校验服务暂不可用"),
 
-    /** 会话上下文签名验证失败 */
-    SESSION_SIGNATURE_INVALID("SHARED.PERM.0003", "会话签名验证失败"),
+  /**
+   * 会话上下文签名验证失败
+   */
+  SESSION_SIGNATURE_INVALID("SHARED.PERM.0003", "会话签名验证失败"),
 
-    /** 会话上下文缺失，无法解析操作者 */
-    SESSION_CONTEXT_MISSING("SHARED.PERM.0004", "会话上下文缺失"),
+  /**
+   * 会话上下文缺失，无法解析操作者
+   */
+  SESSION_CONTEXT_MISSING("SHARED.PERM.0004", "会话上下文缺失"),
 
-    /** 数据范围解析失败 */
-    DATA_SCOPE_RESOLVE_FAILED("SHARED.PERM.0005", "数据范围解析失败");
+  /**
+   * 数据范围解析失败
+   */
+  DATA_SCOPE_RESOLVE_FAILED("SHARED.PERM.0005", "数据范围解析失败");
 
-    private final String code;
-    private final String message;
+  private final String code;
+  private final String message;
 }

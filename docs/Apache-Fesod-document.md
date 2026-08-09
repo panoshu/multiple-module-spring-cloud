@@ -106,18 +106,21 @@ ExcelReaderBuilder ──build()──> ExcelReader
 #### 三层内存优化架构
 
 1. **智能缓存选择器（ReadCacheSelector）**
-  - 接口：`org.apache.fesod.sheet.read.readcache.ReadCacheSelector`
-  - 默认实现：`SimpleReadCacheSelector`
-  - 默认阈值： **5MB**（共享字符串表小于该值走内存，大于则切换磁盘缓存）
+
+- 接口：`org.apache.fesod.sheet.read.readcache.ReadCacheSelector`
+- 默认实现：`SimpleReadCacheSelector`
+- 默认阈值： **5MB**（共享字符串表小于该值走内存，大于则切换磁盘缓存）
 
 2. **流式 SAX 解析引擎（XlsxSaxAnalyser）**
-  - 基于 `SAXParser` 逐行解析，不构建完整 DOM 树
-  - 通过 `XlsxRowHandler` 把每一行作为事件抛给监听器
+
+- 基于 `SAXParser` 逐行解析，不构建完整 DOM 树
+- 通过 `XlsxRowHandler` 把每一行作为事件抛给监听器
 
 3. **自适应存储策略（Ehcache）**
-  - 每 100 条数据一个批次写入磁盘缓存
-  - 内存中保留 LRU 最近访问数据
-  - 大数据量自动溢出到文件存储
+
+- 每 100 条数据一个批次写入磁盘缓存
+- 内存中保留 LRU 最近访问数据
+- 大数据量自动溢出到文件存储
 
 ### 2.2 POJO 与注解
 

@@ -161,17 +161,23 @@ file-service/
 ```java
 // 任务标识
 @IdDefinition(type = IdType.ULID)
-public record FileTaskId(String value) implements Identifier<String> {}
+public record FileTaskId(String value) implements Identifier<String> {
+}
 
 @IdDefinition(type = IdType.ULID)
-public record SubTaskId(String value) implements Identifier<String> {}
+public record SubTaskId(String value) implements Identifier<String> {
+}
 
 @IdDefinition(type = IdType.ULID)
-public record TemplateConfigId(String value) implements Identifier<String> {}
+public record TemplateConfigId(String value) implements Identifier<String> {
+}
 
 // 业务编码
-public record BizType(String value) implements Identifier<String> {}
-public record TemplateCode(String value) implements Identifier<String> {}
+public record BizType(String value) implements Identifier<String> {
+}
+
+public record TemplateCode(String value) implements Identifier<String> {
+}
 ```
 
 `FileTaskId`/`SubTaskId` 用 ULID（无需中心化号段，分布式友好）；`BizType`/`TemplateCode` 虽实现 `Identifier` 但语义是业务编码。
@@ -1531,15 +1537,18 @@ public record ImportYamlCommand(
 现有 `shared-event-starter` 存在以下架构问题：
 
 1. **领域事件直接发送到 MQ**（核心问题）
-  - `DomainEvent` 实现类在 `xxx-domain` 模块，跨服务无法引用
-  - 消费方反序列化时需要领域层依赖，严重违反 DDD
+
+- `DomainEvent` 实现类在 `xxx-domain` 模块，跨服务无法引用
+- 消费方反序列化时需要领域层依赖，严重违反 DDD
 
 2. **`JdbcEventStore.findPendingLogs` 反序列化 Bug**
-  - `Class.forName(eventType)` 用简单类名，会抛 `ClassNotFoundException`
-  - 补偿任务恢复时必然失败
+
+- `Class.forName(eventType)` 用简单类名，会抛 `ClassNotFoundException`
+- 补偿任务恢复时必然失败
 
 3. **领域事件直接序列化落库**
-  - 落库的是领域事件 JSON，反序列化需要领域类可访问
+
+- 落库的是领域事件 JSON，反序列化需要领域类可访问
 
 #### 8.6.2 修正方案：双轨制
 

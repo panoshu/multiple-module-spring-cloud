@@ -34,74 +34,74 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(BffChannelController.class)
 class BffChannelControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  private MockMvc mockMvc;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private ChannelManagementService channelManagementService;
+  @MockitoBean
+  private ChannelManagementService channelManagementService;
 
-    @Test
-    @DisplayName("POST /management/channels/enable 透明转发到 auth-service")
-    void enable_forwardsToAuthService() throws Exception {
-        when(channelManagementService.enable(any()))
-                .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
-                        "cust-001", List.of("INTRANET"), "ACTIVE")));
+  @Test
+  @DisplayName("POST /management/channels/enable 透明转发到 auth-service")
+  void enable_forwardsToAuthService() throws Exception {
+    when(channelManagementService.enable(any()))
+      .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
+        "cust-001", List.of("INTRANET"), "ACTIVE")));
 
-        EnableChannelRequest request = new EnableChannelRequest("cust-001", "INTRANET");
+    EnableChannelRequest request = new EnableChannelRequest("cust-001", "INTRANET");
 
-        mockMvc.perform(post("/management/channels/enable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"));
-    }
+    mockMvc.perform(post("/management/channels/enable")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"));
+  }
 
-    @Test
-    @DisplayName("POST /management/channels/get 透明转发到 auth-service")
-    void get_forwardsToAuthService() throws Exception {
-        when(channelManagementService.get(any()))
-                .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
-                        "cust-001", List.of("INTRANET"), "ACTIVE")));
+  @Test
+  @DisplayName("POST /management/channels/get 透明转发到 auth-service")
+  void get_forwardsToAuthService() throws Exception {
+    when(channelManagementService.get(any()))
+      .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
+        "cust-001", List.of("INTRANET"), "ACTIVE")));
 
-        GetEntitlementRequest request = new GetEntitlementRequest("cust-001");
+    GetEntitlementRequest request = new GetEntitlementRequest("cust-001");
 
-        mockMvc.perform(post("/management/channels/get")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"))
-                .andExpect(jsonPath("$.data.customerNo").value("cust-001"));
-    }
+    mockMvc.perform(post("/management/channels/get")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"))
+      .andExpect(jsonPath("$.data.customerNo").value("cust-001"));
+  }
 
-    @Test
-    @DisplayName("POST /management/channels/disable 透明转发到 auth-service")
-    void disable_forwardsToAuthService() throws Exception {
-        when(channelManagementService.disable(any())).thenReturn(ApiResult.success(null));
+  @Test
+  @DisplayName("POST /management/channels/disable 透明转发到 auth-service")
+  void disable_forwardsToAuthService() throws Exception {
+    when(channelManagementService.disable(any())).thenReturn(ApiResult.success(null));
 
-        DisableChannelRequest request = new DisableChannelRequest("cust-001", "INTRANET");
+    DisableChannelRequest request = new DisableChannelRequest("cust-001", "INTRANET");
 
-        mockMvc.perform(post("/management/channels/disable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"));
-    }
+    mockMvc.perform(post("/management/channels/disable")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"));
+  }
 
-    @Test
-    @DisplayName("POST /management/channels/replace 透明转发到 auth-service")
-    void replace_forwardsToAuthService() throws Exception {
-        when(channelManagementService.replace(any()))
-                .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
-                        "cust-001", List.of("INTRANET", "INTERNET"), "ACTIVE")));
+  @Test
+  @DisplayName("POST /management/channels/replace 透明转发到 auth-service")
+  void replace_forwardsToAuthService() throws Exception {
+    when(channelManagementService.replace(any()))
+      .thenReturn(ApiResult.success(new CustomerChannelEntitlementResponse(
+        "cust-001", List.of("INTRANET", "INTERNET"), "ACTIVE")));
 
-        ReplaceChannelsRequest request = new ReplaceChannelsRequest("cust-001", List.of("INTRANET", "INTERNET"));
+    ReplaceChannelsRequest request = new ReplaceChannelsRequest("cust-001", List.of("INTRANET", "INTERNET"));
 
-        mockMvc.perform(post("/management/channels/replace")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"));
-    }
+    mockMvc.perform(post("/management/channels/replace")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"));
+  }
 }

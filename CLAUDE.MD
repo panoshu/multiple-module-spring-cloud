@@ -85,13 +85,19 @@ types → domain → api → application → adapter → infrastructure → star
 
 ```java
 public interface Repository<T extends AggregateRoot<ID>, ID extends Identifier<?>> {
-    Optional<T> load(ID id);
-    default T loadOrThrow(ID id) { ... }
-    void save(T aggregateRoot);
-    void delete(T aggregateRoot);
-    void deleteById(ID id);
-    List<T> loadAll();
-    void streamByAppId(ID id, Consumer<AggregateRoot<ID>> processor);
+  Optional<T> load(ID id);
+
+  default T loadOrThrow(ID id) { ...}
+
+  void save(T aggregateRoot);
+
+  void delete(T aggregateRoot);
+
+  void deleteById(ID id);
+
+  List<T> loadAll();
+
+  void streamByAppId(ID id, Consumer<AggregateRoot<ID>> processor);
 }
 ```
 
@@ -105,13 +111,13 @@ public interface Repository<T extends AggregateRoot<ID>, ID extends Identifier<?
 
 ### 3.1 基础抽象层（5 个）
 
-| 模块               | 内容                                                                                                                        |
-|--------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `shared-types`     | 领域原语基类：`Identifier<T>`、`@IdDefinition`                                                                              |
-| `shared-exception` | 异常体系：`BaseException` / `DomainException` / `BusinessException` / `SystemException` + `ErrorDefinition`                 |
+| 模块               | 内容                                                                                                                               |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `shared-types`     | 领域原语基类：`Identifier<T>`、`@IdDefinition`                                                                                     |
+| `shared-exception` | 异常体系：`BaseException` / `DomainException` / `BusinessException` / `SystemException` + `ErrorDefinition`                        |
 | `shared-domain`    | DDD 基类：`Entity<ID>`、`AggregateRoot<ID>`、`ValueObject`、`Repository<T,ID>`、`DomainEvent`、`DefaultEventBus`、`@DomainService` |
-| `shared-api`       | API 层公共 DTO：`PageData<T>`、`Result<T>` 等                                                                               |
-| `shared-utils`     | 工具类集合                                                                                                                  |
+| `shared-api`       | API 层公共 DTO：`PageData<T>`、`Result<T>` 等                                                                                      |
+| `shared-utils`     | 工具类集合                                                                                                                         |
 
 ### 3.2 自定义 Starter 层（7 个）
 
@@ -336,10 +342,12 @@ public interface BusinessFactExtractor {
 1. **不要修改内核代码**
 2. 在自己的业务模块中实现 `StepExtensionAction` 接口
 3. 实现类中：
-  - 注入业务特有的明细层 Repository（如 `EmployeeDetailRepository`）
-  - 通过 `app.id()` 捞出明细数据
-  - 注入内核的 `MaterialRuleEngine` 和 `ConditionEvaluationGateway`
-  - 遍历明细，将明细转换为局部 Facts，调用引擎计算 `DETAIL` 级别材料
+
+- 注入业务特有的明细层 Repository（如 `EmployeeDetailRepository`）
+- 通过 `app.id()` 捞出明细数据
+- 注入内核的 `MaterialRuleEngine` 和 `ConditionEvaluationGateway`
+- 遍历明细，将明细转换为局部 Facts，调用引擎计算 `DETAIL` 级别材料
+
 4. **配置闭环**：在配置中心 JSON 中，将实现的 Bean 名字配置到 `postExtensions` 中
 
 #### 业务线如何使用表单解析能力（来自 DefaultFormParsingHandler 注释）

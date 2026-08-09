@@ -1,7 +1,6 @@
 package com.pension.permission.application.authorization;
 
 
-
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.enumeration.Effect;
 import com.pension.permission.domain.authorization.valueobject.Permission;

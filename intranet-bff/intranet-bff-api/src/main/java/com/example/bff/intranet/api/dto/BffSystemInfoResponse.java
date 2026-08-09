@@ -7,13 +7,12 @@ package com.example.bff.intranet.api.dto;
  * @param serviceName  服务名（spring.application.name）
  * @param port         服务端口
  * @param contextPath  上下文路径
- *
  * @author bff
  */
 public record BffSystemInfoResponse(
-    String channelScope,
-    String serviceName,
-    int port,
-    String contextPath
+  String channelScope,
+  String serviceName,
+  int port,
+  String contextPath
 ) {
 }

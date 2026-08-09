@@ -1,8 +1,8 @@
 package com.example.auth.api;
 
-import com.example.auth.api.query.ListPermissionItemsRequest;
 import com.example.auth.api.dto.PermissionGroupResponse;
 import com.example.auth.api.dto.PermissionItemResponse;
+import com.example.auth.api.query.ListPermissionItemsRequest;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,9 +19,9 @@ import java.util.List;
 @HttpExchange("/permission-metadata")
 public interface PermissionMetadataApi {
 
-    @PostExchange("/items")
-    ApiResult<List<PermissionItemResponse>> listItems(@RequestBody @Valid ListPermissionItemsRequest request);
+  @PostExchange("/items")
+  ApiResult<List<PermissionItemResponse>> listItems(@RequestBody @Valid ListPermissionItemsRequest request);
 
-    @PostExchange("/items/grouped")
-    ApiResult<List<PermissionGroupResponse>> listGroupedItems(@RequestBody @Valid ListPermissionItemsRequest request);
+  @PostExchange("/items/grouped")
+  ApiResult<List<PermissionGroupResponse>> listGroupedItems(@RequestBody @Valid ListPermissionItemsRequest request);
 }

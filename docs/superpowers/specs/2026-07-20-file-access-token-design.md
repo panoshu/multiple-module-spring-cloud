@@ -752,31 +752,32 @@ public class KonaFileTokenGateway implements FileTokenGateway {
 ### 7.3 Redis 一次性 Token 标记
 
 ```java
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RedisFileTokenStore implements FileTokenStore {
 
-    private final RedissonClient redissonClient;
-    private final FileTokenProperties properties;
+  private final RedissonClient redissonClient;
+  private final FileTokenProperties properties;
 
-    @Override
-    public boolean markUsed(String tokenId, Duration ttl) {
-        String key = properties.getRedis().getKeyPrefix() + tokenId;
-        RBucket<String> bucket = redissonClient.getBucket(key);
-        // SETNX + EXPIRE 原子操作
-        boolean success = bucket.setIfAbsent("1", ttl);
-        if (!success) {
-            log.warn("token 重复使用: tokenId={}", tokenId);
-        }
-        return success;
+  @Override
+  public boolean markUsed(String tokenId, Duration ttl) {
+    String key = properties.getRedis().getKeyPrefix() + tokenId;
+    RBucket<String> bucket = redissonClient.getBucket(key);
+    // SETNX + EXPIRE 原子操作
+    boolean success = bucket.setIfAbsent("1", ttl);
+    if (!success) {
+      log.warn("token 重复使用: tokenId={}", tokenId);
     }
+    return success;
+  }
 
-    @Override
-    public boolean isUsed(String tokenId) {
-        String key = properties.getRedis().getKeyPrefix() + tokenId;
-        return redissonClient.getBucket(key).isExists();
-    }
+  @Override
+  public boolean isUsed(String tokenId) {
+    String key = properties.getRedis().getKeyPrefix() + tokenId;
+    return redissonClient.getBucket(key).isExists();
+  }
 }
 ```
 

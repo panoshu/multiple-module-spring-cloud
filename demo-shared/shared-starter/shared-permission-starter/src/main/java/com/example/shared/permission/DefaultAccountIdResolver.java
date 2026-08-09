@@ -22,51 +22,51 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Slf4j
 public class DefaultAccountIdResolver implements AccountIdResolver {
 
-    public static final String ACCOUNT_ID_HEADER = "X-Account-Id";
-    public static final String ACCOUNT_SIG_HEADER = "X-Account-Sig";
+  public static final String ACCOUNT_ID_HEADER = "X-Account-Id";
+  public static final String ACCOUNT_SIG_HEADER = "X-Account-Sig";
 
-    private final String signatureKey;
+  private final String signatureKey;
 
-    public DefaultAccountIdResolver(String signatureKey) {
-        this.signatureKey = signatureKey;
+  public DefaultAccountIdResolver(String signatureKey) {
+    this.signatureKey = signatureKey;
+  }
+
+  @Override
+  public String resolve(ProceedingJoinPoint joinPoint) {
+    HttpServletRequest request = currentRequest();
+    if (request == null) {
+      return null;
     }
 
-    @Override
-    public String resolve(ProceedingJoinPoint joinPoint) {
-        HttpServletRequest request = currentRequest();
-        if (request == null) {
-            return null;
-        }
-
-        String accountIdPayload = request.getHeader(ACCOUNT_ID_HEADER);
-        if (accountIdPayload == null || accountIdPayload.isBlank()) {
-            return null;
-        }
-
-        if (signatureKey == null || signatureKey.isBlank()) {
-            // 未配置密钥，信任网关透传
-            return extractLoginId(accountIdPayload);
-        }
-
-        // 配置密钥，验签
-        String signature = request.getHeader(ACCOUNT_SIG_HEADER);
-        if (signature == null || signature.isBlank()) {
-            log.warn("[AccountIdResolver] X-Account-Sig 缺失");
-            return null;
-        }
-        return SessionSignatureUtils.verifyAccountId(accountIdPayload, signature, signatureKey);
+    String accountIdPayload = request.getHeader(ACCOUNT_ID_HEADER);
+    if (accountIdPayload == null || accountIdPayload.isBlank()) {
+      return null;
     }
 
-    private String extractLoginId(String payload) {
-        int idx = payload.lastIndexOf(SessionSignatureUtils.PAYLOAD_SEPARATOR);
-        return idx > 0 ? payload.substring(0, idx) : payload;
+    if (signatureKey == null || signatureKey.isBlank()) {
+      // 未配置密钥，信任网关透传
+      return extractLoginId(accountIdPayload);
     }
 
-    private HttpServletRequest currentRequest() {
-        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs instanceof ServletRequestAttributes servletAttrs) {
-            return servletAttrs.getRequest();
-        }
-        return null;
+    // 配置密钥，验签
+    String signature = request.getHeader(ACCOUNT_SIG_HEADER);
+    if (signature == null || signature.isBlank()) {
+      log.warn("[AccountIdResolver] X-Account-Sig 缺失");
+      return null;
     }
+    return SessionSignatureUtils.verifyAccountId(accountIdPayload, signature, signatureKey);
+  }
+
+  private String extractLoginId(String payload) {
+    int idx = payload.lastIndexOf(SessionSignatureUtils.PAYLOAD_SEPARATOR);
+    return idx > 0 ? payload.substring(0, idx) : payload;
+  }
+
+  private HttpServletRequest currentRequest() {
+    RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+    if (attrs instanceof ServletRequestAttributes servletAttrs) {
+      return servletAttrs.getRequest();
+    }
+    return null;
+  }
 }

@@ -24,12 +24,12 @@ import java.util.List;
  */
 @ConfigurationProperties(prefix = "gateway.channels")
 public record GatewayChannelProperties(
-    /**
-     * 启用渠道列表（顺序即 StpLogic 注册与遍历顺序）。
-     *
-     * <p>为空时默认不启用任何渠道（仅剩余公共能力）。
-     */
-    @DefaultValue List<ChannelType> enabled
+  /**
+   * 启用渠道列表（顺序即 StpLogic 注册与遍历顺序）。
+   *
+   * <p>为空时默认不启用任何渠道（仅剩余公共能力）。
+   */
+  @DefaultValue List<ChannelType> enabled
 ) {
 
   public GatewayChannelProperties {

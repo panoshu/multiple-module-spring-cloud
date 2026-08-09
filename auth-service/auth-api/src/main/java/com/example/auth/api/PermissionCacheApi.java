@@ -1,8 +1,8 @@
 package com.example.auth.api;
 
+import com.example.auth.api.dto.PermissionResponse;
 import com.example.auth.api.query.GetBusinessPermissionsRequest;
 import com.example.auth.api.query.GetPlatformPermissionsRequest;
-import com.example.auth.api.dto.PermissionResponse;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,9 +19,9 @@ import java.util.Set;
 @HttpExchange("/permission-cache")
 public interface PermissionCacheApi {
 
-    @PostExchange("/platform")
-    ApiResult<Set<PermissionResponse>> getPlatformPermissions(@RequestBody @Valid GetPlatformPermissionsRequest request);
+  @PostExchange("/platform")
+  ApiResult<Set<PermissionResponse>> getPlatformPermissions(@RequestBody @Valid GetPlatformPermissionsRequest request);
 
-    @PostExchange("/business")
-    ApiResult<Set<PermissionResponse>> getBusinessPermissions(@RequestBody @Valid GetBusinessPermissionsRequest request);
+  @PostExchange("/business")
+  ApiResult<Set<PermissionResponse>> getBusinessPermissions(@RequestBody @Valid GetBusinessPermissionsRequest request);
 }

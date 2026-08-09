@@ -11,11 +11,11 @@ import jakarta.validation.constraints.NotNull;
  * @author bff
  */
 public record BffRouteConfigRequest(
-    @NotBlank(message = "业务类型不能为空") String businessType,
-    @NotBlank(message = "服务名不能为空") String serviceName,
-    @NotNull(message = "渠道范围不能为空") ChannelScope channelScope
+  @NotBlank(message = "业务类型不能为空") String businessType,
+  @NotBlank(message = "服务名不能为空") String serviceName,
+  @NotNull(message = "渠道范围不能为空") ChannelScope channelScope
 ) {
-    public BffRouteConfig toRouteConfig() {
-        return new BffRouteConfig(businessType, serviceName, channelScope);
-    }
+  public BffRouteConfig toRouteConfig() {
+    return new BffRouteConfig(businessType, serviceName, channelScope);
+  }
 }

@@ -20,29 +20,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BffChannelController implements BffChannelApi {
 
-    private final ChannelManagementService channelManagementService;
+  private final ChannelManagementService channelManagementService;
 
-    public BffChannelController(ChannelManagementService channelManagementService) {
-        this.channelManagementService = channelManagementService;
-    }
+  public BffChannelController(ChannelManagementService channelManagementService) {
+    this.channelManagementService = channelManagementService;
+  }
 
-    @Override
-    public ApiResult<CustomerChannelEntitlementResponse> enable(EnableChannelRequest request) {
-        return channelManagementService.enable(request);
-    }
+  @Override
+  public ApiResult<CustomerChannelEntitlementResponse> enable(EnableChannelRequest request) {
+    return channelManagementService.enable(request);
+  }
 
-    @Override
-    public ApiResult<Void> disable(DisableChannelRequest request) {
-        return channelManagementService.disable(request);
-    }
+  @Override
+  public ApiResult<Void> disable(DisableChannelRequest request) {
+    return channelManagementService.disable(request);
+  }
 
-    @Override
-    public ApiResult<CustomerChannelEntitlementResponse> replace(ReplaceChannelsRequest request) {
-        return channelManagementService.replace(request);
-    }
+  @Override
+  public ApiResult<CustomerChannelEntitlementResponse> replace(ReplaceChannelsRequest request) {
+    return channelManagementService.replace(request);
+  }
 
-    @Override
-    public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
-        return channelManagementService.get(request);
-    }
+  @Override
+  public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
+    return channelManagementService.get(request);
+  }
 }

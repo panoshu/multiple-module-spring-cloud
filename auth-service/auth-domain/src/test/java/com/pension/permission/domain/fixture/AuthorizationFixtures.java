@@ -4,11 +4,7 @@ import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.aggregate.Grant;
-import com.pension.permission.domain.authorization.enumeration.Effect;
-import com.pension.permission.domain.authorization.enumeration.GrantOrigin;
-import com.pension.permission.domain.authorization.enumeration.GrantStatus;
-import com.pension.permission.domain.authorization.enumeration.GrantType;
-import com.pension.permission.domain.authorization.enumeration.ScopeDimension;
+import com.pension.permission.domain.authorization.enumeration.*;
 import com.pension.permission.domain.authorization.repository.GrantRepository;
 import com.pension.permission.domain.authorization.spi.PlanMembershipLookup;
 import com.pension.permission.domain.authorization.valueobject.ActionCode;
@@ -36,7 +32,8 @@ import static org.mockito.Mockito.mock;
  */
 public final class AuthorizationFixtures {
 
-  private AuthorizationFixtures() {}
+  private AuthorizationFixtures() {
+  }
 
   // ===== 基础值对象 =====
 

@@ -26,48 +26,48 @@ import org.springframework.stereotype.Component;
 @Order(1)
 public class RequirePermissionAspect {
 
-    private final PermissionExecutor permissionExecutor;
-    private final AccountIdResolver accountIdResolver;
-    private final PlanIdResolver planIdResolver;
+  private final PermissionExecutor permissionExecutor;
+  private final AccountIdResolver accountIdResolver;
+  private final PlanIdResolver planIdResolver;
 
-    @Around("@annotation(requirePermission)")
-    public Object check(ProceedingJoinPoint joinPoint, RequirePermission requirePermission)
-            throws Throwable {
-        String accountId = accountIdResolver.resolve(joinPoint);
-        if (accountId == null || accountId.isBlank()) {
-            throw new BusinessException(PermissionErrorCode.SESSION_CONTEXT_MISSING)
-                .withLogDetail("X-Account-Id header 缺失或验签失败")
-                .withContext("business", requirePermission.business())
-                .withContext("action", requirePermission.action());
-        }
-
-        String planId = planIdResolver.resolve(joinPoint, requirePermission);
-        String businessCode = requirePermission.business();
-        String actionCode = requirePermission.action().isBlank()
-            ? null : requirePermission.action();
-
-        PermissionCheckContext context = new PermissionCheckContext(
-            accountId, planId, businessCode, actionCode);
-
-        PermissionCheckResult result;
-        try {
-            result = permissionExecutor.check(context);
-        } catch (Exception e) {
-            log.warn("[RequirePermission] 权限校验失败, fail-closed. account={}, business={}",
-                accountId, businessCode, e);
-            throw new BusinessException(PermissionErrorCode.PERMISSION_SERVICE_UNAVAILABLE, e)
-                .withLogDetail("权限校验执行异常: " + e.getMessage())
-                .withContext("account", accountId)
-                .withContext("business", businessCode);
-        }
-
-        if (result == null || !result.allowed()) {
-            throw new BusinessException(PermissionErrorCode.PERMISSION_DENIED)
-                .withContext("account", accountId)
-                .withContext("plan", planId)
-                .withContext("business", businessCode)
-                .withContext("action", actionCode);
-        }
-        return joinPoint.proceed();
+  @Around("@annotation(requirePermission)")
+  public Object check(ProceedingJoinPoint joinPoint, RequirePermission requirePermission)
+    throws Throwable {
+    String accountId = accountIdResolver.resolve(joinPoint);
+    if (accountId == null || accountId.isBlank()) {
+      throw new BusinessException(PermissionErrorCode.SESSION_CONTEXT_MISSING)
+        .withLogDetail("X-Account-Id header 缺失或验签失败")
+        .withContext("business", requirePermission.business())
+        .withContext("action", requirePermission.action());
     }
+
+    String planId = planIdResolver.resolve(joinPoint, requirePermission);
+    String businessCode = requirePermission.business();
+    String actionCode = requirePermission.action().isBlank()
+      ? null : requirePermission.action();
+
+    PermissionCheckContext context = new PermissionCheckContext(
+      accountId, planId, businessCode, actionCode);
+
+    PermissionCheckResult result;
+    try {
+      result = permissionExecutor.check(context);
+    } catch (Exception e) {
+      log.warn("[RequirePermission] 权限校验失败, fail-closed. account={}, business={}",
+        accountId, businessCode, e);
+      throw new BusinessException(PermissionErrorCode.PERMISSION_SERVICE_UNAVAILABLE, e)
+        .withLogDetail("权限校验执行异常: " + e.getMessage())
+        .withContext("account", accountId)
+        .withContext("business", businessCode);
+    }
+
+    if (result == null || !result.allowed()) {
+      throw new BusinessException(PermissionErrorCode.PERMISSION_DENIED)
+        .withContext("account", accountId)
+        .withContext("plan", planId)
+        .withContext("business", businessCode)
+        .withContext("action", actionCode);
+    }
+    return joinPoint.proceed();
+  }
 }

@@ -21,15 +21,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataScope {
 
-    /**
-     * 业务编码，用于查询该用户在此业务下的可见范围。
-     * 与 @RequirePermission 的 business 保持一致。
-     */
-    String business();
+  /**
+   * 业务编码，用于查询该用户在此业务下的可见范围。
+   * 与 @RequirePermission 的 business 保持一致。
+   */
+  String business();
 
-    /**
-     * 过滤维度，决定 Repository 拼接哪个字段。
-     * 默认 PLAN：大多数业务表都包含 plan_no。
-     */
-    DataScopeDimension dimension() default DataScopeDimension.PLAN;
+  /**
+   * 过滤维度，决定 Repository 拼接哪个字段。
+   * 默认 PLAN：大多数业务表都包含 plan_no。
+   */
+  DataScopeDimension dimension() default DataScopeDimension.PLAN;
 }

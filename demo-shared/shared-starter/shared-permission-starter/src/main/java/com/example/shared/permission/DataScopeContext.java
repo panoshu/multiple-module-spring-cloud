@@ -14,33 +14,33 @@ import com.example.shared.permission.errorcode.PermissionErrorCode;
  */
 public final class DataScopeContext {
 
-    private DataScopeContext() {
-    }
+  private static final ThreadLocal<DataScope> HOLDER = new ThreadLocal<>();
 
-    private static final ThreadLocal<DataScope> HOLDER = new ThreadLocal<>();
+  private DataScopeContext() {
+  }
 
-    public static void set(DataScope scope) {
-        HOLDER.set(scope);
-    }
+  public static void set(DataScope scope) {
+    HOLDER.set(scope);
+  }
 
-    public static DataScope get() {
-        DataScope scope = HOLDER.get();
-        return scope != null ? scope : DataScope.empty();
-    }
+  public static DataScope get() {
+    DataScope scope = HOLDER.get();
+    return scope != null ? scope : DataScope.empty();
+  }
 
-    public static void clear() {
-        HOLDER.remove();
-    }
+  public static void clear() {
+    HOLDER.remove();
+  }
 
-    /**
-     * 获取当前 DataScope，未设置时抛异常（强约束场景用）。
-     */
-    public static DataScope require() {
-        DataScope scope = HOLDER.get();
-        if (scope == null) {
-            throw new BusinessException(PermissionErrorCode.SESSION_CONTEXT_MISSING)
-                .withLogDetail("DataScopeContext 未设置，可能未标注 @DataScope 注解");
-        }
-        return scope;
+  /**
+   * 获取当前 DataScope，未设置时抛异常（强约束场景用）。
+   */
+  public static DataScope require() {
+    DataScope scope = HOLDER.get();
+    if (scope == null) {
+      throw new BusinessException(PermissionErrorCode.SESSION_CONTEXT_MISSING)
+        .withLogDetail("DataScopeContext 未设置，可能未标注 @DataScope 注解");
     }
+    return scope;
+  }
 }

@@ -12,11 +12,11 @@ import com.example.auth.api.dto.DataScope;
  */
 public interface DataScopeResolver {
 
-    /**
-     * 解析当前用户的可见数据范围。
-     *
-     * @param business 业务编码
-     * @return 可见范围，失败返回 {@link DataScope#empty()}（fail-closed）
-     */
-    DataScope resolve(String business);
+  /**
+   * 解析当前用户的可见数据范围。
+   *
+   * @param business 业务编码
+   * @return 可见范围，失败返回 {@link DataScope#empty()}（fail-closed）
+   */
+  DataScope resolve(String business);
 }

@@ -10,5 +10,6 @@ import jakarta.validation.constraints.NotBlank;
  * @author auth-api
  */
 public record DataScopeRequest(
-    @NotBlank String accountId,
-    @NotBlank String businessCode) {}
+  @NotBlank String accountId,
+  @NotBlank String businessCode) {
+}

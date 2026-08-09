@@ -5,23 +5,25 @@
 ### 1.1 当前架构
 
 当前项目采用单体网关（demo-gateway）直连各业务微服务的架构：
+
 - demo-gateway 按 Path 前缀路由到各业务服务（`/annuity/**` → annuity-service）
 - business-core-kernel 作为公共业务能力库，被各业务服务以 Maven 依赖方式引入
-- kernel 的 5 类公共 API（Batch/Form/Application/Material/Progress）通过 business-core-adapter 的 `@AutoConfiguration` + `@ComponentScan` 在各业务服务中自动暴露为 REST 端点
+- kernel 的 5 类公共 API（Batch/Form/Application/Material/Progress）通过 business-core-adapter 的 `@AutoConfiguration` +
+  `@ComponentScan` 在各业务服务中自动暴露为 REST 端点
 - 服务间通信用 `@HttpExchange`（httpexchange-spring-boot-autoconfigure），按包名映射目标 URL
 
 ### 1.2 目标
 
 新增两个 BFF 模块和两个网关模块，按渠道分离：
 
-| 模块 | 渠道 | 职责 |
-|------|------|------|
-| internet-gateway | 互联网 | 认证、加解密、路由到 internet-bff |
+| 模块             | 渠道      | 职责                              |
+|------------------|-----------|-----------------------------------|
+| internet-gateway | 互联网    | 认证、加解密、路由到 internet-bff |
 | intranet-gateway | 网点/总部 | 认证、加解密、路由到 intranet-bff |
-| internet-bff | 互联网 | 请求路由、数据聚合、接口适配 |
-| intranet-bff | 网点/总部 | 请求路由、数据聚合、接口适配 |
+| internet-bff     | 互联网    | 请求路由、数据聚合、接口适配      |
+| intranet-bff     | 网点/总部 | 请求路由、数据聚合、接口适配      |
 
-请求链路：**前端 → 网关 → BFF → 业务服务**
+请求链路： **前端 → 网关 → BFF → 业务服务**
 
 ### 1.3 核心设计约束
 
@@ -35,14 +37,14 @@
 
 ### 2.1 BFF 应做的事
 
-| 职责 | 说明 |
-|------|------|
+| 职责           | 说明                                                                                     |
+|----------------|------------------------------------------------------------------------------------------|
 | 渠道差异化适配 | 互联网和网点/总部渠道的前端交互模式、数据粒度、安全要求不同，BFF 为各自渠道裁剪/组装数据 |
-| 请求路由与分发 | 根据请求中的 `businessType` 定位目标业务服务，将请求转发到正确的服务实例 |
-| 数据聚合与裁剪 | 前端一个页面可能需要调用多个后端服务，BFF 并发调用并聚合为一个响应 |
-| 协议转换 | 前端友好的数据格式 ↔ 后端服务 API 格式 |
-| 会话上下文处理 | 从网关透传的 `X-Session-Context` 中提取渠道信息、用户身份，按渠道做额外安全校验 |
-| 审计记录 | 记录请求入口、路由决策、后端调用耗时、聚合结果，用于问题排查和行为追溯 |
+| 请求路由与分发 | 根据请求中的 `businessType` 定位目标业务服务，将请求转发到正确的服务实例                 |
+| 数据聚合与裁剪 | 前端一个页面可能需要调用多个后端服务，BFF 并发调用并聚合为一个响应                       |
+| 协议转换       | 前端友好的数据格式 ↔ 后端服务 API 格式                                                   |
+| 会话上下文处理 | 从网关透传的 `X-Session-Context` 中提取渠道信息、用户身份，按渠道做额外安全校验          |
+| 审计记录       | 记录请求入口、路由决策、后端调用耗时、聚合结果，用于问题排查和行为追溯                   |
 
 ### 2.2 BFF 不应做的事
 
@@ -53,12 +55,12 @@
 
 ### 2.3 BFF 代码的配置化边界
 
-| 扩展场景 | 需要改代码吗 | 说明 |
-|----------|-------------|------|
-| 新增业务类型（现有服务处理） | 不需要 | DB 路由表加一行，BFF 自动路由到对应服务 |
-| 新增服务（处理已有业务类型集） | 加依赖+配置 | 加 Maven 依赖 + DB 加行 + 重启 BFF |
-| 新增 BFF 接口 / 新增聚合逻辑 | 必须写代码 | 这是 BFF 的核心价值，不是缺陷 |
-| 后端 API 签名变更 | BFF 同步修改 | 强类型语言的编译期约束 |
+| 扩展场景                       | 需要改代码吗 | 说明                                    |
+|--------------------------------|--------------|-----------------------------------------|
+| 新增业务类型（现有服务处理）   | 不需要       | DB 路由表加一行，BFF 自动路由到对应服务 |
+| 新增服务（处理已有业务类型集） | 加依赖+配置  | 加 Maven 依赖 + DB 加行 + 重启 BFF      |
+| 新增 BFF 接口 / 新增聚合逻辑   | 必须写代码   | 这是 BFF 的核心价值，不是缺陷           |
+| 后端 API 签名变更              | BFF 同步修改 | 强类型语言的编译期约束                  |
 
 纯路由（businessType → serviceName）可配置化；接口编排（BFF 接口 → 后端 API 方法 + 聚合逻辑）必须写代码。这是强类型语言的自然约束，不是设计缺陷。
 
@@ -74,14 +76,14 @@
 
 ### 3.2 新增模块
 
-| 模块 | 说明 |
-|------|------|
-| `gateway-shared` | 公共网关组件（sa-token 集成、SM4 加解密、会话注入、过滤器基类） |
-| `internet-gateway` | 互联网网关，处理 internet 渠道的认证/加解密/路由 |
-| `intranet-gateway` | 内网网关，处理 branch/hq 渠道的认证/加解密/路由 |
-| `bff-shared` | 公共 BFF 组件（BusinessTypeRouter、KernelApiRegistry、KernelApiInvoker、公共 DTO） |
-| `internet-bff` | 互联网 BFF，依赖 bff-shared + 各业务服务 API 模块 |
-| `intranet-bff` | 内网 BFF，依赖 bff-shared + 各业务服务 API 模块 |
+| 模块               | 说明                                                                               |
+|--------------------|------------------------------------------------------------------------------------|
+| `gateway-shared`   | 公共网关组件（sa-token 集成、SM4 加解密、会话注入、过滤器基类）                    |
+| `internet-gateway` | 互联网网关，处理 internet 渠道的认证/加解密/路由                                   |
+| `intranet-gateway` | 内网网关，处理 branch/hq 渠道的认证/加解密/路由                                    |
+| `bff-shared`       | 公共 BFF 组件（BusinessTypeRouter、KernelApiRegistry、KernelApiInvoker、公共 DTO） |
+| `internet-bff`     | 互联网 BFF，依赖 bff-shared + 各业务服务 API 模块                                  |
+| `intranet-bff`     | 内网 BFF，依赖 bff-shared + 各业务服务 API 模块                                    |
 
 现有 `demo-gateway` 保留作为开发环境统一入口，或逐步废弃。
 
@@ -113,6 +115,7 @@ intranet-bff/                  # 内网 BFF（结构同 internet-bff）
 ```
 
 `bff-shared` 包含：
+
 - `BusinessTypeRouter`：businessType → serviceName 解析（DB + Caffeine 缓存）
 - `KernelApiRegistryFactory`：用 HttpServiceProxyFactory 为每个服务动态创建 kernel API 代理
 - `KernelApiRegistry`：serviceName → kernel API 代理的注册表
@@ -122,6 +125,7 @@ intranet-bff/                  # 内网 BFF（结构同 internet-bff）
 ### 3.4 BFF 引入的依赖
 
 每个 BFF 引入：
+
 - `business-core-api` — kernel 公共 API 接口和 DTO（用于 KernelApiRegistry 类型安全调用）
 - 各业务服务的 `xxx-api` 模块 — 服务专属 API（如 annuity-api、approval-api、file-api）
 - `bff-shared` — 公共路由机制
@@ -131,9 +135,11 @@ intranet-bff/                  # 内网 BFF（结构同 internet-bff）
 
 ### 4.1 设计挑战
 
-kernel 的 5 类公共 API 是同一个 `@HttpExchange` 接口，被多个业务服务以库方式暴露。httpexchange 库按包名映射 URL（一个包 → 一个 URL），无法对同一接口配置多个目标服务。
+kernel 的 5 类公共 API 是同一个 `@HttpExchange` 接口，被多个业务服务以库方式暴露。httpexchange 库按包名映射 URL（一个包 →
+一个 URL），无法对同一接口配置多个目标服务。
 
-**解决方案**：不使用 httpexchange 库的包名映射，改用 Spring 6 原生的 `HttpServiceProxyFactory` 为每个服务动态创建 kernel API 代理。路径从 `@HttpExchange` 注解自动读取，服务名从 DB 路由表动态解析。
+**解决方案**：不使用 httpexchange 库的包名映射，改用 Spring 6 原生的 `HttpServiceProxyFactory` 为每个服务动态创建 kernel
+API 代理。路径从 `@HttpExchange` 注解自动读取，服务名从 DB 路由表动态解析。
 
 ### 4.2 DB 路由表
 
@@ -164,12 +170,12 @@ CREATE UNIQUE INDEX uk_bff_route_business_channel
 
 示例数据：
 
-| business_type | service_name | channel_scope |
-|---------------|--------------|---------------|
-| ACC_PLAN_CREATE | annuity-service | ALL |
-| ACC_PLAN_MODIFY | annuity-service | ALL |
-| ACC_PLAN_DELETE | annuity-service | ALL |
-| LOAN_APPLY | loan-service | ALL |
+| business_type   | service_name    | channel_scope |
+|-----------------|-----------------|---------------|
+| ACC_PLAN_CREATE | annuity-service | ALL           |
+| ACC_PLAN_MODIFY | annuity-service | ALL           |
+| ACC_PLAN_DELETE | annuity-service | ALL           |
+| LOAN_APPLY      | loan-service    | ALL           |
 
 ### 4.3 BusinessTypeRouter
 
@@ -248,7 +254,9 @@ public class KernelApiRegistryFactory {
 ```
 
 **工作原理**：
-- `factory.createClient(BusinessBatchApi.class)` 读取 `@HttpExchange("/core/batch")` + `@PostExchange("/create")` 注解，自动构建请求 URL
+
+- `factory.createClient(BusinessBatchApi.class)` 读取 `@HttpExchange("/core/batch")` + `@PostExchange("/create")`
+  注解，自动构建请求 URL
 - `@LoadBalanced RestClient.Builder` 使 `http://annuity-service` 通过 LoadBalancer 解析到实际实例
 - 路径从注解自动读取，不硬编码
 - 类型安全：直接调用 `BusinessBatchApi.create(CreateBatchCommand)`
@@ -274,10 +282,10 @@ httpexchange:
 
 ### 4.6 两类 API 的调用方式总结
 
-| API 类型 | 调用方式 | 路径来源 | 服务名来源 |
-|----------|---------|---------|-----------|
-| kernel 公共 API | KernelApiRegistry 动态代理 | @HttpExchange 注解 | DB 路由表 |
-| 服务专属 API | 标准 @HttpExchange 注入 | @HttpExchange 注解 | httpexchange 配置 |
+| API 类型        | 调用方式                   | 路径来源           | 服务名来源        |
+|-----------------|----------------------------|--------------------|-------------------|
+| kernel 公共 API | KernelApiRegistry 动态代理 | @HttpExchange 注解 | DB 路由表         |
+| 服务专属 API    | 标准 @HttpExchange 注入    | @HttpExchange 注解 | httpexchange 配置 |
 
 ## 五、BFF API 设计
 
@@ -292,6 +300,7 @@ httpexchange:
 ### 5.2 businessType 传递策略
 
 所有 BFF 请求都要求 `businessType` 字段，包括按 ID 查询的场景。理由：
+
 - 用户在操作流程中始终处于某个业务类型上下文，前端天然持有 businessType
 - BFF 用 businessType 做路由，后端服务不需要该字段时由 BFF 在转换时剥离
 - 避免跨服务反查实体来确定业务类型的 chicken-egg 问题
@@ -405,6 +414,7 @@ public class BffAggregationService {
 ### 5.7 互联网 BFF 与内网 BFF 的 API 差异
 
 两个 BFF 的 API 接口独立定义：
+
 - 互联网 BFF：暴露互联网渠道可操作的接口（受限业务类型、简化操作流程）
 - 内网 BFF：暴露网点/总部渠道的完整接口（全部业务类型、审批操作、管理功能）
 
@@ -437,6 +447,7 @@ intranet-gateway/
 ### 6.2 路由配置
 
 internet-gateway：
+
 ```yaml
 spring.cloud.gateway.routes:
   - id: internet-bff-route
@@ -449,6 +460,7 @@ spring.cloud.gateway.routes:
 ```
 
 intranet-gateway：
+
 ```yaml
 spring.cloud.gateway.routes:
   - id: intranet-bff-route
@@ -462,26 +474,27 @@ spring.cloud.gateway.routes:
 
 ### 6.3 渠道认证差异
 
-| 网关 | 渠道 | StpLogic | 白名单路径 | 二次授权 |
-|------|------|----------|------------|---------|
-| internet-gateway | INTERNET | internet StpLogic | /internet/auth/login | 不需要 |
-| intranet-gateway | BRANCH | branch StpLogic | /branch/auth/login, /branch/auth/secondary-auth/** | 需要 |
-| intranet-gateway | HQ | hq StpLogic | /hq/auth/login | 不需要 |
+| 网关             | 渠道     | StpLogic          | 白名单路径                                         | 二次授权 |
+|------------------|----------|-------------------|----------------------------------------------------|----------|
+| internet-gateway | INTERNET | internet StpLogic | /internet/auth/login                               | 不需要   |
+| intranet-gateway | BRANCH   | branch StpLogic   | /branch/auth/login, /branch/auth/secondary-auth/** | 需要     |
+| intranet-gateway | HQ       | hq StpLogic       | /hq/auth/login                                     | 不需要   |
 
 ## 七、审计日志
 
 ### 7.1 审计记录内容
 
-| 维度 | 字段 | 用途 |
-|------|------|------|
-| 请求入口 | 时间戳、渠道、用户ID、请求路径、businessType | 请求溯源 |
-| 路由决策 | 目标服务名、目标API路径、路由命中规则 | 路由排查 |
-| 后端调用 | 每次服务调用的耗时、状态码、错误码 | 性能监控、问题定位 |
-| 聚合结果 | 聚合了哪些服务、总耗时、最终响应状态 | 行为追溯 |
+| 维度     | 字段                                         | 用途               |
+|----------|----------------------------------------------|--------------------|
+| 请求入口 | 时间戳、渠道、用户ID、请求路径、businessType | 请求溯源           |
+| 路由决策 | 目标服务名、目标API路径、路由命中规则        | 路由排查           |
+| 后端调用 | 每次服务调用的耗时、状态码、错误码           | 性能监控、问题定位 |
+| 聚合结果 | 聚合了哪些服务、总耗时、最终响应状态         | 行为追溯           |
 
 ### 7.2 实现方式
 
-通过 AOP 切面在 BFF Controller 层拦截，异步写入审计表（经 shared-event-starter 事件总线），不阻塞主流程。trace ID 贯穿前端 → 网关 → BFF → 业务服务全链路。
+通过 AOP 切面在 BFF Controller 层拦截，异步写入审计表（经 shared-event-starter 事件总线），不阻塞主流程。trace ID 贯穿前端 →
+网关 → BFF → 业务服务全链路。
 
 ```java
 @Aspect
@@ -566,7 +579,8 @@ public class BffAuditAspect {
 
 ### 10.1 kernel 不需要修改
 
-kernel 的公共 API 定义（@HttpExchange 接口）和实现（Controller）保持不变。各业务服务继续通过 business-core-adapter 自动暴露 kernel API 端点。BFF 通过 HttpServiceProxyFactory 创建的代理读取相同的 @HttpExchange 注解，调用相同的端点路径。
+kernel 的公共 API 定义（@HttpExchange 接口）和实现（Controller）保持不变。各业务服务继续通过 business-core-adapter 自动暴露
+kernel API 端点。BFF 通过 HttpServiceProxyFactory 创建的代理读取相同的 @HttpExchange 注解，调用相同的端点路径。
 
 ### 10.2 现有服务不需要修改
 

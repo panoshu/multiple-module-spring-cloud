@@ -17,8 +17,7 @@ public enum SessionStatus implements CodeEnum<String> {
 
   CLOSED("closed", "已关闭"),
 
-  EXPIRED("expired", "已过期")
-  ;
+  EXPIRED("expired", "已过期");
 
   private final String code;
   private final String description;

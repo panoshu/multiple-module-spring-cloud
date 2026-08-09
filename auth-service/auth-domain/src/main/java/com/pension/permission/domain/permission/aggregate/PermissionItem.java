@@ -120,19 +120,57 @@ public class PermissionItem extends AggregateRoot<PermissionItemId> {
     this.markUpdated(scanner);
   }
 
-  public BusinessCode businessCode() { return businessCode; }
-  public ActionCode actionCode() { return actionCode; }
-  public PermissionCategory category() { return category; }
-  public PermissionItemSource source() { return source; }
-  public String controller() { return controller; }
-  public String method() { return method; }
-  public String httpMethod() { return httpMethod; }
-  public String path() { return path; }
-  public String displayName() { return displayName; }
-  public String description() { return description; }
-  public String categoryGroup() { return categoryGroup; }
-  public int sortOrder() { return sortOrder; }
-  public boolean autoRegistered() { return autoRegistered; }
+  public BusinessCode businessCode() {
+    return businessCode;
+  }
+
+  public ActionCode actionCode() {
+    return actionCode;
+  }
+
+  public PermissionCategory category() {
+    return category;
+  }
+
+  public PermissionItemSource source() {
+    return source;
+  }
+
+  public String controller() {
+    return controller;
+  }
+
+  public String method() {
+    return method;
+  }
+
+  public String httpMethod() {
+    return httpMethod;
+  }
+
+  public String path() {
+    return path;
+  }
+
+  public String displayName() {
+    return displayName;
+  }
+
+  public String description() {
+    return description;
+  }
+
+  public String categoryGroup() {
+    return categoryGroup;
+  }
+
+  public int sortOrder() {
+    return sortOrder;
+  }
+
+  public boolean autoRegistered() {
+    return autoRegistered;
+  }
 
   @Override
   protected void validateInvariants() {

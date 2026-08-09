@@ -5,4 +5,5 @@ package com.example.auth.api.dto;
  *
  * @param allowed 是否允许
  */
-public record PermissionCheckResponse(boolean allowed) {}
+public record PermissionCheckResponse(boolean allowed) {
+}

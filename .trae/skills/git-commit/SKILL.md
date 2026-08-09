@@ -46,12 +46,13 @@ git log --oneline -5
 基于 `git diff --cached` 的实际内容，判断：
 
 1. **变更类型（type）**：按优先级选择最主要的类型
-  - `feat` > `fix` > `refactor` > `perf` > `docs` > `test` > `build` > `ci` > `chore` > `style` > `revert`
+
+- `feat` > `fix` > `refactor` > `perf` > `docs` > `test` > `build` > `ci` > `chore` > `style` > `revert`
 
 2. **影响范围（scope）**：根据变更文件路径匹配 scope
 
    | 文件路径模式 | Scope |
-      |--------------|-------|
+         |--------------|-------|
    | `demo-shared/shared-types/**` | `shared-types` |
    | `demo-shared/shared-exception/**` | `shared-exception` |
    | `demo-shared/shared-domain/**` | `shared-domain` |

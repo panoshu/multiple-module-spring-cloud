@@ -7,4 +7,5 @@ import java.util.List;
  *
  * @param items 各权限点校验结果
  */
-public record PermissionCheckBatchResponse(List<PermissionCheckItemResponse> items) {}
+public record PermissionCheckBatchResponse(List<PermissionCheckItemResponse> items) {
+}

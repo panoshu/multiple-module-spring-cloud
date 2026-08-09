@@ -15,10 +15,11 @@ import jakarta.validation.constraints.NotBlank;
  * @author auth-api
  */
 public record PermissionItemDescriptor(
-    @NotBlank String businessCode,
-    String actionCode,
-    @NotBlank String category,
-    String controller,
-    String method,
-    String httpMethod,
-    String path) {}
+  @NotBlank String businessCode,
+  String actionCode,
+  @NotBlank String category,
+  String controller,
+  String method,
+  String httpMethod,
+  String path) {
+}

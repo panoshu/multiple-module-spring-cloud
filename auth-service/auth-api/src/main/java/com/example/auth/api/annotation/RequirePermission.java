@@ -20,18 +20,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequirePermission {
 
-    /**
-     * 业务编码，对应 PermissionItem.businessCode
-     */
-    String business();
+  /**
+   * 业务编码，对应 PermissionItem.businessCode
+   */
+  String business();
 
-    /**
-     * 操作编码，空串代表不区分操作
-     */
-    String action() default "";
+  /**
+   * 操作编码，空串代表不区分操作
+   */
+  String action() default "";
 
-    /**
-     * 权限类别，默认业务权限
-     */
-    PermissionCategory category() default PermissionCategory.BUSINESS;
+  /**
+   * 权限类别，默认业务权限
+   */
+  PermissionCategory category() default PermissionCategory.BUSINESS;
 }

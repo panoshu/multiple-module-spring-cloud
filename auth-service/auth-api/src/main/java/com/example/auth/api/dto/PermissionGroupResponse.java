@@ -8,4 +8,5 @@ import java.util.List;
  * @param groupName 分组名称
  * @param items     分组下权限项
  */
-public record PermissionGroupResponse(String groupName, List<PermissionItemResponse> items) {}
+public record PermissionGroupResponse(String groupName, List<PermissionItemResponse> items) {
+}

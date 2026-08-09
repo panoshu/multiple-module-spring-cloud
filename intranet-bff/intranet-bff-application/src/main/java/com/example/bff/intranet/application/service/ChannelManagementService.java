@@ -19,25 +19,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChannelManagementService {
 
-    private final CustomerChannelEntitlementApi channelEntitlementApi;
+  private final CustomerChannelEntitlementApi channelEntitlementApi;
 
-    public ChannelManagementService(CustomerChannelEntitlementApi channelEntitlementApi) {
-        this.channelEntitlementApi = channelEntitlementApi;
-    }
+  public ChannelManagementService(CustomerChannelEntitlementApi channelEntitlementApi) {
+    this.channelEntitlementApi = channelEntitlementApi;
+  }
 
-    public ApiResult<CustomerChannelEntitlementResponse> enable(EnableChannelRequest request) {
-        return channelEntitlementApi.enable(request);
-    }
+  public ApiResult<CustomerChannelEntitlementResponse> enable(EnableChannelRequest request) {
+    return channelEntitlementApi.enable(request);
+  }
 
-    public ApiResult<Void> disable(DisableChannelRequest request) {
-        return channelEntitlementApi.disable(request);
-    }
+  public ApiResult<Void> disable(DisableChannelRequest request) {
+    return channelEntitlementApi.disable(request);
+  }
 
-    public ApiResult<CustomerChannelEntitlementResponse> replace(ReplaceChannelsRequest request) {
-        return channelEntitlementApi.replace(request);
-    }
+  public ApiResult<CustomerChannelEntitlementResponse> replace(ReplaceChannelsRequest request) {
+    return channelEntitlementApi.replace(request);
+  }
 
-    public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
-        return channelEntitlementApi.get(request);
-    }
+  public ApiResult<CustomerChannelEntitlementResponse> get(GetEntitlementRequest request) {
+    return channelEntitlementApi.get(request);
+  }
 }

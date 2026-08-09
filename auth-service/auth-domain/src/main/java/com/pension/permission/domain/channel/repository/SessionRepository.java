@@ -36,7 +36,7 @@ public interface SessionRepository extends Repository<Session, SessionId> {
    * 避免柜员在互联网/总部/网点多渠道同时有会话时跨渠道误绑定。</p>
    *
    * @param primaryAccountId 主账号
-   * @param channel 渠道（二次授权场景固定为 {@link AnnuityChannel#BANK_BRANCH}）
+   * @param channel          渠道（二次授权场景固定为 {@link AnnuityChannel#BANK_BRANCH}）
    * @return 会话（若存在）
    */
   Optional<Session> findActiveByPrimaryAccountIdAndChannel(UserNo primaryAccountId, AnnuityChannel channel);

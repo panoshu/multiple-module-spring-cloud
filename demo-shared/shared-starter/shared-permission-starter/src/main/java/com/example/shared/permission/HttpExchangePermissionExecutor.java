@@ -1,8 +1,8 @@
 package com.example.shared.permission;
 
 import com.example.auth.api.PermissionCheckApi;
-import com.example.auth.api.query.PermissionCheckRequest;
 import com.example.auth.api.dto.PermissionCheckResponse;
+import com.example.auth.api.query.PermissionCheckRequest;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,29 +24,29 @@ import org.springframework.stereotype.Component;
 @ConditionalOnMissingBean(PermissionExecutor.class)
 public class HttpExchangePermissionExecutor implements PermissionExecutor {
 
-    private final PermissionCheckApi permissionCheckApi;
+  private final PermissionCheckApi permissionCheckApi;
 
-    @Override
-    public PermissionCheckResult check(PermissionCheckContext context) {
-        PermissionCheckRequest request = new PermissionCheckRequest(
-            context.accountId(),
-            context.planId(),
-            context.businessCode(),
-            context.actionCode());
-        ApiResult<PermissionCheckResponse> result = permissionCheckApi.check(request);
+  @Override
+  public PermissionCheckResult check(PermissionCheckContext context) {
+    PermissionCheckRequest request = new PermissionCheckRequest(
+      context.accountId(),
+      context.planId(),
+      context.businessCode(),
+      context.actionCode());
+    ApiResult<PermissionCheckResponse> result = permissionCheckApi.check(request);
 
-        if (result == null || !result.isSuccess() || result.data() == null) {
-            log.warn("[HttpExchangePermissionExecutor] auth-service 响应异常: result={}", result);
-            return PermissionCheckResult.deny("auth-service 响应异常");
-        }
-        if (result.data().allowed()) {
-            return PermissionCheckResult.allow();
-        }
-        return PermissionCheckResult.deny("权限不足");
+    if (result == null || !result.isSuccess() || result.data() == null) {
+      log.warn("[HttpExchangePermissionExecutor] auth-service 响应异常: result={}", result);
+      return PermissionCheckResult.deny("auth-service 响应异常");
     }
-
-    @Override
-    public boolean isLocalExecution() {
-        return false;
+    if (result.data().allowed()) {
+      return PermissionCheckResult.allow();
     }
+    return PermissionCheckResult.deny("权限不足");
+  }
+
+  @Override
+  public boolean isLocalExecution() {
+    return false;
+  }
 }

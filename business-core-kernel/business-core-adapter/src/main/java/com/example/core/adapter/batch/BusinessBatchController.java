@@ -1,5 +1,6 @@
 package com.example.core.adapter.batch;
 
+import com.example.auth.api.annotation.RequirePermission;
 import com.example.core.adapter.batch.converter.BatchConverter;
 import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
@@ -25,7 +26,6 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.identifier.id.*;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

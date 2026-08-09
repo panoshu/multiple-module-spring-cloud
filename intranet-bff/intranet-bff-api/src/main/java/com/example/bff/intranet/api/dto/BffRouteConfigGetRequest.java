@@ -9,6 +9,6 @@ import jakarta.validation.constraints.Positive;
  * @author bff
  */
 public record BffRouteConfigGetRequest(
-    @NotNull(message = "ID不能为空") @Positive(message = "ID必须为正数") Long id
+  @NotNull(message = "ID不能为空") @Positive(message = "ID必须为正数") Long id
 ) {
 }

@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChannelAwareSaRouterMatchChannelTest {
 
   private static final GatewayChannelProperties ALL_CHANNELS =
-      new GatewayChannelProperties(List.of(ChannelType.INTERNET, ChannelType.HQ, ChannelType.BRANCH));
+    new GatewayChannelProperties(List.of(ChannelType.INTERNET, ChannelType.HQ, ChannelType.BRANCH));
 
   private ChannelAwareSaRouter newRouter() {
     return new ChannelAwareSaRouter(ALL_CHANNELS);
@@ -67,7 +67,7 @@ class ChannelAwareSaRouterMatchChannelTest {
   @DisplayName("未启用渠道前缀返回 null(配置驱动)")
   void unconfiguredChannelPathReturnsNull() {
     ChannelAwareSaRouter router = new ChannelAwareSaRouter(
-        new GatewayChannelProperties(List.of(ChannelType.INTERNET)));
+      new GatewayChannelProperties(List.of(ChannelType.INTERNET)));
     assertThat(router.matchChannel("/hq/users/list")).isNull();
     assertThat(router.matchChannel("/branch/auth/login")).isNull();
   }

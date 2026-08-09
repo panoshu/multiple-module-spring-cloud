@@ -7,13 +7,10 @@ import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
+import com.example.shared.identifier.contract.Identifier;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
-import com.pension.permission.application.channel.command.CloseSecondaryAuthCommand;
-import com.pension.permission.application.channel.command.ConfirmSecondaryAuthCommand;
-import com.pension.permission.application.channel.command.InitiateSecondaryAuthCommand;
-import com.pension.permission.application.channel.command.ResendCodeCommand;
-import com.pension.permission.application.channel.command.RevokeSecondaryAuthCommand;
+import com.pension.permission.application.channel.command.*;
 import com.pension.permission.application.channel.config.SecondaryAuthConfig;
 import com.pension.permission.domain.authorization.valueobject.ActionCode;
 import com.pension.permission.domain.authorization.valueobject.BusinessCode;
@@ -35,6 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -48,12 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SecondaryAuthAppService 应用服务测试")
@@ -67,16 +60,6 @@ class SecondaryAuthAppServiceTest {
   private static final Duration SESSION_TIMEOUT = Duration.ofHours(2);
   private static final int VERIFICATION_MAX_ATTEMPTS = 3;
   private static final int VERIFICATION_CODE_LENGTH = 6;
-
-  @Mock private SecondaryAuthSessionRepository sessionRepository;
-  @Mock private VerificationCodeHasher codeHasher;
-  @Mock private SecondaryAuthConfig config;
-  @Mock private IdService idService;
-  @Mock private ChannelAccessPolicy channelAccessPolicy;
-  @Mock private EventBus eventBus;
-
-  private SecondaryAuthAppService service;
-
   private final VerificationCodeHasher acceptHasher = new VerificationCodeHasher() {
     @Override
     public String hash(String rawCode) {
@@ -88,6 +71,19 @@ class SecondaryAuthAppServiceTest {
       return true;
     }
   };
+  @Mock
+  private SecondaryAuthSessionRepository sessionRepository;
+  @Mock
+  private VerificationCodeHasher codeHasher;
+  @Mock
+  private SecondaryAuthConfig config;
+  @Mock
+  private IdService idService;
+  @Mock
+  private ChannelAccessPolicy channelAccessPolicy;
+  @Mock
+  private EventBus eventBus;
+  private SecondaryAuthAppService service;
 
   @BeforeEach
   void setUp() {
@@ -165,7 +161,7 @@ class SecondaryAuthAppServiceTest {
         .isInstanceOf(BusinessException.class);
 
       verify(sessionRepository, never()).save(any());
-      verify(idService, never()).nextId(any(Class.class));
+      verify(idService, never()).nextId(ArgumentMatchers.<Class<? extends Identifier<?>>>any());
     }
 
     @Test
@@ -234,14 +230,14 @@ class SecondaryAuthAppServiceTest {
         TELLER_NO, owner(), APPROVER_NO, MOBILE, planId);
       when(sessionRepository.findActiveByTeller(TELLER_NO)).thenReturn(Optional.empty());
       org.mockito.Mockito.doThrow(new DomainException(
-        com.pension.permission.domain.channel.errorcode.ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED))
+          com.pension.permission.domain.channel.errorcode.ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED))
         .when(channelAccessPolicy).requireEnabledForPlan(planId, AnnuityChannel.BANK_BRANCH);
 
       assertThatThrownBy(() -> service.initiate(cmd))
         .isInstanceOf(DomainException.class);
 
       verify(channelAccessPolicy).requireEnabledForPlan(planId, AnnuityChannel.BANK_BRANCH);
-      verify(idService, never()).nextId(any(Class.class));
+      verify(idService, never()).nextId(ArgumentMatchers.<Class<? extends Identifier<?>>>any());
       verify(sessionRepository, never()).save(any(SecondaryAuthSession.class));
       verify(eventBus, never()).publish(any(DomainEvent.class));
     }

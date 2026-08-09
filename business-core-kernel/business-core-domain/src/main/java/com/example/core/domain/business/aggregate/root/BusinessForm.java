@@ -47,11 +47,11 @@ public class BusinessForm extends AggregateRoot<FormId> {
   /**
    * 工厂方法：创建新业务表单。
    *
-   * @param formId         表单ID
-   * @param batchId        关联批次ID
+   * @param formId          表单ID
+   * @param batchId         关联批次ID
    * @param businessContext 业务上下文
-   * @param operatorInfo   操作人信息
-   * @param formFile       表单文件
+   * @param operatorInfo    操作人信息
+   * @param formFile        表单文件
    * @return 新创建的表单聚合根
    */
   public static BusinessForm create(FormId formId, BatchId batchId, BusinessContext businessContext, OperatorInfo operatorInfo, BusinessFile formFile) {

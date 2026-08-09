@@ -59,61 +59,6 @@ public final class UKeyCredential
   }
 
 
-  public static UKeyCredential create(
-    CredentialId id,
-    CredentialOwner owner,
-    String keySerial,
-    Set<AnnuityChannel> channels,
-    ValidityPeriod validityPeriod,
-    UserNo operator
-  ) {
-
-    return new UKeyCredential(
-      id,
-      owner,
-      keySerial,
-      channels,
-      validityPeriod,
-      operator
-    );
-
-  }
-
-
-  /**
-   * Repository 重建入口，不产生领域事件.
-   */
-  public static UKeyCredential reconstitute(
-    CredentialId id,
-    CredentialOwner owner,
-    Set<AnnuityChannel> applicableChannels,
-    CredentialStatus status,
-    ValidityPeriod validityPeriod,
-    UserNo createdBy,
-    LocalDateTime createdAt,
-    UserNo updatedBy,
-    LocalDateTime updatedAt,
-    Version version,
-    String keySerial
-  ) {
-
-    return new UKeyCredential(
-      id,
-      owner,
-      applicableChannels,
-      status,
-      validityPeriod,
-      createdBy,
-      createdAt,
-      updatedBy,
-      updatedAt,
-      version,
-      keySerial
-    );
-
-  }
-
-
   private UKeyCredential(
     CredentialId id,
     CredentialOwner owner,
@@ -148,6 +93,58 @@ public final class UKeyCredential
 
   }
 
+  public static UKeyCredential create(
+    CredentialId id,
+    CredentialOwner owner,
+    String keySerial,
+    Set<AnnuityChannel> channels,
+    ValidityPeriod validityPeriod,
+    UserNo operator
+  ) {
+
+    return new UKeyCredential(
+      id,
+      owner,
+      keySerial,
+      channels,
+      validityPeriod,
+      operator
+    );
+
+  }
+
+  /**
+   * Repository 重建入口，不产生领域事件.
+   */
+  public static UKeyCredential reconstitute(
+    CredentialId id,
+    CredentialOwner owner,
+    Set<AnnuityChannel> applicableChannels,
+    CredentialStatus status,
+    ValidityPeriod validityPeriod,
+    UserNo createdBy,
+    LocalDateTime createdAt,
+    UserNo updatedBy,
+    LocalDateTime updatedAt,
+    Version version,
+    String keySerial
+  ) {
+
+    return new UKeyCredential(
+      id,
+      owner,
+      applicableChannels,
+      status,
+      validityPeriod,
+      createdBy,
+      createdAt,
+      updatedBy,
+      updatedAt,
+      version,
+      keySerial
+    );
+
+  }
 
   @Override
   public CredentialType type() {

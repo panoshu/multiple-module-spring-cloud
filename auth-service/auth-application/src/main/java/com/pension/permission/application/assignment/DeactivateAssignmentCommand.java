@@ -6,5 +6,5 @@ import com.pension.permission.types.AssignmentId;
 
 public record DeactivateAssignmentCommand(
   AssignmentId assignmentId,
-                                          UserNo operator) {
+  UserNo operator) {
 }

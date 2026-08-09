@@ -21,15 +21,15 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("/management/channels")
 public interface BffChannelApi {
 
-    @PostExchange("/enable")
-    ApiResult<CustomerChannelEntitlementResponse> enable(@Valid @RequestBody EnableChannelRequest request);
+  @PostExchange("/enable")
+  ApiResult<CustomerChannelEntitlementResponse> enable(@Valid @RequestBody EnableChannelRequest request);
 
-    @PostExchange("/disable")
-    ApiResult<Void> disable(@Valid @RequestBody DisableChannelRequest request);
+  @PostExchange("/disable")
+  ApiResult<Void> disable(@Valid @RequestBody DisableChannelRequest request);
 
-    @PostExchange("/replace")
-    ApiResult<CustomerChannelEntitlementResponse> replace(@Valid @RequestBody ReplaceChannelsRequest request);
+  @PostExchange("/replace")
+  ApiResult<CustomerChannelEntitlementResponse> replace(@Valid @RequestBody ReplaceChannelsRequest request);
 
-    @PostExchange("/get")
-    ApiResult<CustomerChannelEntitlementResponse> get(@Valid @RequestBody GetEntitlementRequest request);
+  @PostExchange("/get")
+  ApiResult<CustomerChannelEntitlementResponse> get(@Valid @RequestBody GetEntitlementRequest request);
 }

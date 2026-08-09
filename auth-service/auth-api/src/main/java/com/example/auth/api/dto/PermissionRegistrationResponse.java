@@ -9,6 +9,7 @@ package com.example.auth.api.dto;
  * @author auth-api
  */
 public record PermissionRegistrationResponse(
-    int totalReceived,
-    int upserted,
-    int unchanged) {}
+  int totalReceived,
+  int upserted,
+  int unchanged) {
+}

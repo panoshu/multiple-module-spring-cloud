@@ -8,6 +8,6 @@ package com.example.auth.api.annotation;
  * @author auth-api
  */
 public enum PermissionCategory {
-    BUSINESS,
-    PLATFORM
+  BUSINESS,
+  PLATFORM
 }

@@ -37,11 +37,11 @@ public class LocalDataScopeResolver implements DataScopeResolver {
     }
     try {
       ResolveDataScopeQuery query = new ResolveDataScopeQuery(
-          UserNo.of(accountId), new BusinessCode(business));
+        UserNo.of(accountId), new BusinessCode(business));
       return permissionQueryService.resolveDataScope(query);
     } catch (Exception e) {
       log.warn("[LocalDataScopeResolver] 解析失败, fail-closed. account={}, business={}",
-          accountId, business, e);
+        accountId, business, e);
       return DataScope.empty();
     }
   }

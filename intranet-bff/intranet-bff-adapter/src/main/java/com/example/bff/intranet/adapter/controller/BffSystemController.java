@@ -17,19 +17,19 @@ import java.util.List;
 @RestController
 public class BffSystemController implements BffSystemApi {
 
-    private final SystemManagementService systemManagementService;
+  private final SystemManagementService systemManagementService;
 
-    public BffSystemController(SystemManagementService systemManagementService) {
-        this.systemManagementService = systemManagementService;
-    }
+  public BffSystemController(SystemManagementService systemManagementService) {
+    this.systemManagementService = systemManagementService;
+  }
 
-    @Override
-    public ApiResult<BffSystemInfoResponse> getInfo() {
-        return systemManagementService.getInfo();
-    }
+  @Override
+  public ApiResult<BffSystemInfoResponse> getInfo() {
+    return systemManagementService.getInfo();
+  }
 
-    @Override
-    public ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes() {
-        return systemManagementService.listBusinessTypes();
-    }
+  @Override
+  public ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes() {
+    return systemManagementService.listBusinessTypes();
+  }
 }

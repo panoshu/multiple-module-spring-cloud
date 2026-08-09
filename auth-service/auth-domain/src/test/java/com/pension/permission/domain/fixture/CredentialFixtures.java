@@ -18,7 +18,8 @@ import java.util.Set;
  */
 public final class CredentialFixtures {
 
-  private CredentialFixtures() {}
+  private CredentialFixtures() {
+  }
 
   public static Clock fixedClock(String instant) {
     return Clock.fixed(Instant.parse(instant), ZoneOffset.UTC);

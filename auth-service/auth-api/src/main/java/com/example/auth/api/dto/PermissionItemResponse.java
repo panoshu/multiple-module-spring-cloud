@@ -12,4 +12,5 @@ package com.example.auth.api.dto;
  * @param sortOrder     排序序号
  */
 public record PermissionItemResponse(String businessCode, String actionCode, String category,
-        String displayName, String description, String categoryGroup, int sortOrder) {}
+                                     String displayName, String description, String categoryGroup, int sortOrder) {
+}

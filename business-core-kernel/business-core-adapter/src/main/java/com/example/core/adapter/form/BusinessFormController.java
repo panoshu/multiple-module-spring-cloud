@@ -1,5 +1,6 @@
 package com.example.core.adapter.form;
 
+import com.example.auth.api.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.form.converter.FormConverter;
 import com.example.core.api.context.SessionContext;
@@ -16,7 +17,6 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.FormId;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

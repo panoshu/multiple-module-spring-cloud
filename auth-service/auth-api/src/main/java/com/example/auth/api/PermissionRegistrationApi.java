@@ -16,12 +16,12 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("/internal/permission-registration")
 public interface PermissionRegistrationApi {
 
-    /**
-     * 批量上报权限点.
-     *
-     * @param request 包含来源服务名 + 权限点列表
-     */
-    @PostExchange("/register")
-    ApiResult<PermissionRegistrationResponse> register(
-        @RequestBody @Valid PermissionRegistrationRequest request);
+  /**
+   * 批量上报权限点.
+   *
+   * @param request 包含来源服务名 + 权限点列表
+   */
+  @PostExchange("/register")
+  ApiResult<PermissionRegistrationResponse> register(
+    @RequestBody @Valid PermissionRegistrationRequest request);
 }

@@ -11,9 +11,9 @@ public interface IdService {
    * @param idClass    ID 类 (需标注 @IdDefinition)
    * @param bizContext 业务上下文 (用于替换 %p)
    */
-  <T extends Identifier<K>, K> T nextId(Class<T> idClass, String bizContext);
+  <T extends Identifier<?>> T nextId(Class<T> idClass, String bizContext);
 
-  <T extends Identifier<K>, K> T nextId(Class<T> idClass);
+  <T extends Identifier<?>> T nextId(Class<T> idClass);
 
   /**
    * 生成普通字符串 ID

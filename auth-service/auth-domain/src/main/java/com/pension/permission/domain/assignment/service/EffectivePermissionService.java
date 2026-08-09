@@ -77,6 +77,13 @@ public final class EffectivePermissionService {
     this.idService = idService;
   }
 
+  private static <T> java.util.List<T> concat(java.util.List<T> a, java.util.List<T> b) {
+    java.util.List<T> result = new java.util.ArrayList<>(a.size() + b.size());
+    result.addAll(a);
+    result.addAll(b);
+    return result;
+  }
+
   /**
    * 能力层不涉及角色模板，直接复用AuthorizationEngine，不重复实现
    */
@@ -200,7 +207,9 @@ public final class EffectivePermissionService {
       boolean isAllow = g.effect() == Effect.ALLOW;
       for (ScopeRule rule : g.scopeRules()) {
         switch (rule.dimension()) {
-          case GLOBAL -> { if (isAllow) isGlobal = true; }
+          case GLOBAL -> {
+            if (isAllow) isGlobal = true;
+          }
           case PLAN -> {
             if (isAllow) visiblePlans.add(rule.value());
             else deniedPlans.add(rule.value());
@@ -230,13 +239,6 @@ public final class EffectivePermissionService {
     return new VisibleScope(false, visiblePlans, visibleCustomers, deniedPlans, deniedCustomers);
   }
 
-  private static <T> java.util.List<T> concat(java.util.List<T> a, java.util.List<T> b) {
-    java.util.List<T> result = new java.util.ArrayList<>(a.size() + b.size());
-    result.addAll(a);
-    result.addAll(b);
-    return result;
-  }
-
   /**
    * 把该身份当前活跃的身份分配，实时解析成角色模板对应的权限，
    * 构造成不落库的"虚拟Grant"——字段形态跟真实Grant完全一致，
@@ -254,8 +256,10 @@ public final class EffectivePermissionService {
 
     List<ScopeRule> scopeRules = switch (assignment.scopeDimension()) {
       case PLAN -> List.of(new ScopeRule(ScopeDimension.PLAN, assignment.scopeValue(), assignment.isInheritable()));
-      case CUSTOMER -> List.of(new ScopeRule(ScopeDimension.CUSTOMER, assignment.scopeValue(), assignment.isInheritable()));
-      case PRODUCT -> List.of(new ScopeRule(ScopeDimension.PRODUCT, assignment.scopeValue(), assignment.isInheritable()));
+      case CUSTOMER ->
+        List.of(new ScopeRule(ScopeDimension.CUSTOMER, assignment.scopeValue(), assignment.isInheritable()));
+      case PRODUCT ->
+        List.of(new ScopeRule(ScopeDimension.PRODUCT, assignment.scopeValue(), assignment.isInheritable()));
       case GLOBAL -> List.of();
     };
     GrantSubject subject = new UserListSubject(Set.of(identity));

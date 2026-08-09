@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChannelAwareSaRouterTest {
 
   private static final GatewayChannelProperties ALL_CHANNELS =
-      new GatewayChannelProperties(List.of(ChannelType.INTERNET, ChannelType.HQ, ChannelType.BRANCH));
+    new GatewayChannelProperties(List.of(ChannelType.INTERNET, ChannelType.HQ, ChannelType.BRANCH));
 
   private ChannelAwareSaRouter router;
 
@@ -90,7 +90,7 @@ class ChannelAwareSaRouterTest {
     @DisplayName("未启用渠道不注册 StpLogic(配置驱动)")
     void unconfiguredChannelNotRegistered() {
       ChannelAwareSaRouter single = new ChannelAwareSaRouter(
-          new GatewayChannelProperties(List.of(ChannelType.INTERNET)));
+        new GatewayChannelProperties(List.of(ChannelType.INTERNET)));
       assertThat(single.getStpLogic(ChannelType.INTERNET)).isNotNull();
       assertThat(single.getStpLogic(ChannelType.HQ)).isNull();
       assertThat(single.getStpLogic(ChannelType.BRANCH)).isNull();
@@ -188,7 +188,7 @@ class ChannelAwareSaRouterTest {
     @DisplayName("配置单渠道时仅返回该渠道")
     void singleChannelListed() {
       ChannelAwareSaRouter single = new ChannelAwareSaRouter(
-          new GatewayChannelProperties(List.of(ChannelType.BRANCH)));
+        new GatewayChannelProperties(List.of(ChannelType.BRANCH)));
       assertThat(single.enabledChannels()).containsExactly(ChannelType.BRANCH);
     }
   }

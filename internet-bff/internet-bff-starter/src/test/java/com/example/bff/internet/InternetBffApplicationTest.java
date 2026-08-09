@@ -1,8 +1,8 @@
 package com.example.bff.internet;
 
-import com.example.bff.shared.route.BusinessTypeRouter;
-import com.example.bff.shared.registry.KernelApiRegistry;
 import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
+import com.example.bff.shared.registry.KernelApiRegistry;
+import com.example.bff.shared.route.BusinessTypeRouter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,8 @@ import org.springframework.web.client.RestClient;
 
 import javax.sql.DataSource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * 互联网 BFF 启动模块集成测试
@@ -40,57 +41,57 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class InternetBffApplicationTest {
 
-    @Autowired
-    private ApplicationContext applicationContext;
+  @Autowired
+  private ApplicationContext applicationContext;
 
-    @Autowired
-    private BusinessTypeRouter businessTypeRouter;
+  @Autowired
+  private BusinessTypeRouter businessTypeRouter;
 
-    @Autowired
-    private KernelApiRegistry kernelApiRegistry;
+  @Autowired
+  private KernelApiRegistry kernelApiRegistry;
 
-    @Autowired
-    private BffRouteConfigRepositoryImpl routeConfigRepository;
+  @Autowired
+  private BffRouteConfigRepositoryImpl routeConfigRepository;
 
-    @Test
-    @DisplayName("应用上下文加载成功")
-    void contextLoads() {
-        assertNotNull(applicationContext);
+  @Test
+  @DisplayName("应用上下文加载成功")
+  void contextLoads() {
+    assertNotNull(applicationContext);
+  }
+
+  @Test
+  @DisplayName("BFF 核心组件已注册")
+  void coreComponentsRegistered() {
+    assertNotNull(businessTypeRouter);
+    assertNotNull(kernelApiRegistry);
+    assertNotNull(routeConfigRepository);
+  }
+
+  @Test
+  @DisplayName("BffBusinessController 已注册")
+  void controllerRegistered() {
+    assertTrue(applicationContext.containsBean("bffBusinessController"));
+  }
+
+  /**
+   * 测试环境基础设施 bean 配置
+   *
+   * <p>提供 DataSource 与 {@code @LoadBalanced RestClient.Builder} 两个测试专用 bean，
+   * 以填补 internet-bff-starter 依赖链相对其他业务服务缺少的自动配置（HikariCP / 实际 LoadBalancer）。
+   */
+  @TestConfiguration
+  static class TestInfrastructureConfiguration {
+
+    @Bean
+    @ConfigurationProperties("spring.datasource")
+    public DataSource dataSource() {
+      return new DriverManagerDataSource();
     }
 
-    @Test
-    @DisplayName("BFF 核心组件已注册")
-    void coreComponentsRegistered() {
-        assertNotNull(businessTypeRouter);
-        assertNotNull(kernelApiRegistry);
-        assertNotNull(routeConfigRepository);
+    @Bean
+    @LoadBalanced
+    public RestClient.Builder restClientBuilder() {
+      return RestClient.builder();
     }
-
-    @Test
-    @DisplayName("BffBusinessController 已注册")
-    void controllerRegistered() {
-        assertTrue(applicationContext.containsBean("bffBusinessController"));
-    }
-
-    /**
-     * 测试环境基础设施 bean 配置
-     *
-     * <p>提供 DataSource 与 {@code @LoadBalanced RestClient.Builder} 两个测试专用 bean，
-     * 以填补 internet-bff-starter 依赖链相对其他业务服务缺少的自动配置（HikariCP / 实际 LoadBalancer）。
-     */
-    @TestConfiguration
-    static class TestInfrastructureConfiguration {
-
-        @Bean
-        @ConfigurationProperties("spring.datasource")
-        public DataSource dataSource() {
-            return new DriverManagerDataSource();
-        }
-
-        @Bean
-        @LoadBalanced
-        public RestClient.Builder restClientBuilder() {
-            return RestClient.builder();
-        }
-    }
+  }
 }

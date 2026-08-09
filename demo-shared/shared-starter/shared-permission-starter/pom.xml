@@ -10,7 +10,8 @@
   </parent>
 
   <artifactId>shared-permission-starter</artifactId>
-  <description>功能权限校验自动配置模块，提供 @RequirePermission 注解的 AOP 切面和 PermissionClient 自动装配</description>
+  <description>功能权限校验自动配置模块，提供 @RequirePermission 注解的 AOP 切面和 PermissionClient 自动装配
+  </description>
 
   <dependencies>
     <!-- auth-api：@RequirePermission 注解、PermissionCategory 枚举、SessionSignatureUtils、PermissionCheckApi -->

@@ -18,15 +18,15 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DefaultSessionContextSignatureVerifier implements SessionContextSignatureVerifier {
 
-    private final String signatureKey;
+  private final String signatureKey;
 
-    @Override
-    public boolean verify(String sessionContextBase64, String signature, long expireAtEpochSecond) {
-        if (signatureKey == null || signatureKey.isEmpty()) {
-            log.debug("[DefaultSessionContextSignatureVerifier] signatureKey 未配置,跳过验签");
-            return true;
-        }
-        return SessionSignatureUtils.verifySessionContext(
-            sessionContextBase64, signature, expireAtEpochSecond, signatureKey);
+  @Override
+  public boolean verify(String sessionContextBase64, String signature, long expireAtEpochSecond) {
+    if (signatureKey == null || signatureKey.isEmpty()) {
+      log.debug("[DefaultSessionContextSignatureVerifier] signatureKey 未配置,跳过验签");
+      return true;
     }
+    return SessionSignatureUtils.verifySessionContext(
+      sessionContextBase64, signature, expireAtEpochSecond, signatureKey);
+  }
 }

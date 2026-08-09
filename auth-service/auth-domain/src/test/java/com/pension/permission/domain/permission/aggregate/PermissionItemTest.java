@@ -2,13 +2,10 @@ package com.pension.permission.domain.permission.aggregate;
 
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.enumeration.PermissionCategory;
-import com.pension.permission.domain.authorization.valueobject.ActionCode;
-import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.permission.enumeration.PermissionItemSource;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PermissionItemTest {
 

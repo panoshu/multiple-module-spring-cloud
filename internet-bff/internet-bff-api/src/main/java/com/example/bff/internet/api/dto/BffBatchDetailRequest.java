@@ -9,10 +9,10 @@ import jakarta.validation.constraints.NotBlank;
  * @author bff
  */
 public record BffBatchDetailRequest(
-    @NotBlank(message = "业务类型不能为空") String businessType,
-    @NotBlank(message = "批次ID不能为空") String batchId
+  @NotBlank(message = "业务类型不能为空") String businessType,
+  @NotBlank(message = "批次ID不能为空") String batchId
 ) {
-    public GetBatchDetailQuery toQuery() {
-        return new GetBatchDetailQuery(batchId);
-    }
+  public GetBatchDetailQuery toQuery() {
+    return new GetBatchDetailQuery(batchId);
+  }
 }

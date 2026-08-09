@@ -21,37 +21,37 @@ import java.util.List;
 @Service
 public class SystemManagementService {
 
-    private final Environment environment;
-    private final BffRouteConfigRepository routeConfigRepository;
+  private final Environment environment;
+  private final BffRouteConfigRepository routeConfigRepository;
 
-    public SystemManagementService(Environment environment,
-                                   BffRouteConfigRepository routeConfigRepository) {
-        this.environment = environment;
-        this.routeConfigRepository = routeConfigRepository;
-    }
+  public SystemManagementService(Environment environment,
+                                 BffRouteConfigRepository routeConfigRepository) {
+    this.environment = environment;
+    this.routeConfigRepository = routeConfigRepository;
+  }
 
-    public ApiResult<BffSystemInfoResponse> getInfo() {
-        BffSystemInfoResponse response = new BffSystemInfoResponse(
-                environment.getProperty("bff.channel-scope", "ALL"),
-                environment.getProperty("spring.application.name", "unknown"),
-                environment.getProperty("server.port", Integer.class, 0),
-                environment.getProperty("server.servlet.context-path", "/")
-        );
-        return ApiResult.success(response);
-    }
+  public ApiResult<BffSystemInfoResponse> getInfo() {
+    BffSystemInfoResponse response = new BffSystemInfoResponse(
+      environment.getProperty("bff.channel-scope", "ALL"),
+      environment.getProperty("spring.application.name", "unknown"),
+      environment.getProperty("server.port", Integer.class, 0),
+      environment.getProperty("server.servlet.context-path", "/")
+    );
+    return ApiResult.success(response);
+  }
 
-    public ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes() {
-        List<BffBusinessTypeResponse> list = routeConfigRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
-        return ApiResult.success(list);
-    }
+  public ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes() {
+    List<BffBusinessTypeResponse> list = routeConfigRepository.findAll().stream()
+      .map(this::toResponse)
+      .toList();
+    return ApiResult.success(list);
+  }
 
-    private BffBusinessTypeResponse toResponse(BffRouteConfig config) {
-        return new BffBusinessTypeResponse(
-                config.businessType(),
-                config.serviceName(),
-                config.channelScope().name()
-        );
-    }
+  private BffBusinessTypeResponse toResponse(BffRouteConfig config) {
+    return new BffBusinessTypeResponse(
+      config.businessType(),
+      config.serviceName(),
+      config.channelScope().name()
+    );
+  }
 }

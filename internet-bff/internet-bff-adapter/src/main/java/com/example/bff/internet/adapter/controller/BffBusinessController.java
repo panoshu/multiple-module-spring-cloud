@@ -28,57 +28,57 @@ import java.util.List;
 @RestController
 public class BffBusinessController implements BffBusinessApi {
 
-    private final BusinessTypeRouter router;
-    private final KernelApiRegistry kernelApiRegistry;
-    private final BffAggregationService aggregationService;
+  private final BusinessTypeRouter router;
+  private final KernelApiRegistry kernelApiRegistry;
+  private final BffAggregationService aggregationService;
 
-    public BffBusinessController(
-            BusinessTypeRouter router,
-            KernelApiRegistry kernelApiRegistry,
-            BffAggregationService aggregationService) {
-        this.router = router;
-        this.kernelApiRegistry = kernelApiRegistry;
-        this.aggregationService = aggregationService;
-    }
+  public BffBusinessController(
+    BusinessTypeRouter router,
+    KernelApiRegistry kernelApiRegistry,
+    BffAggregationService aggregationService) {
+    this.router = router;
+    this.kernelApiRegistry = kernelApiRegistry;
+    this.aggregationService = aggregationService;
+  }
 
-    @Override
-    public ApiResult<BatchCreatedResponse> createBatch(BffCreateBatchRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getBatchApi(serviceName).create(request.toCommand());
-    }
+  @Override
+  public ApiResult<BatchCreatedResponse> createBatch(BffCreateBatchRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getBatchApi(serviceName).create(request.toCommand());
+  }
 
-    @Override
-    public ApiResult<BatchDetailResponse> batchDetail(BffBatchDetailRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getBatchApi(serviceName).detail(request.toQuery());
-    }
+  @Override
+  public ApiResult<BatchDetailResponse> batchDetail(BffBatchDetailRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getBatchApi(serviceName).detail(request.toQuery());
+  }
 
-    @Override
-    public ApiResult<UploadTokenResponse> applyUploadToken(BffFormTokenRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getFormApi(serviceName).applyUploadToken(request.toCommand());
-    }
+  @Override
+  public ApiResult<UploadTokenResponse> applyUploadToken(BffFormTokenRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getFormApi(serviceName).applyUploadToken(request.toCommand());
+  }
 
-    @Override
-    public ApiResult<SubmitResponse> submitApplication(BffSubmitRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getApplicationApi(serviceName).submit(request.toCommand());
-    }
+  @Override
+  public ApiResult<SubmitResponse> submitApplication(BffSubmitRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getApplicationApi(serviceName).submit(request.toCommand());
+  }
 
-    @Override
-    public ApiResult<ApplicationDetailResponse> applicationDetail(BffApplicationDetailRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getApplicationApi(serviceName).detail(request.toQuery());
-    }
+  @Override
+  public ApiResult<ApplicationDetailResponse> applicationDetail(BffApplicationDetailRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getApplicationApi(serviceName).detail(request.toQuery());
+  }
 
-    @Override
-    public ApiResult<List<MaterialItemResponse>> listMaterials(BffListMaterialsRequest request) {
-        String serviceName = router.resolveServiceName(request.businessType());
-        return kernelApiRegistry.getMaterialApi(serviceName).list(request.toQuery());
-    }
+  @Override
+  public ApiResult<List<MaterialItemResponse>> listMaterials(BffListMaterialsRequest request) {
+    String serviceName = router.resolveServiceName(request.businessType());
+    return kernelApiRegistry.getMaterialApi(serviceName).list(request.toQuery());
+  }
 
-    @Override
-    public ApiResult<BatchOverviewResponse> batchOverview(BffBatchOverviewRequest request) {
-        return aggregationService.getBatchOverview(request);
-    }
+  @Override
+  public ApiResult<BatchOverviewResponse> batchOverview(BffBatchOverviewRequest request) {
+    return aggregationService.getBatchOverview(request);
+  }
 }

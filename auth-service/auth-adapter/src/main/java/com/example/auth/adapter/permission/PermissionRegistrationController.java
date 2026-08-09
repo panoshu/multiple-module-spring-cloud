@@ -21,17 +21,17 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 public class PermissionRegistrationController implements PermissionRegistrationApi {
 
-    private final PermissionScannerService scannerService;
+  private final PermissionScannerService scannerService;
 
-    @Override
-    public ApiResult<PermissionRegistrationResponse> register(
-            PermissionRegistrationRequest request) {
-        PermissionRegistrationResult result = scannerService.registerFromExternal(
-            request.sourceService(),
-            request.items());
-        return ApiResult.success(new PermissionRegistrationResponse(
-            result.totalReceived(),
-            result.upserted(),
-            result.unchanged()));
-    }
+  @Override
+  public ApiResult<PermissionRegistrationResponse> register(
+    PermissionRegistrationRequest request) {
+    PermissionRegistrationResult result = scannerService.registerFromExternal(
+      request.sourceService(),
+      request.items());
+    return ApiResult.success(new PermissionRegistrationResponse(
+      result.totalReceived(),
+      result.upserted(),
+      result.unchanged()));
+  }
 }

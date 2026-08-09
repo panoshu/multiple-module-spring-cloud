@@ -7,9 +7,8 @@ import com.mybatisflex.core.query.QueryColumn;
  */
 public final class MockQueryColumns {
 
-    private MockQueryColumns() {
-    }
-
-    public static final QueryColumn PLAN_NO = new QueryColumn("plan_no");
-    public static final QueryColumn CUSTOMER_NO = new QueryColumn("customer_no");
+  public static final QueryColumn PLAN_NO = new QueryColumn("plan_no");
+  public static final QueryColumn CUSTOMER_NO = new QueryColumn("customer_no");
+  private MockQueryColumns() {
+  }
 }

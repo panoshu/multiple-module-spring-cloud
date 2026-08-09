@@ -17,20 +17,19 @@ import static org.mockito.Mockito.*;
 class RedisFileTokenStoreTest {
 
   private RedissonClient redissonClient;
-  private FileTokenProperties properties;
   private RedisFileTokenStore store;
 
   @BeforeEach
   void setUp() {
     redissonClient = mock(RedissonClient.class);
-    properties = new FileTokenProperties();
+    FileTokenProperties properties = new FileTokenProperties();
     store = new RedisFileTokenStore(redissonClient, properties);
   }
 
   @Test
   @DisplayName("markUsed 首次调用返回 true")
   void should_return_true_when_first_mark() {
-    RBucket<String> bucket = mock(RBucket.class);
+    RBucket<String> bucket = mock();
     doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
     when(bucket.setIfAbsent(eq("1"), any(Duration.class))).thenReturn(true);
 
@@ -41,7 +40,7 @@ class RedisFileTokenStoreTest {
   @Test
   @DisplayName("markUsed 重复调用返回 false")
   void should_return_false_when_repeat_mark() {
-    RBucket<String> bucket = mock(RBucket.class);
+    RBucket<String> bucket = mock();
     doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
     when(bucket.setIfAbsent(eq("1"), any(Duration.class))).thenReturn(false);
 
@@ -52,7 +51,7 @@ class RedisFileTokenStoreTest {
   @Test
   @DisplayName("isUsed 检查 key 是否存在")
   void should_check_is_used() {
-    RBucket<String> bucket = mock(RBucket.class);
+    RBucket<String> bucket = mock();
     doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
     when(bucket.isExists()).thenReturn(true);
 

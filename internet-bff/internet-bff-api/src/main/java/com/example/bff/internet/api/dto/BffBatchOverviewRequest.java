@@ -11,18 +11,18 @@ import jakarta.validation.constraints.NotBlank;
  * @author bff
  */
 public record BffBatchOverviewRequest(
-    @NotBlank(message = "业务类型不能为空") String businessType,
-    @NotBlank(message = "批次ID不能为空") String batchId
+  @NotBlank(message = "业务类型不能为空") String businessType,
+  @NotBlank(message = "批次ID不能为空") String batchId
 ) {
-    public GetBatchDetailQuery toBatchDetailQuery() {
-        return new GetBatchDetailQuery(batchId);
-    }
+  public GetBatchDetailQuery toBatchDetailQuery() {
+    return new GetBatchDetailQuery(batchId);
+  }
 
-    public GetBatchProgressQuery toProgressQuery() {
-        return new GetBatchProgressQuery(batchId);
-    }
+  public GetBatchProgressQuery toProgressQuery() {
+    return new GetBatchProgressQuery(batchId);
+  }
 
-    public FindApplicationListQuery toApplicationListQuery() {
-        return new FindApplicationListQuery(batchId, null);
-    }
+  public FindApplicationListQuery toApplicationListQuery() {
+    return new FindApplicationListQuery(batchId, null);
+  }
 }

@@ -9,4 +9,5 @@ import com.pension.permission.types.SecondaryAuthSessionId;
 public record ResendCodeCommand(
   SecondaryAuthSessionId sessionId,
   UserNo operator
-) {}
+) {
+}

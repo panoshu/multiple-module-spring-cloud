@@ -2,8 +2,8 @@ package com.pension.permission.domain.channel.valueobject;
 
 import com.example.shared.identifier.id.PlanNo;
 import com.pension.permission.domain.authorization.enumeration.PermissionCategory;
-import com.pension.permission.domain.fixture.AuthorizationFixtures;
 import com.pension.permission.domain.authorization.valueobject.Permission;
+import com.pension.permission.domain.fixture.AuthorizationFixtures;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

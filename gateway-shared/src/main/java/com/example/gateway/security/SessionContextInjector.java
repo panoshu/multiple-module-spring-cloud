@@ -2,11 +2,11 @@ package com.example.gateway.security;
 
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpLogic;
+import com.example.auth.api.util.SessionSignatureUtils;
+import com.example.auth.api.util.SessionSignatureUtils.SignedPayload;
 import com.example.gateway.config.GatewaySessionProperties;
 import com.example.gateway.order.GatewayFilterOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.auth.api.util.SessionSignatureUtils;
-import com.example.auth.api.util.SessionSignatureUtils.SignedPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -79,11 +79,11 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
    * 需要剥离的敏感请求头（防止客户端伪造）
    */
   private static final List<String> SENSITIVE_HEADERS = List.of(
-      ACCOUNT_ID_HEADER,
-      ACCOUNT_SIG_HEADER,
-      SESSION_CONTEXT_HEADER,
-      SESSION_SIG_HEADER,
-      SESSION_EXPIRE_HEADER);
+    ACCOUNT_ID_HEADER,
+    ACCOUNT_SIG_HEADER,
+    SESSION_CONTEXT_HEADER,
+    SESSION_SIG_HEADER,
+    SESSION_EXPIRE_HEADER);
 
   private final ChannelAwareSaRouter channelAwareSaRouter;
   private final ObjectMapper objectMapper;
@@ -127,14 +127,14 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
 
     String signatureKey = sessionProperties.signatureKey();
     long ttlSeconds = sessionProperties.ttlSeconds() > 0
-        ? sessionProperties.ttlSeconds()
-        : SessionSignatureUtils.DEFAULT_TTL_SECONDS;
+      ? sessionProperties.ttlSeconds()
+      : SessionSignatureUtils.DEFAULT_TTL_SECONDS;
 
     ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-        .headers(headers -> SENSITIVE_HEADERS.forEach(headers::remove))
-        .header(SESSION_CONTEXT_HEADER, encodedContext)
-        .headers(headers -> applySignedHeaders(headers, loginId, encodedContext, signatureKey, ttlSeconds))
-        .build();
+      .headers(headers -> SENSITIVE_HEADERS.forEach(headers::remove))
+      .header(SESSION_CONTEXT_HEADER, encodedContext)
+      .headers(headers -> applySignedHeaders(headers, loginId, encodedContext, signatureKey, ttlSeconds))
+      .build();
 
     ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
     return chain.filter(mutatedExchange);
@@ -170,16 +170,16 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
    * 生产环境必须配置 signatureKey。
    */
   private void applySignedHeaders(
-      org.springframework.util.MultiValueMap<String, String> headers,
-      String loginId,
-      String encodedContext,
-      String signatureKey,
-      long ttlSeconds) {
+    org.springframework.util.MultiValueMap<String, String> headers,
+    String loginId,
+    String encodedContext,
+    String signatureKey,
+    long ttlSeconds) {
 
     if (signatureKey == null || signatureKey.isEmpty()) {
       // 向后兼容：未配置密钥时仅写入明文（开发环境）
       log.warn("[SessionContextInjector] permission.session.signature-key 未配置,身份信息未签名," +
-          "生产环境必须配置此密钥");
+        "生产环境必须配置此密钥");
       headers.add(ACCOUNT_ID_HEADER, loginId);
       return;
     }
@@ -191,7 +191,7 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
 
     // 签发 session 上下文签名
     String sessionSig = SessionSignatureUtils.signSessionContext(
-        encodedContext, signed.expireAtEpochSecond(), signatureKey);
+      encodedContext, signed.expireAtEpochSecond(), signatureKey);
     headers.add(SESSION_SIG_HEADER, sessionSig);
     headers.add(SESSION_EXPIRE_HEADER, String.valueOf(signed.expireAtEpochSecond()));
   }

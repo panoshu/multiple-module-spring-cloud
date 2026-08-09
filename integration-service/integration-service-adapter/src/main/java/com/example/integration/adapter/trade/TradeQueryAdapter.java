@@ -1,5 +1,7 @@
 package com.example.integration.adapter.trade;
 
+import com.example.auth.api.annotation.PermissionCategory;
+import com.example.auth.api.annotation.RequirePermission;
 import com.example.integration.adapter.trade.mapper.PortfolioBalanceConverter;
 import com.example.integration.adapter.trade.mapper.PortfolioConverter;
 import com.example.integration.api.core.trade.api.TradeQueryApi;
@@ -9,8 +11,6 @@ import com.example.integration.application.trade.service.TradeQueryAppService;
 import com.example.integration.domain.trade.model.TradePortfolioBalance;
 import com.example.integration.domain.trade.model.TradePortfolioQuery;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;

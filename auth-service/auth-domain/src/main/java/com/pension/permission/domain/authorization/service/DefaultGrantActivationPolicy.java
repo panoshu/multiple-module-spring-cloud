@@ -1,6 +1,5 @@
 package com.pension.permission.domain.authorization.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.pension.permission.domain.authorization.enumeration.GrantOrigin;
 import com.pension.permission.domain.authorization.enumeration.GrantType;
 import com.pension.permission.domain.authorization.spi.GrantActivationPolicy;

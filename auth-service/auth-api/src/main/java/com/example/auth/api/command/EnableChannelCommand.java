@@ -15,4 +15,5 @@ public record EnableChannelCommand(
   CustomerNo customerNo,
   AnnuityChannel channel,
   UserNo operator
-) {}
+) {
+}

@@ -1,6 +1,6 @@
 package com.pension.permission.domain.permission;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.assignment.repository.AssignmentRepository;
 import com.pension.permission.domain.assignment.service.EffectivePermissionService;
@@ -10,23 +10,20 @@ import com.pension.permission.domain.authorization.repository.GrantRepository;
 import com.pension.permission.domain.authorization.service.AuthorizationEngine;
 import com.pension.permission.domain.authorization.spi.PlanMembershipLookup;
 import com.pension.permission.domain.authorization.valueobject.Permission;
+import com.pension.permission.domain.channel.valueobject.SessionPermissionCache;
 import com.pension.permission.domain.fixture.AuthorizationFixtures;
 import com.pension.permission.domain.permission.aggregate.PermissionItem;
 import com.pension.permission.domain.permission.enumeration.PermissionItemSource;
 import com.pension.permission.domain.permission.repository.PermissionItemRepository;
 import com.pension.permission.domain.permission.spi.PermissionCacheStore;
-import com.pension.permission.domain.channel.valueobject.SessionPermissionCache;
 import com.pension.permission.domain.product.ProductGateway;
 import com.pension.permission.domain.role.service.RoleTemplateResolver;
-import com.example.shared.identifier.contract.IdService;
 import com.pension.permission.types.GrantId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 

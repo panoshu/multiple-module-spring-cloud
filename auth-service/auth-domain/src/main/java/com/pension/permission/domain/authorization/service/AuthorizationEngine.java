@@ -10,7 +10,6 @@ import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.product.PlanSnapshot;
 import com.pension.permission.domain.product.ProductGateway;
-import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;

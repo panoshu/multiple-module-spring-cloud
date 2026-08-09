@@ -12,15 +12,15 @@
 
 ## 二、现状问题清单
 
-| 编号 | 问题 | 影响 |
-|------|------|------|
-| P1 | iam-service 不存在，网关依赖的 iam-api、RouteRuleApi 失效 | 网关路由规则加载失败 |
-| P2 | auth-service 缺少 `/internal/permissions/check` 端点 | permission-sdk 无法调用 |
-| P3 | auth-starter 模块缺失 | auth-service 无法独立启动 |
-| P4 | 网关未写入 `X-Session-Context` header | kernel 的 SessionContextResolver 失效 |
-| P5 | 业务服务（approval/file/integration/annuity）完全没有权限校验 | 裸奔 |
-| P6 | kernel 的 `@RequireBusinessPermission` 与 permission-sdk 的 `@RequirePermission` 两套注解重复 | 概念混淆 |
-| P7 | PermissionScanner 只能扫描 auth-service 自己的 Controller | 权限点元数据不完整 |
+| 编号 | 问题                                                                                          | 影响                                  |
+|------|-----------------------------------------------------------------------------------------------|---------------------------------------|
+| P1   | iam-service 不存在，网关依赖的 iam-api、RouteRuleApi 失效                                     | 网关路由规则加载失败                  |
+| P2   | auth-service 缺少 `/internal/permissions/check` 端点                                          | permission-sdk 无法调用               |
+| P3   | auth-starter 模块缺失                                                                         | auth-service 无法独立启动             |
+| P4   | 网关未写入 `X-Session-Context` header                                                         | kernel 的 SessionContextResolver 失效 |
+| P5   | 业务服务（approval/file/integration/annuity）完全没有权限校验                                 | 裸奔                                  |
+| P6   | kernel 的 `@RequireBusinessPermission` 与 permission-sdk 的 `@RequirePermission` 两套注解重复 | 概念混淆                              |
+| P7   | PermissionScanner 只能扫描 auth-service 自己的 Controller                                     | 权限点元数据不完整                    |
 
 ## 三、分层架构
 
@@ -84,10 +84,11 @@
 **职责**：token 校验 + 渠道分派 + 路由级粗粒度鉴权 + 会话上下文透传
 
 **改动**：
+
 - 依赖从 `iam-api` 改为 `auth-api`
 - `RouteRuleLoader` 调用 `auth-api` 的 `RouteRuleApi`（替代 iam-api）
-- 新增 `SessionContextInjector`：sa-token 校验通过后，从 Token-Session 读取会话信息，
-  组装 `SessionContext` JSON，Base64 编码后写入 `X-Session-Context` 响应头
+- 新增 `SessionContextInjector`：sa-token 校验通过后，从 Token-Session 读取会话信息， 组装 `SessionContext` JSON，Base64
+  编码后写入 `X-Session-Context` 响应头
 - `GatewayStpInterfaceImpl` 适配 auth-service 的权限快照接口
 
 **不做**：不做数据级鉴权（不理解 planId/businessCode 语义）
@@ -99,6 +100,7 @@
 #### 4.2.1 新增 auth-starter 模块
 
 创建 `auth-service/auth-starter`，包含：
+
 - 启动类 `AuthApplication`
 - `application.yml` / `application-local.yml`
 - 打包入口
@@ -126,6 +128,7 @@ public interface PermissionCheckApi {
 ```
 
 响应格式适配 permission-sdk 的极简协议：
+
 - 单点：`{"allowed": true/false}`
 - 批量：`businessCode:actionCode=true,businessCode:actionCode=false`
 
@@ -164,6 +167,7 @@ public interface RouteRuleApi {
 **职责**：提供 `@RequirePermission` 注解的 AOP 切面自动装配 + `PermissionClient` 自动配置
 
 **依赖**：
+
 - `permission-sdk`（零依赖核心）
 - `spring-boot-starter-aop`（切面）
 - `spring-boot-autoconfigure`（自动装配）
@@ -171,13 +175,13 @@ public interface RouteRuleApi {
 
 **提供的组件**：
 
-| 组件 | 作用 |
-|------|------|
-| `RequirePermissionAspect` | `@Around("@annotation(RequirePermission)")` 切面，调用 PermissionGuard.require |
-| `PermissionClientAutoConfiguration` | 自动装配 HttpPermissionClient + CachingPermissionClient |
-| `PlanIdResolver` SPI | 从方法入参解析 planId 的策略接口，业务服务可覆盖 |
-| `AccountIdResolver` SPI | 从请求上下文解析 accountId 的策略接口 |
-| `SessionContextShortCircuit`（可选） | 优先读 `X-Session-Context` header 做短路，未命中再调 auth-service |
+| 组件                                 | 作用                                                                           |
+|--------------------------------------|--------------------------------------------------------------------------------|
+| `RequirePermissionAspect`            | `@Around("@annotation(RequirePermission)")` 切面，调用 PermissionGuard.require |
+| `PermissionClientAutoConfiguration`  | 自动装配 HttpPermissionClient + CachingPermissionClient                        |
+| `PlanIdResolver` SPI                 | 从方法入参解析 planId 的策略接口，业务服务可覆盖                               |
+| `AccountIdResolver` SPI              | 从请求上下文解析 accountId 的策略接口                                          |
+| `SessionContextShortCircuit`（可选） | 优先读 `X-Session-Context` header 做短路，未命中再调 auth-service              |
 
 **配置项**：
 
@@ -202,6 +206,7 @@ public interface PlanIdResolver {
 ```
 
 默认实现 `DefaultPlanIdResolver`：
+
 - 扫描方法入参，若实现 `PlanIdAware` 接口则取 `planId()`
 - 若无 `PlanIdAware`，尝试从 `@RequestParam("planId")` 取
 - 找不到返回 null（平台类权限不需要 planId）
@@ -217,6 +222,7 @@ public interface AccountIdResolver {
 ```
 
 默认实现 `DefaultAccountIdResolver`：
+
 - 从 `RequestContextHolder` 取当前请求的 `X-Account-Id` header
 - 网关写入此 header（sa-token 校验通过后从 Token-Session 取）
 
@@ -225,22 +231,26 @@ public interface AccountIdResolver {
 **职责**：提供跨业务通用的业务数据权限校验
 
 **改动**：
+
 - **废弃** `@RequireBusinessPermission` 注解 + `BusinessPermissionAspect`（功能权限统一走 `@RequirePermission`）
 - **保留** `BusinessAccessGuard` SPI（业务数据权限：计划一致性、客户一致性、代办、二次授权）
 - **保留** `SessionContextResolver`（作为 `shared-permission-starter` 的短路读 SPI 实现选项）
 - kernel 内部 Controller 改用 `@RequirePermission`（通过引入 `shared-permission-starter`）
 
-**kernel 不依赖 auth-api / permission-sdk**：保持纯业务核心定位。`BusinessAccessGuard` 的数据来源是 `SessionContext`（由网关透传或业务服务自行组装），不直接调用 auth-service。
+**kernel 不依赖 auth-api / permission-sdk**：保持纯业务核心定位。`BusinessAccessGuard` 的数据来源是 `SessionContext`
+（由网关透传或业务服务自行组装），不直接调用 auth-service。
 
 ### 4.5 业务服务（approval/file/integration/annuity）
 
 **改动**：
+
 - `xxx-adapter` 引入 `shared-permission-starter`
 - Controller 方法标注 `@RequirePermission(business="APPROVAL", action="CREATE")`
 - 请求 DTO 实现 `PlanIdAware` 接口（若涉及业务权限）
 - 需要业务数据权限校验的，引入 `business-core-application` 使用 `BusinessAccessGuard`
 
 **不做的**：
+
 - 不在每个业务服务重复实现 AOP 切面
 - 不直接依赖 `permission-sdk`（通过 `shared-permission-starter` 间接引入）
 - 不直接依赖 `auth-api`（通过 SDK 的 HttpPermissionClient 调用）
@@ -281,12 +291,12 @@ public interface AccountIdResolver {
 
 ### 6.1 为什么新建 shared-permission-starter 而不是下沉到 kernel？
 
-| 维度 | 下沉到 kernel | 新建 shared-permission-starter |
-|------|--------------|------------------------------|
-| 依赖方向 | kernel 需依赖 permission-sdk + spring-aop | 业务服务依赖 starter，kernel 不变 |
-| 职责单一性 | kernel 变成"业务核心 + 权限框架" | kernel 保持纯业务核心 |
-| 可选性 | 所有依赖 kernel 的服务被迫接受 | 业务服务按需引入 |
-| 循环依赖风险 | auth-service 若反向依赖 kernel 则循环 | 无风险 |
+| 维度         | 下沉到 kernel                             | 新建 shared-permission-starter    |
+|--------------|-------------------------------------------|-----------------------------------|
+| 依赖方向     | kernel 需依赖 permission-sdk + spring-aop | 业务服务依赖 starter，kernel 不变 |
+| 职责单一性   | kernel 变成"业务核心 + 权限框架"          | kernel 保持纯业务核心             |
+| 可选性       | 所有依赖 kernel 的服务被迫接受            | 业务服务按需引入                  |
+| 循环依赖风险 | auth-service 若反向依赖 kernel 则循环     | 无风险                            |
 
 ### 6.2 为什么废弃 kernel 的 @RequireBusinessPermission？
 
@@ -296,7 +306,7 @@ public interface AccountIdResolver {
 
 ### 6.3 为什么保留 kernel 的 BusinessAccessGuard？
 
-- 业务数据权限（计划一致性、客户一致性、代办、二次授权）是**跨业务通用的业务规则**
+- 业务数据权限（计划一致性、客户一致性、代办、二次授权）是 **跨业务通用的业务规则**
 - 这些校验依赖 `SessionContext`（由网关透传），不需要调用 auth-service
 - 属于业务核心领域知识，归 kernel 所有符合 DDD 原则
 
@@ -344,61 +354,61 @@ demo-shared/shared-permission-starter（新建）
 
 ### 阶段一：auth-service 权限能力补齐
 
-| 步骤 | 内容 | 模块 |
-|------|------|------|
-| 1 | 创建 auth-starter 模块（启动类 + 配置） | auth-service/auth-starter |
-| 2 | auth-api 新增 PermissionCheckApi | auth-service/auth-api |
-| 3 | auth-adapter 新增 PermissionCheckController | auth-service/auth-adapter |
-| 4 | auth-domain 新增 route 限界上下文 | auth-service/auth-domain |
-| 5 | auth-infrastructure 新增 RouteRule 持久化 | auth-service/auth-infrastructure |
-| 6 | auth-api 新增 RouteRuleApi | auth-service/auth-api |
-| 7 | auth-adapter 新增 RouteRuleController | auth-service/auth-adapter |
-| 8 | schema-pg/sql 新增 t_auth_route_rule 表 | auth-service/auth-infrastructure |
+| 步骤 | 内容                                        | 模块                             |
+|------|---------------------------------------------|----------------------------------|
+| 1    | 创建 auth-starter 模块（启动类 + 配置）     | auth-service/auth-starter        |
+| 2    | auth-api 新增 PermissionCheckApi            | auth-service/auth-api            |
+| 3    | auth-adapter 新增 PermissionCheckController | auth-service/auth-adapter        |
+| 4    | auth-domain 新增 route 限界上下文           | auth-service/auth-domain         |
+| 5    | auth-infrastructure 新增 RouteRule 持久化   | auth-service/auth-infrastructure |
+| 6    | auth-api 新增 RouteRuleApi                  | auth-service/auth-api            |
+| 7    | auth-adapter 新增 RouteRuleController       | auth-service/auth-adapter        |
+| 8    | schema-pg/sql 新增 t_auth_route_rule 表     | auth-service/auth-infrastructure |
 
 ### 阶段二：shared-permission-starter 创建
 
-| 步骤 | 内容 |
-|------|------|
-| 9 | 创建 demo-shared/shared-permission-starter 模块 |
-| 10 | 实现 RequirePermissionAspect 切面 |
-| 11 | 实现 PermissionClientAutoConfiguration |
-| 12 | 实现 PlanIdResolver / AccountIdResolver SPI |
-| 13 | 实现 SessionContextShortCircuit（可选） |
-| 14 | 编写单元测试 |
+| 步骤 | 内容                                            |
+|------|-------------------------------------------------|
+| 9    | 创建 demo-shared/shared-permission-starter 模块 |
+| 10   | 实现 RequirePermissionAspect 切面               |
+| 11   | 实现 PermissionClientAutoConfiguration          |
+| 12   | 实现 PlanIdResolver / AccountIdResolver SPI     |
+| 13   | 实现 SessionContextShortCircuit（可选）         |
+| 14   | 编写单元测试                                    |
 
 ### 阶段三：网关改造
 
-| 步骤 | 内容 |
-|------|------|
-| 15 | pom.xml 依赖 iam-api → auth-api |
-| 16 | RouteRuleLoader 适配 auth-api 的 RouteRuleApi |
-| 17 | 新增 SessionContextInjector |
-| 18 | GatewayStpInterfaceImpl 适配 auth-service 权限快照 |
+| 步骤 | 内容                                               |
+|------|----------------------------------------------------|
+| 15   | pom.xml 依赖 iam-api → auth-api                    |
+| 16   | RouteRuleLoader 适配 auth-api 的 RouteRuleApi      |
+| 17   | 新增 SessionContextInjector                        |
+| 18   | GatewayStpInterfaceImpl 适配 auth-service 权限快照 |
 
 ### 阶段四：kernel 改造
 
-| 步骤 | 内容 |
-|------|------|
-| 19 | 废弃 @RequireBusinessPermission + BusinessPermissionAspect |
-| 20 | kernel 内部 Controller 改用 @RequirePermission |
-| 21 | kernel 引入 shared-permission-starter |
+| 步骤 | 内容                                                       |
+|------|------------------------------------------------------------|
+| 19   | 废弃 @RequireBusinessPermission + BusinessPermissionAspect |
+| 20   | kernel 内部 Controller 改用 @RequirePermission             |
+| 21   | kernel 引入 shared-permission-starter                      |
 
 ### 阶段五：业务服务接入
 
-| 步骤 | 内容 |
-|------|------|
-| 22 | 各业务服务 xxx-adapter 引入 shared-permission-starter |
-| 23 | Controller 标注 @RequirePermission |
-| 24 | 请求 DTO 实现 PlanIdAware（若涉及业务权限） |
-| 25 | 需要业务数据权限的引入 business-core-application |
+| 步骤 | 内容                                                  |
+|------|-------------------------------------------------------|
+| 22   | 各业务服务 xxx-adapter 引入 shared-permission-starter |
+| 23   | Controller 标注 @RequirePermission                    |
+| 24   | 请求 DTO 实现 PlanIdAware（若涉及业务权限）           |
+| 25   | 需要业务数据权限的引入 business-core-application      |
 
 ### 阶段六：验证
 
-| 步骤 | 内容 |
-|------|------|
-| 26 | auth-service 独立启动验证 |
-| 27 | 端到端权限校验链路测试 |
-| 28 | 全量回归测试 |
+| 步骤 | 内容                      |
+|------|---------------------------|
+| 26   | auth-service 独立启动验证 |
+| 27   | 端到端权限校验链路测试    |
+| 28   | 全量回归测试              |
 
 ## 九、PlanIdAware 接口约定
 
@@ -423,24 +433,24 @@ public class CreateApprovalFlowRequest implements PlanIdAware {
 
 ## 十、降级策略
 
-| 场景 | 行为 |
-|------|------|
-| auth-service 不可达 | fail-closed，PermissionGuard 抛 PermissionDeniedException |
-| X-Session-Context header 不存在 | 回退到实时调用 auth-service |
-| CachingPermissionClient 缓存未命中 | 回退到 HttpPermissionClient 实时调用 |
-| 业务服务未引入 shared-permission-starter | 无功能权限校验（需评估风险） |
-| 业务服务未引入 business-core-application | 无业务数据权限校验（需评估风险） |
+| 场景                                     | 行为                                                      |
+|------------------------------------------|-----------------------------------------------------------|
+| auth-service 不可达                      | fail-closed，PermissionGuard 抛 PermissionDeniedException |
+| X-Session-Context header 不存在          | 回退到实时调用 auth-service                               |
+| CachingPermissionClient 缓存未命中       | 回退到 HttpPermissionClient 实时调用                      |
+| 业务服务未引入 shared-permission-starter | 无功能权限校验（需评估风险）                              |
+| 业务服务未引入 business-core-application | 无业务数据权限校验（需评估风险）                          |
 
 ## 十一、与现有代码的兼容性
 
-| 现有组件 | 处理方式 |
-|---------|---------|
-| permission-sdk | 保留，零依赖核心不变 |
-| auth-domain AuthorizationEngine | 保留，权限判定引擎不变 |
-| auth-application PermissionQueryService | 保留，新增 PermissionCheckApi 调用入口 |
-| kernel BusinessAccessGuard | 保留，业务数据权限 SPI 不变 |
-| kernel SessionContextResolver | 保留，作为 shared-permission-starter 短路读实现 |
-| kernel @RequireBusinessPermission | **废弃**，统一到 @RequirePermission |
-| kernel BusinessPermissionAspect | **废弃**，由 shared-permission-starter 的切面替代 |
-| 网关 iam-api 依赖 | **替换**为 auth-api |
-| 网关 RouteRuleLoader | **改造**，调用 auth-api 的 RouteRuleApi |
+| 现有组件                                | 处理方式                                          |
+|-----------------------------------------|---------------------------------------------------|
+| permission-sdk                          | 保留，零依赖核心不变                              |
+| auth-domain AuthorizationEngine         | 保留，权限判定引擎不变                            |
+| auth-application PermissionQueryService | 保留，新增 PermissionCheckApi 调用入口            |
+| kernel BusinessAccessGuard              | 保留，业务数据权限 SPI 不变                       |
+| kernel SessionContextResolver           | 保留，作为 shared-permission-starter 短路读实现   |
+| kernel @RequireBusinessPermission       | **废弃**，统一到 @RequirePermission               |
+| kernel BusinessPermissionAspect         | **废弃**，由 shared-permission-starter 的切面替代 |
+| 网关 iam-api 依赖                       | **替换**为 auth-api                               |
+| 网关 RouteRuleLoader                    | **改造**，调用 auth-api 的 RouteRuleApi           |

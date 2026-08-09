@@ -1,13 +1,8 @@
 package com.example.auth.adapter.converter;
 
-import com.example.auth.api.command.DisableChannelCommand;
-import com.example.auth.api.command.DisableChannelRequest;
-import com.example.auth.api.command.EnableChannelCommand;
-import com.example.auth.api.command.EnableChannelRequest;
-import com.example.auth.api.query.GetEntitlementRequest;
-import com.example.auth.api.command.ReplaceChannelsCommand;
-import com.example.auth.api.command.ReplaceChannelsRequest;
+import com.example.auth.api.command.*;
 import com.example.auth.api.query.GetEntitlementQuery;
+import com.example.auth.api.query.GetEntitlementRequest;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.UserNo;

@@ -30,14 +30,14 @@ public class AssignmentApplicationService {
   private final AssignmentRepository assignmentRepository;
   private final GrantProvisioningService grantProvisioningService;
   private final PlanReachabilityService planReachabilityService;
-  private final EventBus  eventBus;
+  private final EventBus eventBus;
   private final IdService idService;
 
 
   @Transactional
   public AssignmentId createAssignment(CreateAssignmentCommand command) {
 
-    AgentIdentityAssignment assignment =AgentIdentityAssignment.create(
+    AgentIdentityAssignment assignment = AgentIdentityAssignment.create(
       idService.nextId(AssignmentId.class),
       command.operator(),
       command.accountId(),

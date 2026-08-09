@@ -10,18 +10,18 @@ package com.example.shared.permission;
  */
 public interface PermissionExecutor {
 
-    /**
-     * 执行权限校验，返回是否允许。
-     *
-     * @param context 权限校验上下文
-     * @return 校验结果
-     */
-    PermissionCheckResult check(PermissionCheckContext context);
+  /**
+   * 执行权限校验，返回是否允许。
+   *
+   * @param context 权限校验上下文
+   * @return 校验结果
+   */
+  PermissionCheckResult check(PermissionCheckContext context);
 
-    /**
-     * 是否支持本地短路调用（auth-service 实现返回 true）。
-     */
-    default boolean isLocalExecution() {
-        return false;
-    }
+  /**
+   * 是否支持本地短路调用（auth-service 实现返回 true）。
+   */
+  default boolean isLocalExecution() {
+    return false;
+  }
 }

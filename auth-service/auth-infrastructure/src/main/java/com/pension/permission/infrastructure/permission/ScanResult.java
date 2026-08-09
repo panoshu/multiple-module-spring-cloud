@@ -8,4 +8,5 @@ package com.pension.permission.infrastructure.permission;
  * @param unchanged     未变化数量
  * @author auth-infrastructure
  */
-public record ScanResult(int totalReceived, int upserted, int unchanged) {}
+public record ScanResult(int totalReceived, int upserted, int unchanged) {
+}

@@ -531,23 +531,26 @@
 第一阶段仅修复阻塞问题，以下 P0/P1 问题留待后续阶段：
 
 1. **shared 层 P0 问题**（第二阶段）：
-  - shared-domain `SharedDomainErrorCode.message()` 返回空串
-  - shared-types 3 处异常消息错位
-  - shared-utils `VirtualThreadExecutor` Semaphore bug
-  - shared-cache-starter `DistributedLockFactory` 未注册 Bean
-  - shared-id-starter prefix 不匹配
-  - shared-logging-starter schema 使用 AUTO_INCREMENT
-  - 根 pom.xml `shared-file-starter` 幽灵依赖
+
+- shared-domain `SharedDomainErrorCode.message()` 返回空串
+- shared-types 3 处异常消息错位
+- shared-utils `VirtualThreadExecutor` Semaphore bug
+- shared-cache-starter `DistributedLockFactory` 未注册 Bean
+- shared-id-starter prefix 不匹配
+- shared-logging-starter schema 使用 AUTO_INCREMENT
+- 根 pom.xml `shared-file-starter` 幽灵依赖
 
 2. **测试补齐**（第三阶段）：
-  - business-core-kernel/approval-service/integration-service 三个模块的领域服务/聚合根测试覆盖
-  - 当前仅 15 个新增测试覆盖修复点，需要扩展到完整业务场景
+
+- business-core-kernel/approval-service/integration-service 三个模块的领域服务/聚合根测试覆盖
+- 当前仅 15 个新增测试覆盖修复点，需要扩展到完整业务场景
 
 3. **规范对齐**（第四阶段）：
-  - 沉淀 `BaseErrorDefinition` 抽象基类
-  - 所有 schema 提供双套 DDL
-  - 移除 starter 中的 application.yml
-  - 统一 kona-crypto 版本到父 pom
+
+- 沉淀 `BaseErrorDefinition` 抽象基类
+- 所有 schema 提供双套 DDL
+- 移除 starter 中的 application.yml
+- 统一 kona-crypto 版本到父 pom
 
 ### 8.7 修复总结
 

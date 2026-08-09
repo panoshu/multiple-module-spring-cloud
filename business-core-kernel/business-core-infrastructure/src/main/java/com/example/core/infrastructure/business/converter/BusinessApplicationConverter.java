@@ -3,7 +3,6 @@ package com.example.core.infrastructure.business.converter;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;

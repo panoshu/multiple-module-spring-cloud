@@ -16,9 +16,9 @@ import java.util.List;
 @HttpExchange("/management/system")
 public interface BffSystemApi {
 
-    @PostExchange("/info")
-    ApiResult<BffSystemInfoResponse> getInfo();
+  @PostExchange("/info")
+  ApiResult<BffSystemInfoResponse> getInfo();
 
-    @PostExchange("/business-types")
-    ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes();
+  @PostExchange("/business-types")
+  ApiResult<List<BffBusinessTypeResponse>> listBusinessTypes();
 }

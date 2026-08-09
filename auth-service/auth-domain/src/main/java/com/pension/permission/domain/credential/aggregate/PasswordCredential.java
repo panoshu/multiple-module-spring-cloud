@@ -73,66 +73,6 @@ public final class PasswordCredential
   }
 
 
-  public static PasswordCredential create(
-    CredentialId id,
-    UserNo userNo,
-    String passwordHash,
-    Set<AnnuityChannel> channels,
-    UserNo operator,
-    Clock clock
-  ) {
-
-    return new PasswordCredential(
-      id,
-      userNo,
-      passwordHash,
-      channels,
-      operator,
-      clock
-    );
-
-  }
-
-
-  /**
-   * Repository 重建入口，不产生领域事件.
-   *
-   * <p>owner 参数应来自 DO 中存储的 owner 信息（PasswordCredential 的 owner
-   * 恒为 {@link UserCredentialOwner}，此处保留参数仅为与基类重建构造函数一致）。</p>
-   */
-  public static PasswordCredential reconstitute(
-    CredentialId id,
-    CredentialOwner owner,
-    Set<AnnuityChannel> applicableChannels,
-    CredentialStatus status,
-    ValidityPeriod validityPeriod,
-    UserNo createdBy,
-    LocalDateTime createdAt,
-    UserNo updatedBy,
-    LocalDateTime updatedAt,
-    Version version,
-    UserNo userNo,
-    String passwordHash
-  ) {
-
-    return new PasswordCredential(
-      id,
-      owner,
-      applicableChannels,
-      status,
-      validityPeriod,
-      createdBy,
-      createdAt,
-      updatedBy,
-      updatedAt,
-      version,
-      userNo,
-      passwordHash
-    );
-
-  }
-
-
   private PasswordCredential(
     CredentialId id,
     CredentialOwner owner,
@@ -171,6 +111,63 @@ public final class PasswordCredential
 
   }
 
+  public static PasswordCredential create(
+    CredentialId id,
+    UserNo userNo,
+    String passwordHash,
+    Set<AnnuityChannel> channels,
+    UserNo operator,
+    Clock clock
+  ) {
+
+    return new PasswordCredential(
+      id,
+      userNo,
+      passwordHash,
+      channels,
+      operator,
+      clock
+    );
+
+  }
+
+  /**
+   * Repository 重建入口，不产生领域事件.
+   *
+   * <p>owner 参数应来自 DO 中存储的 owner 信息（PasswordCredential 的 owner
+   * 恒为 {@link UserCredentialOwner}，此处保留参数仅为与基类重建构造函数一致）。</p>
+   */
+  public static PasswordCredential reconstitute(
+    CredentialId id,
+    CredentialOwner owner,
+    Set<AnnuityChannel> applicableChannels,
+    CredentialStatus status,
+    ValidityPeriod validityPeriod,
+    UserNo createdBy,
+    LocalDateTime createdAt,
+    UserNo updatedBy,
+    LocalDateTime updatedAt,
+    Version version,
+    UserNo userNo,
+    String passwordHash
+  ) {
+
+    return new PasswordCredential(
+      id,
+      owner,
+      applicableChannels,
+      status,
+      validityPeriod,
+      createdBy,
+      createdAt,
+      updatedBy,
+      updatedAt,
+      version,
+      userNo,
+      passwordHash
+    );
+
+  }
 
   @Override
   public CredentialType type() {

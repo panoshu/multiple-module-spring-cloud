@@ -7,8 +7,8 @@ import com.example.shared.permission.SessionContextSignatureVerifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -64,7 +64,7 @@ public class SessionContextResolver {
 
   @Autowired
   public SessionContextResolver(ObjectMapper objectMapper,
-      ObjectProvider<SessionContextSignatureVerifier> signatureVerifierProvider) {
+                                ObjectProvider<SessionContextSignatureVerifier> signatureVerifierProvider) {
     this.objectMapper = objectMapper;
     this.signatureVerifier = signatureVerifierProvider.getIfAvailable();
   }

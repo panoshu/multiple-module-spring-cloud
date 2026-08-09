@@ -106,7 +106,8 @@ public abstract class CustomerChannelEntitlementConverter {
       return new HashSet<>();
     }
     try {
-      Set<String> names = objectMapper.readValue(json, new TypeReference<>() {});
+      Set<String> names = objectMapper.readValue(json, new TypeReference<>() {
+      });
       Set<AnnuityChannel> channels = new HashSet<>();
       for (String name : names) {
         channels.add(AnnuityChannel.valueOf(name));

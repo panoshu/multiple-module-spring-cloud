@@ -27,16 +27,16 @@ import org.springframework.stereotype.Component;
 @Order(2)
 public class DataScopeAspect {
 
-    private final DataScopeResolver dataScopeResolver;
+  private final DataScopeResolver dataScopeResolver;
 
-    @Around("@annotation(dataScope)")
-    public Object applyDataScope(ProceedingJoinPoint joinPoint, DataScope dataScope) throws Throwable {
-        try {
-            com.example.auth.api.dto.DataScope scope = dataScopeResolver.resolve(dataScope.business());
-            DataScopeContext.set(scope);
-            return joinPoint.proceed();
-        } finally {
-            DataScopeContext.clear();
-        }
+  @Around("@annotation(dataScope)")
+  public Object applyDataScope(ProceedingJoinPoint joinPoint, DataScope dataScope) throws Throwable {
+    try {
+      com.example.auth.api.dto.DataScope scope = dataScopeResolver.resolve(dataScope.business());
+      DataScopeContext.set(scope);
+      return joinPoint.proceed();
+    } finally {
+      DataScopeContext.clear();
     }
+  }
 }

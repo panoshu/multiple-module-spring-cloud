@@ -23,15 +23,15 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @RequiredArgsConstructor
 public class PermissionScanner implements ApplicationRunner {
 
-    private static final UserNo SCANNER_IDENTITY = UserNo.of("permission-scanner");
+  private static final UserNo SCANNER_IDENTITY = UserNo.of("permission-scanner");
 
-    private final PermissionScannerService scannerService;
-    private final RequestMappingHandlerMapping handlerMapping;
+  private final PermissionScannerService scannerService;
+  private final RequestMappingHandlerMapping handlerMapping;
 
-    @Override
-    public void run(ApplicationArguments args) {
-        ScanResult result = scannerService.scanLocal(handlerMapping, SCANNER_IDENTITY);
-        log.info("[PermissionScanner] auth-service 本地扫描完成: 发现 {}, 新增/更新 {}, 未变化 {}",
-            result.totalReceived(), result.upserted(), result.unchanged());
-    }
+  @Override
+  public void run(ApplicationArguments args) {
+    ScanResult result = scannerService.scanLocal(handlerMapping, SCANNER_IDENTITY);
+    log.info("[PermissionScanner] auth-service 本地扫描完成: 发现 {}, 新增/更新 {}, 未变化 {}",
+      result.totalReceived(), result.upserted(), result.unchanged());
+  }
 }

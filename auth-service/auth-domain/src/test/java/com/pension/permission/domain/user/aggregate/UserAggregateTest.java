@@ -2,6 +2,7 @@ package com.pension.permission.domain.user.aggregate;
 
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.exception.DomainException;
+import com.example.shared.identifier.id.UserNo;
 import com.example.shared.identity.DocumentNumber;
 import com.example.shared.identity.IdentityDocument;
 import com.example.shared.identity.IdentityType;
@@ -10,7 +11,6 @@ import com.pension.permission.domain.user.enumeration.UserType;
 import com.pension.permission.domain.user.event.UserActivated;
 import com.pension.permission.domain.user.event.UserDisabled;
 import com.pension.permission.domain.user.event.UserFrozen;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

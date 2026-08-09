@@ -5,4 +5,5 @@ package com.example.auth.api.query;
  *
  * @param category 权限类别（null 表示全部）
  */
-public record ListPermissionItemsRequest(String category) {}
+public record ListPermissionItemsRequest(String category) {
+}

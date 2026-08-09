@@ -129,7 +129,8 @@ public abstract class RoleTemplateConverter {
       return Set.of();
     }
     try {
-      Set<Permission> permissions = objectMapper.readValue(json, new TypeReference<>() {});
+      Set<Permission> permissions = objectMapper.readValue(json, new TypeReference<>() {
+      });
       return permissions != null ? permissions : Set.of();
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("反序列化权限集合失败", e);

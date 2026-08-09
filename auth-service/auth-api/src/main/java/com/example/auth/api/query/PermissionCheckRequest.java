@@ -11,7 +11,8 @@ import jakarta.validation.constraints.NotBlank;
  * @param actionCode   操作编码（null 表示不区分操作）
  */
 public record PermissionCheckRequest(
-    @NotBlank String accountId,
-    String planId,
-    @NotBlank String businessCode,
-    String actionCode) {}
+  @NotBlank String accountId,
+  String planId,
+  @NotBlank String businessCode,
+  String actionCode) {
+}

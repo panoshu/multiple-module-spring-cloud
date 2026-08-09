@@ -298,7 +298,8 @@ public abstract class SecondaryAuthSessionConverter {
     try {
       Set<Permission> permissions = objectMapper.readValue(
         doObj.getSnapshotPermissions(),
-        new TypeReference<>() {}
+        new TypeReference<>() {
+        }
       );
       if (permissions == null || permissions.isEmpty()) {
         return null;

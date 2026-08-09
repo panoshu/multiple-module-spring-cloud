@@ -26,6 +26,15 @@ class CustomerChannelEntitlementTest {
   private static final CustomerNo CUSTOMER_NO = CustomerNo.of("C-001");
   private static final UserNo OPERATOR = UserNo.of("admin-1");
 
+  private CustomerChannelEntitlement createEntitlement(Set<AnnuityChannel> channels) {
+    return CustomerChannelEntitlement.create(
+      new CustomerChannelEntitlement.CreateContext(
+        new CustomerChannelEntitlementId("e-1"),
+        CUSTOMER_NO,
+        channels,
+        OPERATOR));
+  }
+
   @Nested
   @DisplayName("create: 创建客户渠道开通记录")
   class CreateTest {
@@ -232,14 +241,5 @@ class CustomerChannelEntitlementTest {
       assertThat(entitlement.version().value()).isEqualTo(3L);
       assertThat(entitlement.domainEvents()).isEmpty();
     }
-  }
-
-  private CustomerChannelEntitlement createEntitlement(Set<AnnuityChannel> channels) {
-    return CustomerChannelEntitlement.create(
-      new CustomerChannelEntitlement.CreateContext(
-        new CustomerChannelEntitlementId("e-1"),
-        CUSTOMER_NO,
-        channels,
-        OPERATOR));
   }
 }

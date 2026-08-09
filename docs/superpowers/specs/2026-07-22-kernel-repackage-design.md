@@ -12,13 +12,14 @@
 1. **业务领域模型**: `BusinessApplication`、`BusinessForm`、`BusinessBatch` 三个聚合根及其直接关联的值对象、事件、Repository
    接口。
 2. **流程编排引擎**: 包含三层能力——
-  - **引擎核心**: `StepPipelineExecutor` 管道执行器、`StepActionHandler`/`StepExtensionAction`/`BusinessFactExtractor` 三套
-    SPI、Registry 注册表、条件求值网关、配置值对象、`BusinessMetaContext` 共享数据契约。
-  - **公共步骤实现**: kernel 开箱提供的 5 个 `StepActionHandler`(表单解析×3、审批提交、材料准备)、3 个
-    `StepExtensionAction` 抽象基类 (游标分页、JSON 流式摄入、流式查询)、`MaterialRuleEngine` 支撑领域服务、
-    `BusinessFormAppService`/`MaterialAppService` 公共步骤应用服务、外部回调监听器。
-  - **集成网关**: `ApprovalIntegrationGateway`、`FileIntegrationGateway` 等防腐层接口,供公共步骤调用外部服务
-    (approval-service / file-service)。
+
+- **引擎核心**: `StepPipelineExecutor` 管道执行器、`StepActionHandler`/`StepExtensionAction`/`BusinessFactExtractor` 三套
+  SPI、Registry 注册表、条件求值网关、配置值对象、`BusinessMetaContext` 共享数据契约。
+- **公共步骤实现**: kernel 开箱提供的 5 个 `StepActionHandler`(表单解析×3、审批提交、材料准备)、3 个
+  `StepExtensionAction` 抽象基类 (游标分页、JSON 流式摄入、流式查询)、`MaterialRuleEngine` 支撑领域服务、
+  `BusinessFormAppService`/`MaterialAppService` 公共步骤应用服务、外部回调监听器。
+- **集成网关**: `ApprovalIntegrationGateway`、`FileIntegrationGateway` 等防腐层接口,供公共步骤调用外部服务
+  (approval-service / file-service)。
 
 两类代码混在同一包路径下,缺乏清晰的边界划分。
 

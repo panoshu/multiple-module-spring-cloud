@@ -38,8 +38,8 @@ public record VerificationCode(
    * 需要自定义重试次数时请使用 {@link #of(String, LocalDateTime, Duration, int)}。</p>
    *
    * @param hashedCode 已哈希的验证码字符串
-   * @param sentAt 发送时间
-   * @param timeout 超时时间
+   * @param sentAt     发送时间
+   * @param timeout    超时时间
    * @return VerificationCode 实例
    */
   public static VerificationCode of(String hashedCode, LocalDateTime sentAt, Duration timeout) {
@@ -52,9 +52,9 @@ public record VerificationCode(
    * <p>应用层应从 {@code SecondaryAuthConfig.getVerificationMaxAttempts()} 读取配置传入此方法，
    * 避免硬编码重试次数导致配置失效。</p>
    *
-   * @param hashedCode 已哈希的验证码字符串
-   * @param sentAt 发送时间
-   * @param timeout 超时时间
+   * @param hashedCode  已哈希的验证码字符串
+   * @param sentAt      发送时间
+   * @param timeout     超时时间
    * @param maxAttempts 最大重试次数（初始剩余次数）
    * @return VerificationCode 实例
    */

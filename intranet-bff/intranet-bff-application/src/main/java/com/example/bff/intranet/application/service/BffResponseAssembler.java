@@ -14,24 +14,24 @@ import java.util.List;
  */
 final class BffResponseAssembler {
 
-    private BffResponseAssembler() {
-    }
+  private BffResponseAssembler() {
+  }
 
-    /**
-     * 组装批次概览响应。
-     *
-     * @param batchDetail   批次详情（可能为 null）
-     * @param progress      批次进度（可能为 null）
-     * @param applications  申请单列表（可能为 null）
-     */
-    static BatchOverviewResponse assemble(
-            BatchDetailResponse batchDetail,
-            BatchProgressResponse progress,
-            List<ApplicationSummaryResponse> applications) {
-        return new BatchOverviewResponse(
-                batchDetail,
-                progress,
-                applications != null ? applications : List.of()
-        );
-    }
+  /**
+   * 组装批次概览响应。
+   *
+   * @param batchDetail  批次详情（可能为 null）
+   * @param progress     批次进度（可能为 null）
+   * @param applications 申请单列表（可能为 null）
+   */
+  static BatchOverviewResponse assemble(
+    BatchDetailResponse batchDetail,
+    BatchProgressResponse progress,
+    List<ApplicationSummaryResponse> applications) {
+    return new BatchOverviewResponse(
+      batchDetail,
+      progress,
+      applications != null ? applications : List.of()
+    );
+  }
 }

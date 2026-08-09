@@ -1,7 +1,6 @@
 package com.pension.permission.domain.channel.aggregate;
 
 
-
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
@@ -23,27 +22,22 @@ public class Session extends AggregateRoot<SessionId> {
   private final UserNo primaryAccountId;
 
   private final AnnuityChannel channel;
-
-  /**
-   * 当前有效身份
-   */
-  private EffectiveIdentity effectiveIdentity;
-
-  /**
-   * 当前绑定的二次授权会话 ID（仅网点渠道柜员有效）
-   */
-  private SecondaryAuthSessionId secondaryAuthSessionId;
-
-  /**
-   * 当前选择办理的计划
-   */
-  private PlanNo selectedPlanId;
-
   /**
    * 会话过期时间
    */
   private final LocalDateTime expiresAt;
-
+  /**
+   * 当前有效身份
+   */
+  private EffectiveIdentity effectiveIdentity;
+  /**
+   * 当前绑定的二次授权会话 ID（仅网点渠道柜员有效）
+   */
+  private SecondaryAuthSessionId secondaryAuthSessionId;
+  /**
+   * 当前选择办理的计划
+   */
+  private PlanNo selectedPlanId;
   private SessionStatus status;
 
 
@@ -221,8 +215,8 @@ public class Session extends AggregateRoot<SessionId> {
    * 仅网点渠道允许调用此方法。</p>
    *
    * @param sessionId 二次授权会话 ID
-   * @param identity 有效身份
-   * @param operator 操作人
+   * @param identity  有效身份
+   * @param operator  操作人
    */
   public void applySecondaryAuth(
     SecondaryAuthSessionId sessionId,
@@ -325,7 +319,7 @@ public class Session extends AggregateRoot<SessionId> {
     UserNo operator
   ) {
 
-    if(status == SessionStatus.CLOSED){
+    if (status == SessionStatus.CLOSED) {
       return;
     }
 

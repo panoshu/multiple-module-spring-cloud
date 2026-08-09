@@ -25,24 +25,24 @@ import java.util.List;
 @HttpExchange("/bff")
 public interface BffBusinessApi {
 
-    @PostExchange("/batch/create")
-    ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody BffCreateBatchRequest request);
+  @PostExchange("/batch/create")
+  ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody BffCreateBatchRequest request);
 
-    @PostExchange("/batch/detail")
-    ApiResult<BatchDetailResponse> batchDetail(@Valid @RequestBody BffBatchDetailRequest request);
+  @PostExchange("/batch/detail")
+  ApiResult<BatchDetailResponse> batchDetail(@Valid @RequestBody BffBatchDetailRequest request);
 
-    @PostExchange("/form/upload-token")
-    ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody BffFormTokenRequest request);
+  @PostExchange("/form/upload-token")
+  ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody BffFormTokenRequest request);
 
-    @PostExchange("/application/submit")
-    ApiResult<SubmitResponse> submitApplication(@Valid @RequestBody BffSubmitRequest request);
+  @PostExchange("/application/submit")
+  ApiResult<SubmitResponse> submitApplication(@Valid @RequestBody BffSubmitRequest request);
 
-    @PostExchange("/application/detail")
-    ApiResult<ApplicationDetailResponse> applicationDetail(@Valid @RequestBody BffApplicationDetailRequest request);
+  @PostExchange("/application/detail")
+  ApiResult<ApplicationDetailResponse> applicationDetail(@Valid @RequestBody BffApplicationDetailRequest request);
 
-    @PostExchange("/material/list")
-    ApiResult<List<MaterialItemResponse>> listMaterials(@Valid @RequestBody BffListMaterialsRequest request);
+  @PostExchange("/material/list")
+  ApiResult<List<MaterialItemResponse>> listMaterials(@Valid @RequestBody BffListMaterialsRequest request);
 
-    @PostExchange("/dashboard/batch-overview")
-    ApiResult<BatchOverviewResponse> batchOverview(@Valid @RequestBody BffBatchOverviewRequest request);
+  @PostExchange("/dashboard/batch-overview")
+  ApiResult<BatchOverviewResponse> batchOverview(@Valid @RequestBody BffBatchOverviewRequest request);
 }

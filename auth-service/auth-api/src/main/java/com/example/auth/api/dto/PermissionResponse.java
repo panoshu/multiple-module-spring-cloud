@@ -6,4 +6,5 @@ package com.example.auth.api.dto;
  * @param businessCode 业务编码
  * @param actionCode   操作编码
  */
-public record PermissionResponse(String businessCode, String actionCode) {}
+public record PermissionResponse(String businessCode, String actionCode) {
+}

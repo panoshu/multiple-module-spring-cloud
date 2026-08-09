@@ -14,16 +14,16 @@ import org.aspectj.lang.ProceedingJoinPoint;
  */
 public class DefaultPlanIdResolver implements PlanIdResolver {
 
-    @Override
-    public String resolve(ProceedingJoinPoint joinPoint, RequirePermission requirePermission) {
-        if (requirePermission.category() == PermissionCategory.PLATFORM) {
-            return null;
-        }
-        for (Object arg : joinPoint.getArgs()) {
-            if (arg instanceof PlanIdAware aware) {
-                return aware.planId();
-            }
-        }
-        return null;
+  @Override
+  public String resolve(ProceedingJoinPoint joinPoint, RequirePermission requirePermission) {
+    if (requirePermission.category() == PermissionCategory.PLATFORM) {
+      return null;
     }
+    for (Object arg : joinPoint.getArgs()) {
+      if (arg instanceof PlanIdAware aware) {
+        return aware.planId();
+      }
+    }
+    return null;
+  }
 }

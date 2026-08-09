@@ -133,6 +133,65 @@ class SecondaryAuthSessionConverterTest {
     return new PlanCredentialOwner(PlanNo.of("PLAN-OWNER-001"));
   }
 
+  /**
+   * 构造 AUTHORIZED 状态的 DO 样本（含 effectiveIdentity 和 permissionSnapshot JSON）.
+   */
+  private SecondaryAuthSessionDO buildAuthorizedDO() {
+    var doObj = baseDO();
+    doObj.setApproverAccountId("approver-100");
+    doObj.setCredentialOwnerType("USER");
+    doObj.setCredentialOwnerId("user-100");
+    doObj.setVerificationCodeHash(null);
+    doObj.setEffectiveIdentityId("approver-100");
+    doObj.setEffectiveIdentityActing("teller-100");
+    doObj.setEffectiveViaSecondary(true);
+    doObj.setSnapshotPermissions(
+      "[{\"businessCode\":{\"value\":\"BIZ-100\"},\"actionCode\":{\"value\":\"ACT-VIEW\"}}]");
+    doObj.setSnapshotFrozenAt(LocalDateTime.of(2026, 5, 1, 10, 0));
+    doObj.setSnapshotExpiresAt(LocalDateTime.of(2026, 5, 1, 22, 0));
+    doObj.setStatus("AUTHORIZED");
+    doObj.setAuthorizedAt(LocalDateTime.of(2026, 5, 1, 10, 3));
+    return doObj;
+  }
+
+  /**
+   * 构造 PENDING 状态的 DO 样本（含 verificationCode，无 effectiveIdentity 和 permissionSnapshot）.
+   */
+  private SecondaryAuthSessionDO buildPendingDO() {
+    var doObj = baseDO();
+    doObj.setId("sec-200");
+    doObj.setApproverAccountId(null);
+    doObj.setCredentialOwnerType("USER");
+    doObj.setCredentialOwnerId("user-200");
+    doObj.setVerificationCodeHash("hashed-100");
+    doObj.setVerificationSentAt(LocalDateTime.of(2026, 6, 1, 10, 0));
+    doObj.setVerificationExpiresAt(LocalDateTime.of(2026, 6, 1, 10, 5));
+    doObj.setVerificationRemaining(2);
+    doObj.setEffectiveIdentityId(null);
+    doObj.setSnapshotPermissions(null);
+    doObj.setStatus("PENDING");
+    doObj.setAuthorizedAt(null);
+    return doObj;
+  }
+
+  private SecondaryAuthSessionDO baseDO() {
+    var doObj = new SecondaryAuthSessionDO();
+    doObj.setId("sec-100");
+    doObj.setTellerAccountId("teller-100");
+    doObj.setApproverMobile("+8613800138002");
+    doObj.setPlanId("PLAN-100");
+    doObj.setCreatedBy("creator-100");
+    doObj.setUpdatedBy("updater-100");
+    doObj.setCreateTime(LocalDateTime.of(2026, 5, 1, 10, 0));
+    doObj.setUpdateTime(LocalDateTime.of(2026, 5, 2, 10, 0));
+    doObj.setVersion(7);
+    doObj.setInitiatedAt(LocalDateTime.of(2026, 5, 1, 10, 0));
+    doObj.setPendingExpiresAt(LocalDateTime.of(2026, 5, 1, 10, 5));
+    doObj.setExpiresAt(LocalDateTime.of(2026, 5, 1, 22, 0));
+    doObj.setRevokeReason(null);
+    return doObj;
+  }
+
   @Nested
   @DisplayName("toDO: 领域对象 → DO")
   class ToDOTest {
@@ -539,64 +598,5 @@ class SecondaryAuthSessionConverterTest {
       assertThat(roundTripped.permissionSnapshot().permissions())
         .isEqualTo(original.permissionSnapshot().permissions());
     }
-  }
-
-  /**
-   * 构造 AUTHORIZED 状态的 DO 样本（含 effectiveIdentity 和 permissionSnapshot JSON）.
-   */
-  private SecondaryAuthSessionDO buildAuthorizedDO() {
-    var doObj = baseDO();
-    doObj.setApproverAccountId("approver-100");
-    doObj.setCredentialOwnerType("USER");
-    doObj.setCredentialOwnerId("user-100");
-    doObj.setVerificationCodeHash(null);
-    doObj.setEffectiveIdentityId("approver-100");
-    doObj.setEffectiveIdentityActing("teller-100");
-    doObj.setEffectiveViaSecondary(true);
-    doObj.setSnapshotPermissions(
-      "[{\"businessCode\":{\"value\":\"BIZ-100\"},\"actionCode\":{\"value\":\"ACT-VIEW\"}}]");
-    doObj.setSnapshotFrozenAt(LocalDateTime.of(2026, 5, 1, 10, 0));
-    doObj.setSnapshotExpiresAt(LocalDateTime.of(2026, 5, 1, 22, 0));
-    doObj.setStatus("AUTHORIZED");
-    doObj.setAuthorizedAt(LocalDateTime.of(2026, 5, 1, 10, 3));
-    return doObj;
-  }
-
-  /**
-   * 构造 PENDING 状态的 DO 样本（含 verificationCode，无 effectiveIdentity 和 permissionSnapshot）.
-   */
-  private SecondaryAuthSessionDO buildPendingDO() {
-    var doObj = baseDO();
-    doObj.setId("sec-200");
-    doObj.setApproverAccountId(null);
-    doObj.setCredentialOwnerType("USER");
-    doObj.setCredentialOwnerId("user-200");
-    doObj.setVerificationCodeHash("hashed-100");
-    doObj.setVerificationSentAt(LocalDateTime.of(2026, 6, 1, 10, 0));
-    doObj.setVerificationExpiresAt(LocalDateTime.of(2026, 6, 1, 10, 5));
-    doObj.setVerificationRemaining(2);
-    doObj.setEffectiveIdentityId(null);
-    doObj.setSnapshotPermissions(null);
-    doObj.setStatus("PENDING");
-    doObj.setAuthorizedAt(null);
-    return doObj;
-  }
-
-  private SecondaryAuthSessionDO baseDO() {
-    var doObj = new SecondaryAuthSessionDO();
-    doObj.setId("sec-100");
-    doObj.setTellerAccountId("teller-100");
-    doObj.setApproverMobile("+8613800138002");
-    doObj.setPlanId("PLAN-100");
-    doObj.setCreatedBy("creator-100");
-    doObj.setUpdatedBy("updater-100");
-    doObj.setCreateTime(LocalDateTime.of(2026, 5, 1, 10, 0));
-    doObj.setUpdateTime(LocalDateTime.of(2026, 5, 2, 10, 0));
-    doObj.setVersion(7);
-    doObj.setInitiatedAt(LocalDateTime.of(2026, 5, 1, 10, 0));
-    doObj.setPendingExpiresAt(LocalDateTime.of(2026, 5, 1, 10, 5));
-    doObj.setExpiresAt(LocalDateTime.of(2026, 5, 1, 22, 0));
-    doObj.setRevokeReason(null);
-    return doObj;
   }
 }

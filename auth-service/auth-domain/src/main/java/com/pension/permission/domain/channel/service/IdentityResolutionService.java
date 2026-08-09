@@ -1,7 +1,6 @@
 package com.pension.permission.domain.channel.service;
 
 
-
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.annotation.DomainService;
@@ -66,7 +65,7 @@ public final class IdentityResolutionService {
   }
 
   private Optional<UserNo> locateByPhone(Mobile mobile, CredentialOwner owner) {
-      return accountRepository.findByMobile(mobile)
+    return accountRepository.findByMobile(mobile)
       .map(UserAggregate::id)
       .filter(accountId -> belongsToOwner(accountId, owner));
   }

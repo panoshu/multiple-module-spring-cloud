@@ -7,11 +7,7 @@ import com.pension.permission.domain.authorization.event.GrantApproved;
 import com.pension.permission.domain.authorization.event.GrantRejected;
 import com.pension.permission.domain.authorization.event.GrantRevoked;
 import com.pension.permission.domain.authorization.repository.GrantRepository;
-import com.pension.permission.domain.authorization.valueobject.subject.CapabilitySubject;
-import com.pension.permission.domain.authorization.valueobject.subject.GrantSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.PlanAllMembersSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.PlanRoleSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.UserListSubject;
+import com.pension.permission.domain.authorization.valueobject.subject.*;
 import com.pension.permission.domain.permission.spi.PermissionCacheStore;
 import com.pension.permission.types.GrantId;
 import com.pension.permission.types.RoleCode;
@@ -44,14 +40,14 @@ import static org.mockito.Mockito.*;
 @DisplayName("GrantEventRefreshListener")
 class GrantEventRefreshListenerTest {
 
-  @Mock private PermissionCacheStore permissionCacheStore;
-  @Mock private GrantRepository grantRepository;
-
-  @InjectMocks
-  private GrantEventRefreshListener listener;
-
   private static final GrantId GRANT_ID = new GrantId("grant-1");
   private static final UserNo APPROVER = UserNo.of("approver-1");
+  @Mock
+  private PermissionCacheStore permissionCacheStore;
+  @Mock
+  private GrantRepository grantRepository;
+  @InjectMocks
+  private GrantEventRefreshListener listener;
 
   @Test
   @DisplayName("GrantApproved + UserListSubject - 调用 evictAll 失效对应账号缓存")

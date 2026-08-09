@@ -9,4 +9,5 @@ import com.example.shared.identifier.id.CustomerNo;
  */
 public record GetEntitlementQuery(
   CustomerNo customerNo
-) {}
+) {
+}

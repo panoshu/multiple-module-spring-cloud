@@ -27,12 +27,12 @@ import java.util.List;
 @HttpExchange("/management/approval/instances")
 public interface BffApprovalInstanceQueryApi {
 
-    @PostExchange("/get")
-    ApiResult<ApprovalInstanceDTO> getInstance(@Valid @RequestBody GetApprovalInstanceRequest request);
+  @PostExchange("/get")
+  ApiResult<ApprovalInstanceDTO> getInstance(@Valid @RequestBody GetApprovalInstanceRequest request);
 
-    @PostExchange("/my-pending")
-    ApiResult<PageData<PendingApprovalDTO>> listMyPending(@Valid @RequestBody ListMyPendingApprovalsRequest request);
+  @PostExchange("/my-pending")
+  ApiResult<PageData<PendingApprovalDTO>> listMyPending(@Valid @RequestBody ListMyPendingApprovalsRequest request);
 
-    @PostExchange("/history")
-    ApiResult<List<ApprovalRecordDTO>> getHistory(@Valid @RequestBody GetApprovalHistoryRequest request);
+  @PostExchange("/history")
+  ApiResult<List<ApprovalRecordDTO>> getHistory(@Valid @RequestBody GetApprovalHistoryRequest request);
 }

@@ -19,7 +19,7 @@ public interface VerificationCodeHasher {
   /**
    * 校验明文验证码是否匹配哈希值.
    *
-   * @param rawCode 明文验证码
+   * @param rawCode    明文验证码
    * @param hashedCode 哈希后的字符串
    * @return 是否匹配
    */

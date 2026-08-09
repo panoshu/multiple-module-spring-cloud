@@ -1,5 +1,6 @@
 package com.example.core.adapter.progress;
 
+import com.example.auth.api.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.progress.converter.ProgressConverter;
 import com.example.core.api.context.SessionContext;
@@ -10,7 +11,6 @@ import com.example.core.application.business.service.BusinessProgressAppService;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.shared.identifier.id.BatchId;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

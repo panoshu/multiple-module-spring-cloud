@@ -158,8 +158,8 @@ public class ChannelAwareSaRouter {
    */
   public void configureDefaultStpLogic() {
     List<String> channelHeaders = enabledChannels.stream()
-        .map(ChannelType::tokenHeader)
-        .toList();
+      .map(ChannelType::tokenHeader)
+      .toList();
     StpLogic defaultLogic = new StpLogic("default") {
       @Override
       public String getTokenValueNotCut() {

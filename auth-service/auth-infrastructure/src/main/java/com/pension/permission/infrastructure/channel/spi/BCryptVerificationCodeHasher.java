@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class BCryptVerificationCodeHasher implements VerificationCodeHasher {
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+  private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    @Override
-    public String hash(String rawCode) {
-        return encoder.encode(rawCode);
-    }
+  @Override
+  public String hash(String rawCode) {
+    return encoder.encode(rawCode);
+  }
 
-    @Override
-    public boolean matches(String rawCode, String hashedCode) {
-        return encoder.matches(rawCode, hashedCode);
-    }
+  @Override
+  public boolean matches(String rawCode, String hashedCode) {
+    return encoder.matches(rawCode, hashedCode);
+  }
 }

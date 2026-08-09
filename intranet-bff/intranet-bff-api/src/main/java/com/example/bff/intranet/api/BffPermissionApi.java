@@ -1,17 +1,7 @@
 package com.example.bff.intranet.api;
 
-import com.example.auth.api.dto.DataScopeResponse;
-import com.example.auth.api.dto.PermissionCheckBatchResponse;
-import com.example.auth.api.dto.PermissionCheckResponse;
-import com.example.auth.api.dto.PermissionGroupResponse;
-import com.example.auth.api.dto.PermissionItemResponse;
-import com.example.auth.api.dto.PermissionResponse;
-import com.example.auth.api.query.DataScopeRequest;
-import com.example.auth.api.query.GetBusinessPermissionsRequest;
-import com.example.auth.api.query.GetPlatformPermissionsRequest;
-import com.example.auth.api.query.ListPermissionItemsRequest;
-import com.example.auth.api.query.PermissionCheckBatchRequest;
-import com.example.auth.api.query.PermissionCheckRequest;
+import com.example.auth.api.dto.*;
+import com.example.auth.api.query.*;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,30 +21,30 @@ import java.util.Set;
 @HttpExchange("/management/permissions")
 public interface BffPermissionApi {
 
-    // ===== 权限校验（3 个） =====
+  // ===== 权限校验（3 个） =====
 
-    @PostExchange("/check")
-    ApiResult<PermissionCheckResponse> check(@Valid @RequestBody PermissionCheckRequest request);
+  @PostExchange("/check")
+  ApiResult<PermissionCheckResponse> check(@Valid @RequestBody PermissionCheckRequest request);
 
-    @PostExchange("/check-batch")
-    ApiResult<PermissionCheckBatchResponse> checkBatch(@Valid @RequestBody PermissionCheckBatchRequest request);
+  @PostExchange("/check-batch")
+  ApiResult<PermissionCheckBatchResponse> checkBatch(@Valid @RequestBody PermissionCheckBatchRequest request);
 
-    @PostExchange("/resolve-data-scope")
-    ApiResult<DataScopeResponse> resolveDataScope(@Valid @RequestBody DataScopeRequest request);
+  @PostExchange("/resolve-data-scope")
+  ApiResult<DataScopeResponse> resolveDataScope(@Valid @RequestBody DataScopeRequest request);
 
-    // ===== 权限元数据查询（2 个） =====
+  // ===== 权限元数据查询（2 个） =====
 
-    @PostExchange("/metadata/items")
-    ApiResult<List<PermissionItemResponse>> listItems(@Valid @RequestBody ListPermissionItemsRequest request);
+  @PostExchange("/metadata/items")
+  ApiResult<List<PermissionItemResponse>> listItems(@Valid @RequestBody ListPermissionItemsRequest request);
 
-    @PostExchange("/metadata/items/grouped")
-    ApiResult<List<PermissionGroupResponse>> listGroupedItems(@Valid @RequestBody ListPermissionItemsRequest request);
+  @PostExchange("/metadata/items/grouped")
+  ApiResult<List<PermissionGroupResponse>> listGroupedItems(@Valid @RequestBody ListPermissionItemsRequest request);
 
-    // ===== 权限缓存查询（2 个） =====
+  // ===== 权限缓存查询（2 个） =====
 
-    @PostExchange("/cache/platform")
-    ApiResult<Set<PermissionResponse>> getPlatformPermissions(@Valid @RequestBody GetPlatformPermissionsRequest request);
+  @PostExchange("/cache/platform")
+  ApiResult<Set<PermissionResponse>> getPlatformPermissions(@Valid @RequestBody GetPlatformPermissionsRequest request);
 
-    @PostExchange("/cache/business")
-    ApiResult<Set<PermissionResponse>> getBusinessPermissions(@Valid @RequestBody GetBusinessPermissionsRequest request);
+  @PostExchange("/cache/business")
+  ApiResult<Set<PermissionResponse>> getBusinessPermissions(@Valid @RequestBody GetBusinessPermissionsRequest request);
 }

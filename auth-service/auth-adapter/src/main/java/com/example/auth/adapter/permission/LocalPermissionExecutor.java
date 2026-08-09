@@ -33,14 +33,14 @@ public class LocalPermissionExecutor implements PermissionExecutor {
   @Override
   public PermissionCheckResult check(PermissionCheckContext context) {
     CheckPermissionQuery query = new CheckPermissionQuery(
-        UserNo.of(context.accountId()),
-        resolvePlanNo(context.planId()),
-        new BusinessCode(context.businessCode()),
-        resolveActionCode(context.actionCode()));
+      UserNo.of(context.accountId()),
+      resolvePlanNo(context.planId()),
+      new BusinessCode(context.businessCode()),
+      resolveActionCode(context.actionCode()));
     boolean allowed = permissionQueryService.checkPermission(query);
     return allowed
-        ? PermissionCheckResult.allow()
-        : PermissionCheckResult.deny("权限不足");
+      ? PermissionCheckResult.allow()
+      : PermissionCheckResult.deny("权限不足");
   }
 
   @Override

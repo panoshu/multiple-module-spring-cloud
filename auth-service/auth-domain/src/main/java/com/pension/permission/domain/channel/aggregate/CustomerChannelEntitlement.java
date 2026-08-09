@@ -38,31 +38,6 @@ public class CustomerChannelEntitlement extends AggregateRoot<CustomerChannelEnt
   private final CustomerNo customerNo;
   private Set<AnnuityChannel> enabledChannels;
 
-  /**
-   * 创建客户渠道开通记录的参数对象.
-   *
-   * <p>封装 {@link #create(CreateContext)} 所需的全部入参，避免方法参数超标
-   * （规则 04 §10.1：单个方法参数不超过 5 个）。</p>
-   */
-  public record CreateContext(
-    CustomerChannelEntitlementId id,
-    CustomerNo customerNo,
-    Set<AnnuityChannel> enabledChannels,
-    UserNo operator
-  ) {}
-
-  /**
-   * 从持久化数据重建聚合根的快照参数对象.
-   */
-  public record ReconstituteSnapshot(
-    CustomerChannelEntitlementId id,
-    UserNo createdBy, UserNo updatedBy,
-    LocalDateTime createdAt, LocalDateTime updatedAt,
-    Version version,
-    CustomerNo customerNo,
-    Set<AnnuityChannel> enabledChannels
-  ) {}
-
   private CustomerChannelEntitlement(
     CustomerChannelEntitlementId id, UserNo creator,
     CustomerNo customerNo,
@@ -197,5 +172,32 @@ public class CustomerChannelEntitlement extends AggregateRoot<CustomerChannelEnt
       throw new DomainException(ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED)
         .withLogDetail("enabledChannels cannot be null or empty");
     }
+  }
+
+  /**
+   * 创建客户渠道开通记录的参数对象.
+   *
+   * <p>封装 {@link #create(CreateContext)} 所需的全部入参，避免方法参数超标
+   * （规则 04 §10.1：单个方法参数不超过 5 个）。</p>
+   */
+  public record CreateContext(
+    CustomerChannelEntitlementId id,
+    CustomerNo customerNo,
+    Set<AnnuityChannel> enabledChannels,
+    UserNo operator
+  ) {
+  }
+
+  /**
+   * 从持久化数据重建聚合根的快照参数对象.
+   */
+  public record ReconstituteSnapshot(
+    CustomerChannelEntitlementId id,
+    UserNo createdBy, UserNo updatedBy,
+    LocalDateTime createdAt, LocalDateTime updatedAt,
+    Version version,
+    CustomerNo customerNo,
+    Set<AnnuityChannel> enabledChannels
+  ) {
   }
 }

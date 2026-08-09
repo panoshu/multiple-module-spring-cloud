@@ -5,7 +5,6 @@ import com.example.shared.identifier.contract.IdType;
 import com.example.shared.identifier.contract.Identifier;
 
 import java.util.Objects;
-import java.util.UUID;
 
 @IdDefinition(type = IdType.ULID)
 public record SessionId(String value) implements Identifier<String> {

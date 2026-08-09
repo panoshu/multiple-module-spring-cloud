@@ -7,4 +7,5 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @param accountId 账号 ID
  */
-public record GetPlatformPermissionsRequest(@NotBlank String accountId) {}
+public record GetPlatformPermissionsRequest(@NotBlank String accountId) {
+}

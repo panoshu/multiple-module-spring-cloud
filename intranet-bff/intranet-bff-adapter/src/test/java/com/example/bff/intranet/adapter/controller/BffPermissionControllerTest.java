@@ -32,42 +32,42 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(BffPermissionController.class)
 class BffPermissionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired
+  private MockMvc mockMvc;
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private PermissionManagementService permissionManagementService;
+  @MockitoBean
+  private PermissionManagementService permissionManagementService;
 
-    @Test
-    @DisplayName("POST /management/permissions/check 透明转发到 auth-service")
-    void check_forwardsToAuthService() throws Exception {
-        when(permissionManagementService.check(any()))
-                .thenReturn(ApiResult.success(new PermissionCheckResponse(true)));
+  @Test
+  @DisplayName("POST /management/permissions/check 透明转发到 auth-service")
+  void check_forwardsToAuthService() throws Exception {
+    when(permissionManagementService.check(any()))
+      .thenReturn(ApiResult.success(new PermissionCheckResponse(true)));
 
-        PermissionCheckRequest request = new PermissionCheckRequest(
-                "user-001", null, "ACC_PLAN_CREATE", "PERM_CODE");
+    PermissionCheckRequest request = new PermissionCheckRequest(
+      "user-001", null, "ACC_PLAN_CREATE", "PERM_CODE");
 
-        mockMvc.perform(post("/management/permissions/check")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"));
-    }
+    mockMvc.perform(post("/management/permissions/check")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"));
+  }
 
-    @Test
-    @DisplayName("POST /management/permissions/metadata/items 透明转发到 auth-service")
-    void listItems_forwardsToAuthService() throws Exception {
-        when(permissionManagementService.listItems(any()))
-                .thenReturn(ApiResult.success(List.of()));
+  @Test
+  @DisplayName("POST /management/permissions/metadata/items 透明转发到 auth-service")
+  void listItems_forwardsToAuthService() throws Exception {
+    when(permissionManagementService.listItems(any()))
+      .thenReturn(ApiResult.success(List.of()));
 
-        ListPermissionItemsRequest request = new ListPermissionItemsRequest(null);
+    ListPermissionItemsRequest request = new ListPermissionItemsRequest(null);
 
-        mockMvc.perform(post("/management/permissions/metadata/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("COMMON.0000"));
-    }
+    mockMvc.perform(post("/management/permissions/metadata/items")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.code").value("COMMON.0000"));
+  }
 }

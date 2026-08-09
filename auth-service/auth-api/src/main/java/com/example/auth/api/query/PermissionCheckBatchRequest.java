@@ -14,6 +14,7 @@ import java.util.List;
  * @param items     权限点列表
  */
 public record PermissionCheckBatchRequest(
-    @NotBlank String accountId,
-    String planId,
-    @NotEmpty @Valid List<PermissionCheckItemRequest> items) {}
+  @NotBlank String accountId,
+  String planId,
+  @NotEmpty @Valid List<PermissionCheckItemRequest> items) {
+}

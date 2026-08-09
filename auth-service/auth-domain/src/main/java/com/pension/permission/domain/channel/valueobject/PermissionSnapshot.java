@@ -39,8 +39,8 @@ public record PermissionSnapshot(
    * 创建权限快照.
    *
    * @param permissions 冻结的权限集合
-   * @param frozenAt 冻结时间
-   * @param ttl 存活时间（从 frozenAt 开始计算）
+   * @param frozenAt    冻结时间
+   * @param ttl         存活时间（从 frozenAt 开始计算）
    * @return PermissionSnapshot 实例
    */
   public static PermissionSnapshot of(Set<Permission> permissions, LocalDateTime frozenAt, Duration ttl) {

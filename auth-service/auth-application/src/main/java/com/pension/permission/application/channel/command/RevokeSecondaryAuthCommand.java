@@ -10,4 +10,5 @@ public record RevokeSecondaryAuthCommand(
   SecondaryAuthSessionId sessionId,
   UserNo operator,
   String reason
-) {}
+) {
+}

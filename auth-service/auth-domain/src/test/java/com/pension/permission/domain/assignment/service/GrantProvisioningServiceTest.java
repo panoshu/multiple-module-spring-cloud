@@ -1,7 +1,5 @@
 package com.pension.permission.domain.assignment.service;
 
-import com.example.shared.identifier.id.UserNo;
-import com.pension.permission.domain.assignment.aggregate.AgentIdentityAssignment;
 import com.pension.permission.domain.assignment.repository.AssignmentRepository;
 import com.pension.permission.domain.fixture.AssignmentFixtures;
 import com.pension.permission.domain.role.service.RoleTemplateResolver;
@@ -12,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @DisplayName("GrantProvisioningService 测试")
 class GrantProvisioningServiceTest {

@@ -43,84 +43,84 @@ import java.util.Map;
 @ConditionalOnExpression("'${spring.application.name}' != 'auth-service'")
 public class PermissionRegistrationRunner implements ApplicationRunner {
 
-    private final RequestMappingHandlerMapping handlerMapping;
-    private final PermissionRegistrationApi registrationApi;
-    private final Environment environment;
+  private final RequestMappingHandlerMapping handlerMapping;
+  private final PermissionRegistrationApi registrationApi;
+  private final Environment environment;
 
-    @Override
-    public void run(ApplicationArguments args) {
-        String serviceName = environment.getProperty("spring.application.name", "unknown");
+  @Override
+  public void run(ApplicationArguments args) {
+    String serviceName = environment.getProperty("spring.application.name", "unknown");
 
-        try {
-            List<PermissionItemDescriptor> descriptors = extractDescriptors();
-            if (descriptors.isEmpty()) {
-                log.info("[PermissionRegistration] 服务 {} 未发现 @RequirePermission 注解，跳过上报", serviceName);
-                return;
-            }
+    try {
+      List<PermissionItemDescriptor> descriptors = extractDescriptors();
+      if (descriptors.isEmpty()) {
+        log.info("[PermissionRegistration] 服务 {} 未发现 @RequirePermission 注解，跳过上报", serviceName);
+        return;
+      }
 
-            log.info("[PermissionRegistration] 服务 {} 开始上报 {} 个权限点", serviceName, descriptors.size());
-            ApiResult<PermissionRegistrationResponse> result = registrationApi.register(
-                new PermissionRegistrationRequest(serviceName, descriptors));
+      log.info("[PermissionRegistration] 服务 {} 开始上报 {} 个权限点", serviceName, descriptors.size());
+      ApiResult<PermissionRegistrationResponse> result = registrationApi.register(
+        new PermissionRegistrationRequest(serviceName, descriptors));
 
-            if (result != null && result.isSuccess()) {
-                PermissionRegistrationResponse data = result.data();
-                if (data != null) {
-                    log.info("[PermissionRegistration] 服务 {} 上报完成: 接收 {}, 新增/更新 {}, 未变化 {}",
-                        serviceName, data.totalReceived(), data.upserted(), data.unchanged());
-                }
-            } else {
-                log.warn("[PermissionRegistration] 服务 {} 上报失败: {} - {}",
-                    serviceName,
-                    result != null ? result.code() : "null",
-                    result != null ? result.message() : "响应为空");
-            }
-        } catch (Exception e) {
-            log.warn("[PermissionRegistration] 服务 {} 上报权限点失败,不影响启动", serviceName, e);
+      if (result != null && result.isSuccess()) {
+        PermissionRegistrationResponse data = result.data();
+        if (data != null) {
+          log.info("[PermissionRegistration] 服务 {} 上报完成: 接收 {}, 新增/更新 {}, 未变化 {}",
+            serviceName, data.totalReceived(), data.upserted(), data.unchanged());
         }
+      } else {
+        log.warn("[PermissionRegistration] 服务 {} 上报失败: {} - {}",
+          serviceName,
+          result != null ? result.code() : "null",
+          result != null ? result.message() : "响应为空");
+      }
+    } catch (Exception e) {
+      log.warn("[PermissionRegistration] 服务 {} 上报权限点失败,不影响启动", serviceName, e);
     }
+  }
 
-    private List<PermissionItemDescriptor> extractDescriptors() {
-        List<PermissionItemDescriptor> descriptors = new ArrayList<>();
-        for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMapping.getHandlerMethods().entrySet()) {
-            RequirePermission annotation = AnnotationUtils.findAnnotation(
-                entry.getValue().getMethod(), RequirePermission.class);
-            if (annotation == null) {
-                continue;
-            }
+  private List<PermissionItemDescriptor> extractDescriptors() {
+    List<PermissionItemDescriptor> descriptors = new ArrayList<>();
+    for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMapping.getHandlerMethods().entrySet()) {
+      RequirePermission annotation = AnnotationUtils.findAnnotation(
+        entry.getValue().getMethod(), RequirePermission.class);
+      if (annotation == null) {
+        continue;
+      }
 
-            String path = extractPath(entry.getKey());
-            String httpMethod = extractHttpMethod(entry.getKey());
-            String action = annotation.action().isEmpty() ? null : annotation.action();
+      String path = extractPath(entry.getKey());
+      String httpMethod = extractHttpMethod(entry.getKey());
+      String action = annotation.action().isEmpty() ? null : annotation.action();
 
-            descriptors.add(new PermissionItemDescriptor(
-                annotation.business(),
-                action,
-                annotation.category().name(),
-                entry.getValue().getBeanType().getSimpleName(),
-                entry.getValue().getMethod().getName(),
-                httpMethod,
-                path));
-        }
-        return descriptors;
+      descriptors.add(new PermissionItemDescriptor(
+        annotation.business(),
+        action,
+        annotation.category().name(),
+        entry.getValue().getBeanType().getSimpleName(),
+        entry.getValue().getMethod().getName(),
+        httpMethod,
+        path));
     }
+    return descriptors;
+  }
 
-    private String extractPath(RequestMappingInfo info) {
-        if (info.getPathPatternsCondition() != null) {
-            return String.join(",", info.getPathPatternsCondition().getPatternValues());
-        }
-        if (info.getPatternsCondition() != null) {
-            return String.join(",", info.getPatternsCondition().getPatterns());
-        }
-        return null;
+  private String extractPath(RequestMappingInfo info) {
+    if (info.getPathPatternsCondition() != null) {
+      return String.join(",", info.getPathPatternsCondition().getPatternValues());
     }
+    if (info.getPatternsCondition() != null) {
+      return String.join(",", info.getPatternsCondition().getPatterns());
+    }
+    return null;
+  }
 
-    private String extractHttpMethod(RequestMappingInfo info) {
-        if (info.getMethodsCondition() == null) {
-            return null;
-        }
-        return info.getMethodsCondition().getMethods().stream()
-            .map(Enum::name)
-            .reduce((a, b) -> a + "," + b)
-            .orElse(null);
+  private String extractHttpMethod(RequestMappingInfo info) {
+    if (info.getMethodsCondition() == null) {
+      return null;
     }
+    return info.getMethodsCondition().getMethods().stream()
+      .map(Enum::name)
+      .reduce((a, b) -> a + "," + b)
+      .orElse(null);
+  }
 }

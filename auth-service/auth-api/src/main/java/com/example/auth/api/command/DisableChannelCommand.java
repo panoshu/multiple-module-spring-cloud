@@ -15,4 +15,5 @@ public record DisableChannelCommand(
   CustomerNo customerNo,
   AnnuityChannel channel,
   UserNo operator
-) {}
+) {
+}

@@ -1,17 +1,7 @@
 package com.example.bff.intranet.adapter.controller;
 
-import com.example.auth.api.dto.DataScopeResponse;
-import com.example.auth.api.dto.PermissionCheckBatchResponse;
-import com.example.auth.api.dto.PermissionCheckResponse;
-import com.example.auth.api.dto.PermissionGroupResponse;
-import com.example.auth.api.dto.PermissionItemResponse;
-import com.example.auth.api.dto.PermissionResponse;
-import com.example.auth.api.query.DataScopeRequest;
-import com.example.auth.api.query.GetBusinessPermissionsRequest;
-import com.example.auth.api.query.GetPlatformPermissionsRequest;
-import com.example.auth.api.query.ListPermissionItemsRequest;
-import com.example.auth.api.query.PermissionCheckBatchRequest;
-import com.example.auth.api.query.PermissionCheckRequest;
+import com.example.auth.api.dto.*;
+import com.example.auth.api.query.*;
 import com.example.bff.intranet.api.BffPermissionApi;
 import com.example.bff.intranet.application.service.PermissionManagementService;
 import com.example.shared.web.core.api.ApiResult;
@@ -30,44 +20,44 @@ import java.util.Set;
 @RestController
 public class BffPermissionController implements BffPermissionApi {
 
-    private final PermissionManagementService permissionManagementService;
+  private final PermissionManagementService permissionManagementService;
 
-    public BffPermissionController(PermissionManagementService permissionManagementService) {
-        this.permissionManagementService = permissionManagementService;
-    }
+  public BffPermissionController(PermissionManagementService permissionManagementService) {
+    this.permissionManagementService = permissionManagementService;
+  }
 
-    @Override
-    public ApiResult<PermissionCheckResponse> check(PermissionCheckRequest request) {
-        return permissionManagementService.check(request);
-    }
+  @Override
+  public ApiResult<PermissionCheckResponse> check(PermissionCheckRequest request) {
+    return permissionManagementService.check(request);
+  }
 
-    @Override
-    public ApiResult<PermissionCheckBatchResponse> checkBatch(PermissionCheckBatchRequest request) {
-        return permissionManagementService.checkBatch(request);
-    }
+  @Override
+  public ApiResult<PermissionCheckBatchResponse> checkBatch(PermissionCheckBatchRequest request) {
+    return permissionManagementService.checkBatch(request);
+  }
 
-    @Override
-    public ApiResult<DataScopeResponse> resolveDataScope(DataScopeRequest request) {
-        return permissionManagementService.resolveDataScope(request);
-    }
+  @Override
+  public ApiResult<DataScopeResponse> resolveDataScope(DataScopeRequest request) {
+    return permissionManagementService.resolveDataScope(request);
+  }
 
-    @Override
-    public ApiResult<List<PermissionItemResponse>> listItems(ListPermissionItemsRequest request) {
-        return permissionManagementService.listItems(request);
-    }
+  @Override
+  public ApiResult<List<PermissionItemResponse>> listItems(ListPermissionItemsRequest request) {
+    return permissionManagementService.listItems(request);
+  }
 
-    @Override
-    public ApiResult<List<PermissionGroupResponse>> listGroupedItems(ListPermissionItemsRequest request) {
-        return permissionManagementService.listGroupedItems(request);
-    }
+  @Override
+  public ApiResult<List<PermissionGroupResponse>> listGroupedItems(ListPermissionItemsRequest request) {
+    return permissionManagementService.listGroupedItems(request);
+  }
 
-    @Override
-    public ApiResult<Set<PermissionResponse>> getPlatformPermissions(GetPlatformPermissionsRequest request) {
-        return permissionManagementService.getPlatformPermissions(request);
-    }
+  @Override
+  public ApiResult<Set<PermissionResponse>> getPlatformPermissions(GetPlatformPermissionsRequest request) {
+    return permissionManagementService.getPlatformPermissions(request);
+  }
 
-    @Override
-    public ApiResult<Set<PermissionResponse>> getBusinessPermissions(GetBusinessPermissionsRequest request) {
-        return permissionManagementService.getBusinessPermissions(request);
-    }
+  @Override
+  public ApiResult<Set<PermissionResponse>> getBusinessPermissions(GetBusinessPermissionsRequest request) {
+    return permissionManagementService.getBusinessPermissions(request);
+  }
 }

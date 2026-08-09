@@ -17,4 +17,5 @@ public record ReplaceChannelsCommand(
   CustomerNo customerNo,
   Set<AnnuityChannel> channels,
   UserNo operator
-) {}
+) {
+}

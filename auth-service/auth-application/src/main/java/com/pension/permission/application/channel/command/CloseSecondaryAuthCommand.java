@@ -9,4 +9,5 @@ import com.pension.permission.types.SecondaryAuthSessionId;
 public record CloseSecondaryAuthCommand(
   SecondaryAuthSessionId sessionId,
   UserNo operator
-) {}
+) {
+}

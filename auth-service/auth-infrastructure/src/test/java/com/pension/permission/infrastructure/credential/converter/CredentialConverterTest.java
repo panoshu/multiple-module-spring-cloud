@@ -7,7 +7,6 @@ import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pension.permission.domain.credential.aggregate.Credential;
 import com.pension.permission.domain.credential.aggregate.PasswordCredential;
 import com.pension.permission.domain.credential.aggregate.UKeyCredential;
 import com.pension.permission.domain.credential.enumeration.CredentialStatus;
@@ -16,7 +15,6 @@ import com.pension.permission.domain.credential.valueobject.owner.CredentialOwne
 import com.pension.permission.domain.credential.valueobject.owner.CustomerCredentialOwner;
 import com.pension.permission.domain.credential.valueobject.owner.PlanCredentialOwner;
 import com.pension.permission.domain.credential.valueobject.owner.UserCredentialOwner;
-import com.pension.permission.infrastructure.credential.entity.CredentialDO;
 import com.pension.permission.types.CredentialId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -8,4 +8,5 @@ import jakarta.validation.constraints.NotBlank;
  * @param businessCode 业务编码
  * @param actionCode   操作编码
  */
-public record PermissionCheckItemRequest(@NotBlank String businessCode, String actionCode) {}
+public record PermissionCheckItemRequest(@NotBlank String businessCode, String actionCode) {
+}

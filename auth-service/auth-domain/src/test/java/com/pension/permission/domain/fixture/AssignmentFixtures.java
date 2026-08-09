@@ -14,7 +14,8 @@ import static org.mockito.Mockito.mock;
  */
 public final class AssignmentFixtures {
 
-  private AssignmentFixtures() {}
+  private AssignmentFixtures() {
+  }
 
   public static AgentIdentityAssignment activeAssignment(String userNo, String roleCode) {
     return AgentIdentityAssignment.create(

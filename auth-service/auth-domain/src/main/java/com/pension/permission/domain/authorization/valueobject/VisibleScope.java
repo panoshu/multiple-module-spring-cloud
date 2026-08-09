@@ -18,24 +18,24 @@ import java.util.Set;
  * @author auth-domain
  */
 public record VisibleScope(
-    boolean globalVisible,
-    Set<String> visiblePlans,
-    Set<String> visibleCustomers,
-    Set<String> excludedPlans,
-    Set<String> excludedCustomers) {
+  boolean globalVisible,
+  Set<String> visiblePlans,
+  Set<String> visibleCustomers,
+  Set<String> excludedPlans,
+  Set<String> excludedCustomers) {
 
-    public VisibleScope {
-        visiblePlans = visiblePlans != null ? Set.copyOf(visiblePlans) : Set.of();
-        visibleCustomers = visibleCustomers != null ? Set.copyOf(visibleCustomers) : Set.of();
-        excludedPlans = excludedPlans != null ? Set.copyOf(excludedPlans) : Set.of();
-        excludedCustomers = excludedCustomers != null ? Set.copyOf(excludedCustomers) : Set.of();
-    }
+  public VisibleScope {
+    visiblePlans = visiblePlans != null ? Set.copyOf(visiblePlans) : Set.of();
+    visibleCustomers = visibleCustomers != null ? Set.copyOf(visibleCustomers) : Set.of();
+    excludedPlans = excludedPlans != null ? Set.copyOf(excludedPlans) : Set.of();
+    excludedCustomers = excludedCustomers != null ? Set.copyOf(excludedCustomers) : Set.of();
+  }
 
-    public static VisibleScope empty() {
-        return new VisibleScope(false, Set.of(), Set.of(), Set.of(), Set.of());
-    }
+  public static VisibleScope empty() {
+    return new VisibleScope(false, Set.of(), Set.of(), Set.of(), Set.of());
+  }
 
-    public static VisibleScope global() {
-        return new VisibleScope(true, Set.of(), Set.of(), Set.of(), Set.of());
-    }
+  public static VisibleScope global() {
+    return new VisibleScope(true, Set.of(), Set.of(), Set.of(), Set.of());
+  }
 }

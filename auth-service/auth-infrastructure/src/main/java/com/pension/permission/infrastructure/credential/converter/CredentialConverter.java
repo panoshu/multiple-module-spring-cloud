@@ -181,7 +181,8 @@ public abstract class CredentialConverter {
       return Set.of();
     }
     try {
-      Set<AnnuityChannel> channels = objectMapper.readValue(json, new TypeReference<>() {});
+      Set<AnnuityChannel> channels = objectMapper.readValue(json, new TypeReference<>() {
+      });
       return channels != null ? channels : Set.of();
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("反序列化适用渠道失败", e);

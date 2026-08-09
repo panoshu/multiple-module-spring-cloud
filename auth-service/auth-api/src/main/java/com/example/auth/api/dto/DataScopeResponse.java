@@ -13,8 +13,9 @@ import java.util.Set;
  * @author auth-api
  */
 public record DataScopeResponse(
-    boolean globalVisible,
-    Set<String> visiblePlans,
-    Set<String> visibleCustomers,
-    Set<String> excludedPlans,
-    Set<String> excludedCustomers) {}
+  boolean globalVisible,
+  Set<String> visiblePlans,
+  Set<String> visibleCustomers,
+  Set<String> excludedPlans,
+  Set<String> excludedCustomers) {
+}

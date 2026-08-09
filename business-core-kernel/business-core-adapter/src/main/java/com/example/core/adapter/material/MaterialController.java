@@ -1,5 +1,6 @@
 package com.example.core.adapter.material;
 
+import com.example.auth.api.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.material.converter.MaterialConverter;
 import com.example.core.api.context.SessionContext;
@@ -17,7 +18,6 @@ import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.shared.identifier.id.ApplicationId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.api.annotation.RequirePermission;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

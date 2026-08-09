@@ -1,14 +1,10 @@
 package com.pension.permission.infrastructure.permission.converter;
 
-import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.enumeration.PermissionCategory;
-import com.pension.permission.domain.authorization.valueobject.ActionCode;
-import com.pension.permission.domain.authorization.valueobject.BusinessCode;
 import com.pension.permission.domain.permission.aggregate.PermissionItem;
 import com.pension.permission.domain.permission.enumeration.PermissionItemSource;
 import com.pension.permission.infrastructure.permission.entity.PermissionItemDO;
-import com.pension.permission.types.PermissionItemId;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

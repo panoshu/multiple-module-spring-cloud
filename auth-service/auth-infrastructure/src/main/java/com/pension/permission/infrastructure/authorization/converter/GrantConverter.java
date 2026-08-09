@@ -14,11 +14,7 @@ import com.pension.permission.domain.authorization.enumeration.GrantStatus;
 import com.pension.permission.domain.authorization.enumeration.GrantType;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 import com.pension.permission.domain.authorization.valueobject.ScopeRule;
-import com.pension.permission.domain.authorization.valueobject.subject.CapabilitySubject;
-import com.pension.permission.domain.authorization.valueobject.subject.GrantSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.PlanAllMembersSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.PlanRoleSubject;
-import com.pension.permission.domain.authorization.valueobject.subject.UserListSubject;
+import com.pension.permission.domain.authorization.valueobject.subject.*;
 import com.pension.permission.infrastructure.authorization.entity.GrantDO;
 import com.pension.permission.types.GrantId;
 import com.pension.permission.types.RoleCode;
@@ -235,34 +231,23 @@ public abstract class GrantConverter {
     return switch (wrapper.type()) {
       case "Capability" -> new CapabilitySubject();
       case "UserList" -> {
-        Set<UserNo> accountIds = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {});
+        Set<UserNo> accountIds = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {
+        });
         yield new UserListSubject(accountIds);
       }
       case "PlanAllMembers" -> {
-        PlanNo planNo = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {});
+        PlanNo planNo = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {
+        });
         yield new PlanAllMembersSubject(planNo);
       }
       case "PlanRole" -> {
-        PlanRolePayload payload = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {});
+        PlanRolePayload payload = objectMapper.convertValue(wrapper.data(), new TypeReference<>() {
+        });
         yield new PlanRoleSubject(payload.planNo(), payload.roleCode());
       }
       default -> throw new IllegalArgumentException("未知的 GrantSubject 类型标识: " + wrapper.type());
     };
   }
-
-  /**
-   * Subject 包装类，承载多态类型标识.
-   */
-  private record SubjectWrapper(String type, Object data) {}
-
-  /**
-   * PlanRoleSubject 的可序列化负载.
-   */
-  private record PlanRolePayload(PlanNo planNo, RoleCode roleCode) {}
-
-  // ===============================
-  // ScopeRule 列表 JSON 序列化
-  // ===============================
 
   protected String toScopeRulesJson(List<ScopeRule> scopeRules) {
     if (scopeRules == null || scopeRules.isEmpty()) {
@@ -280,7 +265,8 @@ public abstract class GrantConverter {
       return List.of();
     }
     try {
-      List<ScopeRule> rules = objectMapper.readValue(json, new TypeReference<>() {});
+      List<ScopeRule> rules = objectMapper.readValue(json, new TypeReference<>() {
+      });
       return rules != null ? rules : List.of();
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("反序列化 ScopeRule 集合失败: " + json, e);
@@ -288,7 +274,7 @@ public abstract class GrantConverter {
   }
 
   // ===============================
-  // Permission 集合 JSON 序列化
+  // ScopeRule 列表 JSON 序列化
   // ===============================
 
   protected String toPermissionsJson(Set<Permission> permissions) {
@@ -307,10 +293,27 @@ public abstract class GrantConverter {
       return new HashSet<>();
     }
     try {
-      Set<Permission> permissions = objectMapper.readValue(json, new TypeReference<>() {});
+      Set<Permission> permissions = objectMapper.readValue(json, new TypeReference<>() {
+      });
       return permissions != null ? permissions : new HashSet<>();
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("反序列化 Permission 集合失败: " + json, e);
     }
+  }
+
+  // ===============================
+  // Permission 集合 JSON 序列化
+  // ===============================
+
+  /**
+   * Subject 包装类，承载多态类型标识.
+   */
+  private record SubjectWrapper(String type, Object data) {
+  }
+
+  /**
+   * PlanRoleSubject 的可序列化负载.
+   */
+  private record PlanRolePayload(PlanNo planNo, RoleCode roleCode) {
   }
 }

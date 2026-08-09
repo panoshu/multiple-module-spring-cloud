@@ -26,8 +26,9 @@
 2. 在 infrastructure 层用 fesod 模板填充实现 `FesodExcelExporter`
 3. 程序生成填充模板 `docs/excel/示例表单_填充模板.xlsx`（首次运行创建，已存在跳过）
 4. 构造 2 个端到端测试：
-  - 全流程 happy path（解析 → 校验 → 拆分 → 导出 → round-trip 验证）
-  - 校验失败时不导出
+
+- 全流程 happy path（解析 → 校验 → 拆分 → 导出 → round-trip 验证）
+- 校验失败时不导出
 
 ### 1.3 非目标
 

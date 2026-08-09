@@ -1,15 +1,11 @@
 package com.example.auth.adapter.permission;
 
 import com.example.auth.api.PermissionCheckApi;
+import com.example.auth.api.dto.*;
 import com.example.auth.api.query.DataScopeRequest;
 import com.example.auth.api.query.PermissionCheckBatchRequest;
 import com.example.auth.api.query.PermissionCheckItemRequest;
 import com.example.auth.api.query.PermissionCheckRequest;
-import com.example.auth.api.dto.DataScope;
-import com.example.auth.api.dto.DataScopeResponse;
-import com.example.auth.api.dto.PermissionCheckBatchResponse;
-import com.example.auth.api.dto.PermissionCheckItemResponse;
-import com.example.auth.api.dto.PermissionCheckResponse;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
@@ -40,10 +36,10 @@ public class PermissionCheckController implements PermissionCheckApi {
   @Override
   public ApiResult<PermissionCheckResponse> check(PermissionCheckRequest request) {
     CheckPermissionQuery query = new CheckPermissionQuery(
-        UserNo.of(request.accountId()),
-        resolvePlanNo(request.planId()),
-        new BusinessCode(request.businessCode()),
-        resolveActionCode(request.actionCode()));
+      UserNo.of(request.accountId()),
+      resolvePlanNo(request.planId()),
+      new BusinessCode(request.businessCode()),
+      resolveActionCode(request.actionCode()));
     boolean allowed = permissionQueryService.checkPermission(query);
     return ApiResult.success(new PermissionCheckResponse(allowed));
   }
@@ -56,15 +52,15 @@ public class PermissionCheckController implements PermissionCheckApi {
     List<PermissionCheckItemResponse> results = new ArrayList<>(request.items().size());
     for (PermissionCheckItemRequest item : request.items()) {
       CheckPermissionQuery query = new CheckPermissionQuery(
-          identity,
-          planNo,
-          new BusinessCode(item.businessCode()),
-          resolveActionCode(item.actionCode()));
+        identity,
+        planNo,
+        new BusinessCode(item.businessCode()),
+        resolveActionCode(item.actionCode()));
       boolean allowed = permissionQueryService.checkPermission(query);
       results.add(new PermissionCheckItemResponse(
-          item.businessCode(),
-          item.actionCode(),
-          allowed));
+        item.businessCode(),
+        item.actionCode(),
+        allowed));
     }
     return ApiResult.success(new PermissionCheckBatchResponse(results));
   }
@@ -72,15 +68,15 @@ public class PermissionCheckController implements PermissionCheckApi {
   @Override
   public ApiResult<DataScopeResponse> resolveDataScope(DataScopeRequest request) {
     ResolveDataScopeQuery query = new ResolveDataScopeQuery(
-        UserNo.of(request.accountId()),
-        new BusinessCode(request.businessCode()));
+      UserNo.of(request.accountId()),
+      new BusinessCode(request.businessCode()));
     DataScope dataScope = permissionQueryService.resolveDataScope(query);
     return ApiResult.success(new DataScopeResponse(
-        dataScope.globalVisible(),
-        dataScope.visiblePlans(),
-        dataScope.visibleCustomers(),
-        dataScope.excludedPlans(),
-        dataScope.excludedCustomers()));
+      dataScope.globalVisible(),
+      dataScope.visiblePlans(),
+      dataScope.visibleCustomers(),
+      dataScope.excludedPlans(),
+      dataScope.excludedCustomers()));
   }
 
   private PlanNo resolvePlanNo(String planId) {

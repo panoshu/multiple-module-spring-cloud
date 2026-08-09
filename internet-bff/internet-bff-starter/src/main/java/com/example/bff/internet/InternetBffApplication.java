@@ -18,12 +18,12 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  */
 @EnableDiscoveryClient
 @SpringBootApplication(scanBasePackages = {
-        "com.example.bff.internet",
-        "com.example.bff.shared"
+  "com.example.bff.internet",
+  "com.example.bff.shared"
 })
 @MapperScan("com.example.bff.shared.infrastructure.mapper")
 public class InternetBffApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(InternetBffApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(InternetBffApplication.class, args);
+  }
 }

@@ -79,9 +79,11 @@
 - 3 个聚合根：`ParseTask`、`SubTaskData`、`TemplateConfig`
 - 1 个聚合内实体：`SourceTemplateDef`
 -
+
 值对象集合（SubTaskSummary、TaskError、RowError、BusinessContext、CanonicalData、FieldLocation、ValidationResult、FetchPagination、PageInfo、PagedRows）
 -
 配置定义值对象（CanonicalModelDef、PropertyFieldDef、TableDef、FieldDef、ValidationRule、DerivationRule、SplitConfig、RegionDef、RegionTrigger、KvStrategy、TableStrategy、DataEndRule、TargetMapping）
+
 - 解析抽象（RawRow、RawRowStream、RegionParseResult 及其子类）
 - 领域事件 `FileParsedEvent`
 - 3 个 Repository 接口

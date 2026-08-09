@@ -24,9 +24,7 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * {@link SaTokenGatewayConfiguration} sa-token 网关配置单元测试。

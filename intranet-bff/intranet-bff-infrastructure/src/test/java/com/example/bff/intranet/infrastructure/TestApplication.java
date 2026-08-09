@@ -28,13 +28,13 @@ import javax.sql.DataSource;
 @SpringBootApplication(scanBasePackages = "com.example.bff.shared.infrastructure")
 @MapperScan("com.example.bff.shared.infrastructure.mapper")
 public class TestApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(TestApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(TestApplication.class, args);
+  }
 
-    @Bean
-    @ConfigurationProperties("spring.datasource")
-    public DataSource dataSource() {
-        return new DriverManagerDataSource();
-    }
+  @Bean
+  @ConfigurationProperties("spring.datasource")
+  public DataSource dataSource() {
+    return new DriverManagerDataSource();
+  }
 }

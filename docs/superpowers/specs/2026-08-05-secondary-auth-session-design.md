@@ -10,9 +10,13 @@
 
 auth-service 当前的网点二次授权实现存在重大安全缺陷：
 
-1. **单步冒充风险**：[DefaultSecondaryAuthService.elevate()](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\service\DefaultSecondaryAuthService.java) 中，柜员只要持有客户 UKey + 经办手机号，**立即**获得经办人身份，**经办人本人不需要确认**。UKey 被盗 + 手机号泄露即可完全冒充经办人。
+1.
+**单步冒充风险**：[DefaultSecondaryAuthService.elevate ()](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\service\DefaultSecondaryAuthService.java)
+中，柜员只要持有客户 UKey + 经办手机号， **立即**获得经办人身份， **经办人本人不需要确认**。UKey 被盗 + 手机号泄露即可完全冒充经办人。
 
-2. **缺少状态机**：[Session 聚合根](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\aggregate\Session.java) 的二次授权状态隐藏在 `EffectiveIdentity` 值对象中，无法表达"待授权/已拒绝/已撤销"等语义。
+2.
+**缺少状态机**：[Session 聚合根](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\aggregate\Session.java)
+的二次授权状态隐藏在 `EffectiveIdentity` 值对象中，无法表达"待授权/已拒绝/已撤销"等语义。
 
 3. **审计能力弱**：只有 `SessionIdentityElevated` 一个事件，缺失发起、拒绝、撤销、超时等完整审计链。
 
@@ -20,7 +24,7 @@ auth-service 当前的网点二次授权实现存在重大安全缺陷：
 
 ### 1.2 设计目标
 
-- 引入 `SecondaryAuthSession` 独立聚合根，支持**短信验证码两段式授权**
+- 引入 `SecondaryAuthSession` 独立聚合根，支持 **短信验证码两段式授权**
 - 设计完整状态机（6 状态），覆盖二次授权全生命周期
 - 冻结权限快照，支持快照 + TTL + 事件驱动的权限判定策略
 - 提供 `SecondaryAuthStrategy` SPI 扩展点，支持未来多种授权方式
@@ -39,7 +43,8 @@ auth-service 当前的网点二次授权实现存在重大安全缺陷：
 
 **结论：不增强**。渠道隔离的真正防线在三层：
 
-1. **Token 层**：sa-token 三套 `StpLogic`（`satoken-internet` / `satoken-hq` / `satoken-branch`）各自独立，互联网 token 无法读取网点会话
+1. **Token 层**：sa-token 三套 `StpLogic`（`satoken-internet` / `satoken-hq` / `satoken-branch`）各自独立，互联网 token
+   无法读取网点会话
 2. **网关层**：demo-gateway 路径前缀 `/internet/**` / `/hq/**` / `/branch/**` 严格隔离
 3. **Repository 查询层**：`SessionRepository.findByTokenAndChannel(token, channel)` 强制带 channel 条件
 
@@ -47,16 +52,17 @@ auth-service 当前的网点二次授权实现存在重大安全缺陷：
 
 ### 2.2 拆分的代价
 
-| 代价 | 说明 |
-|------|------|
-| 违反 DDD 原则 | 聚合根不应使用继承多态，[03-领域模型约束](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\03-领域模型约束.md) 隐含 |
-| 共享字段重复 | primaryAccountId / channel / effectiveIdentity / expiresAt / status 在三个子类重复 |
-| 多态分派反模式 | 应用层 `if (session instanceof BranchSession)` 违反开闭原则 |
-| Repository 复杂化 | MyBatis-Flex 对聚合根继承支持差 |
+| 代价              | 说明                                                                                                                                  |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| 违反 DDD 原则     | 聚合根不应使用继承多态，[03-领域模型约束](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\03-领域模型约束.md) 隐含 |
+| 共享字段重复      | primaryAccountId / channel / effectiveIdentity / expiresAt / status 在三个子类重复                                                    |
+| 多态分派反模式    | 应用层 `if (session instanceof BranchSession)` 违反开闭原则                                                                           |
+| Repository 复杂化 | MyBatis-Flex 对聚合根继承支持差                                                                                                       |
 
 ### 2.3 最终决策
 
 **保持单一 Session 聚合根**，渠道隔离通过：
+
 - Token 严格隔离（已有设计）
 - 网关路径前缀严格隔离（已有设计）
 - Repository 查询强制带 channel 条件（实现层约束）
@@ -100,14 +106,14 @@ auth-service 当前的网点二次授权实现存在重大安全缺陷：
 
 ### 3.2 安全机制
 
-| 机制 | 说明 |
-|------|------|
-| 验证码哈希存储 | 数据库不存明文，使用 BCrypt 哈希 |
-| 验证码时效 | 默认 5 分钟，超时自动失效 |
-| 重试次数限制 | 默认 3 次，耗尽后会话状态变为 EXPIRED |
-| 一次性使用 | 验证成功后立即失效 |
+| 机制             | 说明                                           |
+|------------------|------------------------------------------------|
+| 验证码哈希存储   | 数据库不存明文，使用 BCrypt 哈希               |
+| 验证码时效       | 默认 5 分钟，超时自动失效                      |
+| 重试次数限制     | 默认 3 次，耗尽后会话状态变为 EXPIRED          |
+| 一次性使用       | 验证成功后立即失效                             |
 | 柜员活跃会话唯一 | 同一柜员同时只能有一个 PENDING/AUTHORIZED 会话 |
-| 完整审计 | 发起、发送、确认、拒绝、撤销、超时全程事件记录 |
+| 完整审计         | 发起、发送、确认、拒绝、撤销、超时全程事件记录 |
 
 ### 3.3 VerificationCode 值对象
 
@@ -210,15 +216,15 @@ public record PermissionSnapshot(
 
 ### 4.4 状态流转规则
 
-| 当前状态 | 目标状态 | 触发条件 |
-|---------|---------|---------|
-| （初始） | PENDING | 柜员发起，生成验证码，发短信 |
-| PENDING | AUTHORIZED | 验证码校验通过，冻结快照 |
-| PENDING | REJECTED | 验证码重试次数耗尽（自动） |
-| PENDING | EXPIRED | 待授权超时（默认 5 分钟） |
-| AUTHORIZED | REVOKED | 经办人主动撤销 / 紧急收权 |
-| AUTHORIZED | CLOSED | 柜员登出 / 会话过期（默认 2 小时） |
-| AUTHORIZED | EXPIRED | 快照 TTL 过期（默认 30 秒） |
+| 当前状态   | 目标状态   | 触发条件                           |
+|------------|------------|------------------------------------|
+| （初始）   | PENDING    | 柜员发起，生成验证码，发短信       |
+| PENDING    | AUTHORIZED | 验证码校验通过，冻结快照           |
+| PENDING    | REJECTED   | 验证码重试次数耗尽（自动）         |
+| PENDING    | EXPIRED    | 待授权超时（默认 5 分钟）          |
+| AUTHORIZED | REVOKED    | 经办人主动撤销 / 紧急收权          |
+| AUTHORIZED | CLOSED     | 柜员登出 / 会话过期（默认 2 小时） |
+| AUTHORIZED | EXPIRED    | 快照 TTL 过期（默认 30 秒）        |
 
 非法状态转移抛 `DomainException`。
 
@@ -285,16 +291,17 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
 
 ### 4.7 领域事件
 
-| 事件 | 触发时机 | 异步订阅者动作 |
-|------|---------|---------------|
-| `SecondaryAuthInitiated` | 柜员发起 | 发送短信验证码到经办人手机 |
-| `SecondaryAuthCompleted` | 验证码确认通过 | 更新柜员 Session（写入 secondaryAuthSessionId + effectiveIdentity） |
-| `SecondaryAuthRejected` | 验证码重试耗尽 | 通知柜员拒绝结果 |
-| `SecondaryAuthRevoked` | 经办人撤销 / 紧急收权 | 踢柜员下线 + 清缓存 + 审计 |
-| `SecondaryAuthExpired` | 超时过期 | 通知柜员 + 清缓存 |
-| `SecondaryAuthClosed` | 柜员登出 | 审计记录 |
+| 事件                     | 触发时机              | 异步订阅者动作                                                      |
+|--------------------------|-----------------------|---------------------------------------------------------------------|
+| `SecondaryAuthInitiated` | 柜员发起              | 发送短信验证码到经办人手机                                          |
+| `SecondaryAuthCompleted` | 验证码确认通过        | 更新柜员 Session（写入 secondaryAuthSessionId + effectiveIdentity） |
+| `SecondaryAuthRejected`  | 验证码重试耗尽        | 通知柜员拒绝结果                                                    |
+| `SecondaryAuthRevoked`   | 经办人撤销 / 紧急收权 | 踢柜员下线 + 清缓存 + 审计                                          |
+| `SecondaryAuthExpired`   | 超时过期              | 通知柜员 + 清缓存                                                   |
+| `SecondaryAuthClosed`    | 柜员登出              | 审计记录                                                            |
 
-事件必须实现 `DomainEvent` 接口，使用 record 类型，提供 static `of()` 方法（遵循 [03-领域模型约束](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\03-领域模型约束.md) 第七节）。
+事件必须实现 `DomainEvent` 接口，使用 record 类型，提供 static `of()`
+方法（遵循 [03-领域模型约束](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\03-领域模型约束.md) 第七节）。
 
 ## 五、Session 聚合根改造
 
@@ -772,7 +779,8 @@ public class SecondaryAuthConfig {
 
 ## 十一、错误码
 
-遵循 [08-错误码规范](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\08-错误码规范.md)，在 SERVICE 域下新增 AUTH 模块缩写（与 iam-service 的 IAM 缩写区分，auth-service 使用 AUTH），错误码范围为 `SERVICE.AUTH.0001-0999`：
+遵循 [08-错误码规范](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\.trae\rules\08-错误码规范.md)，在 SERVICE
+域下新增 AUTH 模块缩写（与 iam-service 的 IAM 缩写区分，auth-service 使用 AUTH），错误码范围为 `SERVICE.AUTH.0001-0999`：
 
 ```java
 public enum SecondaryAuthErrorCode implements ErrorDefinition {
@@ -801,35 +809,35 @@ public enum SecondaryAuthErrorCode implements ErrorDefinition {
 
 ### 12.1 新增文件
 
-| 类型 | 路径 |
-|------|------|
-| 聚合根 | `auth-domain/.../channel/aggregate/SecondaryAuthSession.java` |
-| 值对象 | `auth-domain/.../channel/valueobject/VerificationCode.java` |
-| 值对象 | `auth-domain/.../channel/valueobject/PermissionSnapshot.java` |
-| 枚举 | `auth-domain/.../channel/.../SecondaryAuthStatus.java` |
-| Repository 接口 | `auth-domain/.../channel/repository/SecondaryAuthSessionRepository.java` |
-| SPI 接口 | `auth-domain/.../channel/service/SecondaryAuthStrategy.java` |
-| 默认策略实现 | `auth-domain/.../channel/service/SmsCodeSecondaryAuthStrategy.java` |
-| 领域事件 | `auth-domain/.../channel/event/SecondaryAuthInitiated.java` 等 6 个 |
-| 错误码 | `auth-domain/.../channel/errorcode/SecondaryAuthErrorCode.java` |
-| ApplicationService | `auth-application/.../channel/SecondaryAuthAppService.java` |
-| Command | `auth-application/.../channel/command/InitiateSecondaryAuthCommand.java` 等 |
-| 配置类 | `auth-infrastructure/.../config/SecondaryAuthConfig.java` |
-| Repository 实现 | `auth-infrastructure/.../repository/SecondaryAuthSessionRepositoryImpl.java` |
-| DO | `auth-infrastructure/.../entity/SecondaryAuthSessionDO.java` |
-| Mapper | `auth-infrastructure/.../mapper/SecondaryAuthSessionMapper.java` |
-| Converter | `auth-infrastructure/.../converter/SecondaryAuthSessionConverter.java` |
-| DDL | `auth-infrastructure/src/main/resources/schema-pg.sql`（增量） |
-| DDL | `auth-infrastructure/src/main/resources/schema-mysql.sql`（增量） |
+| 类型               | 路径                                                                         |
+|--------------------|------------------------------------------------------------------------------|
+| 聚合根             | `auth-domain/.../channel/aggregate/SecondaryAuthSession.java`                |
+| 值对象             | `auth-domain/.../channel/valueobject/VerificationCode.java`                  |
+| 值对象             | `auth-domain/.../channel/valueobject/PermissionSnapshot.java`                |
+| 枚举               | `auth-domain/.../channel/.../SecondaryAuthStatus.java`                       |
+| Repository 接口    | `auth-domain/.../channel/repository/SecondaryAuthSessionRepository.java`     |
+| SPI 接口           | `auth-domain/.../channel/service/SecondaryAuthStrategy.java`                 |
+| 默认策略实现       | `auth-domain/.../channel/service/SmsCodeSecondaryAuthStrategy.java`          |
+| 领域事件           | `auth-domain/.../channel/event/SecondaryAuthInitiated.java` 等 6 个          |
+| 错误码             | `auth-domain/.../channel/errorcode/SecondaryAuthErrorCode.java`              |
+| ApplicationService | `auth-application/.../channel/SecondaryAuthAppService.java`                  |
+| Command            | `auth-application/.../channel/command/InitiateSecondaryAuthCommand.java` 等  |
+| 配置类             | `auth-infrastructure/.../config/SecondaryAuthConfig.java`                    |
+| Repository 实现    | `auth-infrastructure/.../repository/SecondaryAuthSessionRepositoryImpl.java` |
+| DO                 | `auth-infrastructure/.../entity/SecondaryAuthSessionDO.java`                 |
+| Mapper             | `auth-infrastructure/.../mapper/SecondaryAuthSessionMapper.java`             |
+| Converter          | `auth-infrastructure/.../converter/SecondaryAuthSessionConverter.java`       |
+| DDL                | `auth-infrastructure/src/main/resources/schema-pg.sql`（增量）               |
+| DDL                | `auth-infrastructure/src/main/resources/schema-mysql.sql`（增量）            |
 
 ### 12.2 修改文件
 
-| 文件 | 变更 |
-|------|------|
-| [Session.java](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\aggregate\Session.java) | 移除 `elevateIdentity`，新增 `secondaryAuthSessionId` 字段 + `applySecondaryAuth` / `clearSecondaryAuth` 方法 |
-| [DefaultSecondaryAuthService.java](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\service\DefaultSecondaryAuthService.java) | 重构为发起流程的辅助，核心逻辑移至 `SecondaryAuthStrategy` |
-| Session 表 DDL | 新增 `secondary_auth_session_id` 字段 + 索引 |
-| 父 pom.xml | 添加 `BCrypt` 依赖（如尚未引入） |
+| 文件                                                                                                                                                                                                             | 变更                                                                                                          |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| [Session.java](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\aggregate\Session.java)                                       | 移除 `elevateIdentity`，新增 `secondaryAuthSessionId` 字段 + `applySecondaryAuth` / `clearSecondaryAuth` 方法 |
+| [DefaultSecondaryAuthService.java](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\channel\service\DefaultSecondaryAuthService.java) | 重构为发起流程的辅助，核心逻辑移至 `SecondaryAuthStrategy`                                                    |
+| Session 表 DDL                                                                                                                                                                                                   | 新增 `secondary_auth_session_id` 字段 + 索引                                                                  |
+| 父 pom.xml                                                                                                                                                                                                       | 添加 `BCrypt` 依赖（如尚未引入）                                                                              |
 
 ### 12.3 删除文件
 
@@ -868,27 +876,27 @@ AccountFrozen 事件
 
 ### 14.1 领域层单元测试
 
-| 测试场景 | 覆盖点 |
-|---------|--------|
-| 发起授权 | initiate 正常创建 PENDING 会话 |
-| 验证码确认 | authorizeWithCode 正确流转到 AUTHORIZED |
-| 验证码错误 | recordFailedAttempt 次数递减 |
-| 验证码耗尽 | 自动流转到 REJECTED |
-| 验证码过期 | expireIfTimeout 流转到 EXPIRED |
-| 非法状态转移 | 抛 DomainException |
-| 撤销 | AUTHORIZED → REVOKED |
-| 登出 | AUTHORIZED → CLOSED |
-| 快照过期 | AUTHORIZED → EXPIRED |
-| 不变量校验 | 柜员活跃会话唯一性（Repository 层） |
+| 测试场景     | 覆盖点                                  |
+|--------------|-----------------------------------------|
+| 发起授权     | initiate 正常创建 PENDING 会话          |
+| 验证码确认   | authorizeWithCode 正确流转到 AUTHORIZED |
+| 验证码错误   | recordFailedAttempt 次数递减            |
+| 验证码耗尽   | 自动流转到 REJECTED                     |
+| 验证码过期   | expireIfTimeout 流转到 EXPIRED          |
+| 非法状态转移 | 抛 DomainException                      |
+| 撤销         | AUTHORIZED → REVOKED                    |
+| 登出         | AUTHORIZED → CLOSED                     |
+| 快照过期     | AUTHORIZED → EXPIRED                    |
+| 不变量校验   | 柜员活跃会话唯一性（Repository 层）     |
 
 ### 14.2 应用层集成测试
 
-| 测试场景 | 覆盖点 |
-|---------|--------|
-| 完整授权流程 | 发起 → 收验证码 → 确认 → 办理业务 |
-| 紧急收权 | 账号冻结 → 撤销会话 → 踢人下线 |
-| 事件联动 | SecondaryAuthCompleted 更新柜员 Session |
-| 权限快照 TTL | 30 秒后快照过期 |
+| 测试场景     | 覆盖点                                  |
+|--------------|-----------------------------------------|
+| 完整授权流程 | 发起 → 收验证码 → 确认 → 办理业务       |
+| 紧急收权     | 账号冻结 → 撤销会话 → 踢人下线          |
+| 事件联动     | SecondaryAuthCompleted 更新柜员 Session |
+| 权限快照 TTL | 30 秒后快照过期                         |
 
 ## 十五、未决事项
 

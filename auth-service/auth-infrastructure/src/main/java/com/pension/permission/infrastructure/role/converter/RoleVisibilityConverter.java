@@ -4,11 +4,7 @@ import com.pension.permission.domain.role.enumeration.RoleTemplateScopeDimension
 import com.pension.permission.domain.role.enumeration.RoleVisibilityMode;
 import com.pension.permission.domain.role.valueobject.RoleVisibilityScope;
 import com.pension.permission.infrastructure.role.entity.RoleVisibilityDO;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 /**
  * 角色可见性范围转换器.

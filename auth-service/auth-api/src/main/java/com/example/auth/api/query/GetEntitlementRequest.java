@@ -7,4 +7,5 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @param customerNo 客户编号
  */
-public record GetEntitlementRequest(@NotBlank String customerNo) {}
+public record GetEntitlementRequest(@NotBlank String customerNo) {
+}

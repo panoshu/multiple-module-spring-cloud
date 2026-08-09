@@ -21,42 +21,42 @@ import com.mybatisflex.core.query.QueryWrapper;
  */
 public final class DataScopeQueryHelper {
 
-    private DataScopeQueryHelper() {
-    }
+  private DataScopeQueryHelper() {
+  }
 
-    /**
-     * 应用 plan_no 维度的过滤条件.
-     *
-     * @param wrapper       MyBatis-Flex QueryWrapper
-     * @param planNoColumn  plan_no 列定义（如 BATCH_DO.PLAN_NO）
-     */
-    public static void applyPlanScope(QueryWrapper wrapper, QueryColumn planNoColumn) {
-        DataScope scope = DataScopeContext.get();
-        if (!scope.needsFiltering()) {
-            return;
-        }
-        if (scope.visiblePlans().isEmpty()) {
-            wrapper.and("1 = 0");
-            return;
-        }
-        wrapper.and(planNoColumn.in(scope.visiblePlans()));
+  /**
+   * 应用 plan_no 维度的过滤条件.
+   *
+   * @param wrapper      MyBatis-Flex QueryWrapper
+   * @param planNoColumn plan_no 列定义（如 BATCH_DO.PLAN_NO）
+   */
+  public static void applyPlanScope(QueryWrapper wrapper, QueryColumn planNoColumn) {
+    DataScope scope = DataScopeContext.get();
+    if (!scope.needsFiltering()) {
+      return;
     }
+    if (scope.visiblePlans().isEmpty()) {
+      wrapper.and("1 = 0");
+      return;
+    }
+    wrapper.and(planNoColumn.in(scope.visiblePlans()));
+  }
 
-    /**
-     * 应用 customer_no 维度的过滤条件.
-     *
-     * @param wrapper           MyBatis-Flex QueryWrapper
-     * @param customerNoColumn  customer_no 列定义
-     */
-    public static void applyCustomerScope(QueryWrapper wrapper, QueryColumn customerNoColumn) {
-        DataScope scope = DataScopeContext.get();
-        if (!scope.needsFiltering()) {
-            return;
-        }
-        if (scope.visibleCustomers().isEmpty()) {
-            wrapper.and("1 = 0");
-            return;
-        }
-        wrapper.and(customerNoColumn.in(scope.visibleCustomers()));
+  /**
+   * 应用 customer_no 维度的过滤条件.
+   *
+   * @param wrapper          MyBatis-Flex QueryWrapper
+   * @param customerNoColumn customer_no 列定义
+   */
+  public static void applyCustomerScope(QueryWrapper wrapper, QueryColumn customerNoColumn) {
+    DataScope scope = DataScopeContext.get();
+    if (!scope.needsFiltering()) {
+      return;
     }
+    if (scope.visibleCustomers().isEmpty()) {
+      wrapper.and("1 = 0");
+      return;
+    }
+    wrapper.and(customerNoColumn.in(scope.visibleCustomers()));
+  }
 }

@@ -9,11 +9,11 @@ package com.example.shared.permission;
  */
 public record PermissionCheckResult(boolean allowed, String reason) {
 
-    public static PermissionCheckResult allow() {
-        return new PermissionCheckResult(true, null);
-    }
+  public static PermissionCheckResult allow() {
+    return new PermissionCheckResult(true, null);
+  }
 
-    public static PermissionCheckResult deny(String reason) {
-        return new PermissionCheckResult(false, reason);
-    }
+  public static PermissionCheckResult deny(String reason) {
+    return new PermissionCheckResult(false, reason);
+  }
 }

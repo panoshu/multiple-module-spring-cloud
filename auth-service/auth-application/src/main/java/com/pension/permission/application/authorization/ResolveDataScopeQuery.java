@@ -10,4 +10,5 @@ import com.pension.permission.domain.authorization.valueobject.BusinessCode;
  * @param business 业务编码
  * @author auth-application
  */
-public record ResolveDataScopeQuery(UserNo identity, BusinessCode business) {}
+public record ResolveDataScopeQuery(UserNo identity, BusinessCode business) {
+}

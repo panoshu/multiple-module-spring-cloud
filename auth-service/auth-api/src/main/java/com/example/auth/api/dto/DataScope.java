@@ -16,29 +16,29 @@ import java.util.Set;
  * @author auth-api
  */
 public record DataScope(
-    boolean globalVisible,
-    Set<String> visiblePlans,
-    Set<String> visibleCustomers,
-    Set<String> excludedPlans,
-    Set<String> excludedCustomers
+  boolean globalVisible,
+  Set<String> visiblePlans,
+  Set<String> visibleCustomers,
+  Set<String> excludedPlans,
+  Set<String> excludedCustomers
 ) {
 
-    public DataScope {
-        visiblePlans = visiblePlans != null ? Set.copyOf(visiblePlans) : Set.of();
-        visibleCustomers = visibleCustomers != null ? Set.copyOf(visibleCustomers) : Set.of();
-        excludedPlans = excludedPlans != null ? Set.copyOf(excludedPlans) : Set.of();
-        excludedCustomers = excludedCustomers != null ? Set.copyOf(excludedCustomers) : Set.of();
-    }
+  public DataScope {
+    visiblePlans = visiblePlans != null ? Set.copyOf(visiblePlans) : Set.of();
+    visibleCustomers = visibleCustomers != null ? Set.copyOf(visibleCustomers) : Set.of();
+    excludedPlans = excludedPlans != null ? Set.copyOf(excludedPlans) : Set.of();
+    excludedCustomers = excludedCustomers != null ? Set.copyOf(excludedCustomers) : Set.of();
+  }
 
-    public boolean needsFiltering() {
-        return !globalVisible;
-    }
+  public static DataScope empty() {
+    return new DataScope(false, Set.of(), Set.of(), Set.of(), Set.of());
+  }
 
-    public static DataScope empty() {
-        return new DataScope(false, Set.of(), Set.of(), Set.of(), Set.of());
-    }
+  public static DataScope global() {
+    return new DataScope(true, Set.of(), Set.of(), Set.of(), Set.of());
+  }
 
-    public static DataScope global() {
-        return new DataScope(true, Set.of(), Set.of(), Set.of(), Set.of());
-    }
+  public boolean needsFiltering() {
+    return !globalVisible;
+  }
 }

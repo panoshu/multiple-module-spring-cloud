@@ -9,4 +9,5 @@ import java.util.List;
  * @param channelTypes 已开通渠道类型列表
  * @param status       状态
  */
-public record CustomerChannelEntitlementResponse(String customerNo, List<String> channelTypes, String status) {}
+public record CustomerChannelEntitlementResponse(String customerNo, List<String> channelTypes, String status) {
+}

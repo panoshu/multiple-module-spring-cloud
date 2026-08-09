@@ -20,18 +20,18 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "permission.session")
 public record GatewaySessionProperties(
-    /**
-     * HMAC-SHA256 共享密钥（网关与业务服务必须一致）。
-     *
-     * <p>为空时签名功能不启用（向后兼容，但生产环境必须配置）。
-     */
-    @DefaultValue("") String signatureKey,
+  /**
+   * HMAC-SHA256 共享密钥（网关与业务服务必须一致）。
+   *
+   * <p>为空时签名功能不启用（向后兼容，但生产环境必须配置）。
+   */
+  @DefaultValue("") String signatureKey,
 
-    /**
-     * 签名有效期（秒），默认 5 分钟。
-     *
-     * <p>过期后业务服务拒绝请求，要求重新认证。
-     */
-    @DefaultValue("300") long ttlSeconds
+  /**
+   * 签名有效期（秒），默认 5 分钟。
+   *
+   * <p>过期后业务服务拒绝请求，要求重新认证。
+   */
+  @DefaultValue("300") long ttlSeconds
 ) {
 }

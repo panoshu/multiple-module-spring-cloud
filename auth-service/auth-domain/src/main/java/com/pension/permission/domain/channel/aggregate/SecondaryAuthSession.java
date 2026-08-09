@@ -1,19 +1,14 @@
 package com.pension.permission.domain.channel.aggregate;
 
+import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.contactinfo.Mobile;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.enumeration.SecondaryAuthStatus;
 import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;
-import com.pension.permission.domain.channel.event.SecondaryAuthClosed;
-import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
-import com.pension.permission.domain.channel.event.SecondaryAuthExpired;
-import com.pension.permission.domain.channel.event.SecondaryAuthInitiated;
-import com.pension.permission.domain.channel.event.SecondaryAuthRejected;
-import com.pension.permission.domain.channel.event.SecondaryAuthRevoked;
+import com.pension.permission.domain.channel.event.*;
 import com.pension.permission.domain.channel.spi.VerificationCodeHasher;
 import com.pension.permission.domain.channel.valueobject.EffectiveIdentity;
 import com.pension.permission.domain.channel.valueobject.PermissionSnapshot;
@@ -41,22 +36,24 @@ import java.util.Objects;
  */
 public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> {
 
-  /** 系统触发的操作（如超时过期）使用的操作人标识. */
+  /**
+   * 系统触发的操作（如超时过期）使用的操作人标识.
+   */
   private static final UserNo SYSTEM_OPERATOR = UserNo.of("SYSTEM");
 
   private final UserNo tellerAccountId;
-  private UserNo approverAccountId;
   private final CredentialOwner credentialOwner;
   private final Mobile approverMobile;
   private final PlanNo planId;
+  private final LocalDateTime initiatedAt;
+  private final LocalDateTime pendingExpiresAt;
+  private final LocalDateTime expiresAt;
+  private UserNo approverAccountId;
   private VerificationCode verificationCode;
   private EffectiveIdentity effectiveIdentity;
   private PermissionSnapshot permissionSnapshot;
   private SecondaryAuthStatus status;
-  private final LocalDateTime initiatedAt;
-  private final LocalDateTime pendingExpiresAt;
   private LocalDateTime authorizedAt;
-  private final LocalDateTime expiresAt;
   private String revokeReason;
 
   private SecondaryAuthSession(
@@ -114,47 +111,6 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     this.revokeReason = revokeReason;
     validateInvariants();
   }
-
-  /**
-   * 发起二次授权的参数对象.
-   *
-   * <p>封装 {@link #initiate(InitiateContext)} 所需的全部入参，避免方法参数超标
-   * （规则 04 §10.1：单个方法参数不超过 5 个）。</p>
-   */
-  public record InitiateContext(
-    SecondaryAuthSessionId id,
-    UserNo tellerAccountId,
-    CredentialOwner credentialOwner,
-    UserNo approverAccountId,
-    Mobile approverMobile,
-    PlanNo planId,
-    VerificationCode verificationCode,
-    Duration pendingTimeout,
-    Duration sessionTimeout,
-    UserNo operator
-  ) {}
-
-  /**
-   * 从持久化数据重建聚合根的快照参数对象.
-   *
-   * <p>封装 {@link #reconstitute(ReconstituteSnapshot)} 所需的全部持久化字段，
-   * 避免 20 个参数散传导致顺序错配。</p>
-   */
-  public record ReconstituteSnapshot(
-    SecondaryAuthSessionId id,
-    UserNo createdBy, UserNo updatedBy,
-    LocalDateTime createdAt, LocalDateTime updatedAt,
-    Version version,
-    UserNo tellerAccountId, UserNo approverAccountId,
-    CredentialOwner credentialOwner, Mobile approverMobile,
-    PlanNo planId,
-    VerificationCode verificationCode,
-    EffectiveIdentity effectiveIdentity,
-    PermissionSnapshot permissionSnapshot,
-    SecondaryAuthStatus status,
-    LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime authorizedAt,
-    LocalDateTime expiresAt, String revokeReason
-  ) {}
 
   /**
    * 柜员发起二次授权（PENDING）.
@@ -215,10 +171,10 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
    * </ul>
    * </p>
    *
-   * @param rawCode 明文验证码
+   * @param rawCode  明文验证码
    * @param snapshot 权限快照（应用层预先解析）
    * @param identity 有效身份（应用层预先构造）
-   * @param hasher 验证码哈希器
+   * @param hasher   验证码哈希器
    * @param operator 操作人
    */
   public void authorize(
@@ -264,7 +220,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
   /**
    * 重发验证码（PENDING，重置 verificationCode）.
    *
-   * @param newCode 新的验证码值对象（应用层已哈希）
+   * @param newCode  新的验证码值对象（应用层已哈希）
    * @param operator 操作人
    */
   public void resendVerificationCode(VerificationCode newCode, UserNo operator) {
@@ -286,7 +242,7 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
    * <p>经办人主动撤销或紧急收权时调用。</p>
    *
    * @param revoker 撤销人
-   * @param reason 撤销原因
+   * @param reason  撤销原因
    */
   public void revoke(UserNo revoker, String reason) {
     Objects.requireNonNull(revoker, "revoker");
@@ -398,26 +354,110 @@ public class SecondaryAuthSession extends AggregateRoot<SecondaryAuthSessionId> 
     }
   }
 
+  public SecondaryAuthStatus status() {
+    return status;
+  }
+
+  public UserNo tellerAccountId() {
+    return tellerAccountId;
+  }
+
   // 查询方法
 
-  public SecondaryAuthStatus status() { return status; }
-  public UserNo tellerAccountId() { return tellerAccountId; }
-  public UserNo approverAccountId() { return approverAccountId; }
-  public CredentialOwner credentialOwner() { return credentialOwner; }
-  public Mobile approverMobile() { return approverMobile; }
-  public PlanNo planId() { return planId; }
-  public VerificationCode verificationCode() { return verificationCode; }
-  public EffectiveIdentity effectiveIdentity() { return effectiveIdentity; }
-  public PermissionSnapshot permissionSnapshot() { return permissionSnapshot; }
-  public LocalDateTime initiatedAt() { return initiatedAt; }
-  public LocalDateTime pendingExpiresAt() { return pendingExpiresAt; }
-  public LocalDateTime authorizedAt() { return authorizedAt; }
-  public LocalDateTime expiresAt() { return expiresAt; }
-  public String revokeReason() { return revokeReason; }
+  public UserNo approverAccountId() {
+    return approverAccountId;
+  }
+
+  public CredentialOwner credentialOwner() {
+    return credentialOwner;
+  }
+
+  public Mobile approverMobile() {
+    return approverMobile;
+  }
+
+  public PlanNo planId() {
+    return planId;
+  }
+
+  public VerificationCode verificationCode() {
+    return verificationCode;
+  }
+
+  public EffectiveIdentity effectiveIdentity() {
+    return effectiveIdentity;
+  }
+
+  public PermissionSnapshot permissionSnapshot() {
+    return permissionSnapshot;
+  }
+
+  public LocalDateTime initiatedAt() {
+    return initiatedAt;
+  }
+
+  public LocalDateTime pendingExpiresAt() {
+    return pendingExpiresAt;
+  }
+
+  public LocalDateTime authorizedAt() {
+    return authorizedAt;
+  }
+
+  public LocalDateTime expiresAt() {
+    return expiresAt;
+  }
+
+  public String revokeReason() {
+    return revokeReason;
+  }
 
   public boolean isEffectiveAt(LocalDateTime now) {
     return status == SecondaryAuthStatus.AUTHORIZED
       && !expiresAt.isBefore(now)
       && (permissionSnapshot == null || !permissionSnapshot.isExpired(now));
+  }
+
+  /**
+   * 发起二次授权的参数对象.
+   *
+   * <p>封装 {@link #initiate(InitiateContext)} 所需的全部入参，避免方法参数超标
+   * （规则 04 §10.1：单个方法参数不超过 5 个）。</p>
+   */
+  public record InitiateContext(
+    SecondaryAuthSessionId id,
+    UserNo tellerAccountId,
+    CredentialOwner credentialOwner,
+    UserNo approverAccountId,
+    Mobile approverMobile,
+    PlanNo planId,
+    VerificationCode verificationCode,
+    Duration pendingTimeout,
+    Duration sessionTimeout,
+    UserNo operator
+  ) {
+  }
+
+  /**
+   * 从持久化数据重建聚合根的快照参数对象.
+   *
+   * <p>封装 {@link #reconstitute(ReconstituteSnapshot)} 所需的全部持久化字段，
+   * 避免 20 个参数散传导致顺序错配。</p>
+   */
+  public record ReconstituteSnapshot(
+    SecondaryAuthSessionId id,
+    UserNo createdBy, UserNo updatedBy,
+    LocalDateTime createdAt, LocalDateTime updatedAt,
+    Version version,
+    UserNo tellerAccountId, UserNo approverAccountId,
+    CredentialOwner credentialOwner, Mobile approverMobile,
+    PlanNo planId,
+    VerificationCode verificationCode,
+    EffectiveIdentity effectiveIdentity,
+    PermissionSnapshot permissionSnapshot,
+    SecondaryAuthStatus status,
+    LocalDateTime initiatedAt, LocalDateTime pendingExpiresAt, LocalDateTime authorizedAt,
+    LocalDateTime expiresAt, String revokeReason
+  ) {
   }
 }

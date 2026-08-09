@@ -52,14 +52,14 @@ public class GlobalIdGenerator implements IdService {
   }
 
   @Override
-  public <T extends Identifier<K>, K> T nextId(Class<T> idClass) {
+  public <T extends Identifier<?>> T nextId(Class<T> idClass) {
     return nextId(idClass, null);
   }
 
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends Identifier<K>, K> T nextId(Class<T> idClass, String bizContext) {
+  public <T extends Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
     IdMeta meta = metaCache.computeIfAbsent(idClass, metadataResolver::resolve);
     IdGenerationStrategy strategy = getStrategy(meta.type());
 

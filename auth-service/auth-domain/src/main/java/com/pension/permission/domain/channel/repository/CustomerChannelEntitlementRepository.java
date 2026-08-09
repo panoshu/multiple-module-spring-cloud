@@ -19,7 +19,7 @@ public interface CustomerChannelEntitlementRepository extends Repository<Custome
    *
    * @param customerNo 客户编号
    * @return 开通记录（若存在）；未配置时返回 {@link Optional#empty()}，
-   *         由调用方（{@code ChannelAccessPolicy}）按"默认全关"策略处理
+   * 由调用方（{@code ChannelAccessPolicy}）按"默认全关"策略处理
    */
   Optional<CustomerChannelEntitlement> findByCustomer(CustomerNo customerNo);
 }

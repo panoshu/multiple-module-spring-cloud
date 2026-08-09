@@ -10,7 +10,8 @@ package com.example.shared.permission;
  * @author shared-permission-starter
  */
 public record PermissionCheckContext(
-    String accountId,
-    String planId,
-    String businessCode,
-    String actionCode) {}
+  String accountId,
+  String planId,
+  String businessCode,
+  String actionCode) {
+}

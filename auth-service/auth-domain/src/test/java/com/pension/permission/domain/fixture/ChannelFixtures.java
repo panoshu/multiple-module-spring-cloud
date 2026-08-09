@@ -13,7 +13,8 @@ import java.time.Duration;
  */
 public final class ChannelFixtures {
 
-  private ChannelFixtures() {}
+  private ChannelFixtures() {
+  }
 
   public static EffectiveIdentity directIdentity(String userNo) {
     return EffectiveIdentity.direct(UserNo.of(userNo));

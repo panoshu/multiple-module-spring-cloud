@@ -1,10 +1,12 @@
 package com.example.shared.permission;
 
+import com.example.auth.api.util.SessionSignatureUtils;
+
 /**
  * 会话上下文签名验证 SPI。
  *
  * <p>用于验证网关签发的 {@code X-Session-Context} 签名，防止请求头被伪造。
- *
+ * <p>
  * 默认实现 {@link DefaultSessionContextSignatureVerifier} 使用
  * {@link SessionSignatureUtils} 进行 HMAC-SHA256 验签。
  *

@@ -6,20 +6,7 @@ import com.example.approval.api.dto.ApprovalFlowDTO;
 import com.example.approval.api.dto.ApprovalInstanceDTO;
 import com.example.approval.api.dto.ApprovalRecordDTO;
 import com.example.approval.api.dto.PendingApprovalDTO;
-import com.example.approval.api.request.ApproveRequest;
-import com.example.approval.api.request.CreateApprovalFlowRequest;
-import com.example.approval.api.request.DeprecateApprovalFlowRequest;
-import com.example.approval.api.request.GetApprovalFlowRequest;
-import com.example.approval.api.request.GetApprovalHistoryRequest;
-import com.example.approval.api.request.GetApprovalInstanceRequest;
-import com.example.approval.api.request.ListApprovalFlowsRequest;
-import com.example.approval.api.request.ListMyPendingApprovalsRequest;
-import com.example.approval.api.request.MatchApprovalFlowRequest;
-import com.example.approval.api.request.RejectRequest;
-import com.example.approval.api.request.StartApprovalRequest;
-import com.example.approval.api.request.TransferRequest;
-import com.example.approval.api.request.UpdateApprovalFlowRequest;
-import com.example.approval.api.request.WithdrawRequest;
+import com.example.approval.api.request.*;
 import com.example.approval.api.response.ApprovalFlowIdResponse;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
 import com.example.shared.web.core.api.ApiResult;
@@ -39,72 +26,72 @@ import java.util.List;
 @Service
 public class ApprovalManagementService {
 
-    private final ApprovalFlowApi approvalFlowApi;
-    private final ApprovalInstanceApi approvalInstanceApi;
+  private final ApprovalFlowApi approvalFlowApi;
+  private final ApprovalInstanceApi approvalInstanceApi;
 
-    public ApprovalManagementService(ApprovalFlowApi approvalFlowApi,
-                                     ApprovalInstanceApi approvalInstanceApi) {
-        this.approvalFlowApi = approvalFlowApi;
-        this.approvalInstanceApi = approvalInstanceApi;
-    }
+  public ApprovalManagementService(ApprovalFlowApi approvalFlowApi,
+                                   ApprovalInstanceApi approvalInstanceApi) {
+    this.approvalFlowApi = approvalFlowApi;
+    this.approvalInstanceApi = approvalInstanceApi;
+  }
 
-    // ===== 审批流管理（6 个） =====
+  // ===== 审批流管理（6 个） =====
 
-    public ApiResult<ApprovalFlowIdResponse> createFlow(CreateApprovalFlowRequest request) {
-        return approvalFlowApi.create(request);
-    }
+  public ApiResult<ApprovalFlowIdResponse> createFlow(CreateApprovalFlowRequest request) {
+    return approvalFlowApi.create(request);
+  }
 
-    public ApiResult<Void> updateFlow(UpdateApprovalFlowRequest request) {
-        return approvalFlowApi.update(request);
-    }
+  public ApiResult<Void> updateFlow(UpdateApprovalFlowRequest request) {
+    return approvalFlowApi.update(request);
+  }
 
-    public ApiResult<Void> deprecateFlow(DeprecateApprovalFlowRequest request) {
-        return approvalFlowApi.deprecate(request);
-    }
+  public ApiResult<Void> deprecateFlow(DeprecateApprovalFlowRequest request) {
+    return approvalFlowApi.deprecate(request);
+  }
 
-    public ApiResult<ApprovalFlowDTO> getFlow(GetApprovalFlowRequest request) {
-        return approvalFlowApi.get(request);
-    }
+  public ApiResult<ApprovalFlowDTO> getFlow(GetApprovalFlowRequest request) {
+    return approvalFlowApi.get(request);
+  }
 
-    public ApiResult<PageData<ApprovalFlowDTO>> listFlows(ListApprovalFlowsRequest request) {
-        return approvalFlowApi.list(request);
-    }
+  public ApiResult<PageData<ApprovalFlowDTO>> listFlows(ListApprovalFlowsRequest request) {
+    return approvalFlowApi.list(request);
+  }
 
-    public ApiResult<ApprovalFlowDTO> matchFlow(MatchApprovalFlowRequest request) {
-        return approvalFlowApi.match(request);
-    }
+  public ApiResult<ApprovalFlowDTO> matchFlow(MatchApprovalFlowRequest request) {
+    return approvalFlowApi.match(request);
+  }
 
-    // ===== 审批实例管理（8 个） =====
+  // ===== 审批实例管理（8 个） =====
 
-    public ApiResult<ApprovalInstanceIdResponse> startInstance(StartApprovalRequest request) {
-        return approvalInstanceApi.start(request);
-    }
+  public ApiResult<ApprovalInstanceIdResponse> startInstance(StartApprovalRequest request) {
+    return approvalInstanceApi.start(request);
+  }
 
-    public ApiResult<Void> approveInstance(ApproveRequest request) {
-        return approvalInstanceApi.approve(request);
-    }
+  public ApiResult<Void> approveInstance(ApproveRequest request) {
+    return approvalInstanceApi.approve(request);
+  }
 
-    public ApiResult<Void> rejectInstance(RejectRequest request) {
-        return approvalInstanceApi.reject(request);
-    }
+  public ApiResult<Void> rejectInstance(RejectRequest request) {
+    return approvalInstanceApi.reject(request);
+  }
 
-    public ApiResult<Void> transferInstance(TransferRequest request) {
-        return approvalInstanceApi.transfer(request);
-    }
+  public ApiResult<Void> transferInstance(TransferRequest request) {
+    return approvalInstanceApi.transfer(request);
+  }
 
-    public ApiResult<Void> withdrawInstance(WithdrawRequest request) {
-        return approvalInstanceApi.withdraw(request);
-    }
+  public ApiResult<Void> withdrawInstance(WithdrawRequest request) {
+    return approvalInstanceApi.withdraw(request);
+  }
 
-    public ApiResult<ApprovalInstanceDTO> getInstance(GetApprovalInstanceRequest request) {
-        return approvalInstanceApi.get(request);
-    }
+  public ApiResult<ApprovalInstanceDTO> getInstance(GetApprovalInstanceRequest request) {
+    return approvalInstanceApi.get(request);
+  }
 
-    public ApiResult<PageData<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
-        return approvalInstanceApi.listMyPending(request);
-    }
+  public ApiResult<PageData<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
+    return approvalInstanceApi.listMyPending(request);
+  }
 
-    public ApiResult<List<ApprovalRecordDTO>> getHistory(GetApprovalHistoryRequest request) {
-        return approvalInstanceApi.getHistory(request);
-    }
+  public ApiResult<List<ApprovalRecordDTO>> getHistory(GetApprovalHistoryRequest request) {
+    return approvalInstanceApi.getHistory(request);
+  }
 }
