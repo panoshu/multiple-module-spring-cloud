@@ -1,0 +1,29 @@
+server:
+  port: 18091
+  servlet:
+    context-path: /intranet-bff
+
+spring:
+  application:
+    name: intranet-bff
+  threads:
+    virtual:
+      enabled: true
+  profiles:
+    active: local
+
+# BFF 渠道范围
+bff:
+  channel-scope: INTRANET
+
+trace:
+  context:
+    mapping:
+      OrderId: X-Order-Id
+      UserId: X-User-Id
+      BizId: X-Biz-Id
+      BatchId: X-Batch-Id
+
+logging:
+  level:
+    com.example.bff: DEBUG

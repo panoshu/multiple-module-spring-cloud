@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bff-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      schema-locations: classpath:schema-h2.sql
+      mode: always
+  autoconfigure:
+    exclude:
+      # 禁用 Nacos 服务发现自动配置（测试环境无需注册中心，避免拉起 Nacos 客户端连接失败）
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosServiceRegistryAutoConfiguration
+      - com.alibaba.cloud.nacos.NacosAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryClientConfiguration
+      # 禁用 WebAutoConfiguration：其 @Import 的 BizTraceAutoConfiguration 注册 TraceContextProperties，
+      # 该 @ConfigurationProperties 类标注 @Validated + @NotEmpty/@NotBlank，需 Jakarta Bean Validation provider；
+      # intranet-bff-starter 依赖链不含 hibernate-validator（无 shared-permission-starter），
+      # 启动时 NoProviderFoundException 会让上下文初始化失败。GlobalExceptionHandler 在集成测试中也非必需。
+      - com.example.shared.web.autoconfigure.WebAutoConfiguration
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    discovery:
+      enabled: false
+
+mybatis-flex:
+  mapper-locations: classpath*:mapper/*.xml
+
+bff:
+  channel-scope: INTRANET
+
+logging:
+  level:
+    com.example.bff: DEBUG

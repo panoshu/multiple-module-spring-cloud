@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+      discovery:
+        namespace: ${NACOS_NAMESPACE:public}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/bff}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+mybatis-flex:
+  mapper-locations: classpath*:mapper/*.xml
+
+# httpexchange 客户端代理配置：将下游服务 API 包映射到服务名
+# httpexchange-spring-boot-autoconfigure 自动为 @HttpExchange 接口创建代理 Bean
+httpexchange:
+  clients:
+    com.example.approval.api:
+      url: lb://approval-service
+    com.example.auth.api:
+      url: lb://auth-service
