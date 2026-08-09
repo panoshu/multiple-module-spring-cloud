@@ -103,6 +103,12 @@ gateway:
     #     aliases: [idNumber, id_card]
     #   realName:
     #     aliases: [name, userName]
+  # 渠道注册配置（开发统一入口：启用全部三渠道）
+  channels:
+    enabled:
+      - INTERNET
+      - HQ
+      - BRANCH
 
 ## sa-token 配置(网关层 Reactive WebFlux,详见 https://sa-token.cc/doc.html#/micro/gateway-auth)
 ## 各渠道专属配置(如 token-name / timeout / is-concurrent)在 iam-service 的 SaTokenConfiguration 中通过 StpLogic.setConfig 覆盖

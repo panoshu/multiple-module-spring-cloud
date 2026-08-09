@@ -1,0 +1,95 @@
+server:
+  port: 18081
+
+spring:
+  application:
+    name: internet-gateway
+  threads:
+    virtual:
+      enabled: true # JDK 21 虚拟线程开启
+  profiles:
+    include: local
+
+  # Redis 连接配置(sa-token 分布式会话使用)
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
+
+  cloud:
+    gateway.server.webflux:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 600000
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 允许的前端来源 —— 精准白名单
+            allowed-origins:
+              - "https://com.example"
+            allowed-origin-patterns:
+              - "http://localhost:*"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            allowed-headers:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Tenant-Id"
+              - "X-Requested-With"
+              - "satoken-internet"
+            exposed-headers:
+              - "X-Trace-Id"
+              - "X-Request-Id"
+            allow-credentials: true
+            max-age: 3600
+
+logging:
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30
+
+# 报文加密配置
+gateway:
+  crypto:
+    enabled: false
+    secret-key: ${SM4_SECRET_KEY:}
+  # 渠道注册配置（互联网网关仅启用 INTERNET 渠道）
+  channels:
+    enabled:
+      - INTERNET
+
+## sa-token 配置(网关层 Reactive WebFlux)
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  active-timeout: 1800
+  is-concurrent: true
+  is-share: false
+  token-style: tik
+  is-read-header: true
+  is-read-cookie: false
+  is-log: false
+
+## 网关层 auth 配置（白名单等）
+auth:
+  gateway:
+    public-paths:
+      - /actuator/**
+      - /actuator
+      - /favicon.ico
+      - /internet/auth/login

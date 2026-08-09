@@ -1,0 +1,54 @@
+spring:
+  cloud:
+    nacos.discovery.server-addr: 127.0.0.1:8848 # nacos
+    gateway.server.webflux:
+      discovery.locator:
+        enabled: true
+        lower-case-service-id: true
+      routes:
+        # ============ intranet-bff(内网 BFF) ============
+        - id: intranet-bff-hq-route
+          uri: lb://intranet-bff
+          predicates:
+            - Path=/hq/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, intranet-gateway
+        - id: intranet-bff-branch-route
+          uri: lb://intranet-bff
+          predicates:
+            - Path=/branch/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, intranet-gateway
+        # ============ auth-service(内网渠道认证授权) ============
+        - id: auth-service-hq-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/hq/auth/**
+          filters:
+            - StripPrefix=0
+        - id: auth-service-branch-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/branch/auth/**
+          filters:
+            - StripPrefix=0
+
+# 会话签名配置：网关对 X-Account-Id / X-Session-Context 签名，业务服务验签防伪造
+# 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入，禁止使用此开发密钥
+permission:
+  session:
+    signature-key: dev-session-signature-key-2026
+    ttl-seconds: 300
+
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    org.springframework: ERROR
+    org.springframework.cloud: ERROR
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web: INFO
+    reactor.netty.http.client: INFO
+    reactor.netty.http.server.AccessLog: INFO

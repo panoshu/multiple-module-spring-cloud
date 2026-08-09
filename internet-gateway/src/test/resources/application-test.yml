@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: internet-gateway
+
+  # 测试环境禁用 Redis 与 sa-token Redis DAO(使用默认内存存储)
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.redisson.spring.starter.RedissonAutoConfigurationV1
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - cn.dev33.satoken.dao.SaTokenDaoForRedisTemplate
+
+  cloud:
+    nacos.discovery.enabled: false # 禁止向 Nacos 注册服务
+    gateway.server.webflux.discovery.locator.enabled: false
+
+# 互联网网关仅启用 INTERNET 渠道
+gateway:
+  channels:
+    enabled:
+      - INTERNET
+
+## 白名单配置
+auth:
+  gateway:
+    public-paths:
+      - /actuator/**
+      - /actuator
+      - /favicon.ico
+      - /internet/auth/login
