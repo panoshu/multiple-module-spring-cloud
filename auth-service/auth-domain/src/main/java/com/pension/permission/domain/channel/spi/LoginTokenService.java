@@ -32,4 +32,9 @@ public interface LoginTokenService {
    * 账号冻结联动：把这个账号名下所有登录态都踢下线，不只是当前这一个token
    */
   void invalidateAllTokensOf(UserNo accountId);
+
+  /**
+   * 获取渠道对应的 token header 名称（供 Controller 返回给前端）.
+   */
+  String getTokenName(AnnuityChannel channel);
 }

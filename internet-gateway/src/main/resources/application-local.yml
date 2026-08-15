@@ -20,7 +20,7 @@ spring:
           predicates:
             - Path=/internet/auth/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=1
 
 # 会话签名配置：网关对 X-Account-Id / X-Session-Context 签名，业务服务验签防伪造
 # 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入，禁止使用此开发密钥
