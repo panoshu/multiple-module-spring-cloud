@@ -6,7 +6,7 @@ import com.example.auth.api.CustomerChannelEntitlementApi;
 import com.example.auth.api.PermissionCacheApi;
 import com.example.auth.api.PermissionCheckApi;
 import com.example.auth.api.PermissionMetadataApi;
-import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
+import com.example.bff.intranet.infrastructure.repository.BffRouteConfigRepositoryImpl;
 import com.example.bff.shared.registry.KernelApiRegistry;
 import com.example.bff.shared.route.BusinessTypeRouter;
 import org.junit.jupiter.api.DisplayName;

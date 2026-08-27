@@ -1,16 +1,11 @@
 package com.example.bff.intranet.adapter.controller;
 
-import com.example.bff.intranet.api.dto.*;
-import com.example.bff.intranet.application.service.BffAggregationService;
-import com.example.bff.shared.registry.KernelApiRegistry;
-import com.example.bff.shared.route.BusinessTypeRouter;
-import com.example.core.api.application.BusinessApplicationApi;
+import com.example.bff.shared.business.BffAggregationService;
+import com.example.bff.shared.business.BffBusinessService;
+import com.example.bff.shared.business.dto.*;
 import com.example.core.api.application.response.SubmitResponse;
-import com.example.core.api.batch.BusinessBatchApi;
 import com.example.core.api.batch.response.BatchCreatedResponse;
 import com.example.core.api.batch.response.BatchDetailResponse;
-import com.example.core.api.form.BusinessFormApi;
-import com.example.core.api.material.MaterialAppApi;
 import com.example.shared.web.core.api.ApiResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -39,26 +34,14 @@ class BffBusinessControllerTest {
   private ObjectMapper objectMapper;
 
   @MockitoBean
-  private BusinessTypeRouter router;
-  @MockitoBean
-  private KernelApiRegistry kernelApiRegistry;
+  private BffBusinessService businessService;
   @MockitoBean
   private BffAggregationService aggregationService;
-  @MockitoBean
-  private BusinessBatchApi batchApi;
-  @MockitoBean
-  private BusinessFormApi formApi;
-  @MockitoBean
-  private BusinessApplicationApi applicationApi;
-  @MockitoBean
-  private MaterialAppApi materialApi;
 
   @Test
-  @DisplayName("POST /bff/batch/create 路由到 kernel BusinessBatchApi.create")
-  void createBatch_routesToBatchApi() throws Exception {
-    when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
-    when(kernelApiRegistry.getBatchApi("annuity-service")).thenReturn(batchApi);
-    when(batchApi.create(any())).thenReturn(ApiResult.success(
+  @DisplayName("POST /bff/batch/create 委托 BffBusinessService.createBatch")
+  void createBatch_delegatesToBusinessService() throws Exception {
+    when(businessService.createBatch(any())).thenReturn(ApiResult.success(
       new BatchCreatedResponse("batch-001", "CREATED", LocalDateTime.now())));
 
     BffCreateBatchRequest request = new BffCreateBatchRequest("ACC_PLAN_CREATE", "PLAN001", null);
@@ -72,11 +55,9 @@ class BffBusinessControllerTest {
   }
 
   @Test
-  @DisplayName("POST /bff/batch/detail 路由到 kernel BusinessBatchApi.detail")
-  void batchDetail_routesToBatchApi() throws Exception {
-    when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
-    when(kernelApiRegistry.getBatchApi("annuity-service")).thenReturn(batchApi);
-    when(batchApi.detail(any())).thenReturn(ApiResult.success(
+  @DisplayName("POST /bff/batch/detail 委托 BffBusinessService.batchDetail")
+  void batchDetail_delegatesToBusinessService() throws Exception {
+    when(businessService.batchDetail(any())).thenReturn(ApiResult.success(
       new BatchDetailResponse("batch-001", "ACC_PLAN_CREATE", "PLAN001",
         "C001", "客户A", "PROCESSING", 10, 5, 3, 2,
         LocalDateTime.now(), LocalDateTime.now(), List.of())));
@@ -91,11 +72,9 @@ class BffBusinessControllerTest {
   }
 
   @Test
-  @DisplayName("POST /bff/application/submit 路由到 kernel BusinessApplicationApi.submit")
-  void submitApplication_routesToApplicationApi() throws Exception {
-    when(router.resolveServiceName("ACC_PLAN_CREATE")).thenReturn("annuity-service");
-    when(kernelApiRegistry.getApplicationApi("annuity-service")).thenReturn(applicationApi);
-    when(applicationApi.submit(any())).thenReturn(ApiResult.success(
+  @DisplayName("POST /bff/application/submit 委托 BffBusinessService.submitApplication")
+  void submitApplication_delegatesToBusinessService() throws Exception {
+    when(businessService.submitApplication(any())).thenReturn(ApiResult.success(
       new SubmitResponse("app-001", false, null)));
 
     BffSubmitRequest request = new BffSubmitRequest("ACC_PLAN_CREATE", "app-001");
@@ -108,8 +87,8 @@ class BffBusinessControllerTest {
   }
 
   @Test
-  @DisplayName("POST /bff/dashboard/batch-overview 路由到聚合服务")
-  void batchOverview_routesToAggregationService() throws Exception {
+  @DisplayName("POST /bff/dashboard/batch-overview 委托 BffAggregationService")
+  void batchOverview_delegatesToAggregationService() throws Exception {
     BatchOverviewResponse overview = new BatchOverviewResponse(
       new BatchDetailResponse("batch-001", "ACC_PLAN_CREATE", "PLAN001",
         "C001", "客户A", "PROCESSING", 10, 5, 3, 2,

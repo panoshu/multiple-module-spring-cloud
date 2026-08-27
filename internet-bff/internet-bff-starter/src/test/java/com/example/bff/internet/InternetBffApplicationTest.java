@@ -1,6 +1,6 @@
 package com.example.bff.internet;
 
-import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
+import com.example.bff.internet.infrastructure.repository.BffRouteConfigRepositoryImpl;
 import com.example.bff.shared.registry.KernelApiRegistry;
 import com.example.bff.shared.route.BusinessTypeRouter;
 import org.junit.jupiter.api.DisplayName;

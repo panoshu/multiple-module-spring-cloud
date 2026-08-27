@@ -1,11 +1,12 @@
 package com.example.bff.internet.infrastructure.repository;
 
 import com.example.bff.internet.infrastructure.TestApplication;
-import com.example.bff.shared.infrastructure.entity.BffRouteConfigDO;
-import com.example.bff.shared.infrastructure.mapper.BffRouteConfigMapper;
-import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
+import com.example.bff.internet.infrastructure.entity.BffRouteConfigDO;
+import com.example.bff.internet.infrastructure.mapper.BffRouteConfigMapper;
+import com.example.bff.shared.errorcode.BffErrorCode;
 import com.example.bff.shared.route.BffRouteConfig;
 import com.example.bff.shared.route.ChannelScope;
+import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.example.bff.shared.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO;
+import static com.example.bff.internet.infrastructure.entity.table.BffRouteConfigDOTableDef.BFF_ROUTE_CONFIG_DO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = TestApplication.class)
@@ -89,6 +91,24 @@ class BffRouteConfigRepositoryImplTest {
     assertTrue(names.contains("annuity-service"));
     assertTrue(names.contains("loan-service"));
     assertEquals(2, names.size());
+  }
+
+  @Test
+  @DisplayName("update 不存在的路由配置抛出 BusinessException")
+  void update_notFound_throws() {
+    BffRouteConfig updated = new BffRouteConfig("NOT_EXIST", "any-service", ChannelScope.ALL);
+
+    BusinessException ex = assertThrows(BusinessException.class,
+      () -> repository.update(99999L, updated, "admin"));
+    assertEquals(BffErrorCode.ROUTE_CONFIG_NOT_FOUND.getCode(), ex.code());
+  }
+
+  @Test
+  @DisplayName("delete 不存在的路由配置抛出 BusinessException")
+  void delete_notFound_throws() {
+    BusinessException ex = assertThrows(BusinessException.class,
+      () -> repository.delete(99999L, "admin"));
+    assertEquals(BffErrorCode.ROUTE_CONFIG_NOT_FOUND.getCode(), ex.code());
   }
 
   private void insertRoute(String businessType, String serviceName, String channelScope) {

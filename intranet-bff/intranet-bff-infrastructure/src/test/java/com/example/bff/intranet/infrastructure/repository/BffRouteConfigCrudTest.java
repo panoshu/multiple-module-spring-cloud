@@ -1,9 +1,10 @@
 package com.example.bff.intranet.infrastructure.repository;
 
 import com.example.bff.intranet.infrastructure.TestApplication;
-import com.example.bff.shared.infrastructure.repository.BffRouteConfigRepositoryImpl;
+import com.example.bff.shared.errorcode.BffErrorCode;
 import com.example.bff.shared.route.BffRouteConfig;
 import com.example.bff.shared.route.ChannelScope;
+import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,24 @@ class BffRouteConfigCrudTest {
     Optional<BffRouteConfig> result = repository.findById(id);
 
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  @DisplayName("update 不存在的路由配置抛出 BusinessException")
+  void update_notFound_throws() {
+    BffRouteConfig updated = new BffRouteConfig("NOT_EXIST", "any-service", ChannelScope.ALL);
+
+    BusinessException ex = assertThrows(BusinessException.class,
+      () -> repository.update(99999L, updated, "admin"));
+    assertEquals(BffErrorCode.ROUTE_CONFIG_NOT_FOUND.getCode(), ex.code());
+  }
+
+  @Test
+  @DisplayName("delete 不存在的路由配置抛出 BusinessException")
+  void delete_notFound_throws() {
+    BusinessException ex = assertThrows(BusinessException.class,
+      () -> repository.delete(99999L, "admin"));
+    assertEquals(BffErrorCode.ROUTE_CONFIG_NOT_FOUND.getCode(), ex.code());
   }
 
   @Test

@@ -11,6 +11,17 @@ spring:
       enabled: true
   profiles:
     active: local
+  datasource:
+    url: jdbc:oceanbase://obproxy-2b2e.ops.cloud-dev.group.cpic.com:3306/route?useSSL=false&useUnicode=true&characterEncoding=utf-8
+    username: "tellerapp@cjyl_CP22TELLER_tellerdb_dev#cjyl_mix_002"
+    password: "|4]yt_1#Is7UB+Xu"
+    driver-class-name: com.oceanbase.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
 # BFF 渠道范围
 bff:

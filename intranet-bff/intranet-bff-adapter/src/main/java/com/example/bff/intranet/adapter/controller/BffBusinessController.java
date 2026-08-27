@@ -1,10 +1,16 @@
 package com.example.bff.intranet.adapter.controller;
 
-import com.example.bff.intranet.api.BffBusinessApi;
-import com.example.bff.intranet.api.dto.*;
-import com.example.bff.intranet.application.service.BffAggregationService;
-import com.example.bff.shared.registry.KernelApiRegistry;
-import com.example.bff.shared.route.BusinessTypeRouter;
+import com.example.bff.shared.business.BffBusinessApi;
+import com.example.bff.shared.business.BffAggregationService;
+import com.example.bff.shared.business.BffBusinessService;
+import com.example.bff.shared.business.dto.BffApplicationDetailRequest;
+import com.example.bff.shared.business.dto.BffBatchDetailRequest;
+import com.example.bff.shared.business.dto.BffBatchOverviewRequest;
+import com.example.bff.shared.business.dto.BffCreateBatchRequest;
+import com.example.bff.shared.business.dto.BffFormTokenRequest;
+import com.example.bff.shared.business.dto.BffListMaterialsRequest;
+import com.example.bff.shared.business.dto.BffSubmitRequest;
+import com.example.bff.shared.business.dto.BatchOverviewResponse;
 import com.example.core.api.application.response.ApplicationDetailResponse;
 import com.example.core.api.application.response.SubmitResponse;
 import com.example.core.api.batch.response.BatchCreatedResponse;
@@ -19,8 +25,7 @@ import java.util.List;
 /**
  * 内网 BFF 业务 Controller
  *
- * <p>实现 {@link BffBusinessApi}，通过 {@link BusinessTypeRouter} 解析服务名，
- * 通过 {@link KernelApiRegistry} 获取 kernel API 代理，转发请求到对应业务服务。
+ * <p>实现 {@link BffBusinessApi}，委托 {@link BffBusinessService} 执行路由 + API 调用，
  * 聚合场景委托给 {@link BffAggregationService}。
  *
  * @author bff
@@ -28,53 +33,43 @@ import java.util.List;
 @RestController
 public class BffBusinessController implements BffBusinessApi {
 
-  private final BusinessTypeRouter router;
-  private final KernelApiRegistry kernelApiRegistry;
+  private final BffBusinessService businessService;
   private final BffAggregationService aggregationService;
 
-  public BffBusinessController(
-    BusinessTypeRouter router,
-    KernelApiRegistry kernelApiRegistry,
-    BffAggregationService aggregationService) {
-    this.router = router;
-    this.kernelApiRegistry = kernelApiRegistry;
+  public BffBusinessController(BffBusinessService businessService,
+                               BffAggregationService aggregationService) {
+    this.businessService = businessService;
     this.aggregationService = aggregationService;
   }
 
   @Override
   public ApiResult<BatchCreatedResponse> createBatch(BffCreateBatchRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getBatchApi(serviceName).create(request.toCommand());
+    return businessService.createBatch(request);
   }
 
   @Override
   public ApiResult<BatchDetailResponse> batchDetail(BffBatchDetailRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getBatchApi(serviceName).detail(request.toQuery());
+    return businessService.batchDetail(request);
   }
 
   @Override
   public ApiResult<UploadTokenResponse> applyUploadToken(BffFormTokenRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getFormApi(serviceName).applyUploadToken(request.toCommand());
+    return businessService.applyUploadToken(request);
   }
 
   @Override
   public ApiResult<SubmitResponse> submitApplication(BffSubmitRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getApplicationApi(serviceName).submit(request.toCommand());
+    return businessService.submitApplication(request);
   }
 
   @Override
   public ApiResult<ApplicationDetailResponse> applicationDetail(BffApplicationDetailRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getApplicationApi(serviceName).detail(request.toQuery());
+    return businessService.applicationDetail(request);
   }
 
   @Override
   public ApiResult<List<MaterialItemResponse>> listMaterials(BffListMaterialsRequest request) {
-    String serviceName = router.resolveServiceName(request.businessType());
-    return kernelApiRegistry.getMaterialApi(serviceName).list(request.toQuery());
+    return businessService.listMaterials(request);
   }
 
   @Override
