@@ -57,7 +57,9 @@ public interface FileMetadataConverter {
   }
 
   default FileMetadata toDomain(FileMetadataDO aDo) {
-    if (aDo == null) return null;
+    if (aDo == null) {
+      return null;
+    }
     return FileMetadata.reconstitute(
       new FileId(aDo.getId()),
       aDo.getOriginalName(),
@@ -91,7 +93,9 @@ public interface FileMetadataConverter {
    * 使用共享 static ObjectMapper 避免每次调用创建新实例。
    */
   default String scopeToJson(FileAccessScope scope) {
-    if (scope == null) return null;
+    if (scope == null) {
+      return null;
+    }
     try {
       return OBJECT_MAPPER.writeValueAsString(scope);
     } catch (Exception e) {
@@ -105,7 +109,9 @@ public interface FileMetadataConverter {
    * 使用共享 static ObjectMapper 避免每次调用创建新实例。
    */
   default FileAccessScope jsonToScope(String json) {
-    if (json == null || json.isBlank()) return null;
+    if (json == null || json.isBlank()) {
+      return null;
+    }
     try {
       return OBJECT_MAPPER.readValue(json, FileAccessScope.class);
     } catch (Exception e) {

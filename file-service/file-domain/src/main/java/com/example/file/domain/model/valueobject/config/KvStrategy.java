@@ -13,6 +13,8 @@ public record KvStrategy(
 ) implements RegionStrategy, ValueObject {
   public KvStrategy {
     labelAliases = labelAliases == null ? Map.of() : Map.copyOf(labelAliases);
-    if (maxBlankRows <= 0) maxBlankRows = 3;
+    if (maxBlankRows <= 0) {
+      maxBlankRows = 3;
+    }
   }
 }

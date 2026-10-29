@@ -40,14 +40,18 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 
   @Override
   public Optional<FileAccessLog> load(FileAccessLogId id) {
-    if (id == null) return Optional.empty();
+    if (id == null) {
+      return Optional.empty();
+    }
     FileAccessLogDO aDo = mapper.selectOneById(id.value());
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
 
   @Override
   public void save(FileAccessLog accessLog) {
-    if (accessLog == null) throw new IllegalArgumentException("log 不能为空");
+    if (accessLog == null) {
+      throw new IllegalArgumentException("log 不能为空");
+    }
     FileAccessLogDO aDo = converter.toDO(accessLog);
     // 流水记录只新增不更新（业务语义上每次 APPLY/ACCESS 都产生新记录）
     mapper.insert(aDo);
@@ -77,13 +81,17 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 
   @Override
   public void streamByAppId(FileAccessLogId id, Consumer<com.example.shared.domain.aggregate.root.AggregateRoot<FileAccessLogId>> processor) {
-    if (id == null || processor == null) return;
+    if (id == null || processor == null) {
+      return;
+    }
     load(id).ifPresent(processor);
   }
 
   @Override
   public List<FileAccessLog> findByFileId(FileId fileId) {
-    if (fileId == null) return List.of();
+    if (fileId == null) {
+      return List.of();
+    }
     List<FileAccessLogDO> list = mapper.selectListByQuery(
       QueryWrapper.create()
         .where(FILE_ACCESS_LOG_DO.FILE_ID.eq(fileId.value()))
@@ -94,7 +102,9 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 
   @Override
   public List<FileAccessLog> findByTokenHash(String tokenHash) {
-    if (tokenHash == null || tokenHash.isBlank()) return List.of();
+    if (tokenHash == null || tokenHash.isBlank()) {
+      return List.of();
+    }
     List<FileAccessLogDO> list = mapper.selectListByQuery(
       QueryWrapper.create()
         .where(FILE_ACCESS_LOG_DO.TOKEN_HASH.eq(tokenHash))
@@ -105,7 +115,9 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 
   @Override
   public long countByActionAndTimeRange(FileAccessAction action, LocalDateTime from, LocalDateTime to) {
-    if (action == null || from == null || to == null) return 0L;
+    if (action == null || from == null || to == null) {
+      return 0L;
+    }
     QueryWrapper wrapper = QueryWrapper.create()
       .where(FILE_ACCESS_LOG_DO.ACTION.eq(action.name()))
       .and(FILE_ACCESS_LOG_DO.OCCUR_AT.between(from, to));
@@ -114,7 +126,9 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
 
   private void publishDomainEvents(FileAccessLog accessLog) {
     List<DomainEvent> events = accessLog.domainEvents();
-    if (events.isEmpty()) return;
+    if (events.isEmpty()) {
+      return;
+    }
     for (DomainEvent event : events) {
       try {
         eventPublisher.publishEvent(event);

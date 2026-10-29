@@ -48,18 +48,18 @@ checkPermission(identity, planId, permission, at)
 
 **对 planId 的 5 个硬绑定点**：
 
-| # | 绑定点                                 | 位置                                                                                                                                                                                                             |
-|---|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1 | `checkPermission` 入参                 | [EffectivePermissionService:108](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/auth-service/auth-domain/src/main/java/com/pension/permission/domain/assignment/service/EffectivePermissionService.java) |
-| 2 | 能力层需要 PlanSnapshot                | `checkPlanCapability`                                                                                                                                                                                            |
-| 3 | 主体层 `requirePlan(planId)`           | `checkSubjectGrant` 内                                                                                                                                                                                           |
+| # | 绑定点                              | 位置                                                                                                                                                                                                               |
+|---|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | `checkPermission` 入参             | [EffectivePermissionService:108](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/auth-service/auth-domain/src/main/java/com/pension/permission/domain/assignment/service/EffectivePermissionService.java) |
+| 2 | 能力层需要 PlanSnapshot               | `checkPlanCapability`                                                                                                                                                                                            |
+| 3 | 主体层 `requirePlan(planId)`        | `checkSubjectGrant` 内                                                                                                                                                                                            |
 | 4 | ScopeMatcher 全部维度依赖 PlanSnapshot | [ScopeMatcher](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/auth-service/auth-domain/src/main/java/com/pension/permission/domain/authorization/service/ScopeMatcher.java)                              |
-| 5 | `ScopeDimension` 枚举无 GLOBAL         | [ScopeDimension.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/auth-service/auth-domain/src/main/java/com/pension/permission/domain/authorization/enumeration/ScopeDimension.java)                 |
+| 5 | `ScopeDimension` 枚举无 GLOBAL      | [ScopeDimension.java](file:///d:/WorkSpace/Trae/multiple-module-spring-cloud/auth-service/auth-domain/src/main/java/com/pension/permission/domain/authorization/enumeration/ScopeDimension.java)                 |
 
 ### 2.2 维度枚举不一致
 
-| 枚举                         | 包            | 值                                                       | 有 GLOBAL |
-|------------------------------|---------------|----------------------------------------------------------|-----------|
+| 枚举                           | 包             | 值                                                        | 有 GLOBAL |
+|------------------------------|---------------|----------------------------------------------------------|----------|
 | `ScopeDimension`             | authorization | PLAN, PRODUCT, CUSTOMER, ACCOUNT_MANAGER, OPERATING_MODE | ❌        |
 | `RoleTemplateScopeDimension` | role          | GLOBAL, CUSTOMER, PRODUCT, PLAN                          | ✅        |
 | `AssignmentScopeDimension`   | types         | PLAN, CUSTOMER, PRODUCT, GLOBAL                          | ✅        |
@@ -391,11 +391,11 @@ public interface PermissionCacheApi {
 
 **各渠道拉取策略（前端控制）**：
 
-| 渠道     | 登录后                     | 选计划后                       |
-|----------|----------------------------|--------------------------------|
-| 网上渠道 | 默认选计划，并发调两个接口 | 切换计划时只调 `/business`     |
-| 网点渠道 | 二次授权后拉 `/platform`   | 选计划后拉 `/business`         |
-| 总部渠道 | 拉 `/platform`             | 用户主动选计划后拉 `/business` |
+| 渠道   | 登录后                | 选计划后                  |
+|------|--------------------|-----------------------|
+| 网上渠道 | 默认选计划，并发调两个接口      | 切换计划时只调 `/business`   |
+| 网点渠道 | 二次授权后拉 `/platform` | 选计划后拉 `/business`     |
+| 总部渠道 | 拉 `/platform`      | 用户主动选计划后拉 `/business` |
 
 #### 4.3.3 缓存计算逻辑
 
@@ -470,24 +470,24 @@ public class PermissionCacheInvalidator {
 
 #### t_auth_permission_item（权限点元数据）
 
-| 字段            | 类型         | 说明                      |
-|-----------------|--------------|---------------------------|
-| id              | BIGINT PK    | 主键                      |
-| business_code   | VARCHAR(64)  | 业务编码                  |
-| action_code     | VARCHAR(64)  | 操作编码（null=整个业务） |
-| category        | VARCHAR(16)  | BUSINESS / PLATFORM       |
-| source          | VARCHAR(16)  | API / MANUAL              |
-| controller      | VARCHAR(255) | 来源Controller类名        |
-| method          | VARCHAR(255) | 来源方法名                |
-| http_method     | VARCHAR(16)  | HTTP方法                  |
-| path            | VARCHAR(512) | 请求路径                  |
-| display_name    | VARCHAR(128) | 显示名称（管理后台补充）  |
-| description     | VARCHAR(512) | 描述（管理后台补充）      |
-| category_group  | VARCHAR(64)  | 分组（管理后台补充）      |
-| sort_order      | INT          | 排序                      |
+| 字段              | 类型           | 说明                  |
+|-----------------|--------------|---------------------|
+| id              | BIGINT PK    | 主键                  |
+| business_code   | VARCHAR(64)  | 业务编码                |
+| action_code     | VARCHAR(64)  | 操作编码（null=整个业务）     |
+| category        | VARCHAR(16)  | BUSINESS / PLATFORM |
+| source          | VARCHAR(16)  | API / MANUAL        |
+| controller      | VARCHAR(255) | 来源Controller类名      |
+| method          | VARCHAR(255) | 来源方法名               |
+| http_method     | VARCHAR(16)  | HTTP方法              |
+| path            | VARCHAR(512) | 请求路径                |
+| display_name    | VARCHAR(128) | 显示名称（管理后台补充）        |
+| description     | VARCHAR(512) | 描述（管理后台补充）          |
+| category_group  | VARCHAR(64)  | 分组（管理后台补充）          |
+| sort_order      | INT          | 排序                  |
 | auto_registered | BOOLEAN      | 是否自动注册              |
-| created_at      | TIMESTAMP    | 创建时间                  |
-| updated_at      | TIMESTAMP    | 更新时间                  |
+| created_at      | TIMESTAMP    | 创建时间                |
+| updated_at      | TIMESTAMP    | 更新时间                |
 
 唯一索引：`uk_permission_item_biz_action (business_code, action_code)`
 普通索引：`idx_permission_item_category (category)`, `idx_permission_item_group (category_group)`
@@ -499,14 +499,14 @@ public class PermissionCacheInvalidator {
 
 ## 六、与现有 PermissionSnapshot 的关系
 
-| 维度     | SessionPermissionCache（新增）  | PermissionSnapshot（现有）   |
-|----------|---------------------------------|------------------------------|
-| 层级     | Session 级                      | SecondaryAuthSession 级      |
-| 用途     | 功能可见性（菜单/按钮显不显示） | 操作授权（这次操作能不能做） |
-| TTL      | 5 分钟                          | 30 秒                        |
-| 内容     | 平台权限 + 业务权限分区         | 扁平的权限集合               |
-| 适用渠道 | 所有渠道                        | 仅网点渠道                   |
-| 存储     | Redis                           | SecondaryAuthSession 内      |
+| 维度   | SessionPermissionCache（新增） | PermissionSnapshot（现有） |
+|------|----------------------------|------------------------|
+| 层级   | Session 级                  | SecondaryAuthSession 级 |
+| 用途   | 功能可见性（菜单/按钮显不显示）           | 操作授权（这次操作能不能做）         |
+| TTL  | 5 分钟                       | 30 秒                   |
+| 内容   | 平台权限 + 业务权限分区              | 扁平的权限集合                |
+| 适用渠道 | 所有渠道                       | 仅网点渠道                  |
+| 存储   | Redis                      | SecondaryAuthSession 内 |
 
 两者不冲突：SessionPermissionCache 是"粗粒度可见性缓存"，PermissionSnapshot
 是"细粒度操作授权快照"。真正的权限校验始终在后端实时做，这两个都是缓存层优化。
@@ -557,18 +557,18 @@ public class PermissionCacheInvalidator {
 
 ## 八、关键决策记录
 
-| #  | 决策                                                                         | 理由                                                         |
-|----|------------------------------------------------------------------------------|--------------------------------------------------------------|
-| 1  | 平台管理权限纳入 Grant 体系                                                  | 用户要求统一模型，避免两套体系割裂                           |
-| 2  | 通过 `ScopeDimension.GLOBAL` + 空 scopeRules 支持平台权限                    | 最小改动复用 ScopeMatcher，不破坏现有判定逻辑                |
-| 3  | `PermissionCategory` 存于元数据表，不进 Permission 值对象                    | 类别是元数据属性，不改变 Permission 的值语义                 |
-| 4  | 判定入口分流（checkPermission / checkPlatformPermission）                    | 平台权限无能力层概念，强行合并会引入无效的 PlanSnapshot 依赖 |
-| 5  | SessionPermissionCache 分区存储（platformPermissions + businessPermissions） | 选计划时只需重拉业务权限，平台权限不变                       |
-| 6  | 权限点由代码注解决定（单一事实来源），元数据由后台补充                       | 避免后台随意新增权限点导致与代码脱节                         |
-| 7  | 缓存拉取时机由前端控制                                                       | 后端只提供原子接口，组合策略交给前端适配各渠道差异           |
-| 8  | Grant 结构不变，sourcePlanNo/targetPlanNo 为 null 表示全局                   | 避免改造聚合根，复用现有字段                                 |
-| 9  | 平台管理 Grant 的 origin 复用 HQ_CONFIG                                      | 语义一致：都是总部配置的授权                                 |
-| 10 | 平台管理权限的 subject 用 UserListSubject                                    | 当前已够用，角色模板实时解析也走 UserListSubject             |
+| #  | 决策                                                                     | 理由                                    |
+|----|------------------------------------------------------------------------|---------------------------------------|
+| 1  | 平台管理权限纳入 Grant 体系                                                      | 用户要求统一模型，避免两套体系割裂                     |
+| 2  | 通过 `ScopeDimension.GLOBAL` + 空 scopeRules 支持平台权限                       | 最小改动复用 ScopeMatcher，不破坏现有判定逻辑         |
+| 3  | `PermissionCategory` 存于元数据表，不进 Permission 值对象                          | 类别是元数据属性，不改变 Permission 的值语义          |
+| 4  | 判定入口分流（checkPermission / checkPlatformPermission）                      | 平台权限无能力层概念，强行合并会引入无效的 PlanSnapshot 依赖 |
+| 5  | SessionPermissionCache 分区存储（platformPermissions + businessPermissions） | 选计划时只需重拉业务权限，平台权限不变                   |
+| 6  | 权限点由代码注解决定（单一事实来源），元数据由后台补充                                            | 避免后台随意新增权限点导致与代码脱节                    |
+| 7  | 缓存拉取时机由前端控制                                                            | 后端只提供原子接口，组合策略交给前端适配各渠道差异             |
+| 8  | Grant 结构不变，sourcePlanNo/targetPlanNo 为 null 表示全局                       | 避免改造聚合根，复用现有字段                        |
+| 9  | 平台管理 Grant 的 origin 复用 HQ_CONFIG                                       | 语义一致：都是总部配置的授权                        |
+| 10 | 平台管理权限的 subject 用 UserListSubject                                      | 当前已够用，角色模板实时解析也走 UserListSubject      |
 
 ## 九、安全边界
 

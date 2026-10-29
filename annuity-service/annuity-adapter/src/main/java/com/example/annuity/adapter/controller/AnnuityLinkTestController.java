@@ -9,6 +9,7 @@ import com.example.annuity.application.service.LinkTestService;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/annuity/test")
 @RequiredArgsConstructor
+@Profile("dev")
 public class AnnuityLinkTestController implements AnnuityLinkTestApi {
 
   private final LinkTestService linkTestService;

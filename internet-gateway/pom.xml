@@ -18,19 +18,7 @@
       <groupId>com.example</groupId>
       <artifactId>gateway-shared</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.alibaba.cloud</groupId>
-      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-    </dependency>
-    <!-- auth-api: 网关调用 auth-service 的 RouteRuleApi 加载动态路由规则 -->
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>auth-api</artifactId>
-    </dependency>
+
     <!-- httpexchange: 注册 @HttpExchange 标注的 auth-api 接口为远程客户端 -->
     <dependency>
       <groupId>io.github.danielliu1123</groupId>
@@ -38,13 +26,13 @@
     </dependency>
 
     <dependency>
+      <groupId>com.alipay.cloud</groupId>
+      <artifactId>spring-cloud-starter-sofa-registry</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-test</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

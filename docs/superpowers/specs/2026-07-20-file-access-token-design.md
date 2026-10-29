@@ -32,20 +32,20 @@
 
 ## 二、核心设计决策
 
-| 决策项            | 选择                                                                                            | 理由                           |
-|-------------------|-------------------------------------------------------------------------------------------------|--------------------------------|
-| Token 生命周期    | 一次性 + 短时效（5-15 分钟）                                                                    | 安全性高，泄露风险低           |
-| Token 持久化      | 不存数据库，Redis 标记已使用                                                                    | 性能优，避免 DB 写入           |
-| Token 载荷        | 完整载荷（含 fileId/customerNo/productNo/operator/allowedContentTypes/allowedMaxSize/expireAt） | 服务端无状态校验               |
-| 企业/产品字段归属 | FileAccessScope 值对象（JSONB 存储）                                                            | 符合 DDD，便于扩展             |
-| 流水记录时机      | 双记录（APPLY + ACCESS）                                                                        | 完整审计轨迹                   |
-| 会话信息来源      | HTTP Header（X-User-No/X-Customer-No/X-Product-No）                                             | 网关统一注入，性能优           |
-| Header 注入策略   | 网关统一注入（网络隔离防伪造）                                                                  | 零 RPC，性能最优               |
-| 架构方案          | 方案 A：Token 作为领域服务                                                                      | 业务规则在 domain 层，便于测试 |
-| 文件摘要算法      | SM3（国密）                                                                                     | 替代 MD5，符合国密要求         |
-| Token 加密算法    | SM4/CBC/PKCS5Padding + 随机 IV                                                                  | 国密标准模式                   |
-| 下载策略          | 流式下载（StreamingResponseBody，8KB 缓冲）                                                     | 内存友好，YAGNI 不做断点续传   |
-| 文件存储命名      | 使用 fileId（不用原名）                                                                         | 安全考虑                       |
+| 决策项         | 选择                                                                                       | 理由                  |
+|-------------|------------------------------------------------------------------------------------------|---------------------|
+| Token 生命周期  | 一次性 + 短时效（5-15 分钟）                                                                       | 安全性高，泄露风险低          |
+| Token 持久化   | 不存数据库，Redis 标记已使用                                                                        | 性能优，避免 DB 写入        |
+| Token 载荷    | 完整载荷（含 fileId/customerNo/productNo/operator/allowedContentTypes/allowedMaxSize/expireAt） | 服务端无状态校验            |
+| 企业/产品字段归属   | FileAccessScope 值对象（JSONB 存储）                                                            | 符合 DDD，便于扩展         |
+| 流水记录时机      | 双记录（APPLY + ACCESS）                                                                      | 完整审计轨迹              |
+| 会话信息来源      | HTTP Header（X-User-No/X-Customer-No/X-Product-No）                                        | 网关统一注入，性能优          |
+| Header 注入策略 | 网关统一注入（网络隔离防伪造）                                                                          | 零 RPC，性能最优          |
+| 架构方案        | 方案 A：Token 作为领域服务                                                                        | 业务规则在 domain 层，便于测试 |
+| 文件摘要算法      | SM3（国密）                                                                                  | 替代 MD5，符合国密要求       |
+| Token 加密算法  | SM4/CBC/PKCS5Padding + 随机 IV                                                             | 国密标准模式              |
+| 下载策略        | 流式下载（StreamingResponseBody，8KB 缓冲）                                                       | 内存友好，YAGNI 不做断点续传   |
+| 文件存储命名      | 使用 fileId（不用原名）                                                                          | 安全考虑                |
 
 ## 三、领域模型设计
 
@@ -572,19 +572,19 @@ COMMENT ON COLUMN t_file_metadata.digest_algorithm IS '摘要算法: SM3';
 
 完整字段清单（改造后）:
 
-| 字段             | 类型          | 说明         | PENDING_UPLOAD | UPLOADED |
-|------------------|---------------|--------------|----------------|----------|
-| id               | VARCHAR(64)   | FileId       | ✓             | ✓       |
-| access_scope     | JSONB         | 访问范围     | ✓             | ✓       |
-| original_name    | VARCHAR(512)  | 原始文件名   | NULL           | ✓       |
-| size             | BIGINT        | 文件大小     | NULL           | ✓       |
-| content_type     | VARCHAR(128)  | MIME 类型    | NULL           | ✓       |
-| md5              | VARCHAR(64)   | 旧字段，保留 | NULL           | 旧数据   |
-| digest           | VARCHAR(128)  | SM3 摘要     | NULL           | ✓       |
-| digest_algorithm | VARCHAR(20)   | 'SM3'        | NULL           | 'SM3'    |
-| storage_key      | VARCHAR(1024) | 后端存储 key | NULL           | ✓       |
-| status           | VARCHAR(20)   | 状态         | PENDING_UPLOAD | UPLOADED |
-| 其他字段         | -             | 同现有       | ✓             | ✓       |
+| 字段               | 类型            | 说明       | PENDING_UPLOAD | UPLOADED |
+|------------------|---------------|----------|----------------|----------|
+| id               | VARCHAR(64)   | FileId   | ✓              | ✓        |
+| access_scope     | JSONB         | 访问范围     | ✓              | ✓        |
+| original_name    | VARCHAR(512)  | 原始文件名    | NULL           | ✓        |
+| size             | BIGINT        | 文件大小     | NULL           | ✓        |
+| content_type     | VARCHAR(128)  | MIME 类型  | NULL           | ✓        |
+| md5              | VARCHAR(64)   | 旧字段，保留   | NULL           | 旧数据      |
+| digest           | VARCHAR(128)  | SM3 摘要   | NULL           | ✓        |
+| digest_algorithm | VARCHAR(20)   | 'SM3'    | NULL           | 'SM3'    |
+| storage_key      | VARCHAR(1024) | 后端存储 key | NULL           | ✓        |
+| status           | VARCHAR(20)   | 状态       | PENDING_UPLOAD | UPLOADED |
+| 其他字段             | -             | 同现有      | ✓              | ✓        |
 
 ### 6.2 t_file_access_log 表（新建）
 
@@ -642,16 +642,16 @@ FILE_TOKEN_SECRET_NOT_CONFIGURED("FILE_TOKEN_SECRET_NOT_CONFIGURED", "文件 tok
 
 **HTTP 状态码映射**:
 
-| 错误码                           | HTTP Status               | 说明                 |
-|----------------------------------|---------------------------|----------------------|
+| 错误码                              | HTTP Status               | 说明            |
+|----------------------------------|---------------------------|---------------|
 | FILE_TOKEN_INVALID               | 401 Unauthorized          | token 无效或解密失败 |
-| FILE_TOKEN_EXPIRED               | 401 Unauthorized          | token 已过期         |
-| FILE_TOKEN_ALREADY_USED          | 409 Conflict              | token 重复使用       |
-| FILE_TOKEN_MISMATCH              | 403 Forbidden             | 用户/企业/产品不匹配 |
+| FILE_TOKEN_EXPIRED               | 401 Unauthorized          | token 已过期     |
+| FILE_TOKEN_ALREADY_USED          | 409 Conflict              | token 重复使用    |
+| FILE_TOKEN_MISMATCH              | 403 Forbidden             | 用户/企业/产品不匹配   |
 | FILE_CONTENT_TYPE_NOT_ALLOWED    | 422 Unprocessable Entity  | 文件类型不允许       |
-| FILE_SIZE_EXCEEDED               | 422 Unprocessable Entity  | 文件大小超限         |
-| FILE_NOT_UPLOADABLE              | 409 Conflict              | 文件状态不允许上传   |
-| FILE_NOT_DOWNLOADABLE            | 409 Conflict              | 文件状态不允许下载   |
+| FILE_SIZE_EXCEEDED               | 422 Unprocessable Entity  | 文件大小超限        |
+| FILE_NOT_UPLOADABLE              | 409 Conflict              | 文件状态不允许上传     |
+| FILE_NOT_DOWNLOADABLE            | 409 Conflict              | 文件状态不允许下载     |
 | FILE_TOKEN_SECRET_NOT_CONFIGURED | 500 Internal Server Error | 服务端配置错误       |
 
 ## 七、国密加密与 Redis 集成
@@ -1067,37 +1067,37 @@ ALTER |
 
 ### 10.1 单元测试（file-domain）
 
-| 测试类                 | 覆盖范围                                                                               |
-|------------------------|----------------------------------------------------------------------------------------|
+| 测试类                    | 覆盖范围                                                                       |
+|------------------------|----------------------------------------------------------------------------|
 | `FileMetadataTest`     | `createForUpload()` 初始状态、`completeUpload()` 状态转换、`verifyDownloadable()` 校验 |
-| `FileAccessScopeTest`  | 值对象校验                                                                             |
-| `FileTokenPayloadTest` | 值对象校验                                                                             |
-| `FileAccessLogTest`    | `apply()`/`access()` 工厂方法、`markSuccess()`/`markFail()`                            |
-| `FileTokenServiceTest` | 4 个核心方法，mock `FileTokenGateway`/`FileTokenStore`，验证所有校验分支               |
+| `FileAccessScopeTest`  | 值对象校验                                                                      |
+| `FileTokenPayloadTest` | 值对象校验                                                                      |
+| `FileAccessLogTest`    | `apply()`/`access()` 工厂方法、`markSuccess()`/`markFail()`                     |
+| `FileTokenServiceTest` | 4 个核心方法，mock `FileTokenGateway`/`FileTokenStore`，验证所有校验分支                  |
 
 ### 10.2 应用层测试（file-application）
 
-| 测试类                             | 覆盖范围                                       |
-|------------------------------------|------------------------------------------------|
-| `ApplyUploadTokenUseCaseTest`      | 正常流程 + 流水记录                            |
+| 测试类                                | 覆盖范围                          |
+|------------------------------------|-------------------------------|
+| `ApplyUploadTokenUseCaseTest`      | 正常流程 + 流水记录                   |
 | `UploadFileWithTokenUseCaseTest`   | 正常上传 + token 校验失败各分支 + 流水失败记录 |
-| `ApplyDownloadTokenUseCaseTest`    | 正常流程 + 文件不可下载                        |
-| `DownloadFileWithTokenUseCaseTest` | 正常下载 + token 校验失败                      |
+| `ApplyDownloadTokenUseCaseTest`    | 正常流程 + 文件不可下载                 |
+| `DownloadFileWithTokenUseCaseTest` | 正常下载 + token 校验失败             |
 
 ### 10.3 基础设施测试（file-infrastructure）
 
-| 测试类                            | 覆盖范围                                    |
-|-----------------------------------|---------------------------------------------|
-| `KonaFileTokenGatewayTest`        | SM4 加解密 round-trip、错误密钥、错误 token |
-| `RedisFileTokenStoreTest`         | `markUsed` 成功/重复返回 false、`isUsed`    |
-| `FileAccessLogRepositoryImplTest` | CRUD + 查询方法                             |
-| `FileStorageRouterTest`           | 适配 `computeDigest` 重命名                 |
-| `LocalFileStorageTest`            | SM3 摘要计算                                |
+| 测试类                               | 覆盖范围                              |
+|-----------------------------------|-----------------------------------|
+| `KonaFileTokenGatewayTest`        | SM4 加解密 round-trip、错误密钥、错误 token  |
+| `RedisFileTokenStoreTest`         | `markUsed` 成功/重复返回 false、`isUsed` |
+| `FileAccessLogRepositoryImplTest` | CRUD + 查询方法                       |
+| `FileStorageRouterTest`           | 适配 `computeDigest` 重命名            |
+| `LocalFileStorageTest`            | SM3 摘要计算                          |
 
 ### 10.4 集成测试（file-infrastructure）
 
-| 测试类                      | 覆盖范围                                                                                    |
-|-----------------------------|---------------------------------------------------------------------------------------------|
+| 测试类                         | 覆盖范围                                                                              |
+|-----------------------------|-----------------------------------------------------------------------------------|
 | `FileAccessIntegrationTest` | 端到端：apply upload token → upload file → apply download token → download file，全流程验证 |
 
 ### 10.5 测试数据与配置
@@ -1129,12 +1129,12 @@ file:
 
 ## 十二、风险与缓解
 
-| 风险                          | 影响                                  | 缓解措施                                                                      |
-|-------------------------------|---------------------------------------|-------------------------------------------------------------------------------|
-| Kona SDK 兼容性               | JDK 25 preview 可能与 Kona 不兼容     | 早期验证（阶段 3 首先跑通加解密 round-trip）                                  |
-| Redis 不可用                  | token 一次性标记失效，重复使用风险    | 启动时检查 Redis 连接，失败则拒绝启动                                         |
-| SM4 密钥泄露                  | token 可被解密伪造                    | 密钥通过环境变量注入，不入仓库；定期轮换                                      |
-| 网关绕过                      | Header 可被伪造                       | 网络隔离（文件服务不暴露公网），仅网关可访问                                  |
+| 风险                    | 影响                             | 缓解措施                                                            |
+|-----------------------|--------------------------------|-----------------------------------------------------------------|
+| Kona SDK 兼容性          | JDK 25 preview 可能与 Kona 不兼容    | 早期验证（阶段 3 首先跑通加解密 round-trip）                                   |
+| Redis 不可用             | token 一次性标记失效，重复使用风险           | 启动时检查 Redis 连接，失败则拒绝启动                                          |
+| SM4 密钥泄露              | token 可被解密伪造                   | 密钥通过环境变量注入，不入仓库；定期轮换                                            |
+| 网关绕过                  | Header 可被伪造                    | 网络隔离（文件服务不暴露公网），仅网关可访问                                          |
 | FileMetadata 改造影响现有功能 | StoreFileUseCase 等已有用例可能 break | 保留 `create()` 重载方法向后兼容，`completeUpload()` 与 `markUploaded()` 并存 |
 
 ## 十三、验收标准

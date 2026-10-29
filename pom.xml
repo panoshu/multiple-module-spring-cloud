@@ -31,12 +31,16 @@
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <spring-boot.run.skip>true</spring-boot.run.skip>
 
     <demo.version>${project.version}</demo.version>
 
     <!-- Spring Dependency Versions -->
     <spring-boot.version>3.5.14</spring-boot.version>
     <spring-cloud.version>2025.0.2</spring-cloud.version>
+
+    <!-- Sofa Cloud Dependency Versions -->
+    <springcloud.sofa.version>2025.0.2</springcloud.sofa.version>
 
     <!-- Plugin Dependency Versions -->
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
@@ -52,7 +56,6 @@
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <lombok.version>1.18.46</lombok.version>
     <mybatis-flex.version>1.11.5</mybatis-flex.version>
-    <spring-cloud-starter-alibaba-nacos.version>2025.0.0.0</spring-cloud-starter-alibaba-nacos.version>
     <redisson-spring-boot-starter.version>4.3.1</redisson-spring-boot-starter.version>
     <fury.version>0.10.3</fury.version>
     <openhtmltopdf-pdfbox.version>1.1.36</openhtmltopdf-pdfbox.version>
@@ -65,7 +68,9 @@
     <kona-crypto.version>1.0.15</kona-crypto.version>
     <sa-token.version>1.45.0</sa-token.version>
     <commons-pool2.version>2.12.1</commons-pool2.version>
-    <spring-security-crypto.version>6.5.1</spring-security-crypto.version>
+    <jaxb-runtime.version>2.3.8</jaxb-runtime.version>
+    <commons.io.version>2.22.0</commons.io.version>
+    <oceanbase-client.version>2.4.18</oceanbase-client.version>
   </properties>
 
   <dependencyManagement>
@@ -84,6 +89,15 @@
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
         <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Spring Cloud Sofa BOM -->
+      <dependency>
+        <groupId>com.alipay.cloud</groupId>
+        <artifactId>spring-cloud-sofa-dependencies</artifactId>
+        <version>${springcloud.sofa.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -127,6 +141,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>business-core-infrastructure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>business-core-adapter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -338,12 +357,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.alibaba.cloud</groupId>
-        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-        <version>${spring-cloud-starter-alibaba-nacos.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.redisson</groupId>
         <artifactId>redisson-spring-boot-starter</artifactId>
         <version>${redisson-spring-boot-starter.version}</version>
@@ -431,6 +444,23 @@
         <artifactId>commons-pool2</artifactId>
         <version>${commons-pool2.version}</version>
       </dependency>
+      <!-- sofa registry 需要的依赖 -->
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb-runtime.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons.io.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.oceanbase</groupId>
+        <artifactId>oceanbase-client</artifactId>
+        <version>${oceanbase-client.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -450,6 +480,9 @@
               </goals>
             </execution>
           </executions>
+          <configuration>
+            <skip>${spring-boot.run.skip}</skip>
+          </configuration>
         </plugin>
 
         <!-- Compiler Plugin -->

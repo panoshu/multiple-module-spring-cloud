@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>bff-shared</artifactId>
-  <description>BFF 公共组件（路由解析、kernel API 代理注册表、业务 API/DTO、聚合编排、自动配置）</description>
+  <description>BFF 公共组件（业务 API/DTO、聚合编排、ScenarioHandler 基础设施）</description>
 
   <dependencies>
     <dependency>
@@ -19,15 +19,15 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>annuity-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -40,14 +40,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-autoconfigure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

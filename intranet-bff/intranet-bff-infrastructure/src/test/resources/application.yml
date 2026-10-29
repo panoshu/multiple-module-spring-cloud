@@ -8,12 +8,6 @@ spring:
     init:
       schema-locations: classpath:schema-h2.sql
       mode: always
-  autoconfigure:
-    exclude:
-      # BffAutoConfiguration 创建 KernelApiRegistry 需要 @LoadBalanced RestClient.Builder，
-      # infrastructure 集成测试仅需 Repository，无需 BFF 路由/代理注册
-      - com.example.bff.shared.config.BffAutoConfiguration
-
 mybatis-flex:
   mapper-locations: classpath*:mapper/*.xml
 

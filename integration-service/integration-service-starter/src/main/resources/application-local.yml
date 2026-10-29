@@ -1,11 +1,9 @@
 spring:
-  cloud:
-    nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
   datasource:
-    url: jdbc:postgresql://127.0.0.1:55432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
-    username: user_demo
-    password: passwd_demo
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:oceanbase://obproxy-2b2e.ops.cloud-dev.group.cpic.com:3306/route?useSSL=false&useUnicode=true&characterEncoding=utf-8
+    username: "tellerapp@cjyl_CP22TELLER_tellerdb_dev#cjyl_mix_002"
+    password: "|4]yt_1#Is7UB+Xu"
+    driver-class-name: com.oceanbase.jdbc.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 1

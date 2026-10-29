@@ -21,7 +21,10 @@ import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,7 +33,7 @@ import java.util.Map;
 /**
  * 业务材料管理 Controller
  *
- * <p>实现 {@link MaterialAppApi},入口完成会话解析与功能权限校验,
+ * <p>实现 {@link MaterialAppApi}（纯契约接口）,入口完成会话解析与功能权限校验,
  * 调用 {@link MaterialAppService} 进行材料处理。
  *
  * <p>后续新增 Controller 方法流程:
@@ -44,7 +47,9 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
+@RequestMapping("/core/material")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class MaterialController implements MaterialAppApi {
 
   private final MaterialAppService materialAppService;
@@ -52,6 +57,7 @@ public class MaterialController implements MaterialAppApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
+  @PostMapping("/bind-individual")
   @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command) {
     SessionContext session = sessionResolver.require();
@@ -73,6 +79,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
+  @PostMapping("/bind-package")
   @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command) {
     SessionContext session = sessionResolver.require();
@@ -93,6 +100,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
+  @PostMapping("/unbind")
   @RequirePermission(business = "MATERIAL", action = "UNBIND")
   public ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command) {
     SessionContext session = sessionResolver.require();
@@ -108,6 +116,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
+  @PostMapping("/list")
   @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query) {
     SessionContext session = sessionResolver.require();
@@ -120,6 +129,7 @@ public class MaterialController implements MaterialAppApi {
   }
 
   @Override
+  @PostMapping("/check-completeness")
   @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query) {
     SessionContext session = sessionResolver.require();

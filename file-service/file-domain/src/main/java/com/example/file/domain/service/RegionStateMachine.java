@@ -46,7 +46,9 @@ public class RegionStateMachine {
 
   private boolean shouldEnterRegion(RawRow row, RegionDef target, ParseContext ctx) {
     // 第一个区域或无 trigger 时立即进入
-    if (target.trigger() == null) return true;
+    if (target.trigger() == null) {
+      return true;
+    }
     // 否则检查当前行是否匹配 trigger
     return ctx.isNextRegionTrigger(row);
   }

@@ -1,0 +1,343 @@
+Spring Boot 4（Spring Framework 7）HTTP Service Registry 体系建设完整报告
+适用版本基线：Spring Boot 4.x / Spring Framework 7.x（2025 年 11 月 GA），Spring Cloud 2025.x 配套。最低 JDK 17，推荐 JDK 25。
+适用场景：多模块微服务体系——每个业务服务对外暴露独立的 api 契约模块（@HttpExchange 接口集合），以 Maven 依赖形式供其他服务引入；同时覆盖服务间内网调用与外部第三方服务调用两条链路。
+核心结论（全报告一句话版）：契约下沉到 api 模块、注册逻辑下沉到 api 模块内嵌的 AutoConfiguration、横切能力（统一请求头/认证/错误解码/重试/熔断）下沉到公司级公共 starter；内网调用走 @ImportHttpServices + 分组属性，外网调用走独立客户端模块 + 防腐门面；重试只针对瞬时故障、熔断在外重试在内。
+一、体系总览
+三个层次各司其职，互不越界：
+层次	载体	职责	演进频率
+契约层	每个服务的 xxx-api Maven 模块	@HttpExchange 接口 + DTO，双端共用	随业务契约变更
+注册层	api 模块内嵌的 AutoConfiguration（进阶）或调用方配置类（基础）	@ImportHttpServices 声明分组、注册代理 Bean	基本不变
+横切层	公司级 common-http-spring-boot-starter	统一请求头、认证、错误解码、重试、熔断	随平台规范演进
+关键机制事实：@ImportHttpServices 注解（位于 org.springframework.web.service.registry）用于声明 @HttpExchange 接口并让框架生成客户端代理注册为 Bean，可指定具体 types 或 basePackages 扫描，通常放在主应用类上。Spring Boot 通过 HttpServiceGroupConfigurer 为每个 HTTP Service 分组追加客户端属性支持，Spring Security 借同一扩展点注入 OAuth 支持。
+二、API 契约模块（xxx-api）规范
+2.1 依赖约束
+api 模块只依赖 spring-web（提供 @HttpExchange 系列注解）；进阶模式另加 spring-boot-autoconfigure 与 HTTP client 支持模块，一律 provided/optional scope，保证不向消费方传递任何 Spring Boot 运行时依赖。
+<!-- user-api/pom.xml -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-web</artifactId>
+</dependency>
+<!-- 进阶模式追加，均为 provided -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-autoconfigure</artifactId>
+    <scope>provided</scope>
+</dependency>
+2.2 接口定义规则
+• URL 只写相对路径，绝对地址（base-url）由调用方分组配置决定，api 模块对环境/域名/服务发现方式中立。
+• @HttpExchange 可置于接口级作为公共前缀；方法级用 @GetExchange/@PostExchange 等具体注解。
+• 参数注解（@PathVariable、@RequestBody、@RequestHeader 等）双端通用。
+• 每个服务的 api 接口收敛到独立根包（如 com.xxx.user.api），为后续包扫描注册划定边界。
+• 接口演进按契约版本管理：minor 版本向后兼容；破坏性变更必须走新接口/新方法，禁止原地修改。
+三、调用方注册与配置
+3.1 基础模式：调用方手写注册
+@Configuration
+@ImportHttpServices(group = "user-service", types = { UserApi.class })
+@ImportHttpServices(group = "order-service", basePackages = "com.xxx.order.api") // 注解可重复
+public class HttpServiceConfig { }
+一个组（group）= 一组共享同一客户端配置（base-url、超时、拦截器）的接口，通常对应一个目标微服务。组名全局规范：group = 目标微服务名，与注册中心服务名对齐，属性键、监控指标、日志天然一致。
+3.2 属性配置
+spring:
+  http:
+    client:                       # Boot 4 统一的 HTTP 客户端属性树（覆盖阻塞与响应式）
+      connect-timeout: 2s         # 全局默认
+      read-timeout: 3s
+      service:
+        group:
+          user-service:
+            base-url: http://user-service        # K8s Service DNS / 注册中心服务名
+            read-timeout: 5s                      # 按组覆盖
+          order-service:
+            base-url: http://order-service:8080
+属性结构事实：Boot 4 将阻塞与响应式客户端配置统一进 spring.http.client 前缀，服务组配置位于 spring.http.client.service.group.<组名>.*。
+3.3 客户端类型与定制
+默认底层为 RestClient（阻塞式）；响应式场景在注解上声明 clientType 切换 WebClient。定制走组级 Configurer：
+@Bean
+RestClientHttpServiceGroupConfigurer groupCustomizer() {
+    return groups -> {
+        groups.forEachClient((name, builder) -> builder.defaultHeader("X-Client", "my-app"));
+        groups.filterByName("user-service").forEachClient((name, builder) ->
+                builder.requestInterceptor(new AuthTokenInterceptor()));
+    };
+}
+引入 Spring Cloud 2025.x LoadBalancer 后，base-url 直接写服务名即完成实例选择与负载均衡，无需 @LoadBalanced。代理 Bean 在 Bean 定义阶段就绪，可直接构造器注入。
+四、公共 common-http-spring-boot-starter 建设
+职责边界：承载所有内网调用的横切能力（统一请求头、认证、错误解码、重试、熔断），由平台组维护、随公司 BOM 统一发布。不做注册（注册归 api 模块），只做客户端行为定制（通过 HttpServiceGroupConfigurer 对所有组生效）。
+@AutoConfiguration
+@ConditionalOnClass(RestClientHttpServiceGroupConfigurer.class)
+public class CommonHttpAutoConfiguration {
+    @Bean
+    RestClientHttpServiceGroupConfigurer commonGroupCustomizer(
+            ObjectProvider<TraceContextProvider> trace,
+            ObjectProvider<InternalTokenProvider> token,
+            ResilienceProperties resilienceProps,
+            CircuitBreakerRegistry cbRegistry) {
+        return groups -> groups.forEachClient((name, builder) -> builder
+                .requestInterceptor(new TraceHeaderInterceptor(trace.getIfAvailable()))
+                .requestInterceptor(new InternalAuthInterceptor(token.getIfAvailable()))
+                .requestInterceptor(new ResilienceInterceptor(resilienceProps.forGroup(name), cbRegistry, name))
+                .defaultStatusHandler(new InternalErrorHandler()));
+    }
+}
+配套要求：
+• 自动配置类注册进本模块的 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports（spring.factories 已废弃）。
+• Boot 3.x 存量服务降级：starter 内额外提供 RestClientCustomizer Bean，用 @ConditionalOnMissingClass 双向守卫，让旧版本服务引同一 starter 也能拿到统一请求头与错误处理。
+• Spring Security 7 支持 @HttpExchange 方法上通过 @ClientRegistrationId 做 OAuth2 客户端认证，走框架自动装配而非手写拦截器。
+五、api 模块自带 AutoConfiguration（进阶模式）
+5.1 结构与守卫
+@AutoConfiguration
+@ConditionalOnClass(UserApi.class)
+@ConditionalOnProperty(prefix = "app.http.user-service", name = "enabled",
+                       havingValue = "true", matchIfMissing = false) // 默认不装配
+@ImportHttpServices(group = "user-service", types = UserApi.class)
+public class UserApiAutoConfiguration { }
+注册进 api 模块的 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports。调用方启用仅需：
+app:
+  http:
+    user-service:
+      enabled: true
+spring:
+  http:
+    client:
+      service:
+        group:
+          user-service:
+            base-url: http://user-service
+5.2 服务提供方（自实现 Controller）的隔离
+提供方服务引入自己的 api jar 时，三重风险全部由条件守卫化解：
+• 客户端 Bean 无意义注册：matchIfMissing = false，提供方默认不开启开关，不装配代理。
+• 自调用：未开启即无代理 Bean 可注入，误注入在编译期/启动期即暴露。
+• 契约同步：@HttpExchange 注解在服务端不被解析为映射注解，MVC 路由只认 @RequestMapping 家族；Controller implements 接口继承的是方法签名与双端通用参数注解，路由不受接口 HTTP 元数据干扰。
+5.3 "api 里放 autoconfig 太重"的正解
+• provided scope 保证依赖不传递，api jar 对外仍是"接口 + DTO + 元数据"，字节数与手写配置方案无异。
+• 装配生效与否由消费方属性开关决定，提供方引了 jar 什么都不发生。
+• 若团队坚持物理隔离：api 模块保持纯净，伴生一个 user-api-spring-boot 模块承载 AutoConfiguration，调用方引伴生模块、提供方只引纯 api 模块——技术效果等同，纯组织偏好。
+六、重试机制
+6.1 触发条件三维判定
+维度	配置项	默认基线	判定说明
+HTTP 状态码	retry-on-status	408,425,429,500,502,503,504	集合内才重试；429/503 解析 Retry-After 头优先作为等待时长（设上限）
+异常类型	retry-on-exceptions	IOException 连接类	连接建立失败/连接重置可重；读超时按幂等性单独决策
+读超时	retry-on-read-timeout	GET/PUT/DELETE=true，POST=false	读超时意味着请求可能已被服务端执行，POST 默认不重防重复写
+业务 code 字段	biz-code-field	空（关闭）	HTTP 200 但 body 业务失败场景
+业务 code 值	retry-on-biz-codes	空	须与对方系统约定"临时性、可自愈"的业务码，禁止单方拍板
+6.2 不可重试场景（硬规则）
+• 4xx 客户端错误（400/401/403/404/409）：重试结果不变，纯放大无效流量。
+• 非幂等写操作（无幂等键的 POST）：读超时后重试可致重复扣款/下单；判定标准是服务端幂等性而非方法语义。
+• 下游持续过载：此时工具是熔断而非重试；重试解决偶发抖动，熔断解决持续不可用。
+6.3 重试执行参数基线
+参数	推荐基线
+最大尝试次数	用户链路 3 / 后台链路 5（含首次）
+退避策略	指数退避 + 随机抖动：初始 100ms、倍数 2、抖动 ±50%、上限 2s
+单请求总超时	用户链路 ≤ 2~3s（重试总预算内）
+为什么必须指数退避 + 抖动：固定间隔重试在下游瞬时过载时形成同步冲击；指数退避拉开间隔、抖动打散各客户端时刻，避免二次打击。
+6.4 框架内置选项与选位
+Spring Framework 7 在 org.springframework.resilience 包原生提供声明式 @Retryable（属性为 includes/excludes、maxRetries、delay）与编程式 RetryTemplate（默认最多重试 3 次、间隔 1 秒）。另有 @ConcurrencyLimit 提供并发限流。
+选位规则：本体系中重试需依据 HTTP 状态码与响应体业务 code 判定，这类信号只在 HTTP 客户端拦截层可见——因此 HTTP 服务间重试统一走拦截器（见 §6.5），方法级 @Retryable 仅作兜底（如下游 DAO 调用），二者职责不重叠。从 spring-retry 迁移时注意属性名差异：maxAttempts=5 → maxRetries=4（语义为首次尝试之外的重试次数）、retryFor → includes。
+6.5 公共 starter 中的统一实现模板
+public class ResilienceInterceptor implements ClientHttpRequestInterceptor {
+    private final ResilienceProperties props;
+    private final CircuitBreakerRegistry cbRegistry;
+    private final String serviceName;
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body,
+                                        ClientHttpRequestExecution execution) throws IOException {
+        CircuitBreaker cb = cbRegistry.circuitBreaker(serviceName, props::toCbConfig);
+        // 熔断在外、重试在内：一次业务调用（含全部重试）只计 1 个熔断样本
+        return cb.executeSupplier(() -> executeWithRetry(request, body, execution));
+    }
+    private ClientHttpResponse executeWithRetry(HttpRequest request, byte[] body,
+                                                ClientHttpRequestExecution execution) {
+        int attempt = 0;
+        long backoff = props.getBackoffInitial().toMillis();
+        while (true) {
+            attempt++;
+            ClientHttpResponse response;
+            byte[] cachedBody;
+            try {
+                response = execution.execute(request, body);
+                cachedBody = StreamUtils.copyToByteArray(response.getBody()); // 缓冲防流被消费
+            } catch (IOException e) {
+                if (attempt >= props.getMaxAttempts() || !isRetryableException(request, e))
+                    throw new UncheckedIOException(e);
+                sleep(jittered(backoff));
+                backoff = nextBackoff(backoff);
+                continue;
+            }
+            OptionalLong waitMs = judgeRetry(request, response, cachedBody, attempt, backoff);
+            if (waitMs.isPresent()) { sleep(waitMs.getAsLong()); continue; }
+            return wrap(response, cachedBody); // 不重试：回填缓存 body 给下游反序列化
+        }
+    }
+    private OptionalLong judgeRetry(HttpRequest req, ClientHttpResponse resp,
+                                    byte[] cachedBody, int attempt, long currentBackoff) {
+        if (attempt >= props.getMaxAttempts()) return OptionalLong.empty();
+        int status = resp.getStatusCode().value();
+        if (props.getRetryOnStatus().contains(status)) {          // 维度1：状态码
+            long retryAfter = parseRetryAfterMillis(resp);
+            return OptionalLong.of(retryAfter > 0 ? cap(retryAfter, props.getMaxBackoff())
+                                                  : jittered(currentBackoff));
+        }
+        if (status == 200 && props.getBizCodeField() != null && isJson(resp)) { // 维度3：业务 code
+            Integer bizCode = extractCode(cachedBody, props.getBizCodeField());
+            if (bizCode != null && props.getRetryOnBizCodes().contains(bizCode))
+                return OptionalLong.of(jittered(currentBackoff));
+        }
+        return OptionalLong.empty();
+    }
+    private boolean isRetryableException(HttpRequest req, IOException e) {  // 维度2：异常
+        if (e instanceof ConnectException) return true;
+        if (e instanceof SocketTimeoutException)
+            return props.isRetryOnReadTimeout() || isIdempotent(req.getMethod());
+        if (e instanceof SocketException) return true;
+        return props.getRetryOnExceptions().stream().anyMatch(c -> c.isInstance(e));
+    }
+}
+配置样例（全局基线 + 按组覆盖）：
+app:
+  http:
+    resilience:
+      default:
+        retry-on-status: 408,425,429,500,502,503,504
+        max-attempts: 3
+        backoff-initial: 100ms
+        backoff-multiplier: 2
+        backoff-jitter: 0.5
+      group:
+        user-service:
+          biz-code-field: code
+          retry-on-biz-codes: 1001,1002
+        order-service:
+          retry-on-read-timeout: false
+七、熔断与重试配合
+7.1 引入方式
+• 首选：Resilience4j 原生 API（CircuitBreakerRegistry），与拦截器集成最顺。
+• 需要熔断实现可切换（将来可能换 Sentinel 等）：引入 spring-cloud-starter-circuitbreaker-resilience4j，经 CircuitBreakerFactory 抽象层使用。
+Resilience4j 的装饰器模型天然支持熔断与重试堆叠组合，这是两者配合的基础。
+7.2 执行顺序：熔断在外、重试在内（强制规则）
+业务代码
+  → CircuitBreaker（外层，统计"一次业务调用"的最终结果，重试 N 次只计 1 样本）
+      → Retry（内层，三维触发判定 + 指数退避）
+          → RestClient → 目标实例
+配反的后果：重试每次尝试都过熔断器，一次调用最坏贡献 N 个失败样本——下游偶发抖动被误判成持续故障，熔断过早打开，而重试本可救回这些请求。代码落点即 cb.executeSupplier(() -> executeWithRetry(...)) 一行。
+7.3 熔断参数基线
+参数	基线	说明
+slidingWindowSize	100	滑动窗口请求数
+minimumNumberOfCalls	20	达到样本量才开始算失败率，防小样本误判
+failureRateThreshold	50	百分比阈值
+waitDurationInOpenState	30s	OPEN → HALF_OPEN 等待时间
+permittedNumberOfCallsInHalfOpenState	10	半开态探测请求数
+slowCallDurationThreshold	≥ max-attempts × max-backoff	必须大于重试总预算，否则重试成功也被记为慢调用
+7.4 熔断打开后的降级
+熔断打开抛 CallNotPermittedException——非业务异常，公共 starter 统一转换为"下游不可用"异常并配 fallback（缓存值/默认值/异步补偿），禁止让 500 直接冒给调用方：
+try {
+    orderApi.createOrder(cmd);
+} catch (DownstreamUnavailableException e) {
+    fallbackQueue.enqueue(cmd);
+}
+半开态探测建议收敛重试（max-attempts=1），确认恢复后再放开，避免探测失败反复打断恢复窗口。
+八、服务端契约对齐（可选但推荐）
+提供方 Controller 直接 implements api 模块接口，实现"双端共用契约"：
+@RestController
+public class UserController implements UserApi {
+    @Override public UserDTO getUser(Long id) { return userService.findById(id); }
+    @Override public UserDTO createUser(UserDTO user) { /* ... */ }
+}
+契约任何变更在编译期同时约束两端。注意：提供方为自身方便在 Controller 上加的私有映射不得回写接口——接口演进必须按契约版本管理。
+九、外部第三方服务调用模块（独立体系）
+9.1 与内网调用的本质差异（决定必须分体系建设）
+维度	内网服务间	外部第三方
+寻址	注册中心服务名 + LB	固定域名，多环境各异
+认证	公司统一内部 token/mTLS	每家不同（API Key/OAuth2/签名），必须每第三方一套
+契约控制权	双方共同演进	对方说了算，必须建防腐层隔离 DTO
+幂等性	可跨团队约定	不透明，重试默认保守（只重连接失败）
+超时/熔断基线	公司统一	按对方 SLA 独立设定
+连接池	可共享	必须按第三方隔离
+9.2 技术选型
+默认 RestClient + @HttpExchange（每第三方独立构建，不走 @ImportHttpServices 分组）；外部依赖多且都要重试/熔断/降级时考虑 spring-cloud-openfeign（生态全家桶）；WebFlux 技术栈或网关型高并发聚合用 WebClient；RestTemplate 已进入维护弃用轨道，新模块禁用。
+9.3 模块结构（防腐层落点）
+xxx-external-clients/
+├── payment/                    # 每个第三方一个包，天然隔离
+│   ├── PaymentApi.java         # @HttpExchange 接口，仅包内可见
+│   ├── PaymentClient.java      # 门面：异常转换 + 降级 + 业务语义方法
+│   ├── PaymentProps.java       # @ConfigurationProperties(prefix="ext.payment")
+│   └── dto/                    # 对方 DTO + 对内领域 DTO 转换
+├── logistics/ …
+└── ExternalClientsAutoConfiguration.java
+业务代码只注入 PaymentClient 门面，永不直接碰 PaymentApi。
+每第三方一个 RestClient Bean：
+@Bean
+PaymentClient paymentClient(PaymentProps props) {
+    RestClient restClient = RestClient.builder()
+            .baseUrl(props.getBaseUrl())
+            .defaultHeader("Authorization", "Bearer " + resolveKey(props)) // 密钥走 Vault/环境变量
+            .requestFactory(factoryWith(props))       // 独立连接池 + 独立超时
+            .requestInterceptor(retry.forExt("payment")) // 保守重试：仅连接失败
+            .defaultStatusHandler(HttpStatusCode::isError,
+                    (req, resp) -> { throw new PaymentApiException(resp); })
+            .build();
+    PaymentApi api = HttpServiceProxyFactory
+            .builderFor(RestClientAdapter.create(restClient))
+            .build().createClient(PaymentApi.class);
+    return new PaymentClient(api);
+}
+ext:
+  payment:
+    base-url: https://api.payment-provider.com
+    api-key: ${VAULT_PAYMENT_KEY}
+    read-timeout: 5s
+    connect-timeout: 2s
+    max-retries: 2
+  logistics:
+    read-timeout: 10s     # 按对方 SLA
+9.4 测试与契约守护
+• 切片测试：@RestClientTest + MockRestServiceServer。
+• 集成测试：WireMock / MockWebServer 模拟对方，覆盖超时、重试、错误解码全链路及网络层故障。
+• 契约冒烟：对关键第三方每日跑一次真实调用 sandbox 的冒烟测试，提前发现对方契约变更。
+9.5 边界一句话
+内网调用复用 @ImportHttpServices 体系；外部调用单独模块、每第三方独立客户端 + 防腐门面。两套体系在依赖和配置上彻底分开，只共享底层 RestClient 能力与公共 starter 工具类。
+十、技术选型决策表
+场景	选型	理由
+Spring 体系内、注册中心内网服务间调用	RestClient + @HttpExchange + @ImportHttpServices	官方长期方向，与 Spring Cloud/Security/Micrometer 零胶水集成，双端契约共享
+外部第三方调用（≤5 家、交互简单）	RestClient（独立构建）	最少依赖，官方一致
+外部第三方调用（十家以上、都要容错）	spring-cloud-openfeign	重试/熔断/日志/错误解码生态开箱即用
+Android / 非 Spring 消费者的客户端 SDK	Retrofit + OkHttp	该领域事实标准，suspend 协程一等公民
+WebFlux 技术栈、网关型高并发聚合	WebClient	非阻塞编程模型匹配
+新项目（任何场景）	禁用 RestTemplate	已随 Framework 7.0 弃用并计划移除
+十一、高频踩坑清单（按体系层次汇总）
+注册与装配层
+• 组名全局冲突：规范"一组一服务，组名 = 服务名"，跨团队由架构约定统一。
+• basePackages 扫描过宽：误把调用方自身代码注册成 HTTP 代理，引起启动报错；api 模块用独立根包，扫描范围点到为止。
+• AutoConfiguration.imports 文件路径必须是 META-INF/spring/ 下逐行全限定类名，不得写旧式 spring.factories。
+• @ConditionalOnClass 守卫不可省，防"只引 DTO 不激活客户端"的场景误注册。
+重试层
+• 读超时重试非幂等 POST 导致重复扣款：要么全内网写接口强约束幂等键，要么 POST 默认禁读超时重试。
+• 重试叠加放大：调用方重试 3 次 + 下游内部又重试 3 次 = 流量放大 9 倍；全链路只在最外层做完整重试预算，内层靠熔断兜底。
+• 拦截器读了响应体未回填：下游代理反序列化拿到空流报错；必须缓冲 byte[] 并包装响应返回。
+• 业务 code 判定读大文件：先检查 Content-Type 为 application/json 且设响应体大小上限。
+• Retry-After: 3600 未设上限：调用线程挂一小时；解析后必须与 max-backoff 取小。
+• 429 盲目重试引发雪崩：对方限流即已过载，退避 + 抖动是底线，严格做法是超出本次调用剩余总预算即放弃重试上抛降级。
+• 业务 code 白名单单方拍板：只收双方约定的"临时性、可自愈"错误码，禁止确定性失败码进白名单。
+熔断层
+• 熔断内外层顺序配反（最常见错误）：必须熔断在外、重试在内，否则重试流量放大失败率、熔断过早跳闸。
+• 慢调用阈值小于重试总预算：重试成功被记成慢调用，污染慢调用失败率。
+• 半开态探测失败立刻回 OPEN：探测期收敛重试（max-attempts=1）。
+版本兼容层
+• @ImportHttpServices、HttpServiceGroupConfigurer、spring.http.client.* 属性均为 Framework 7 / Boot 4 引入；api 模块契约（@HttpExchange 自 6.0 起）可被 Boot 3.x 调用方复用，但注册方式在旧调用方需退回手写 HttpServiceProxyFactory Bean 或 Feign，内嵌 AutoConfiguration 用 @ConditionalOnClass 让其在旧环境静默跳过。
+• Framework 7 基线变化：JDK 17 起步、Jakarta EE 11、spring-jcl 移除换 Apache Commons Logging 1.3.0。
+• spring-retry 迁移到 Framework resilience 时属性名差异：maxAttempts→maxRetries（语义为首次尝试之外的重试次数，需减 1）、retryFor→includes。
+十二、参数基线速查表（全体系汇总）
+类别	参数	基线值
+重试	最大尝试次数	用户链路 3 / 后台链路 5
+重试	退避	初始 100ms、倍数 2、抖动 ±50%、上限 2s
+重试	可重试状态码	408,425,429,500,502,503,504
+重试	读超时重试	GET/PUT/DELETE 开、POST 关
+熔断	滑动窗口	100
+熔断	最小调用数	20
+熔断	失败率阈值	50%
+熔断	OPEN 等待	30s
+熔断	半开探测数	10
+熔断	慢调用阈值	≥ max-attempts × max-backoff
+超时	内网读超时	3s（全局默认），按组覆盖
+超时	外部读超时	按对方 SLA 独立设定（5s/10s 各异）
+超时	用户链路单请求总预算	≤ 2~3s
+体系落地后的最终形态：新增一个被调服务，成本 = api 模块写一次约 10 行的 XxxApiAutoConfiguration；调用方引一个依赖、写一行 enabled 开关加一行 base-url；拦截器、认证、错误解码、重试、熔断的演进全部收敛在平台 starter 单点维护；业务服务里零容错代码、零注册代码。

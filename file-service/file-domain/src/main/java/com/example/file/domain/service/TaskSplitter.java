@@ -35,7 +35,9 @@ public class TaskSplitter {
 
     Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<>();
     for (Object r : rows) {
-      if (!(r instanceof Map<?, ?> row)) continue;
+      if (!(r instanceof Map<?, ?> row)) {
+        continue;
+      }
       Object k = row.get(field);
       String key = k != null ? k.toString() : "default";
       grouped.computeIfAbsent(key, x -> new ArrayList<>())

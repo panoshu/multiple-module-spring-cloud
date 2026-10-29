@@ -9,7 +9,11 @@ import com.example.shared.identifier.id.ProductNo;
  */
 public record FileAccessScope(CustomerNo customerNo, ProductNo productNo) implements ValueObject {
   public FileAccessScope {
-    if (customerNo == null) throw new IllegalArgumentException("customerNo 不能为空");
-    if (productNo == null) throw new IllegalArgumentException("productNo 不能为空");
+    if (customerNo == null) {
+      throw new IllegalArgumentException("customerNo 不能为空");
+    }
+    if (productNo == null) {
+      throw new IllegalArgumentException("productNo 不能为空");
+    }
   }
 }

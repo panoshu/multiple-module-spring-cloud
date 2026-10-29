@@ -27,7 +27,9 @@ public class YamlConfigLoader implements ConfigLoader {
     Yaml yaml = new Yaml();
 
     Map<String, Object> baseline = yaml.load(baselineYaml);
-    if (baseline == null) baseline = new LinkedHashMap<>();
+    if (baseline == null) {
+      baseline = new LinkedHashMap<>();
+    }
 
     List<Map<String, Object>> sourceTemplates = new ArrayList<>();
     for (String sourceYaml : sourceTemplateYamls) {
@@ -69,7 +71,9 @@ public class YamlConfigLoader implements ConfigLoader {
   @SuppressWarnings("unchecked")
   private CanonicalModelDef parseCanonicalModel(Map<String, Object> baseline) {
     Map<String, Object> cm = (Map<String, Object>) baseline.get("canonicalModel");
-    if (cm == null) return new CanonicalModelDef(List.of(), List.of());
+    if (cm == null) {
+      return new CanonicalModelDef(List.of(), List.of());
+    }
 
     List<PropertyFieldDef> properties = new ArrayList<>();
     List<Map<String, Object>> props = (List<Map<String, Object>>) cm.getOrDefault("properties", List.of());
@@ -133,7 +137,9 @@ public class YamlConfigLoader implements ConfigLoader {
   @SuppressWarnings("unchecked")
   private SplitConfig parseSplitConfig(Map<String, Object> baseline) {
     Map<String, Object> sc = (Map<String, Object>) baseline.get("splitConfig");
-    if (sc == null) return new SplitConfig(List.of(), null, SplitMissPolicy.ERROR, null, null, false, 0);
+    if (sc == null) {
+      return new SplitConfig(List.of(), null, SplitMissPolicy.ERROR, null, null, false, 0);
+    }
 
     List<String> keys = (List<String>) sc.getOrDefault("keys", List.of());
 
@@ -194,7 +200,9 @@ public class YamlConfigLoader implements ConfigLoader {
 
   @SuppressWarnings("unchecked")
   private RegionStrategy parseStrategy(Map<String, Object> stratMap, RegionType type) {
-    if (stratMap == null) return null;
+    if (stratMap == null) {
+      return null;
+    }
 
     if (type == RegionType.KEY_VALUE) {
       Map<String, List<String>> labelAliases = new LinkedHashMap<>();
@@ -233,7 +241,9 @@ public class YamlConfigLoader implements ConfigLoader {
 
   private <E extends Enum<E>> E parseEnum(Map<String, Object> map, String key, Class<E> enumClass, E defaultVal) {
     Object val = map.get(key);
-    if (val == null) return defaultVal;
+    if (val == null) {
+      return defaultVal;
+    }
     try {
       return Enum.valueOf(enumClass, val.toString());
     } catch (Exception e) {

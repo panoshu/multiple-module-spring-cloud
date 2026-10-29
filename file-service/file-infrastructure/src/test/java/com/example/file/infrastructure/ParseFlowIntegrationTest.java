@@ -78,7 +78,9 @@ class ParseFlowIntegrationTest {
 
       // 简单 ExpressionEvaluator 实现
       ExpressionEvaluator evaluator = (expr, ctxMap) -> {
-        if (expr == null) return true;
+        if (expr == null) {
+          return true;
+        }
         if (expr.endsWith("!= null")) {
           String field = expr.substring(0, expr.indexOf("!=")).trim();
           return ctxMap.containsKey(field) && ctxMap.get(field) != null;

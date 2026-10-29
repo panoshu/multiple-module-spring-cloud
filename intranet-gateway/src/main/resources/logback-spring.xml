@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+  <!-- 1. 引入Spring Boot官方基础配置（核心复用） -->
+  <!-- defaults.xml: 基础变量、默认格式、ANSI颜色 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!-- 定义 MDC 上下文字段的公共日志片段 -->
+  <property name="MDC_CONTEXT_FIELDS"
+            value="[BizId:%X{BizId:-}][BatchId:%X{BatchId:-}][OrderId:%X{OrderId:-}][UserId:%X{UserId:-}]"/>
+
+  <property name="CONSOLE_LOG_PATTERN"
+            value="$%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}){} %clr(${PID:-}){magenta} %clr(--- %esb(){APPLICATION_NAME}%esb{APPLICATION_GROUP}[%15.15t] ${LOG_CORRELATION_PATTERN:-}){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %clr(${MDC_CONTEXT_FIELDS}){yellow} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+  <property name="FILE_LOG_PATTERN"
+            value="%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:-} --- %esb(){APPLICATION_NAME}%esb{APPLICATION_GROUP}[%t] ${LOG_CORRELATION_PATTERN:-}%-40.40logger{39} : ${MDC_CONTEXT_FIELDS} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+  <!-- 2. 外置化配置（从application.yml读取，覆盖默认值） -->
+  <!-- 手动组合路径：LOG_PATH + LOG_FILE_NAME → 覆盖官方LOG_FILE -->
+  <springProperty scope="context" name="LOG_FILE_PATH" source="logging.file.path" defaultValue="logs"/>
+  <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name" defaultValue="spring.log"/>
+  <property name="LOG_FILE" value="${LOG_FILE_PATH}/${LOG_FILE_NAME}"/>
+
+  <springProperty scope="context" name="ROOT_LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
+
+  <!-- 复用Spring Console Appender（自带彩色输出） -->
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <!-- ==================== Local环境配置（仅彩色控制台） ==================== -->
+  <springProfile name="!(dev | sit | uat | prod)">
+    <root level="${ROOT_LOG_LEVEL}">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <!-- ==================== 非Local环境配置（控制台+异步文件） ==================== -->
+  <springProfile name="dev | sit | uat | prod">
+    <!-- 复用Spring File Appender -->
+    <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+
+    <!-- 异步文件 Appender 包装官方 FILE Appender） -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+      <appender-ref ref="FILE"/>
+      <queueSize>512</queueSize> <!-- 异步队列大小 -->
+      <discardingThreshold>0</discardingThreshold> <!-- 队列满时不丢弃日志 -->
+      <includeCallerData>false</includeCallerData> <!-- 不包含调用者信息，提升性能 -->
+    </appender>
+
+    <!-- 根日志器：输出到控制台+异步文件 -->
+    <root level="${ROOT_LOG_LEVEL}">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="ASYNC_FILE"/>
+    </root>
+  </springProfile>
+
+</configuration>

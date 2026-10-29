@@ -8,8 +8,14 @@ public record FetchRowsRequest(
   int size
 ) {
   public FetchRowsRequest {
-    if (page <= 0) page = 1;
-    if (size <= 0) size = 20;
-    if (size > 500) size = 500;
+    if (page <= 0) {
+      page = 1;
+    }
+    if (size <= 0) {
+      size = 20;
+    }
+    if (size > 500) {
+      size = 500;
+    }
   }
 }

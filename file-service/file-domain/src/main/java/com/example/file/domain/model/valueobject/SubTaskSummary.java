@@ -13,7 +13,11 @@ public record SubTaskSummary(
   SubTaskStatus status
 ) implements ValueObject {
   public SubTaskSummary {
-    if (subTaskId == null) throw new IllegalArgumentException("SubTaskSummary.subTaskId null");
-    if (status == null) status = SubTaskStatus.PENDING;
+    if (subTaskId == null) {
+      throw new IllegalArgumentException("SubTaskSummary.subTaskId null");
+    }
+    if (status == null) {
+      status = SubTaskStatus.PENDING;
+    }
   }
 }

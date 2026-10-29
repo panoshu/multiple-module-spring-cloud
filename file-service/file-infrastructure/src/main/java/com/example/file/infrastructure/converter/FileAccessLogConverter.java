@@ -20,7 +20,9 @@ import org.mapstruct.MappingConstants;
 public interface FileAccessLogConverter {
 
   default FileAccessLogDO toDO(FileAccessLog log) {
-    if (log == null) return null;
+    if (log == null) {
+      return null;
+    }
     FileAccessLogDO aDo = new FileAccessLogDO();
     aDo.setId(log.id() != null ? log.id().value() : null);
     aDo.setFileId(log.fileId() != null ? log.fileId().value() : null);
@@ -45,7 +47,9 @@ public interface FileAccessLogConverter {
   }
 
   default FileAccessLog toDomain(FileAccessLogDO aDo) {
-    if (aDo == null) return null;
+    if (aDo == null) {
+      return null;
+    }
     return FileAccessLog.reconstitute(
       aDo.getId() != null ? FileAccessLogId.of(aDo.getId()) : null,
       aDo.getFileId() != null ? new FileId(aDo.getFileId()) : null,

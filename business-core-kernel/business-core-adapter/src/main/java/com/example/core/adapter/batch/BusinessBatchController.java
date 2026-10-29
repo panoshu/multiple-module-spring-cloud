@@ -29,7 +29,10 @@ import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
@@ -37,7 +40,7 @@ import java.util.Optional;
 /**
  * 业务批次管理 Controller
  *
- * <p>实现 {@link BusinessBatchApi},入口完成五步:
+ * <p>实现 {@link BusinessBatchApi}（纯契约接口）,入口完成五步:
  * <ol>
  *   <li>业务类型校验({@link SupportedBusinessTypeValidator})</li>
  *   <li>会话解析({@link SessionContextResolver})</li>
@@ -60,7 +63,9 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
+@RequestMapping("/core/batch")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessBatchController implements BusinessBatchApi {
 
   private final BusinessBatchAppService batchAppService;
@@ -71,8 +76,9 @@ public class BusinessBatchController implements BusinessBatchApi {
   private final BusinessAccessGuard accessGuard;
 
   @Override
+  @PostMapping("/active")
   @RequirePermission(business = "BATCH", action = "VIEW")
-  public ApiResult<Optional<BatchSummaryResponse>> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
+  public ApiResult<BatchSummaryResponse> findActive(@Valid @RequestBody FindActiveBatchQuery query) {
     typeValidator.validate(query.businessType());
     SessionContext session = sessionResolver.require();
     log.info("查询未完成批次: planNo={}, businessType={}, userNo={}",
@@ -82,10 +88,11 @@ public class BusinessBatchController implements BusinessBatchApi {
       new PlanNo(query.planNo()),
       BusinessType.valueOf(query.businessType())
     );
-    return ApiResult.success(batch.map(converter::toSummaryResponse));
+    return ApiResult.success(batch.map(converter::toSummaryResponse).orElse(null));
   }
 
   @Override
+  @PostMapping("/create")
   @RequirePermission(business = "BATCH", action = "CREATE")
   public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
     typeValidator.validate(command.businessType());
@@ -103,6 +110,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   @Override
+  @PostMapping("/detail")
   @RequirePermission(business = "BATCH", action = "VIEW")
   public ApiResult<BatchDetailResponse> detail(@Valid @RequestBody GetBatchDetailQuery query) {
     SessionContext session = sessionResolver.require();
@@ -112,6 +120,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   @Override
+  @PostMapping("/cancel")
   @RequirePermission(business = "BATCH", action = "CANCEL")
   public ApiResult<Void> cancel(@Valid @RequestBody CancelBatchCommand command) {
     SessionContext session = sessionResolver.require();

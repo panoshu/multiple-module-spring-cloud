@@ -70,7 +70,9 @@ public class ExcelParserImpl implements ExcelParser {
             int colIndex = entry.getKey();
             String val = entry.getValue();
             // RawRow 通过 Map.copyOf 拒绝 null value，此处跳过 null 单元格
-            if (val == null) continue;
+            if (val == null) {
+              continue;
+            }
             cells.put(colIndex, val);
             if (!val.trim().isEmpty()) {
               isBlank = false;
@@ -101,8 +103,12 @@ public class ExcelParserImpl implements ExcelParser {
   }
 
   private boolean matchesTrigger(RawRow row, RegionDef region) {
-    if (region.trigger() == null) return true;
-    if (row.isBlank()) return false;
+    if (region.trigger() == null) {
+      return true;
+    }
+    if (row.isBlank()) {
+      return false;
+    }
     long matchCount = row.cells().values().stream()
       .filter(v -> v != null && !v.trim().isEmpty())
       .count();
@@ -120,7 +126,9 @@ public class ExcelParserImpl implements ExcelParser {
       RawRow row = rows.get(i);
       if (row.isBlank()) {
         blankCount++;
-        if (blankCount >= maxBlankRows) break;
+        if (blankCount >= maxBlankRows) {
+          break;
+        }
         i++;
         continue;
       }
@@ -157,7 +165,9 @@ public class ExcelParserImpl implements ExcelParser {
       RawRow row = rows.get(i);
       if (row.isBlank()) {
         blankCount++;
-        if (blankCount >= maxBlankRows) break;
+        if (blankCount >= maxBlankRows) {
+          break;
+        }
       } else {
         blankCount = 0;
       }
@@ -182,7 +192,9 @@ public class ExcelParserImpl implements ExcelParser {
     // 读取表头行
     for (int h = 0; h < headerRows; h++) {
       int rowIdx = headerStart + h;
-      if (rowIdx >= rows.size()) break;
+      if (rowIdx >= rows.size()) {
+        break;
+      }
       if (h == nameRowIdx) {
         RawRow headerRow = rows.get(rowIdx);
         Map<Integer, String> cells = headerRow.cells();
@@ -211,9 +223,15 @@ public class ExcelParserImpl implements ExcelParser {
     int i = headerStart + headerRows;
     while (i < rows.size()) {
       RawRow row = rows.get(i);
-      if (row.isBlank()) break;
-      if (maxRows > 0 && rowCount >= maxRows) break;
-      if (isDataEnd(row, strategy.dataEnd())) break;
+      if (row.isBlank()) {
+        break;
+      }
+      if (maxRows > 0 && rowCount >= maxRows) {
+        break;
+      }
+      if (isDataEnd(row, strategy.dataEnd())) {
+        break;
+      }
 
       Map<String, Object> rowData = new LinkedHashMap<>();
       Map<Integer, String> cells = row.cells();
@@ -235,9 +253,13 @@ public class ExcelParserImpl implements ExcelParser {
   }
 
   private boolean isDataEnd(RawRow row, DataEndRule dataEnd) {
-    if (dataEnd == null || dataEnd.markers().isEmpty()) return false;
+    if (dataEnd == null || dataEnd.markers().isEmpty()) {
+      return false;
+    }
     String firstCell = row.cells().get(0);
-    if (firstCell == null) return false;
+    if (firstCell == null) {
+      return false;
+    }
     return dataEnd.markers().contains(firstCell.trim());
   }
 
@@ -250,9 +272,15 @@ public class ExcelParserImpl implements ExcelParser {
     int rowCount = 0;
     while (i < rows.size()) {
       RawRow row = rows.get(i);
-      if (row.isBlank()) break;
-      if (maxRows > 0 && rowCount >= maxRows) break;
-      if (isDataEnd(row, strategy.dataEnd())) break;
+      if (row.isBlank()) {
+        break;
+      }
+      if (maxRows > 0 && rowCount >= maxRows) {
+        break;
+      }
+      if (isDataEnd(row, strategy.dataEnd())) {
+        break;
+      }
       rowCount++;
       i++;
     }

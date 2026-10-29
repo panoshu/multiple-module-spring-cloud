@@ -9,9 +9,7 @@ import com.example.shared.exception.ErrorDefinition;
  */
 public enum BffErrorCode implements ErrorDefinition {
 
-  ROUTE_NOT_FOUND("SERVICE.BFF.0001", "未找到业务类型路由"),
-  INVALID_CHANNEL_SCOPE("SERVICE.BFF.0002", "无效的渠道范围配置"),
-  ROUTE_CONFIG_NOT_FOUND("SERVICE.BFF.0003", "路由配置不存在");
+  SCENARIO_NOT_SUPPORTED("SERVICE.BFF.0001", "不支持的业务场景");
 
   private final String code;
   private final String message;

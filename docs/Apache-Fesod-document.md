@@ -12,10 +12,10 @@
 
 ### 项目演进历史
 
-| 时间    | 阶段                      | 说明                                                                  |
-|---------|---------------------------|-----------------------------------------------------------------------|
-| 早期    | EasyExcel                 | 阿里开源的 Excel 处理库，作者 @Jiaju Zhuang                           |
-| 2023 年 | FastExcel                 | 原作者带领团队启动，对底层架构进行彻底重构                            |
+| 时间     | 阶段                        | 说明                                              |
+|--------|---------------------------|-------------------------------------------------|
+| 早期     | EasyExcel                 | 阿里开源的 Excel 处理库，作者 @Jiaju Zhuang                |
+| 2023 年 | FastExcel                 | 原作者带领团队启动，对底层架构进行彻底重构                           |
 | 2025 年 | Apache Fesod (Incubating) | 项目捐赠给 Apache 软件基金会，进入孵化器，**正式更名为 Apache Fesod** |
 
 > **名称由来**：Fesod（发音 `/ˈfɛsɒd/`）是 "**F**ast **E**asy **S**preadsheet and **O**ther **D**ocuments"
@@ -23,24 +23,24 @@
 
 ### 核心能力
 
-| 痛点       | 传统方案（如 POI DOM）       | Fesod 方案                         |
-|------------|------------------------------|------------------------------------|
-| 内存占用   | 100MB 文件可消耗 1GB+ 内存   | 默认智能缓存，可控制在数百 MB 以内 |
-| 大文件 OOM | 百万行频繁 Full GC / OOM     | SAX 流式解析 + 磁盘缓存自适应切换  |
-| 并发能力   | 多任务易耗尽堆内存           | 每任务可独立配置缓存阈值           |
-| API 易用性 | 需手动分页/分批/临时文件管理 | 监听器 + 流式 API，零样板代码      |
+| 痛点      | 传统方案（如 POI DOM）     | Fesod 方案             |
+|---------|---------------------|----------------------|
+| 内存占用    | 100MB 文件可消耗 1GB+ 内存 | 默认智能缓存，可控制在数百 MB 以内  |
+| 大文件 OOM | 百万行频繁 Full GC / OOM | SAX 流式解析 + 磁盘缓存自适应切换 |
+| 并发能力    | 多任务易耗尽堆内存           | 每任务可独立配置缓存阈值         |
+| API 易用性 | 需手动分页/分批/临时文件管理     | 监听器 + 流式 API，零样板代码   |
 
 ### 1.1 版本兼容性
 
-| 版本             | 发布日期       | JDK 支持范围                                  | 备注 |
-|------------------|----------------|-----------------------------------------------|------|
+| 版本               | 发布日期           | JDK 支持范围                             | 备注 |
+|------------------|----------------|--------------------------------------|----|
 | 2.0.2-incubating | JDK8 - JDK25   | Apache Incubator release (最新版本，推荐使用) |
-| 2.0.1-incubating | JDK8 - JDK25   | Apache Incubator release                      |
-| 2.0.0-incubating | JDK8 - JDK25   | NA(not available)                             |
-| 1.3.0            | JDK 8 - JDK 25 | Non-Apache release                            |
-| 1.2.0            | JDK 8 - JDK 21 | Non-Apache release                            |
-| 1.1.0            | JDK 8 - JDK 21 | Non-Apache release                            |
-| 1.0.0            | JDK 8 - JDK 21 | Non-Apache release                            |
+| 2.0.1-incubating | JDK8 - JDK25   | Apache Incubator release             |
+| 2.0.0-incubating | JDK8 - JDK25   | NA(not available)                    |
+| 1.3.0            | JDK 8 - JDK 25 | Non-Apache release                   |
+| 1.2.0            | JDK 8 - JDK 21 | Non-Apache release                   |
+| 1.1.0            | JDK 8 - JDK 21 | Non-Apache release                   |
+| 1.0.0            | JDK 8 - JDK 21 | Non-Apache release                   |
 
 > **重要说明**：
 > - 当前 1.x 系列版本均为 **进入 Apache 孵化器之前**发布的版本（Non-Apache Releases），仍以 FastExcel 名称发布。
@@ -139,13 +139,13 @@ public class DemoData {
 
 常用注解：
 
-| 注解                                             | 作用         |
-|--------------------------------------------------|--------------|
+| 注解                                               | 作用     |
+|--------------------------------------------------|--------|
 | `@ExcelProperty(index = 2)`                      | 按列下标读取 |
-| `@ExcelProperty("String Title")`                 | 按列名读取   |
-| `@ExcelIgnore`                                   | 忽略字段     |
-| `@DateTimeFormat("yyyyMMddHHmmss")`              | 日期格式化   |
-| `@NumberFormat("#.##%")`                         | 数字格式化   |
+| `@ExcelProperty("String Title")`                 | 按列名读取  |
+| `@ExcelIgnore`                                   | 忽略字段   |
+| `@DateTimeFormat("yyyyMMddHHmmss")`              | 日期格式化  |
+| `@NumberFormat("#.##%")`                         | 数字格式化  |
 | `@ExcelProperty(converter = XxxConverter.class)` | 自定义转换器 |
 
 ### 2.3 三种监听器写法
@@ -449,7 +449,7 @@ public class ConverterData {
 
 转换行为示例：
 
-| Excel 单元格值        | 注解                                                            | Java 字段值             |
+| Excel 单元格值            | 注解                                                              | Java 字段值                |
 |-----------------------|-----------------------------------------------------------------|-------------------------|
 | `Hello`               | `@ExcelProperty(converter = CustomStringStringConverter.class)` | `"Custom: Hello"`       |
 | `2025-01-01 12:30:00` | `@DateTimeFormat("yyyy-MM-dd HH:mm:ss")`                        | `"2025-01-01 12:30:00"` |
@@ -459,17 +459,17 @@ public class ConverterData {
 
 **`@DateTimeFormat`**：日期单元格转 String
 
-| 参数               | 默认值 | 说明                                        |
-|--------------------|--------|---------------------------------------------|
-| `value`            | 空     | 日期格式，遵循 `java.text.SimpleDateFormat` |
-| `use1904windowing` | 自动   | Excel 文件使用 1904 日期系统时设为 `true`   |
+| 参数                 | 默认值 | 说明                                   |
+|--------------------|-----|--------------------------------------|
+| `value`            | 空   | 日期格式，遵循 `java.text.SimpleDateFormat` |
+| `use1904windowing` | 自动  | Excel 文件使用 1904 日期系统时设为 `true`       |
 
 **`@NumberFormat`**：数字单元格转 String
 
-| 参数           | 默认值    | 说明                                     |
-|----------------|-----------|------------------------------------------|
-| `value`        | 空        | 数字格式，遵循 `java.text.DecimalFormat` |
-| `roundingMode` | `HALF_UP` | 格式化时的舍入模式                       |
+| 参数             | 默认值       | 说明                                |
+|----------------|-----------|-----------------------------------|
+| `value`        | 空         | 数字格式，遵循 `java.text.DecimalFormat` |
+| `roundingMode` | `HALF_UP` | 格式化时的舍入模式                         |
 
 ### 2.13 行数限制（numRows）
 
@@ -507,13 +507,13 @@ public void singleSheetRead() {
 Fesod 通过 [Apache Commons CSV](https://commons.apache.org/proper/commons-csv) 支持 CSV 读取，使用 `.csv()` 切换到 CSV
 模式，再链式配置参数：
 
-| 参数              | 默认值        | 说明                                                                              |
-|-------------------|---------------|-----------------------------------------------------------------------------------|
-| `delimiter`       | `,`（逗号）   | 字段分隔符，推荐使用 `CsvConstant` 常量（如 `CsvConstant.AT`、`CsvConstant.TAB`） |
-| `quote`           | `"`（双引号） | 字段引号字符，推荐 `CsvConstant.DOUBLE_QUOTE`                                     |
-| `recordSeparator` | `CRLF`        | 行分隔符，如 `CsvConstant.CRLF`（Windows）/ `CsvConstant.LF`（Unix）              |
-| `nullString`      | `null`        | 表示 `null` 值的字符串（注意与空串 `""` 不同）                                    |
-| `escape`          | `null`        | 转义字符，用于转义引号本身                                                        |
+| 参数                | 默认值      | 说明                                                                |
+|-------------------|----------|-------------------------------------------------------------------|
+| `delimiter`       | `,`（逗号）  | 字段分隔符，推荐使用 `CsvConstant` 常量（如 `CsvConstant.AT`、`CsvConstant.TAB`） |
+| `quote`           | `"`（双引号） | 字段引号字符，推荐 `CsvConstant.DOUBLE_QUOTE`                              |
+| `recordSeparator` | `CRLF`   | 行分隔符，如 `CsvConstant.CRLF`（Windows）/ `CsvConstant.LF`（Unix）        |
+| `nullString`      | `null`   | 表示 `null` 值的字符串（注意与空串 `""` 不同）                                    |
+| `escape`          | `null`   | 转义字符，用于转义引号本身                                                     |
 
 #### 2.14.1 基础用法
 
@@ -587,10 +587,10 @@ public void csvFormatDemo() {
 
 通过重写 `ReadListener#extra` 方法 + `.extraRead(CellExtraTypeEnum)` 注册要读取的额外信息类型：
 
-| `CellExtraTypeEnum` | 含义           |
-|---------------------|----------------|
-| `COMMENT`           | 单元格注释     |
-| `HYPERLINK`         | 超链接         |
+| `CellExtraTypeEnum` | 含义      |
+|---------------------|---------|
+| `COMMENT`           | 单元格注释   |
+| `HYPERLINK`         | 超链接     |
 | `MERGE`             | 合并单元格范围 |
 
 #### 2.15.1 读取注释
@@ -761,12 +761,12 @@ public class ExcelController {
 
 #### 2.18.1 缓存策略选择
 
-| 场景           | 文件大小 | 配置策略                          |
-|----------------|----------|-----------------------------------|
-| 小文件高性能   | < 5MB    | 强制内存缓存 `MapCache`           |
-| 中等文件平衡   | 5 - 50MB | 默认智能选择（不配置）            |
+| 场景      | 文件大小     | 配置策略                              |
+|---------|----------|-----------------------------------|
+| 小文件高性能  | < 5MB    | 强制内存缓存 `MapCache`                 |
+| 中等文件平衡  | 5 - 50MB | 默认智能选择（不配置）                       |
 | 大文件内存控制 | > 50MB   | `SimpleReadCacheSelector(20, 90)` |
-| 超大文件       | > 500MB  | 自定义阈值 + `numRows` 分页       |
+| 超大文件    | > 500MB  | 自定义阈值 + `numRows` 分页              |
 
 ```java
 // 场景1：小文件高性能模式（<5MB）
@@ -860,31 +860,31 @@ public class ResilientReadListener implements ReadListener<DataModel> {
 
 ### 2.19 读取 API 速查表
 
-| 方法                                                                                                    | 用途                                              |
-|---------------------------------------------------------------------------------------------------------|---------------------------------------------------|
-| `FesodSheet.read(fileName)`                                                                             | 构造读取 Builder（也可传 `InputStream`）          |
-| `FesodSheet.readSheet(int index)` / `readSheet(String name)`                                            | 构造指定 Sheet 的 Builder                         |
-| `.head(Class<?>)`                                                                                       | 指定 POJO 类                                      |
-| `.registerReadListener(listener)`                                                                       | 注册监听器                                        |
-| `.sheet()`                                                                                              | 选择默认 Sheet                                    |
-| `.sheet(int index)`                                                                                     | 按下标选 Sheet                                    |
-| `.sheet(String name)`                                                                                   | 按名称选 Sheet                                    |
-| `.headRowNumber(int)`                                                                                   | 设置表头行数（默认 1）                            |
-| `.ignoreHiddenSheet(boolean)`                                                                           | 是否忽略隐藏 Sheet（含 very hidden）              |
-| `.includeColumnIndexes(List<Integer>)`                                                                  | 仅读取指定列                                      |
-| `.registerConverter(Converter<?>)`                                                                      | 注册自定义转换器                                  |
-| `.readCache(ReadCache)`                                                                                 | 强制指定缓存实现（如 `MapCache`）                 |
-| `.readCacheSelector(ReadCacheSelector)`                                                                 | 指定缓存选择器（如 `SimpleReadCacheSelector`）    |
-| `.numRows(int)`                                                                                         | 限制单次读取行数（含表头，0=不限）                |
-| `.extraRead(CellExtraTypeEnum)`                                                                         | 注册要读取的额外信息（COMMENT/HYPERLINK/MERGE）   |
-| `.csv()`                                                                                                | 切换到 CSV 读取模式                               |
-| `.csv().delimiter(...)` / `.quote(...)` / `.recordSeparator(...)` / `.nullString(...)` / `.escape(...)` | CSV 模式下的参数配置                              |
-| `.build()`                                                                                              | 构造 `ExcelReader`（用于多 Sheet 读取或精细控制） |
-| `.doRead()`                                                                                             | 异步执行（监听器回调）                            |
-| `.doReadSync()`                                                                                         | 同步执行，返回 `List`                             |
-| `.doReadAll()`                                                                                          | 读取所有 Sheet                                    |
-| `excelReader.read(ReadSheet...)`                                                                        | 读取指定的一个或多个 Sheet                        |
-| `readSheet.setNumRows(int)`                                                                             | 单 Sheet 级别的行数限制                           |
+| 方法                                                                                                      | 用途                                   |
+|---------------------------------------------------------------------------------------------------------|--------------------------------------|
+| `FesodSheet.read(fileName)`                                                                             | 构造读取 Builder（也可传 `InputStream`）      |
+| `FesodSheet.readSheet(int index)` / `readSheet(String name)`                                            | 构造指定 Sheet 的 Builder                 |
+| `.head(Class<?>)`                                                                                       | 指定 POJO 类                            |
+| `.registerReadListener(listener)`                                                                       | 注册监听器                                |
+| `.sheet()`                                                                                              | 选择默认 Sheet                           |
+| `.sheet(int index)`                                                                                     | 按下标选 Sheet                           |
+| `.sheet(String name)`                                                                                   | 按名称选 Sheet                           |
+| `.headRowNumber(int)`                                                                                   | 设置表头行数（默认 1）                         |
+| `.ignoreHiddenSheet(boolean)`                                                                           | 是否忽略隐藏 Sheet（含 very hidden）          |
+| `.includeColumnIndexes(List<Integer>)`                                                                  | 仅读取指定列                               |
+| `.registerConverter(Converter<?>)`                                                                      | 注册自定义转换器                             |
+| `.readCache(ReadCache)`                                                                                 | 强制指定缓存实现（如 `MapCache`）               |
+| `.readCacheSelector(ReadCacheSelector)`                                                                 | 指定缓存选择器（如 `SimpleReadCacheSelector`） |
+| `.numRows(int)`                                                                                         | 限制单次读取行数（含表头，0=不限）                   |
+| `.extraRead(CellExtraTypeEnum)`                                                                         | 注册要读取的额外信息（COMMENT/HYPERLINK/MERGE）  |
+| `.csv()`                                                                                                | 切换到 CSV 读取模式                         |
+| `.csv().delimiter(...)` / `.quote(...)` / `.recordSeparator(...)` / `.nullString(...)` / `.escape(...)` | CSV 模式下的参数配置                         |
+| `.build()`                                                                                              | 构造 `ExcelReader`（用于多 Sheet 读取或精细控制）  |
+| `.doRead()`                                                                                             | 异步执行（监听器回调）                          |
+| `.doReadSync()`                                                                                         | 同步执行，返回 `List`                       |
+| `.doReadAll()`                                                                                          | 读取所有 Sheet                           |
+| `excelReader.read(ReadSheet...)`                                                                        | 读取指定的一个或多个 Sheet                     |
+| `readSheet.setNumRows(int)`                                                                             | 单 Sheet 级别的行数限制                      |
 
 ---
 
@@ -897,12 +897,12 @@ public class ResilientReadListener implements ReadListener<DataModel> {
 
 #### 模板占位符语法
 
-| 占位符                | 含义                           | 示例                             |
-|-----------------------|--------------------------------|----------------------------------|
-| `{fieldName}`         | 普通变量，从对象/Map 取值      | `{name}` → 取 `name` 字段        |
-| `{.fieldName}`        | 列表变量，列表中每个对象的字段 | `{.name}` → 列表项的 `name` 字段 |
-| `{prefix.fieldName}`  | 多列表场景，带前缀区分         | `{data1.name}`、`{data2.name}`   |
-| `{.prefix.fieldName}` | 多列表场景，列表字段带前缀     | `{.data1.name}`                  |
+| 占位符                   | 含义              | 示例                            |
+|-----------------------|-----------------|-------------------------------|
+| `{fieldName}`         | 普通变量，从对象/Map 取值 | `{name}` → 取 `name` 字段        |
+| `{.fieldName}`        | 列表变量，列表中每个对象的字段 | `{.name}` → 列表项的 `name` 字段    |
+| `{prefix.fieldName}`  | 多列表场景，带前缀区分     | `{data1.name}`、`{data2.name}` |
+| `{.prefix.fieldName}` | 多列表场景，列表字段带前缀   | `{.data1.name}`               |
 
 > 占位符可在模板的任意单元格中使用；列表占位符所在的行会被作为"模板行"，每条数据复制一行。
 
@@ -1028,10 +1028,10 @@ public void complexFill() {
 
 #### FillConfig 关键参数
 
-| 参数          | 类型                 | 说明                                                                   |
-|---------------|----------------------|------------------------------------------------------------------------|
-| `forceNewRow` | `boolean`            | 是否强制新建行。开启后每次填充列表项都会插入新行，避免覆盖后续模板内容 |
-| `direction`   | `WriteDirectionEnum` | 填充方向：`VERTICAL`（默认，纵向）/ `HORIZONTAL`（横向）               |
+| 参数            | 类型                   | 说明                                       |
+|---------------|----------------------|------------------------------------------|
+| `forceNewRow` | `boolean`            | 是否强制新建行。开启后每次填充列表项都会插入新行，避免覆盖后续模板内容      |
+| `direction`   | `WriteDirectionEnum` | 填充方向：`VERTICAL`（默认，纵向）/ `HORIZONTAL`（横向） |
 
 ### 3.5 大数据量复杂填充（Complex Fill with Table）
 
@@ -1130,23 +1130,23 @@ public void compositeFill() {
 
 ### 3.8 填充 API 速查表
 
-| 方法                                                 | 用途                                   |
-|------------------------------------------------------|----------------------------------------|
-| `FesodSheet.write(fileName)`                         | 构造写入 Builder                       |
-| `.withTemplate(templateFileName)`                    | 指定模板文件                           |
-| `.withTemplate(InputStream)`                         | 以流方式指定模板                       |
-| `.sheet()`                                           | 选择默认 Sheet                         |
-| `.sheet(int index)`                                  | 按下标选 Sheet                         |
-| `.sheet(String name)`                                | 按名称选 Sheet                         |
-| `.doFill(obj)`                                       | 一次性填充对象/Map/List                |
-| `.doFill(obj, FillConfig)`                           | 带配置填充                             |
+| 方法                                                   | 用途                         |
+|------------------------------------------------------|----------------------------|
+| `FesodSheet.write(fileName)`                         | 构造写入 Builder               |
+| `.withTemplate(templateFileName)`                    | 指定模板文件                     |
+| `.withTemplate(InputStream)`                         | 以流方式指定模板                   |
+| `.sheet()`                                           | 选择默认 Sheet                 |
+| `.sheet(int index)`                                  | 按下标选 Sheet                 |
+| `.sheet(String name)`                                | 按名称选 Sheet                 |
+| `.doFill(obj)`                                       | 一次性填充对象/Map/List           |
+| `.doFill(obj, FillConfig)`                           | 带配置填充                      |
 | `.build()`                                           | 构造 `ExcelWriter`（用于批量多次填充） |
-| `writer.fill(data, writeSheet)`                      | 单次填充                               |
-| `writer.fill(data, FillConfig, writeSheet)`          | 带配置单次填充                         |
-| `writer.write(List<List<?>>, writeSheet)`            | 追加普通写入（不带模板规则）           |
-| `FillConfig.builder().forceNewRow(true).build()`     | 强制新建行                             |
-| `FillConfig.builder().direction(HORIZONTAL).build()` | 横向填充                               |
-| `new FillWrapper(prefix, list)`                      | 多列表前缀包装                         |
+| `writer.fill(data, writeSheet)`                      | 单次填充                       |
+| `writer.fill(data, FillConfig, writeSheet)`          | 带配置单次填充                    |
+| `writer.write(List<List<?>>, writeSheet)`            | 追加普通写入（不带模板规则）             |
+| `FillConfig.builder().forceNewRow(true).build()`     | 强制新建行                      |
+| `FillConfig.builder().direction(HORIZONTAL).build()` | 横向填充                       |
+| `new FillWrapper(prefix, list)`                      | 多列表前缀包装                    |
 
 ---
 
@@ -1154,23 +1154,23 @@ public void compositeFill() {
 
 ### 4.1 读取场景选型
 
-| 数据量           | 推荐方案                             | 关键配置                                               |
-|------------------|--------------------------------------|--------------------------------------------------------|
-| < 1 万行         | 同步 `doReadSync()`                  | 无需特殊配置                                           |
-| 1 万 - 10 万行   | 监听器 + `PageReadListener` 分批入库 | 默认缓存                                               |
-| 10 万 - 100 万行 | 监听器 + 自定义 `ReadCacheSelector`  | `SimpleReadCacheSelector(20, 90)`                      |
-| > 100 万行       | 监听器 + 自定义阈值 + `numRows` 分页 | `SimpleReadCacheSelector(50, 200)` + `.numRows(10000)` |
+| 数据量           | 推荐方案                          | 关键配置                                                   |
+|---------------|-------------------------------|--------------------------------------------------------|
+| < 1 万行        | 同步 `doReadSync()`             | 无需特殊配置                                                 |
+| 1 万 - 10 万行   | 监听器 + `PageReadListener` 分批入库 | 默认缓存                                                   |
+| 10 万 - 100 万行 | 监听器 + 自定义 `ReadCacheSelector` | `SimpleReadCacheSelector(20, 90)`                      |
+| > 100 万行      | 监听器 + 自定义阈值 + `numRows` 分页    | `SimpleReadCacheSelector(50, 200)` + `.numRows(10000)` |
 
 ### 4.2 填充场景选型
 
-| 业务场景                              | 推荐方案                                     |
-|---------------------------------------|----------------------------------------------|
-| 单条数据回填（如合同、证书）          | 简单填充 `doFill(obj)`                       |
-| 列表数据回填（如明细表）              | 列表填充 `doFill(list)` 或批量 `writer.fill` |
-| 列表 + 普通变量混填（如带汇总的报表） | 复杂填充 + `FillConfig.forceNewRow(true)`    |
-| 大数据量报表                          | 列表放最后 + `WriteTable` 追加统计           |
-| 动态列数（横向展开）                  | `FillConfig.direction(HORIZONTAL)`           |
-| 多个不同列表同表展示                  | `FillWrapper` + 前缀                         |
+| 业务场景                 | 推荐方案                                  |
+|----------------------|---------------------------------------|
+| 单条数据回填（如合同、证书）       | 简单填充 `doFill(obj)`                    |
+| 列表数据回填（如明细表）         | 列表填充 `doFill(list)` 或批量 `writer.fill` |
+| 列表 + 普通变量混填（如带汇总的报表） | 复杂填充 + `FillConfig.forceNewRow(true)` |
+| 大数据量报表               | 列表放最后 + `WriteTable` 追加统计             |
+| 动态列数（横向展开）           | `FillConfig.direction(HORIZONTAL)`    |
+| 多个不同列表同表展示           | `FillWrapper` + 前缀                    |
 
 ### 4.3 通用注意事项
 

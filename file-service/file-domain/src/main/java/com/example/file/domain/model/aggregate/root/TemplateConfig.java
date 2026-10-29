@@ -82,19 +82,29 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
                                       List<ValidationRule> validationRules, List<DerivationRule> derivationRules,
                                       SplitConfig splitConfig, List<SourceTemplateDef> sourceTemplates,
                                       UserNo userNo) {
-    if (bizType == null) throw new IllegalArgumentException("bizType null");
-    if (errorPolicy == null) throw new IllegalArgumentException("errorPolicy null");
-    if (canonicalModel == null) throw new IllegalArgumentException("canonicalModel null");
-    if (splitConfig == null) throw new IllegalArgumentException("splitConfig null");
-    if (sourceTemplates == null || sourceTemplates.isEmpty())
+    if (bizType == null) {
+      throw new IllegalArgumentException("bizType null");
+    }
+    if (errorPolicy == null) {
+      throw new IllegalArgumentException("errorPolicy null");
+    }
+    if (canonicalModel == null) {
+      throw new IllegalArgumentException("canonicalModel null");
+    }
+    if (splitConfig == null) {
+      throw new IllegalArgumentException("splitConfig null");
+    }
+    if (sourceTemplates == null || sourceTemplates.isEmpty()) {
       throw new IllegalArgumentException("sourceTemplates empty");
+    }
     return new TemplateConfig(id, bizType, version, errorPolicy, canonicalModel,
       validationRules, derivationRules, splitConfig, sourceTemplates, userNo);
   }
 
   public void activate() {
-    if (this.status == ConfigStatus.DEPRECATED)
+    if (this.status == ConfigStatus.DEPRECATED) {
       throw new IllegalStateException("Cannot activate deprecated config");
+    }
     this.status = ConfigStatus.ACTIVE;
     this.effectiveFrom = LocalDateTime.now();
   }
@@ -122,8 +132,12 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
 
   @Override
   protected void validateInvariants() {
-    if (bizType == null) throw new IllegalStateException("bizType null");
-    if (status == null) throw new IllegalStateException("status null");
+    if (bizType == null) {
+      throw new IllegalStateException("bizType null");
+    }
+    if (status == null) {
+      throw new IllegalStateException("status null");
+    }
   }
 
   public BizType bizType() {

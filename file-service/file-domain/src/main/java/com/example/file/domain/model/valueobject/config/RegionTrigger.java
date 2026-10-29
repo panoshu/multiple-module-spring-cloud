@@ -8,6 +8,8 @@ public record RegionTrigger(
   int minMatchCount
 ) implements ValueObject {
   public RegionTrigger {
-    if (minMatchCount <= 0) minMatchCount = 1;
+    if (minMatchCount <= 0) {
+      minMatchCount = 1;
+    }
   }
 }

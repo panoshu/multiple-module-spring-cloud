@@ -8,7 +8,7 @@ spring:
     virtual:
       enabled: true # JDK 21 虚拟线程开启
   profiles:
-    include: local
+    include: local,sofa
 
   # Redis 连接配置(sa-token 分布式会话使用)
   data:

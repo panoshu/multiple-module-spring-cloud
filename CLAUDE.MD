@@ -17,37 +17,37 @@ Alibaba（Nacos）作为运行基座，目标是搭建可演进的企业级业�
 
 根 `pom.xml` 声明 **6 个顶级模块**：
 
-| 模块                   | 角色                     | 备注                                                      |
-|------------------------|--------------------------|-----------------------------------------------------------|
-| `demo-gateway`         | API 网关                 | Spring Cloud Gateway，含 ExcludeRouteFilter 自定义过滤器  |
-| `demo-shared`          | 共享基础库               | 12 个子模块（5 基础抽象 + 7 自定义 Starter）              |
-| `business-core-kernel` | **业务流程编排引擎内核** | 6 层完整 DDD，提供表单解析/流程编排/材料计算/明细摄入能力 |
-| `integration-service`  | 外部系统集成             | 封装外部交易系统，含 5564 交易码查询                      |
-| `approval-service`     | 审批服务                 | 7 层完整 DDD，含审批流和审批实例                          |
-| `file-service`         | 文件服务                 | 7 层完整 DDD，含 Excel 解析/导出引擎                      |
+| 模块                     | 角色             | 备注                                               |
+|------------------------|----------------|--------------------------------------------------|
+| `demo-gateway`         | API 网关         | Spring Cloud Gateway，含 ExcludeRouteFilter 自定义过滤器 |
+| `demo-shared`          | 共享基础库          | 12 个子模块（5 基础抽象 + 7 自定义 Starter）                  |
+| `business-core-kernel` | **业务流程编排引擎内核** | 6 层完整 DDD，提供表单解析/流程编排/材料计算/明细摄入能力                |
+| `integration-service`  | 外部系统集成         | 封装外部交易系统，含 5564 交易码查询                            |
+| `approval-service`     | 审批服务           | 7 层完整 DDD，含审批流和审批实例                              |
+| `file-service`         | 文件服务           | 7 层完整 DDD，含 Excel 解析/导出引擎                        |
 
 > 注：规则文档 `01-架构与依赖规则.md` 提到的 `customer-service` 实际不存在；`business-core-api` 模块当前为空（仅有
 > pom.xml，但其他 business-core-* 子模块代码齐全）。
 
 ### 1.3 关键版本
 
-| 技术                         | 版本                     |
-|------------------------------|--------------------------|
+| 技术                           | 版本                     |
+|------------------------------|------------------------|
 | JDK                          | 25（`--enable-preview`） |
-| Spring Boot                  | 3.5.14                   |
-| Spring Cloud                 | 2025.0.2                 |
-| Spring Cloud Alibaba (Nacos) | 2025.0.0.0               |
-| MyBatis-Flex                 | 1.11.5                   |
-| Redisson                     | 4.3.1                    |
-| RocketMQ Spring Boot Starter | 2.3.0                    |
-| MapStruct                    | 1.6.3                    |
-| Lombok                       | 1.18.46                  |
-| Apache Fesod (Excel)         | 2.0.2-incubating         |
-| Aviator (表达式引擎)         | 5.4.3                    |
-| Fury (序列化)                | 0.10.3                   |
-| Retrofit                     | 3.3.0                    |
-| Logbook                      | 4.0.4                    |
-| OpenHtmlToPdf                | 1.1.36                   |
+| Spring Boot                  | 3.5.14                 |
+| Spring Cloud                 | 2025.0.2               |
+| Spring Cloud Alibaba (Nacos) | 2025.0.0.0             |
+| MyBatis-Flex                 | 1.11.5                 |
+| Redisson                     | 4.3.1                  |
+| RocketMQ Spring Boot Starter | 2.3.0                  |
+| MapStruct                    | 1.6.3                  |
+| Lombok                       | 1.18.46                |
+| Apache Fesod (Excel)         | 2.0.2-incubating       |
+| Aviator (表达式引擎)              | 5.4.3                  |
+| Fury (序列化)                   | 0.10.3                 |
+| Retrofit                     | 3.3.0                  |
+| Logbook                      | 4.0.4                  |
+| OpenHtmlToPdf                | 1.1.36                 |
 
 ---
 
@@ -111,28 +111,28 @@ public interface Repository<T extends AggregateRoot<ID>, ID extends Identifier<?
 
 ### 3.1 基础抽象层（5 个）
 
-| 模块               | 内容                                                                                                                               |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `shared-types`     | 领域原语基类：`Identifier<T>`、`@IdDefinition`                                                                                     |
-| `shared-exception` | 异常体系：`BaseException` / `DomainException` / `BusinessException` / `SystemException` + `ErrorDefinition`                        |
+| 模块                 | 内容                                                                                                                        |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `shared-types`     | 领域原语基类：`Identifier<T>`、`@IdDefinition`                                                                                    |
+| `shared-exception` | 异常体系：`BaseException` / `DomainException` / `BusinessException` / `SystemException` + `ErrorDefinition`                    |
 | `shared-domain`    | DDD 基类：`Entity<ID>`、`AggregateRoot<ID>`、`ValueObject`、`Repository<T,ID>`、`DomainEvent`、`DefaultEventBus`、`@DomainService` |
-| `shared-api`       | API 层公共 DTO：`PageData<T>`、`Result<T>` 等                                                                                      |
-| `shared-utils`     | 工具类集合                                                                                                                         |
+| `shared-api`       | API 层公共 DTO：`PageData<T>`、`Result<T>` 等                                                                                   |
+| `shared-utils`     | 工具类集合                                                                                                                     |
 
 ### 3.2 自定义 Starter 层（7 个）
 
 每个 Starter 通过 `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 实现自动装配。
 
-| Starter                  | 功能                                                                             |
-|--------------------------|----------------------------------------------------------------------------------|
-| `shared-id-starter`      | 强类型 ID 生成（ULID/UUID_V7/SEGMENT），含 `schema-mysql.sql` 和 `schema-pg.sql` |
-| `shared-cache-starter`   | 多级缓存（Caffeine L1 + Redisson L2）+ 分布式锁防击穿                            |
-| `shared-event-starter`   | 事件总线：领域事件 → 集成事件 DTO 转换 → MQ 发送                                 |
-| `shared-web-starter`     | Web 通用配置（异常处理、序列化、拦截器）                                         |
-| `shared-client-starter`  | HTTP 客户端（Retrofit + Logbook 日志）                                           |
-| `shared-logging-starter` | 日志增强（含 schema-mysql.sql 和 schema-pg.sql）                                 |
-| `shared-pdf-starter`     | PDF 生成（OpenHtmlToPdf + HTML 模板：bank-letter / month-report / red-header）   |
-| `shared-file-starter`    | 文件存储抽象（依赖声明存在）                                                     |
+| Starter                  | 功能                                                                      |
+|--------------------------|-------------------------------------------------------------------------|
+| `shared-id-starter`      | 强类型 ID 生成（ULID/UUID_V7/SEGMENT），含 `schema-mysql.sql` 和 `schema-pg.sql`  |
+| `shared-cache-starter`   | 多级缓存（Caffeine L1 + Redisson L2）+ 分布式锁防击穿                                |
+| `shared-event-starter`   | 事件总线：领域事件 → 集成事件 DTO 转换 → MQ 发送                                         |
+| `shared-web-starter`     | Web 通用配置（异常处理、序列化、拦截器）                                                  |
+| `shared-client-starter`  | HTTP 客户端（Retrofit + Logbook 日志）                                         |
+| `shared-logging-starter` | 日志增强（含 schema-mysql.sql 和 schema-pg.sql）                                |
+| `shared-pdf-starter`     | PDF 生成（OpenHtmlToPdf + HTML 模板：bank-letter / month-report / red-header） |
+| `shared-file-starter`    | 文件存储抽象（依赖声明存在）                                                          |
 
 > 已修复：`shared-logging-starter` 包名原为 `com.example.share.logging`（缺少 `d`），现已统一修正为
 > `com.example.shared.logging`。
@@ -205,10 +205,10 @@ public interface StepActionHandler {
 
 内核已提供 3 个开箱即用实现：
 
-| Handler                          | handlerName                      | 职责                                                                   |
-|----------------------------------|----------------------------------|------------------------------------------------------------------------|
-| `DefaultFormParsingHandler`      | `defaultFormParsingHandler`      | 触发表单异步解析并返回 `SUSPEND_ASYNC_WAIT` 挂起引擎                   |
-| `FormParsingHandler`             | `FormParsingHandler`             | 早期版本的表单解析处理器（已不推荐）                                   |
+| Handler                          | handlerName                      | 职责                                            |
+|----------------------------------|----------------------------------|-----------------------------------------------|
+| `DefaultFormParsingHandler`      | `defaultFormParsingHandler`      | 触发表单异步解析并返回 `SUSPEND_ASYNC_WAIT` 挂起引擎         |
+| `FormParsingHandler`             | `FormParsingHandler`             | 早期版本的表单解析处理器（已不推荐）                            |
 | `PlanMaterialPreparationHandler` | `planMaterialPreparationHandler` | 计算计划层（PLAN）材料清单，明细层材料由业务线在 postExtensions 中扩展 |
 
 #### 4.3.2 StepExtensionAction — 步骤管道扩展动作
@@ -291,49 +291,49 @@ public interface BusinessFactExtractor {
 
 `business-core-domain/gateway/` 定义 3 个防腐层接口，由 infrastructure 层实现：
 
-| Gateway                      | 职责                                               | 默认实现                                             |
-|------------------------------|----------------------------------------------------|------------------------------------------------------|
-| `BusinessConfigGateway`      | 查询下一步路由、材料规则、提取器配置、表单解析配置 | 由各业务服务实现                                     |
-| `ConditionEvaluationGateway` | SpEL 表达式求值                                    | `SpelConditionEvaluationGateway`（基于 Spring SpEL） |
-| `FileIntegrationGateway`     | 触发异步解析、流式下载文件、申请上传 Token         | 由 file-service 集成实现                             |
+| Gateway                      | 职责                        | 默认实现                                             |
+|------------------------------|---------------------------|--------------------------------------------------|
+| `BusinessConfigGateway`      | 查询下一步路由、材料规则、提取器配置、表单解析配置 | 由各业务服务实现                                         |
+| `ConditionEvaluationGateway` | SpEL 表达式求值                | `SpelConditionEvaluationGateway`（基于 Spring SpEL） |
+| `FileIntegrationGateway`     | 触发异步解析、流式下载文件、申请上传 Token  | 由 file-service 集成实现                              |
 
 ### 4.7 领域事件体系
 
 `business-core-domain/event/` 定义 5 个领域事件（均使用 `record` + `DomainEvent` 接口）：
 
-| 事件                      | 触发时机                   |
-|---------------------------|----------------------------|
-| `FormUploadedEvent`       | 表单上传完成               |
+| 事件                        | 触发时机          |
+|---------------------------|---------------|
+| `FormUploadedEvent`       | 表单上传完成        |
 | `ApplicationSpawnedEvent` | 表单解析完成裂变出新申请单 |
-| `StepEnteredEvent`        | 申请单进入新步骤           |
-| `PipelineExecutedEvent`   | 管道执行完成               |
-| `BatchStatusChangedEvent` | 批次状态变更               |
+| `StepEnteredEvent`        | 申请单进入新步骤      |
+| `PipelineExecutedEvent`   | 管道执行完成        |
+| `BatchStatusChangedEvent` | 批次状态变更        |
 
 所有事件均提供 `static of(...)` 方法，内部通过 `EventId.generate()` 和 `LocalDateTime.now()` 设置事件 ID 和时间。
 
 ### 4.8 Repository 契约
 
-| Repository              | 聚合根                | 扩展方法                                                      |
+| Repository              | 聚合根                   | 扩展方法                                                          |
 |-------------------------|-----------------------|---------------------------------------------------------------|
-| `ApplicationRepository` | `BusinessApplication` | 继承基础契约（无扩展）                                        |
+| `ApplicationRepository` | `BusinessApplication` | 继承基础契约（无扩展）                                                   |
 | `FormRepository`        | `BusinessForm`        | `findByApplicationId(ApplicationId)`                          |
 | `BatchRepository`       | `BusinessBatch`       | `findByFormId(FormId)` / `findByApplicationId(ApplicationId)` |
 
 ### 4.9 错误码体系
 
-| 层          | 错误码枚举            | 示例                                                                            |
+| 层           | 错误码枚举                 | 示例                                                                              |
 |-------------|-----------------------|---------------------------------------------------------------------------------|
 | domain      | `CoreDomainErrorCode` | `INVALID_STATUS(200001)` / `INVALID_DATA(200002)` / `INVALID_OPERATION(200003)` |
 | application | `CoreAppErrorCode`    | `STEP_HANDLER_FAILED(102001)` / `DATA_NOT_FOUND(101001)` / `INVALIDATE(103001)` |
 
 ### 4.10 Infrastructure 层支持
 
-| 类                               | 职责                                                                                                   |
-|----------------------------------|--------------------------------------------------------------------------------------------------------|
-| `SpelConditionEvaluationGateway` | 基于 Spring SpEL 实现条件求值，注入 customerNo/productNo/businessType/facts 变量，异常容错视为不通过   |
+| 类                                | 职责                                                                                          |
+|----------------------------------|---------------------------------------------------------------------------------------------|
+| `SpelConditionEvaluationGateway` | 基于 Spring SpEL 实现条件求值，注入 customerNo/productNo/businessType/facts 变量，异常容错视为不通过               |
 | `DomainServiceConfiguration`     | 通过 `@ComponentScan` 扫描 `com.example.core` 和 `com.example.business` 包下标注 `@DomainService` 的类 |
-| `LibJacksonModule`               | 注册 `BusinessExtension` 的 Jackson Mix-in                                                             |
-| `BusinessExtensionMixIn`         | JSON 序列化配置                                                                                        |
+| `LibJacksonModule`               | 注册 `BusinessExtension` 的 Jackson Mix-in                                                     |
+| `BusinessExtensionMixIn`         | JSON 序列化配置                                                                                  |
 
 ### 4.11 business-core-kernel 使用指南
 
@@ -382,11 +382,11 @@ file-types / file-domain / file-api / file-application
 
 **3 个聚合根**：
 
-| 聚合根           | 职责                                 |
-|------------------|--------------------------------------|
-| `ParseTask`      | 解析任务（含子任务列表）             |
+| 聚合根              | 职责                 |
+|------------------|--------------------|
+| `ParseTask`      | 解析任务（含子任务列表）       |
 | `TemplateConfig` | 模板配置（含字段定义、触发器、策略） |
-| `SubTaskData`    | 子任务数据（含行数据）               |
+| `SubTaskData`    | 子任务数据（含行数据）        |
 
 **11 个领域服务**（部分列举）：
 
@@ -438,8 +438,8 @@ file-types / file-domain / file-api / file-application
 
 **2 个聚合根**：
 
-| 聚合根             | 职责                                 |
-|--------------------|--------------------------------------|
+| 聚合根                | 职责                 |
+|--------------------|--------------------|
 | `ApprovalFlow`     | 审批流定义（含节点列表，可发布版本） |
 | `ApprovalInstance` | 审批实例（含节点执行记录、审批记录） |
 
@@ -573,13 +573,13 @@ integration-service-api / -domain / -application
 
 全项目共 **14 个 application.yml** + 4 套环境配置：
 
-| 服务                        | 配置文件                                 |
+| 服务                          | 配置文件                                     |
 |-----------------------------|------------------------------------------|
 | demo-gateway                | application.yml + dev/local/prod/example |
 | integration-service-starter | application.yml + local                  |
 | approval-starter            | application.yml + local                  |
-| file-starter                | **缺失 application.yml**（已知问题）     |
-| shared-event-starter        | application.yml（含 mysql.sql/pg.sql）   |
+| file-starter                | **缺失 application.yml**（已知问题）             |
+| shared-event-starter        | application.yml（含 mysql.sql/pg.sql）      |
 | shared-id-starter           | application.yml + test                   |
 | shared-logging-starter      | application.yml                          |
 | shared-pdf-starter          | application.yml                          |
@@ -589,7 +589,7 @@ integration-service-api / -domain / -application
 
 4 个启动类（注：`business-core-kernel` 作为内核无启动类）：
 
-| 启动类                   | 模块                        |
+| 启动类                      | 模块                          |
 |--------------------------|-----------------------------|
 | `GatewayApplication`     | demo-gateway                |
 | `FileApplication`        | file-starter                |
@@ -598,13 +598,13 @@ integration-service-api / -domain / -application
 
 ### 9.3 数据库一致性
 
-| 服务                   | 实际数据库                  | 规则声明                |
-|------------------------|-----------------------------|-------------------------|
-| file-service           | PostgreSQL（JSONB）         | PostgreSQL（首选）      |
-| approval-service       | MySQL                       | MySQL（备选，已合法化） |
-| shared-id-starter      | 提供 MySQL + PG 两套 schema | -                       |
-| shared-logging-starter | 提供 MySQL + PG 两套 schema | -                       |
-| shared-event-starter   | 提供 MySQL + PG 两套 schema | -                       |
+| 服务                     | 实际数据库                   | 规则声明           |
+|------------------------|-------------------------|----------------|
+| file-service           | PostgreSQL（JSONB）       | PostgreSQL（首选） |
+| approval-service       | MySQL                   | MySQL（备选，已合法化） |
+| shared-id-starter      | 提供 MySQL + PG 两套 schema | -              |
+| shared-logging-starter | 提供 MySQL + PG 两套 schema | -              |
+| shared-event-starter   | 提供 MySQL + PG 两套 schema | -              |
 
 > 已统一：`02-技术栈规范.md` 现声明 PostgreSQL 为首选、MySQL 为备选，与实际一致。
 
@@ -623,29 +623,29 @@ integration-service-api / -domain / -application
 
 ### 10.1 架构层面
 
-| 编号 | 严重级别  | 问题                                        | 建议                                                |
-|------|-----------|---------------------------------------------|-----------------------------------------------------|
-| A1   | Important | `customer-service` 在规则中声明但实际不存在 | 移除规则引用或创建该模块                            |
-| A2   | Minor     | `business-core-api` 为空模块                | 明确该模块定位，或填充共享 DTO，或下沉到 shared-api |
-| A3   | Minor     | `business-core-adapter` 未填充代码          | 控制器由各业务服务的 adapter 层提供，可保持现状     |
+| 编号 | 严重级别      | 问题                              | 建议                                |
+|----|-----------|---------------------------------|-----------------------------------|
+| A1 | Important | `customer-service` 在规则中声明但实际不存在 | 移除规则引用或创建该模块                      |
+| A2 | Minor     | `business-core-api` 为空模块        | 明确该模块定位，或填充共享 DTO，或下沉到 shared-api |
+| A3 | Minor     | `business-core-adapter` 未填充代码   | 控制器由各业务服务的 adapter 层提供，可保持现状      |
 
 ### 10.2 规则与实现不一致
 
-| 编号 | 严重级别  | 问题                                                             | 状态                                           |
-|------|-----------|------------------------------------------------------------------|------------------------------------------------|
-| B1   | Important | 规则声明 PostgreSQL，approval-service 实际用 MySQL               | ✅ 已修复：规则允许 MySQL/PG 双选              |
-| B2   | Important | 规则声明 Spring Kafka，实际用 RocketMQ 2.3.0                     | ✅ 已修复：规则改为 RocketMQ                   |
-| B3   | Minor     | `shared-logging-starter` 包名 `com.example.share.logging` 缺 `d` | ✅ 已修复：统一为 `com.example.shared.logging` |
-| B4   | Minor     | file-starter 缺失 `application.yml`                              | ✅ 已修复：已创建配置文件                      |
+| 编号 | 严重级别      | 问题                                                            | 状态                                     |
+|----|-----------|---------------------------------------------------------------|----------------------------------------|
+| B1 | Important | 规则声明 PostgreSQL，approval-service 实际用 MySQL                    | ✅ 已修复：规则允许 MySQL/PG 双选                 |
+| B2 | Important | 规则声明 Spring Kafka，实际用 RocketMQ 2.3.0                          | ✅ 已修复：规则改为 RocketMQ                    |
+| B3 | Minor     | `shared-logging-starter` 包名 `com.example.share.logging` 缺 `d` | ✅ 已修复：统一为 `com.example.shared.logging` |
+| B4 | Minor     | file-starter 缺失 `application.yml`                             | ✅ 已修复：已创建配置文件                          |
 
 ### 10.3 代码 TODO 清单
 
-| 模块                         | 文件                             | TODO 内容                                                                         |
-|------------------------------|----------------------------------|-----------------------------------------------------------------------------------|
-| approval-infrastructure      | `RoleUserGatewayImpl`            | `getUsersInSamePlan` 伪实现                                                       |
-| approval-infrastructure      | `ApprovalInstanceRepositoryImpl` | `findByApproverId` 伪实现                                                         |
-| approval-application         | `ApprovalInstanceService`        | `listMyPendingApprovals` 抛异常                                                   |
-| approval-application         | `ApprovalInstanceService`        | `getApprovalHistory` 返回空列表                                                   |
+| 模块                           | 文件                               | TODO 内容                                                            |
+|------------------------------|----------------------------------|--------------------------------------------------------------------|
+| approval-infrastructure      | `RoleUserGatewayImpl`            | `getUsersInSamePlan` 伪实现                                           |
+| approval-infrastructure      | `ApprovalInstanceRepositoryImpl` | `findByApproverId` 伪实现                                             |
+| approval-application         | `ApprovalInstanceService`        | `listMyPendingApprovals` 抛异常                                       |
+| approval-application         | `ApprovalInstanceService`        | `getApprovalHistory` 返回空列表                                         |
 | business-core-infrastructure | -                                | `BusinessConfigGateway` / `FileIntegrationGateway` 无默认实现，需业务服务自行实现 |
 
 ### 10.4 工程化亮点

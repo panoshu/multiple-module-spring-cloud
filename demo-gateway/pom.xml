@@ -31,10 +31,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.alibaba.cloud</groupId>
-      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-crypto</artifactId>
     </dependency>
@@ -62,15 +58,10 @@
       <artifactId>redisson-spring-boot-starter</artifactId>
     </dependency>
 
-    <!-- auth-api: 网关调用 auth-service 的 RouteRuleApi 加载动态路由规则 -->
+    <!-- auth-api: 提供 SessionSignatureUtils 等共享工具类（网关签名/验签） -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>auth-api</artifactId>
-    </dependency>
-    <!-- httpexchange: 注册 @HttpExchange 标注的 auth-api 接口为远程客户端 -->
-    <dependency>
-      <groupId>io.github.danielliu1123</groupId>
-      <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
     </dependency>
 
     <dependency>

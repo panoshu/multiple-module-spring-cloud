@@ -206,14 +206,14 @@ public class FesodExcelExporter implements ExcelExporter {
 
 **模板结构**（6 行 4 列）：
 
-| 行 | A                          | B                   | C                              | D                   |
-|----|----------------------------|---------------------|--------------------------------|---------------------|
-| 0  | `企业客户号：{customerNo}` |                     | `企业客户名称：{customerName}` |                     |
-| 1  | (空)                       |                     |                                |                     |
-| 2  | `序号`                     | `姓名`              | `证件类型`                     | `证件号码`          |
-| 3  | `{.employees.seq}`         | `{.employees.name}` | `{.employees.idType}`          | `{.employees.idNo}` |
-| 4  | (空)                       |                     |                                |                     |
-| 5  | `填表人：{filler}`         |                     | `复核人：{reviewer}`           |                     |
+| 行 | A                    | B                   | C                       | D                   |
+|---|----------------------|---------------------|-------------------------|---------------------|
+| 0 | `企业客户号：{customerNo}` |                     | `企业客户名称：{customerName}` |                     |
+| 1 | (空)                  |                     |                         |                     |
+| 2 | `序号`                 | `姓名`                | `证件类型`                  | `证件号码`              |
+| 3 | `{.employees.seq}`   | `{.employees.name}` | `{.employees.idType}`   | `{.employees.idNo}` |
+| 4 | (空)                  |                     |                         |                     |
+| 5 | `填表人：{filler}`       |                     | `复核人：{reviewer}`        |                     |
 
 **生成代码**（在测试类中）：
 

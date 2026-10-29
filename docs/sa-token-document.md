@@ -47,11 +47,11 @@ Session 会话**、 **微服务网关鉴权** 等一系列权限相关问题。
 
 ### 1.1 核心优势
 
-| 优势       | 说明                                           |
-|------------|------------------------------------------------|
-| **简单**   | 零配置启动，开箱即用，低成本上手               |
-| **强大**   | 集成几十项权限相关特性，覆盖大部分业务场景     |
-| **易用**   | API 如丝般顺滑，大量高级特性只需一行代码       |
+| 优势      | 说明                        |
+|---------|---------------------------|
+| **简单**  | 零配置启动，开箱即用，低成本上手          |
+| **强大**  | 集成几十项权限相关特性，覆盖大部分业务场景     |
+| **易用**  | API 如丝般顺滑，大量高级特性只需一行代码    |
 | **高扩展** | 几乎所有组件都提供扩展接口，90% 以上逻辑可重写 |
 
 ### 1.2 功能模块
@@ -404,11 +404,11 @@ public class GlobalExceptionHandler {
 
 ### 5.1 三种"下线"方式的区别
 
-| 方式                 | API                         | 说明                                             |
-|----------------------|-----------------------------|--------------------------------------------------|
-| **注销下线**         | `StpUtil.logout(loginId)`   | 账号会话注销，对方再次访问提示未登录             |
-| **强制下线**（踢人） | `StpUtil.kickout(loginId)`  | 账号被踢下线，对方再次访问提示"已被踢下线"       |
-| **顶人下线**         | `StpUtil.replaced(loginId)` | 账号被新登录顶下线，对方再次访问提示"已被顶下线" |
+| 方式           | API                         | 说明                        |
+|--------------|-----------------------------|---------------------------|
+| **注销下线**     | `StpUtil.logout(loginId)`   | 账号会话注销，对方再次访问提示未登录        |
+| **强制下线**（踢人） | `StpUtil.kickout(loginId)`  | 账号被踢下线，对方再次访问提示"已被踢下线"    |
+| **顶人下线**     | `StpUtil.replaced(loginId)` | 账号被新登录顶下线，对方再次访问提示"已被顶下线" |
 
 ### 5.2 API 示例
 
@@ -440,14 +440,14 @@ StpUtil.logoutByTokenValue("xxxx-xxxx-xxxx");
 
 ### 6.1 可用注解
 
-| 注解                             | 说明                           |
-|----------------------------------|--------------------------------|
-| `@SaCheckLogin`                  | 校验当前会话是否已登录         |
-| `@SaCheckRole("admin")`          | 校验当前会话是否含有指定角色   |
-| `@SaCheckPermission("user:add")` | 校验当前会话是否含有指定权限   |
+| 注解                               | 说明              |
+|----------------------------------|-----------------|
+| `@SaCheckLogin`                  | 校验当前会话是否已登录     |
+| `@SaCheckRole("admin")`          | 校验当前会话是否含有指定角色  |
+| `@SaCheckPermission("user:add")` | 校验当前会话是否含有指定权限  |
 | `@SaCheckSafe`                   | 校验当前会话是否已完成二级认证 |
-| `@SaCheckDisable`                | 校验当前会话是否已被服务禁用   |
-| `@SaIgnore`                      | 声明此方法忽略鉴权             |
+| `@SaCheckDisable`                | 校验当前会话是否已被服务禁用  |
+| `@SaIgnore`                      | 声明此方法忽略鉴权       |
 
 ### 6.2 使用示例
 
@@ -617,12 +617,12 @@ session.set("key", "value");
 
 ### 8.4 Session 的应用场景
 
-| 场景             | 适用 Session    | 说明               |
-|------------------|-----------------|--------------------|
-| 用户基本信息缓存 | Account-Session | 同一账号多设备共享 |
-| 设备信息存储     | Token-Session   | 每次登录独立       |
-| 临时数据存储     | Token-Session   | 随 Token 生命周期  |
-| 跨设备同步数据   | Account-Session | 修改一处处处生效   |
+| 场景       | 适用 Session      | 说明           |
+|----------|-----------------|--------------|
+| 用户基本信息缓存 | Account-Session | 同一账号多设备共享    |
+| 设备信息存储   | Token-Session   | 每次登录独立       |
+| 临时数据存储   | Token-Session   | 随 Token 生命周期 |
+| 跨设备同步数据  | Account-Session | 修改一处处处生效     |
 
 ---
 
@@ -678,11 +678,11 @@ axios.interceptors.request.use((config) => {
 
 ### 9.4 常见问题排查
 
-| 问题                     | 原因                                 | 解决方案                          |
-|--------------------------|--------------------------------------|-----------------------------------|
-| 登录成功但后续接口 401   | 前端只存了 tokenValue 没存 tokenName | 同时存储 tokenName 和 tokenValue  |
-| Postman 正常浏览器报跨域 | CORS 配置未放行自定义请求头          | 在跨域配置中放行 `satoken` 请求头 |
-| 走网关后丢登录态         | 网关安全策略过滤了 satoken 头        | 把 Token 请求头加入网关放行列表   |
+| 问题               | 原因                            | 解决方案                        |
+|------------------|-------------------------------|-----------------------------|
+| 登录成功但后续接口 401    | 前端只存了 tokenValue 没存 tokenName | 同时存储 tokenName 和 tokenValue |
+| Postman 正常浏览器报跨域 | CORS 配置未放行自定义请求头              | 在跨域配置中放行 `satoken` 请求头      |
+| 走网关后丢登录态         | 网关安全策略过滤了 satoken 头           | 把 Token 请求头加入网关放行列表         |
 
 ---
 
@@ -690,14 +690,14 @@ axios.interceptors.request.use((config) => {
 
 ### 10.1 内置六种风格
 
-| 风格          | 示例                                   | 说明                  |
-|---------------|----------------------------------------|-----------------------|
-| `uuid`        | `623368f0-ae24-4f20-9b3a-60c2d9e2d8c8` | 36位 UUID（默认）     |
+| 风格            | 示例                                     | 说明             |
+|---------------|----------------------------------------|----------------|
+| `uuid`        | `623368f0-ae24-4f20-9b3a-60c2d9e2d8c8` | 36位 UUID（默认）   |
 | `simple-uuid` | `623368f0ae244f209b3a60c2d9e2d8c8`     | 32位 UUID（无中划线） |
-| `random-32`   | `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`     | 32位随机字符串        |
-| `random-64`   | 64位随机字符串                         | 更高安全性            |
-| `random-128`  | 128位随机字符串                        | 最高安全性            |
-| `tik`         | `gr_SScIN5PnXxLrvxdBk2VZm1oYv8YxJ`     | 对内系统推荐的风格    |
+| `random-32`   | `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`     | 32位随机字符串       |
+| `random-64`   | 64位随机字符串                               | 更高安全性          |
+| `random-128`  | 128位随机字符串                              | 最高安全性          |
+| `tik`         | `gr_SScIN5PnXxLrvxdBk2VZm1oYv8YxJ`     | 对内系统推荐的风格      |
 
 ### 10.2 配置方式
 
@@ -742,9 +742,9 @@ StpUtil.login(10001, new SaLoginModel()
 
 ### 11.3 临时有效期 vs 永久有效期
 
-| 参数             | 说明                                           |
-|------------------|------------------------------------------------|
-| `timeout`        | Token 的最大有效期                             |
+| 参数               | 说明                         |
+|------------------|----------------------------|
+| `timeout`        | Token 的最大有效期               |
 | `active-timeout` | Token 的活跃超时时间（超过此时间未访问即冻结） |
 
 ```yaml
@@ -1151,10 +1151,10 @@ StpAdminUtil.checkLogin();
 
 Sa-Token SSO 提供三种模式：
 
-| 模式   | 适用场景                    | 说明                 |
-|--------|-----------------------------|----------------------|
-| 模式一 | 前端同域 + 后端同 Redis     | 共享 Cookie 同步会话 |
-| 模式二 | 前端不同域 + 后端同 Redis   | URL 重定向传播会话   |
+| 模式  | 适用场景               | 说明             |
+|-----|--------------------|----------------|
+| 模式一 | 前端同域 + 后端同 Redis   | 共享 Cookie 同步会话 |
+| 模式二 | 前端不同域 + 后端同 Redis  | URL 重定向传播会话    |
 | 模式三 | 前端不同域 + 后端不同 Redis | Http 请求获取会话    |
 
 ### 22.1 添加依赖
@@ -1558,50 +1558,50 @@ sa-token:
 
 ### 28.1 登录相关
 
-| API                                 | 说明                              |
-|-------------------------------------|-----------------------------------|
-| `StpUtil.login(id)`                 | 登录                              |
-| `StpUtil.login(id, SaLoginModel)`   | 登录（指定参数）                  |
-| `StpUtil.logout()`                  | 注销当前会话                      |
-| `StpUtil.logout(loginId)`           | 注销指定账号                      |
-| `StpUtil.logoutByTokenValue(token)` | 根据 Token 注销                   |
-| `StpUtil.isLogin()`                 | 是否已登录                        |
-| `StpUtil.checkLogin()`              | 校验登录（未登录抛异常）          |
-| `StpUtil.getLoginId()`              | 获取登录账号id                    |
-| `StpUtil.getLoginIdAsLong()`        | 获取登录账号id（Long）            |
-| `StpUtil.getLoginIdAsString()`      | 获取登录账号id（String）          |
+| API                                 | 说明                   |
+|-------------------------------------|----------------------|
+| `StpUtil.login(id)`                 | 登录                   |
+| `StpUtil.login(id, SaLoginModel)`   | 登录（指定参数）             |
+| `StpUtil.logout()`                  | 注销当前会话               |
+| `StpUtil.logout(loginId)`           | 注销指定账号               |
+| `StpUtil.logoutByTokenValue(token)` | 根据 Token 注销          |
+| `StpUtil.isLogin()`                 | 是否已登录                |
+| `StpUtil.checkLogin()`              | 校验登录（未登录抛异常）         |
+| `StpUtil.getLoginId()`              | 获取登录账号id             |
+| `StpUtil.getLoginIdAsLong()`        | 获取登录账号id（Long）       |
+| `StpUtil.getLoginIdAsString()`      | 获取登录账号id（String）     |
 | `StpUtil.getLoginIdDefaultNull()`   | 获取登录账号id（未登录返回 null） |
 
 ### 28.2 Token 相关
 
-| API                                | 说明                  |
-|------------------------------------|-----------------------|
-| `StpUtil.getTokenValue()`          | 获取当前 Token 值     |
-| `StpUtil.getTokenName()`           | 获取 Token 名称       |
-| `StpUtil.getTokenInfo()`           | 获取 Token 信息       |
-| `StpUtil.getTokenTimeout()`        | 获取 Token 剩余有效期 |
+| API                                | 说明              |
+|------------------------------------|-----------------|
+| `StpUtil.getTokenValue()`          | 获取当前 Token 值    |
+| `StpUtil.getTokenName()`           | 获取 Token 名称     |
+| `StpUtil.getTokenInfo()`           | 获取 Token 信息     |
+| `StpUtil.getTokenTimeout()`        | 获取 Token 剩余有效期  |
 | `StpUtil.getLoginIdByToken(token)` | 根据 Token 获取账号id |
-| `StpUtil.renewTimeout(timeout)`    | 续签 Token            |
+| `StpUtil.renewTimeout(timeout)`    | 续签 Token        |
 
 ### 28.3 权限相关
 
-| API                                    | 说明                     |
-|----------------------------------------|--------------------------|
-| `StpUtil.getPermissionList()`          | 获取权限列表             |
-| `StpUtil.hasPermission(code)`          | 是否有指定权限           |
+| API                                    | 说明           |
+|----------------------------------------|--------------|
+| `StpUtil.getPermissionList()`          | 获取权限列表       |
+| `StpUtil.hasPermission(code)`          | 是否有指定权限      |
 | `StpUtil.checkPermission(code)`        | 校验权限（不通过抛异常） |
-| `StpUtil.checkPermissionAnd(codes...)` | 校验权限（全部通过）     |
-| `StpUtil.checkPermissionOr(codes...)`  | 校验权限（任一通过）     |
-| `StpUtil.getRoleList()`                | 获取角色列表             |
-| `StpUtil.hasRole(role)`                | 是否有指定角色           |
+| `StpUtil.checkPermissionAnd(codes...)` | 校验权限（全部通过）   |
+| `StpUtil.checkPermissionOr(codes...)`  | 校验权限（任一通过）   |
+| `StpUtil.getRoleList()`                | 获取角色列表       |
+| `StpUtil.hasRole(role)`                | 是否有指定角色      |
 | `StpUtil.checkRole(role)`              | 校验角色（不通过抛异常） |
-| `StpUtil.checkRoleAnd(roles...)`       | 校验角色（全部通过）     |
-| `StpUtil.checkRoleOr(roles...)`        | 校验角色（任一通过）     |
+| `StpUtil.checkRoleAnd(roles...)`       | 校验角色（全部通过）   |
+| `StpUtil.checkRoleOr(roles...)`        | 校验角色（任一通过）   |
 
 ### 28.4 踢人下线
 
-| API                                  | 说明            |
-|--------------------------------------|-----------------|
+| API                                  | 说明          |
+|--------------------------------------|-------------|
 | `StpUtil.kickout(loginId)`           | 踢人下线        |
 | `StpUtil.kickoutByTokenValue(token)` | 根据 Token 踢人 |
 | `StpUtil.replaced(loginId)`          | 顶人下线        |
@@ -1610,30 +1610,30 @@ sa-token:
 ### 28.5 Session 相关
 
 | API                                 | 说明                 |
-|-------------------------------------|----------------------|
+|-------------------------------------|--------------------|
 | `StpUtil.getSession()`              | 获取 Account-Session |
 | `StpUtil.getTokenSession()`         | 获取 Token-Session   |
-| `StpUtil.getSessionBySessionId(id)` | 获取自定义 Session   |
+| `StpUtil.getSessionBySessionId(id)` | 获取自定义 Session      |
 
 ### 28.6 账号封禁
 
-| API                                       | 说明         |
-|-------------------------------------------|--------------|
-| `StpUtil.disable(loginId, time)`          | 封禁账号     |
-| `StpUtil.disable(loginId, service, time)` | 分类封禁     |
-| `StpUtil.untieDisable(loginId)`           | 解封         |
-| `StpUtil.untieDisable(loginId, service)`  | 分类解封     |
-| `StpUtil.isDisabled(loginId)`             | 是否被封禁   |
+| API                                       | 说明     |
+|-------------------------------------------|--------|
+| `StpUtil.disable(loginId, time)`          | 封禁账号   |
+| `StpUtil.disable(loginId, service, time)` | 分类封禁   |
+| `StpUtil.untieDisable(loginId)`           | 解封     |
+| `StpUtil.untieDisable(loginId, service)`  | 分类解封   |
+| `StpUtil.isDisabled(loginId)`             | 是否被封禁  |
 | `StpUtil.getDisableTime(loginId)`         | 剩余封禁时间 |
 
 ### 28.7 二级认证
 
-| API                         | 说明             |
-|-----------------------------|------------------|
-| `StpUtil.openSafe(timeout)` | 开启二级认证     |
-| `StpUtil.closeSafe()`       | 关闭二级认证     |
+| API                         | 说明       |
+|-----------------------------|----------|
+| `StpUtil.openSafe(timeout)` | 开启二级认证   |
+| `StpUtil.closeSafe()`       | 关闭二级认证   |
 | `StpUtil.isSafe()`          | 是否处于二级认证 |
-| `StpUtil.checkSafe()`       | 校验二级认证     |
+| `StpUtil.checkSafe()`       | 校验二级认证   |
 
 ---
 
@@ -1643,12 +1643,12 @@ sa-token:
 
 本项目基于 Spring Boot 3.5.x + Spring Cloud Gateway（WebFlux），建议：
 
-| 模块                 | 依赖                                    | 说明                   |
-|----------------------|-----------------------------------------|------------------------|
-| 网关（demo-gateway） | `sa-token-reactor-spring-boot3-starter` | WebFlux 环境           |
-| 业务服务             | `sa-token-spring-boot3-starter`         | Servlet 环境           |
-| Redis 持久化         | `sa-token-redis-template`               | 分布式会话（官方推荐） |
-| Redis 连接池         | `commons-pool2`                         | Lettuce 连接池支持     |
+| 模块               | 依赖                                      | 说明            |
+|------------------|-----------------------------------------|---------------|
+| 网关（demo-gateway） | `sa-token-reactor-spring-boot3-starter` | WebFlux 环境    |
+| 业务服务             | `sa-token-spring-boot3-starter`         | Servlet 环境    |
+| Redis 持久化        | `sa-token-redis-template`               | 分布式会话（官方推荐）   |
+| Redis 连接池        | `commons-pool2`                         | Lettuce 连接池支持 |
 
 ### A.2 架构建议
 
@@ -1805,10 +1805,10 @@ public class StpInterfaceImpl implements StpInterface {
 
 **两种方案对比**：
 
-| 方案              | 优点                                   | 缺点                   | 适用场景       |
-|-------------------|----------------------------------------|------------------------|----------------|
-| 方案一（Redis）   | 缓存独立于会话，用户重新登录仍命中缓存 | 需自行管理缓存失效     | 权限变更不频繁 |
-| 方案二（Session） | 随会话生命周期自动管理，登出即清除     | 用户重新登录需重新加载 | 权限随会话变更 |
+| 方案           | 优点                  | 缺点          | 适用场景    |
+|--------------|---------------------|-------------|---------|
+| 方案一（Redis）   | 缓存独立于会话，用户重新登录仍命中缓存 | 需自行管理缓存失效   | 权限变更不频繁 |
+| 方案二（Session） | 随会话生命周期自动管理，登出即清除   | 用户重新登录需重新加载 | 权限随会话变更 |
 
 #### 29.2.3 权限变更时清除缓存
 
@@ -2160,182 +2160,182 @@ public class RouteRuleController {
 
 ### 30.1 开始
 
-| 章节                   | 链接                                                | 说明                                |
-|------------------------|-----------------------------------------------------|-------------------------------------|
-| 框架介绍               | https://sa-token.cc/doc.html#/                      | 框架概览、功能特性                  |
-| 在 SpringBoot 环境集成 | https://sa-token.cc/doc.html#/start/example         | Servlet 环境集成                    |
+| 章节                | 链接                                                  | 说明                     |
+|-------------------|-----------------------------------------------------|------------------------|
+| 框架介绍              | https://sa-token.cc/doc.html#/                      | 框架概览、功能特性              |
+| 在 SpringBoot 环境集成 | https://sa-token.cc/doc.html#/start/example         | Servlet 环境集成           |
 | 在 WebFlux 环境集成    | https://sa-token.cc/doc.html#/start/webflux-example | Reactive 环境集成（本项目网关使用） |
-| 在 Solon 环境集成      | https://sa-token.cc/doc.html#/start/solon-example   | Solon 框架集成                      |
-| 其它环境集成示例       | https://sa-token.cc/doc.html#/start/download        | JFinal、Solon 等                    |
-| 集成示例大全下载       | https://sa-token.cc/doc.html#/more/download-demos   | 官方示例代码                        |
+| 在 Solon 环境集成      | https://sa-token.cc/doc.html#/start/solon-example   | Solon 框架集成             |
+| 其它环境集成示例          | https://sa-token.cc/doc.html#/start/download        | JFinal、Solon 等         |
+| 集成示例大全下载          | https://sa-token.cc/doc.html#/more/download-demos   | 官方示例代码                 |
 
 ### 30.2 基础
 
-| 章节         | 链接                                          | 说明                 |
-|--------------|-----------------------------------------------|----------------------|
-| 登录认证     | https://sa-token.cc/doc.html#/use/login-auth  | 登录、注销、会话查询 |
-| 权限认证     | https://sa-token.cc/doc.html#/use/jur-auth    | 权限码、角色校验     |
-| 踢人下线     | https://sa-token.cc/doc.html#/use/kick        | 踢人、顶人、注销     |
-| 注解鉴权     | https://sa-token.cc/doc.html#/use/at-check    | @SaCheckLogin 等     |
-| 路由拦截鉴权 | https://sa-token.cc/doc.html#/use/route-check | SaRouter 路由匹配    |
-| Session 会话 | https://sa-token.cc/doc.html#/use/session     | 三种 Session 模型    |
-| 框架配置     | https://sa-token.cc/doc.html#/use/config      | 所有配置项说明       |
+| 章节         | 链接                                            | 说明              |
+|------------|-----------------------------------------------|-----------------|
+| 登录认证       | https://sa-token.cc/doc.html#/use/login-auth  | 登录、注销、会话查询      |
+| 权限认证       | https://sa-token.cc/doc.html#/use/jur-auth    | 权限码、角色校验        |
+| 踢人下线       | https://sa-token.cc/doc.html#/use/kick        | 踢人、顶人、注销        |
+| 注解鉴权       | https://sa-token.cc/doc.html#/use/at-check    | @SaCheckLogin 等 |
+| 路由拦截鉴权     | https://sa-token.cc/doc.html#/use/route-check | SaRouter 路由匹配   |
+| Session 会话 | https://sa-token.cc/doc.html#/use/session     | 三种 Session 模型   |
+| 框架配置       | https://sa-token.cc/doc.html#/use/config      | 所有配置项说明         |
 
 ### 30.3 深入
 
-| 章节                   | 链接                                             | 说明                            |
-|------------------------|--------------------------------------------------|---------------------------------|
-| 集成 Redis             | https://sa-token.cc/doc.html#/up/integ-redis     | Redis 持久化                    |
-| 前后端分离             | https://sa-token.cc/doc.html#/up/not-cookie      | 无 Cookie 模式                  |
-| 自定义 Token 风格      | https://sa-token.cc/doc.html#/up/token-style     | 六种 Token 风格                 |
-| Token 提交前缀         | https://sa-token.cc/doc.html#/up/token-prefix    | 如 "Bearer " 前缀               |
-| 同端互斥登录           | https://sa-token.cc/doc.html#/up/mutex-login     | QQ 模式互斥                     |
-| 记住我模式             | https://sa-token.cc/doc.html#/up/remember-me     | 临时 Cookie vs 持久 Cookie      |
-| 登录参数 & 注销参数    | https://sa-token.cc/doc.html#/up/login-parameter | SaLoginModel 详解               |
-| 二级认证               | https://sa-token.cc/doc.html#/up/safe-auth       | 敏感操作二次校验                |
-| 模拟他人 & 身份切换    | https://sa-token.cc/doc.html#/up/mock-person     | 临时切换身份                    |
-| 账号封禁               | https://sa-token.cc/doc.html#/up/disable         | 分类封禁、阶梯封禁              |
-| 密码加密               | https://sa-token.cc/doc.html#/up/password-secure | MD5/SHA/AES/RSA                 |
-| 会话查询               | https://sa-token.cc/doc.html#/up/search-session  | 查询所有登录会话                |
-| Http Basic/Digest 认证 | https://sa-token.cc/doc.html#/up/basic-auth      | Basic 认证                      |
-| 全局侦听器             | https://sa-token.cc/doc.html#/up/global-listener | SaTokenListener                 |
-| 全局过滤器             | https://sa-token.cc/doc.html#/up/global-filter   | SaServletFilter/SaReactorFilter |
-| 多账号认证             | https://sa-token.cc/doc.html#/up/many-account    | 多套账号体系                    |
+| 章节                   | 链接                                               | 说明                              |
+|----------------------|--------------------------------------------------|---------------------------------|
+| 集成 Redis             | https://sa-token.cc/doc.html#/up/integ-redis     | Redis 持久化                       |
+| 前后端分离                | https://sa-token.cc/doc.html#/up/not-cookie      | 无 Cookie 模式                     |
+| 自定义 Token 风格         | https://sa-token.cc/doc.html#/up/token-style     | 六种 Token 风格                     |
+| Token 提交前缀           | https://sa-token.cc/doc.html#/up/token-prefix    | 如 "Bearer " 前缀                  |
+| 同端互斥登录               | https://sa-token.cc/doc.html#/up/mutex-login     | QQ 模式互斥                         |
+| 记住我模式                | https://sa-token.cc/doc.html#/up/remember-me     | 临时 Cookie vs 持久 Cookie          |
+| 登录参数 & 注销参数          | https://sa-token.cc/doc.html#/up/login-parameter | SaLoginModel 详解                 |
+| 二级认证                 | https://sa-token.cc/doc.html#/up/safe-auth       | 敏感操作二次校验                        |
+| 模拟他人 & 身份切换          | https://sa-token.cc/doc.html#/up/mock-person     | 临时切换身份                          |
+| 账号封禁                 | https://sa-token.cc/doc.html#/up/disable         | 分类封禁、阶梯封禁                       |
+| 密码加密                 | https://sa-token.cc/doc.html#/up/password-secure | MD5/SHA/AES/RSA                 |
+| 会话查询                 | https://sa-token.cc/doc.html#/up/search-session  | 查询所有登录会话                        |
+| Http Basic/Digest 认证 | https://sa-token.cc/doc.html#/up/basic-auth      | Basic 认证                        |
+| 全局侦听器                | https://sa-token.cc/doc.html#/up/global-listener | SaTokenListener                 |
+| 全局过滤器                | https://sa-token.cc/doc.html#/up/global-filter   | SaServletFilter/SaReactorFilter |
+| 多账号认证                | https://sa-token.cc/doc.html#/up/many-account    | 多套账号体系                          |
 
 ### 30.4 单点登录（SSO）
 
-| 章节                | 链接                                               | 说明                         |
-|---------------------|----------------------------------------------------|------------------------------|
-| 单点登录简述        | https://sa-token.cc/doc.html#/sso/readme           | 三种模式介绍                 |
-| 搭建 SSO-Server     | https://sa-token.cc/doc.html#/sso/sso-server       | 认证中心搭建                 |
-| SSO-Server 开放 API | https://sa-token.cc/doc.html#/sso/sso-apidoc       | 接口文档                     |
-| SSO 模式一          | https://sa-token.cc/doc.html#/sso/sso-type1        | 共享 Cookie 同步会话         |
-| SSO 模式二          | https://sa-token.cc/doc.html#/sso/sso-type2        | URL 重定向传播会话（最常用） |
-| SSO 模式三          | https://sa-token.cc/doc.html#/sso/sso-type3        | Http 请求获取会话            |
-| 配置域名校验        | https://sa-token.cc/doc.html#/sso/sso-check-domain | 安全配置                     |
-| 定制化登录页面      | https://sa-token.cc/doc.html#/sso/sso-custom-login | 自定义 UI                    |
-| 自定义 API 路由     | https://sa-token.cc/doc.html#/sso/sso-custom-api   | 路由定制                     |
-| 平台中心跳转模式    | https://sa-token.cc/doc.html#/sso/sso-home-jump    | 统一入口                     |
-| 匿名 client 接入    | https://sa-token.cc/doc.html#/sso/anon-client      | 无需注册 client              |
-| 单点注销            | https://sa-token.cc/doc.html#/sso/signout          | 全端下线                     |
-| 前后端分离整合方案  | https://sa-token.cc/doc.html#/sso/sso-h5           | H5/小程序 SSO                |
-| 消息推送机制        | https://sa-token.cc/doc.html#/sso/message-push     | 服务端推送                   |
-| 用户数据同步/迁移   | https://sa-token.cc/doc.html#/sso/user-data-sync   | 数据一致性                   |
-| NoSdk、ReSdk 模式   | https://sa-token.cc/doc.html#/sso/sso-nosdk        | 非 Java 项目接入             |
-| SSO 代码 API 参考   | https://sa-token.cc/doc.html#/sso/sso-dev          | API 手册                     |
-| 常见问题总结        | https://sa-token.cc/doc.html#/sso/sso-questions    | FAQ                          |
+| 章节                | 链接                                                 | 说明               |
+|-------------------|----------------------------------------------------|------------------|
+| 单点登录简述            | https://sa-token.cc/doc.html#/sso/readme           | 三种模式介绍           |
+| 搭建 SSO-Server     | https://sa-token.cc/doc.html#/sso/sso-server       | 认证中心搭建           |
+| SSO-Server 开放 API | https://sa-token.cc/doc.html#/sso/sso-apidoc       | 接口文档             |
+| SSO 模式一           | https://sa-token.cc/doc.html#/sso/sso-type1        | 共享 Cookie 同步会话   |
+| SSO 模式二           | https://sa-token.cc/doc.html#/sso/sso-type2        | URL 重定向传播会话（最常用） |
+| SSO 模式三           | https://sa-token.cc/doc.html#/sso/sso-type3        | Http 请求获取会话      |
+| 配置域名校验            | https://sa-token.cc/doc.html#/sso/sso-check-domain | 安全配置             |
+| 定制化登录页面           | https://sa-token.cc/doc.html#/sso/sso-custom-login | 自定义 UI           |
+| 自定义 API 路由        | https://sa-token.cc/doc.html#/sso/sso-custom-api   | 路由定制             |
+| 平台中心跳转模式          | https://sa-token.cc/doc.html#/sso/sso-home-jump    | 统一入口             |
+| 匿名 client 接入      | https://sa-token.cc/doc.html#/sso/anon-client      | 无需注册 client      |
+| 单点注销              | https://sa-token.cc/doc.html#/sso/signout          | 全端下线             |
+| 前后端分离整合方案         | https://sa-token.cc/doc.html#/sso/sso-h5           | H5/小程序 SSO       |
+| 消息推送机制            | https://sa-token.cc/doc.html#/sso/message-push     | 服务端推送            |
+| 用户数据同步/迁移         | https://sa-token.cc/doc.html#/sso/user-data-sync   | 数据一致性            |
+| NoSdk、ReSdk 模式    | https://sa-token.cc/doc.html#/sso/sso-nosdk        | 非 Java 项目接入      |
+| SSO 代码 API 参考     | https://sa-token.cc/doc.html#/sso/sso-dev          | API 手册           |
+| 常见问题总结            | https://sa-token.cc/doc.html#/sso/sso-questions    | FAQ              |
 
 ### 30.5 OAuth2.0
 
-| 章节                      | 链接                                                          | 说明           |
-|---------------------------|---------------------------------------------------------------|----------------|
-| OAuth2.0 简述             | https://sa-token.cc/doc.html#/oauth2/readme                   | 协议介绍       |
-| OAuth2-Server 搭建        | https://sa-token.cc/doc.html#/oauth2/oauth2-server            | 服务端搭建     |
-| OAuth2-Server 开放 API    | https://sa-token.cc/doc.html#/oauth2/oauth2-apidoc            | 接口文档       |
-| 自定义数据加载器          | https://sa-token.cc/doc.html#/oauth2/oauth2-data-loader       | 数据加载定制   |
-| 配置 client 域名校验      | https://sa-token.cc/doc.html#/oauth2/oauth2-check-domain      | 安全配置       |
-| 自定义 Scope 权限及处理器 | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-scope      | Scope 扩展     |
-| 为 Scope 划分等级         | https://sa-token.cc/doc.html#/oauth2/oauth2-scope-level       | 层级 Scope     |
-| 自定义 grant_type         | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-grant_type | 授权类型扩展   |
-| 定制化登录与授权页面      | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-login      | UI 定制        |
-| 自定义 API 路由           | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-api        | 路由定制       |
-| OAuth2-Server 前后台分离  | https://sa-token.cc/doc.html#/oauth2/oauth2-h5                | H5 接入        |
-| OpenId 与 UnionId         | https://sa-token.cc/doc.html#/oauth2/oauth2-openid            | 身份标识       |
-| 开启 OIDC 协议            | https://sa-token.cc/doc.html#/oauth2/oauth2-oidc              | OpenID Connect |
-| 使用注解校验 Access-Token | https://sa-token.cc/doc.html#/oauth2/oauth2-at-check          | 注解鉴权       |
-| OAuth2 与登录会话数据互通 | https://sa-token.cc/doc.html#/oauth2/oauth2-interworking      | 会话互通       |
-| OAuth2 代码 API 参考      | https://sa-token.cc/doc.html#/oauth2/oauth2-dev               | API 手册       |
-| 常见问题总结              | https://sa-token.cc/doc.html#/oauth2/oauth2-questions         | FAQ            |
+| 章节                   | 链接                                                            | 说明             |
+|----------------------|---------------------------------------------------------------|----------------|
+| OAuth2.0 简述          | https://sa-token.cc/doc.html#/oauth2/readme                   | 协议介绍           |
+| OAuth2-Server 搭建     | https://sa-token.cc/doc.html#/oauth2/oauth2-server            | 服务端搭建          |
+| OAuth2-Server 开放 API | https://sa-token.cc/doc.html#/oauth2/oauth2-apidoc            | 接口文档           |
+| 自定义数据加载器             | https://sa-token.cc/doc.html#/oauth2/oauth2-data-loader       | 数据加载定制         |
+| 配置 client 域名校验       | https://sa-token.cc/doc.html#/oauth2/oauth2-check-domain      | 安全配置           |
+| 自定义 Scope 权限及处理器     | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-scope      | Scope 扩展       |
+| 为 Scope 划分等级         | https://sa-token.cc/doc.html#/oauth2/oauth2-scope-level       | 层级 Scope       |
+| 自定义 grant_type       | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-grant_type | 授权类型扩展         |
+| 定制化登录与授权页面           | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-login      | UI 定制          |
+| 自定义 API 路由           | https://sa-token.cc/doc.html#/oauth2/oauth2-custom-api        | 路由定制           |
+| OAuth2-Server 前后台分离  | https://sa-token.cc/doc.html#/oauth2/oauth2-h5                | H5 接入          |
+| OpenId 与 UnionId     | https://sa-token.cc/doc.html#/oauth2/oauth2-openid            | 身份标识           |
+| 开启 OIDC 协议           | https://sa-token.cc/doc.html#/oauth2/oauth2-oidc              | OpenID Connect |
+| 使用注解校验 Access-Token  | https://sa-token.cc/doc.html#/oauth2/oauth2-at-check          | 注解鉴权           |
+| OAuth2 与登录会话数据互通     | https://sa-token.cc/doc.html#/oauth2/oauth2-interworking      | 会话互通           |
+| OAuth2 代码 API 参考     | https://sa-token.cc/doc.html#/oauth2/oauth2-dev               | API 手册         |
+| 常见问题总结               | https://sa-token.cc/doc.html#/oauth2/oauth2-questions         | FAQ            |
 
 ### 30.6 微服务
 
-| 章节                | 链接                                             | 说明                           |
-|---------------------|--------------------------------------------------|--------------------------------|
-| 分布式 Session 会话 | https://sa-token.cc/doc.html#/micro/dcs-session  | 跨服务会话共享                 |
-| 网关统一鉴权        | https://sa-token.cc/doc.html#/micro/gateway-auth | Gateway 鉴权（**本项目重点**） |
-| 内部服务外网隔离    | https://sa-token.cc/doc.html#/micro/same-token   | 服务间调用鉴权                 |
-| 依赖引入说明        | https://sa-token.cc/doc.html#/micro/import-intro | 各环境依赖选择                 |
+| 章节             | 链接                                               | 说明                    |
+|----------------|--------------------------------------------------|-----------------------|
+| 分布式 Session 会话 | https://sa-token.cc/doc.html#/micro/dcs-session  | 跨服务会话共享               |
+| 网关统一鉴权         | https://sa-token.cc/doc.html#/micro/gateway-auth | Gateway 鉴权（**本项目重点**） |
+| 内部服务外网隔离       | https://sa-token.cc/doc.html#/micro/same-token   | 服务间调用鉴权               |
+| 依赖引入说明         | https://sa-token.cc/doc.html#/micro/import-intro | 各环境依赖选择               |
 
 ### 30.7 插件
 
-| 章节                       | 链接                                                   | 说明                   |
-|----------------------------|--------------------------------------------------------|------------------------|
-| AOP 注解鉴权               | https://sa-token.cc/doc.html#/plugin/aop-at            | 注解鉴权增强           |
-| 临时 Token 认证            | https://sa-token.cc/doc.html#/plugin/temp-token        | 短时 Token             |
-| Quick-Login 快速登录插件   | https://sa-token.cc/doc.html#/plugin/quick-login       | 开发期快速登录         |
-| Alone 独立 Redis 插件      | https://sa-token.cc/doc.html#/plugin/alone-redis       | 权限缓存与业务缓存分离 |
-| 缓存层扩展                 | https://sa-token.cc/doc.html#/plugin/dao-extend        | 自定义 SaTokenDao      |
-| JSON 序列化扩展            | https://sa-token.cc/doc.html#/plugin/json-extend       | 自定义序列化           |
-| 序列化插件扩展包           | https://sa-token.cc/doc.html#/plugin/custom-serializer | 序列化扩展             |
-| 和 Thymeleaf 集成          | https://sa-token.cc/doc.html#/plugin/thymeleaf-extend  | 模板引擎集成           |
-| 和 Freemarker 集成         | https://sa-token.cc/doc.html#/plugin/freemarker-extend | 模板引擎集成           |
-| 注解鉴权 SpEL 表达式       | https://sa-token.cc/doc.html#/plugin/spel-at           | 动态权限表达式         |
-| 和 jwt 集成                | https://sa-token.cc/doc.html#/plugin/jwt-extend        | JWT 无状态             |
-| 和 Dubbo 集成              | https://sa-token.cc/doc.html#/plugin/dubbo-extend      | Dubbo 鉴权             |
-| 和 gRPC 集成               | https://sa-token.cc/doc.html#/plugin/grpc-extend       | gRPC 鉴权              |
-| API 接口参数签名           | https://sa-token.cc/doc.html#/plugin/api-sign          | 接口签名校验           |
-| API Key 接口调用秘钥       | https://sa-token.cc/doc.html#/plugin/api-key           | API Key 鉴权           |
-| Sa-Token 插件开发指南      | https://sa-token.cc/doc.html#/fun/plugin-dev           | 自定义插件             |
-| 自定义 SaTokenContext 指南 | https://sa-token.cc/doc.html#/fun/sa-token-context     | 上下文扩展             |
+| 章节                    | 链接                                                     | 说明             |
+|-----------------------|--------------------------------------------------------|----------------|
+| AOP 注解鉴权              | https://sa-token.cc/doc.html#/plugin/aop-at            | 注解鉴权增强         |
+| 临时 Token 认证           | https://sa-token.cc/doc.html#/plugin/temp-token        | 短时 Token       |
+| Quick-Login 快速登录插件    | https://sa-token.cc/doc.html#/plugin/quick-login       | 开发期快速登录        |
+| Alone 独立 Redis 插件     | https://sa-token.cc/doc.html#/plugin/alone-redis       | 权限缓存与业务缓存分离    |
+| 缓存层扩展                 | https://sa-token.cc/doc.html#/plugin/dao-extend        | 自定义 SaTokenDao |
+| JSON 序列化扩展            | https://sa-token.cc/doc.html#/plugin/json-extend       | 自定义序列化         |
+| 序列化插件扩展包              | https://sa-token.cc/doc.html#/plugin/custom-serializer | 序列化扩展          |
+| 和 Thymeleaf 集成        | https://sa-token.cc/doc.html#/plugin/thymeleaf-extend  | 模板引擎集成         |
+| 和 Freemarker 集成       | https://sa-token.cc/doc.html#/plugin/freemarker-extend | 模板引擎集成         |
+| 注解鉴权 SpEL 表达式         | https://sa-token.cc/doc.html#/plugin/spel-at           | 动态权限表达式        |
+| 和 jwt 集成              | https://sa-token.cc/doc.html#/plugin/jwt-extend        | JWT 无状态        |
+| 和 Dubbo 集成            | https://sa-token.cc/doc.html#/plugin/dubbo-extend      | Dubbo 鉴权       |
+| 和 gRPC 集成             | https://sa-token.cc/doc.html#/plugin/grpc-extend       | gRPC 鉴权        |
+| API 接口参数签名            | https://sa-token.cc/doc.html#/plugin/api-sign          | 接口签名校验         |
+| API Key 接口调用秘钥        | https://sa-token.cc/doc.html#/plugin/api-key           | API Key 鉴权     |
+| Sa-Token 插件开发指南       | https://sa-token.cc/doc.html#/fun/plugin-dev           | 自定义插件          |
+| 自定义 SaTokenContext 指南 | https://sa-token.cc/doc.html#/fun/sa-token-context     | 上下文扩展          |
 
 ### 30.8 API 手册
 
-| 章节                    | 链接                                             | 说明       |
-|-------------------------|--------------------------------------------------|------------|
-| StpUtil 鉴权工具类      | https://sa-token.cc/doc.html#/api/stp-util       | 核心 API   |
-| SaSession 会话对象      | https://sa-token.cc/doc.html#/api/sa-session     | 会话 API   |
-| SaTokenDao 数据持久接口 | https://sa-token.cc/doc.html#/api/sa-token-dao   | 持久层接口 |
-| SaStrategy 全局策略     | https://sa-token.cc/doc.html#/api/sa-strategy    | 策略定制   |
+| 章节                | 链接                                               | 说明     |
+|-------------------|--------------------------------------------------|--------|
+| StpUtil 鉴权工具类     | https://sa-token.cc/doc.html#/api/stp-util       | 核心 API |
+| SaSession 会话对象    | https://sa-token.cc/doc.html#/api/sa-session     | 会话 API |
+| SaTokenDao 数据持久接口 | https://sa-token.cc/doc.html#/api/sa-token-dao   | 持久层接口  |
+| SaStrategy 全局策略   | https://sa-token.cc/doc.html#/api/sa-strategy    | 策略定制   |
 | 全局类、方法            | https://sa-token.cc/doc.html#/more/common-action | 全局工具   |
 
 ### 30.9 框架设计
 
-| 章节     | 链接                                              | 说明         |
-|----------|---------------------------------------------------|--------------|
-| 仓库目录 | https://sa-token.cc/doc.html#/arch/dir-intro      | 源码结构     |
+| 章节   | 链接                                                | 说明     |
+|------|---------------------------------------------------|--------|
+| 仓库目录 | https://sa-token.cc/doc.html#/arch/dir-intro      | 源码结构   |
 | 数据结构 | https://sa-token.cc/doc.html#/arch/data-structure | 内部数据模型 |
 
 ### 30.10 附录（重要参考）
 
-| 章节                               | 链接                                                           | 说明             |
-|------------------------------------|----------------------------------------------------------------|------------------|
-| 常见问题排查                       | https://sa-token.cc/doc.html#/more/common-questions            | **问题排查首选** |
-| 框架名词解释                       | https://sa-token.cc/doc.html#/more/noun-intro                  | 概念说明         |
-| Sa-Token 功能结构图                | https://sa-token.cc/doc.html#/fun/auth-flow                    | 架构图           |
-| 全局 Log 输出                      | https://sa-token.cc/doc.html#/fun/log                          | 日志配置         |
-| 异步 & Mock 上下文                 | https://sa-token.cc/doc.html#/fun/async--mock                  | 异步场景         |
-| 未登录场景值详解                   | https://sa-token.cc/doc.html#/fun/not-login-scene              | 异常细分         |
-| Token 有效期详解                   | https://sa-token.cc/doc.html#/fun/token-timeout                | 过期策略         |
-| Session 模型详解                   | https://sa-token.cc/doc.html#/fun/session-model                | 会话模型         |
-| 数据读写三大作用域                 | https://sa-token.cc/doc.html#/fun/three-scope                  | 作用域说明       |
-| TokenInfo 参数详解                 | https://sa-token.cc/doc.html#/fun/token-info                   | Token 参数       |
-| 异常细分状态码                     | https://sa-token.cc/doc.html#/fun/exception-code               | 异常码           |
-| 自定义注解                         | https://sa-token.cc/doc.html#/fun/custom-annotations           | 注解扩展         |
-| 防火墙                             | https://sa-token.cc/doc.html#/fun/firewall                     | 安全防护         |
-| **把权限放在缓存里**               | https://sa-token.cc/doc.html#/fun/jur-cache                    | **权限缓存方案** |
-| **把路由拦截鉴权动态化**           | https://sa-token.cc/doc.html#/fun/dynamic-router-check         | **动态路由鉴权** |
-| 解决反向代理 uri 丢失              | https://sa-token.cc/doc.html#/fun/curr-domain                  | 代理问题         |
-| 解决跨域问题                       | https://sa-token.cc/doc.html#/fun/cors-filter                  | CORS 配置        |
-| 技术选型：SSO 与 OAuth2 对比       | https://sa-token.cc/doc.html#/fun/sso-vs-oauth2                | 选型参考         |
-| 集成 MongoDB 参考一                | https://sa-token.cc/doc.html#/up/integ-spring-mongod-1         | MongoDB 集成     |
-| 集成 MongoDB 参考二                | https://sa-token.cc/doc.html#/up/integ-spring-mongod-2         | MongoDB 集成     |
-| 从 Shiro、SpringSecurity、JWT 迁移 | https://sa-token.cc/doc.html#/fun/auth-framework-function-test | 框架迁移         |
-| issue 提问模板                     | https://sa-token.cc/doc.html#/fun/issue-template               | 提问规范         |
-| 为 Sa-Token 贡献代码               | https://sa-token.cc/doc.html#/fun/git-pr                       | 贡献指南         |
+| 章节                            | 链接                                                             | 说明         |
+|-------------------------------|----------------------------------------------------------------|------------|
+| 常见问题排查                        | https://sa-token.cc/doc.html#/more/common-questions            | **问题排查首选** |
+| 框架名词解释                        | https://sa-token.cc/doc.html#/more/noun-intro                  | 概念说明       |
+| Sa-Token 功能结构图                | https://sa-token.cc/doc.html#/fun/auth-flow                    | 架构图        |
+| 全局 Log 输出                     | https://sa-token.cc/doc.html#/fun/log                          | 日志配置       |
+| 异步 & Mock 上下文                 | https://sa-token.cc/doc.html#/fun/async--mock                  | 异步场景       |
+| 未登录场景值详解                      | https://sa-token.cc/doc.html#/fun/not-login-scene              | 异常细分       |
+| Token 有效期详解                   | https://sa-token.cc/doc.html#/fun/token-timeout                | 过期策略       |
+| Session 模型详解                  | https://sa-token.cc/doc.html#/fun/session-model                | 会话模型       |
+| 数据读写三大作用域                     | https://sa-token.cc/doc.html#/fun/three-scope                  | 作用域说明      |
+| TokenInfo 参数详解                | https://sa-token.cc/doc.html#/fun/token-info                   | Token 参数   |
+| 异常细分状态码                       | https://sa-token.cc/doc.html#/fun/exception-code               | 异常码        |
+| 自定义注解                         | https://sa-token.cc/doc.html#/fun/custom-annotations           | 注解扩展       |
+| 防火墙                           | https://sa-token.cc/doc.html#/fun/firewall                     | 安全防护       |
+| **把权限放在缓存里**                  | https://sa-token.cc/doc.html#/fun/jur-cache                    | **权限缓存方案** |
+| **把路由拦截鉴权动态化**                | https://sa-token.cc/doc.html#/fun/dynamic-router-check         | **动态路由鉴权** |
+| 解决反向代理 uri 丢失                 | https://sa-token.cc/doc.html#/fun/curr-domain                  | 代理问题       |
+| 解决跨域问题                        | https://sa-token.cc/doc.html#/fun/cors-filter                  | CORS 配置    |
+| 技术选型：SSO 与 OAuth2 对比          | https://sa-token.cc/doc.html#/fun/sso-vs-oauth2                | 选型参考       |
+| 集成 MongoDB 参考一                | https://sa-token.cc/doc.html#/up/integ-spring-mongod-1         | MongoDB 集成 |
+| 集成 MongoDB 参考二                | https://sa-token.cc/doc.html#/up/integ-spring-mongod-2         | MongoDB 集成 |
+| 从 Shiro、SpringSecurity、JWT 迁移 | https://sa-token.cc/doc.html#/fun/auth-framework-function-test | 框架迁移       |
+| issue 提问模板                    | https://sa-token.cc/doc.html#/fun/issue-template               | 提问规范       |
+| 为 Sa-Token 贡献代码               | https://sa-token.cc/doc.html#/fun/git-pr                       | 贡献指南       |
 
 ### 30.11 其他
 
-| 章节                | 链接                                                   | 说明       |
-|---------------------|--------------------------------------------------------|------------|
-| 更新日志            | https://sa-token.cc/doc.html#/more/update-log          | 版本变更   |
-| 框架生态            | https://sa-token.cc/doc.html#/more/link                | 相关项目   |
-| 框架博客            | https://sa-token.cc/doc.html#/more/blog                | 技术文章   |
-| 推荐公众号          | https://sa-token.cc/doc.html#/more/tj-gzh              | 关注渠道   |
-| 加入讨论群          | https://sa-token.cc/doc.html#/more/join-group          | 社区交流   |
-| Sa-Token 内容合作群 | https://sa-token.cc/doc.html#/more/content-cooperation | 内容合作   |
-| 赞助 Sa-Token       | https://sa-token.cc/doc.html#/more/sa-token-donate     | 赞助渠道   |
-| 需求提交            | https://sa-token.cc/doc.html#/more/demand-commit       | 需求反馈   |
-| 问卷调查            | https://sa-token.cc/doc.html#/more/wenjuan             | 满意度调查 |
+| 章节             | 链接                                                     | 说明    |
+|----------------|--------------------------------------------------------|-------|
+| 更新日志           | https://sa-token.cc/doc.html#/more/update-log          | 版本变更  |
+| 框架生态           | https://sa-token.cc/doc.html#/more/link                | 相关项目  |
+| 框架博客           | https://sa-token.cc/doc.html#/more/blog                | 技术文章  |
+| 推荐公众号          | https://sa-token.cc/doc.html#/more/tj-gzh              | 关注渠道  |
+| 加入讨论群          | https://sa-token.cc/doc.html#/more/join-group          | 社区交流  |
+| Sa-Token 内容合作群 | https://sa-token.cc/doc.html#/more/content-cooperation | 内容合作  |
+| 赞助 Sa-Token    | https://sa-token.cc/doc.html#/more/sa-token-donate     | 赞助渠道  |
+| 需求提交           | https://sa-token.cc/doc.html#/more/demand-commit       | 需求反馈  |
+| 问卷调查           | https://sa-token.cc/doc.html#/more/wenjuan             | 满意度调查 |
 
 ---
 

@@ -22,15 +22,21 @@ public class SourceTemplateIdentifier {
 
   public Optional<SourceTemplateDef> identify(TemplateConfig config, RawRowStream stream, int scanRows) {
     List<String> headers = extractHeaders(stream, scanRows);
-    if (headers.isEmpty()) return Optional.empty();
+    if (headers.isEmpty()) {
+      return Optional.empty();
+    }
 
     SourceTemplateDef best = null;
     double bestRatio = 0.0;
 
     for (SourceTemplateDef def : config.sourceTemplates()) {
-      if (def.identifyMode() != IdentifyMode.AUTO) continue;
+      if (def.identifyMode() != IdentifyMode.AUTO) {
+        continue;
+      }
       List<String> fp = def.fingerprint();
-      if (fp.isEmpty()) continue;
+      if (fp.isEmpty()) {
+        continue;
+      }
 
       long matchCount = fp.stream().filter(headers::contains).count();
       double ratio = (double) matchCount / fp.size();
@@ -49,7 +55,9 @@ public class SourceTemplateIdentifier {
     int count = 0;
     while (stream.hasNext() && count < scanRows) {
       RawRow row = stream.next();
-      if (row.isBlank()) continue;
+      if (row.isBlank()) {
+        continue;
+      }
       for (String cell : row.cells().values()) {
         if (cell != null && !cell.isBlank()) {
           result.add(cell.trim());

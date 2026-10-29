@@ -20,13 +20,16 @@ import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 业务表单管理 Controller
  *
- * <p>实现 {@link BusinessFormApi},入口完成会话解析与功能权限校验,
+ * <p>实现 {@link BusinessFormApi}（纯契约接口）,入口完成会话解析与功能权限校验,
  * 调用 {@link BusinessFormAppService} 进行表单处理。
  *
  * <p>后续新增 Controller 方法流程:
@@ -40,7 +43,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
+@RequestMapping("/core/form")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessFormController implements BusinessFormApi {
 
   private final BusinessFormAppService formAppService;
@@ -48,6 +53,7 @@ public class BusinessFormController implements BusinessFormApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
+  @PostMapping("/upload-token")
   @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command) {
     SessionContext session = sessionResolver.require();
@@ -63,6 +69,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
+  @PostMapping("/confirm-upload")
   @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command) {
     SessionContext session = sessionResolver.require();
@@ -80,6 +87,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
+  @PostMapping("/delete")
   @RequirePermission(business = "FORM", action = "DELETE")
   public ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command) {
     SessionContext session = sessionResolver.require();
@@ -91,6 +99,7 @@ public class BusinessFormController implements BusinessFormApi {
   }
 
   @Override
+  @PostMapping("/status")
   @RequirePermission(business = "FORM", action = "VIEW")
   public ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query) {
     SessionContext session = sessionResolver.require();

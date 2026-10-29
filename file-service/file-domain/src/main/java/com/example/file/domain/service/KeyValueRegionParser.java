@@ -32,13 +32,17 @@ public class KeyValueRegionParser implements RegionParser {
       RawRow row = stream.peek();
 
       if (row.isBlank()) {
-        if (++consecutiveBlank >= strategy.maxBlankRows()) break;
+        if (++consecutiveBlank >= strategy.maxBlankRows()) {
+          break;
+        }
         stream.next();
         continue;
       }
       consecutiveBlank = 0;
 
-      if (ctx.isNextRegionTrigger(row)) break;
+      if (ctx.isNextRegionTrigger(row)) {
+        break;
+      }
 
       stream.next();
       Map<String, String> matched = matchLabels(row, strategy);
@@ -61,7 +65,9 @@ public class KeyValueRegionParser implements RegionParser {
         String cellValue = cell.getValue();
         if (aliases.contains(cellValue) && strategy.valuePosition() == KvValuePosition.RIGHT) {
           String value = cells.get(colIdx + 1);
-          if (value != null) result.put(canonicalKey, value);
+          if (value != null) {
+            result.put(canonicalKey, value);
+          }
         }
         // BELOW 模式：值在下一行同列，由调用方提供后续行
       }

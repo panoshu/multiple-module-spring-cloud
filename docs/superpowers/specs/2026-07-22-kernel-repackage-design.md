@@ -68,16 +68,16 @@ kernel 模块的核心价值在于"三层可插拔"架构:
 
 ## 2. 设计决策
 
-| 决策项                                   | 选择                        | 理由                                                                                          |
-|------------------------------------------|-----------------------------|-----------------------------------------------------------------------------------------------|
-| 分包粒度                                 | 包级分包(不拆分 Maven 模块) | 改动最小,保持现有依赖关系不变                                                                 |
-| 子包命名                                 | `business` / `engine`       | `business` 表示业务领域模型(3 聚合根),`engine` 表示流程编排引擎(含核心+公共步骤+集成网关)     |
-| `BusinessApplication` 归属               | `business`                  | 业务受理过程全生命周期聚合根,业务数据由各业务服务自定义聚合根承载                             |
-| `MaterialRuleEngine` 归属                | `engine`                    | 公共步骤(材料准备)的支撑领域服务,非业务模型                                                   |
-| 集成网关归属                             | `engine`                    | `ApprovalIntegrationGateway`/`FileIntegrationGateway` 是公共步骤调用外部服务的防腐层,属于引擎 |
-| `BusinessConfigGateway` 是否拆分         | 不拆分                      | 所有方法都服务于引擎(路由配置 + 公共步骤配置),统一归入 `engine.gateway`                       |
-| `BusinessOrchestrationAppService` 重命名 | `FlowOrchestrationService`  | 该类是引擎入口编排器,非业务应用服务;重命名后语义更清晰                                        |
-| `StepPipelineExecutor` 是否修改          | 不修改                      | 职责纯粹,仅移动包路径                                                                         |
+| 决策项                                   | 选择                         | 理由                                                                         |
+|---------------------------------------|----------------------------|----------------------------------------------------------------------------|
+| 分包粒度                                  | 包级分包(不拆分 Maven 模块)         | 改动最小,保持现有依赖关系不变                                                            |
+| 子包命名                                  | `business` / `engine`      | `business` 表示业务领域模型(3 聚合根),`engine` 表示流程编排引擎(含核心+公共步骤+集成网关)                |
+| `BusinessApplication` 归属              | `business`                 | 业务受理过程全生命周期聚合根,业务数据由各业务服务自定义聚合根承载                                          |
+| `MaterialRuleEngine` 归属               | `engine`                   | 公共步骤(材料准备)的支撑领域服务,非业务模型                                                    |
+| 集成网关归属                                | `engine`                   | `ApprovalIntegrationGateway`/`FileIntegrationGateway` 是公共步骤调用外部服务的防腐层,属于引擎 |
+| `BusinessConfigGateway` 是否拆分          | 不拆分                        | 所有方法都服务于引擎(路由配置 + 公共步骤配置),统一归入 `engine.gateway`                            |
+| `BusinessOrchestrationAppService` 重命名 | `FlowOrchestrationService` | 该类是引擎入口编排器,非业务应用服务;重命名后语义更清晰                                               |
+| `StepPipelineExecutor` 是否修改           | 不修改                        | 职责纯粹,仅移动包路径                                                                |
 
 ## 3. 详细设计
 
@@ -303,23 +303,23 @@ com.example.core.infrastructure
 
 ### 4.1 文件移动统计
 
-| 层级           | 移动到 business | 移动到 engine | 新增  | 合计    |
-|----------------|-----------------|---------------|-------|---------|
-| domain         | ~32             | ~26           | 0     | ~58     |
-| application    | 0               | ~17           | 0     | ~17     |
-| infrastructure | 0               | ~7            | 0     | ~7      |
-| **合计**       | **~32**         | **~50**       | **0** | **~82** |
+| 层级             | 移动到 business | 移动到 engine | 新增    | 合计      |
+|----------------|--------------|------------|-------|---------|
+| domain         | ~32          | ~26        | 0     | ~58     |
+| application    | 0            | ~17        | 0     | ~17     |
+| infrastructure | 0            | ~7         | 0     | ~7      |
+| **合计**         | **~32**      | **~50**    | **0** | **~82** |
 
 **注**: 无新增文件 (不拆分 `BusinessConfigGateway`),仅 1 个文件重命名 (`BusinessOrchestrationAppService` →
 `FlowOrchestrationService`)。
 
 ### 4.2 外部模块影响
 
-| 模块               | 影响内容                                |
-|--------------------|-----------------------------------------|
+| 模块                 | 影响内容                        |
+|--------------------|-----------------------------|
 | `annuity-service`  | 需同步更新所有 import kernel 类的包路径 |
-| `file-service`     | 无直接影响(不依赖 kernel)               |
-| `approval-service` | 无直接影响(不依赖 kernel)               |
+| `file-service`     | 无直接影响(不依赖 kernel)           |
+| `approval-service` | 无直接影响(不依赖 kernel)           |
 
 ### 4.3 测试影响
 
@@ -338,12 +338,12 @@ com.example.core.infrastructure
 
 由于采用包级分包 (不拆分 Maven 模块),`business` 和 `engine` 两个子包之间存在编译期依赖,这是设计允许的:
 
-| 依赖方向                | 示例                                                                                                                                                                    | 说明                                              |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| 依赖方向                    | 示例                                                                                                                                                                | 说明                        |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
 | `business` → `engine`   | `BusinessApplication` 依赖 `PipelineExecutionResult`、`StepEnteredEvent`、`PipelineExecutedEvent`、`BusinessMetaContext`、`ApplicationFlowStep`                         | 充血模型聚合根内聚流程行为,需引用引擎值对象和事件 |
-| `engine` → `business`   | `StepActionHandler`/`StepExtensionAction` SPI 依赖 `BusinessApplication`                                                                                                | 引擎 SPI 以业务聚合根为参数,实现编排              |
-| `engine` → `engine`     | `StepPipelineExecutor` 依赖 `ExtensionActionRegistry`、`ConditionEvaluationGateway`;`PlanMaterialPreparationHandler` 依赖 `MaterialRuleEngine`、`BusinessConfigGateway` | 引擎内部依赖                                      |
-| `business` → `business` | `BusinessApplication` 依赖 `MaterialItem`、`BusinessContext`                                                                                                            | 业务内部依赖                                      |
+| `engine` → `business`   | `StepActionHandler`/`StepExtensionAction` SPI 依赖 `BusinessApplication`                                                                                            | 引擎 SPI 以业务聚合根为参数,实现编排     |
+| `engine` → `engine`     | `StepPipelineExecutor` 依赖 `ExtensionActionRegistry`、`ConditionEvaluationGateway`;`PlanMaterialPreparationHandler` 依赖 `MaterialRuleEngine`、`BusinessConfigGateway` | 引擎内部依赖                    |
+| `business` → `business` | `BusinessApplication` 依赖 `MaterialItem`、`BusinessContext`                                                                                                         | 业务内部依赖                    |
 
 **关键约束**: 包级分包不引入强制隔离,仅通过包结构表达职责边界。若未来需要严格隔离 (如引擎独立复用),可升级为模块级拆分。
 

@@ -6,11 +6,9 @@ import com.example.shared.web.trace.config.TraceContextProperties;
 import com.example.shared.web.trace.filter.BizContextPropagationFilter;
 import com.example.shared.web.trace.impl.MdcBizContextAccessor;
 import com.example.shared.web.trace.integration.FeignTraceInterceptor;
-import com.example.shared.web.trace.integration.OkHttpTraceInterceptor;
+import com.example.shared.web.trace.integration.RetrofitTraceInterceptor;
 import com.example.shared.web.trace.integration.SpringWebTraceInterceptor;
 import com.example.shared.web.trace.spi.BizContextAccessor;
-import com.github.lianjiatech.retrofit.spring.boot.interceptor.GlobalInterceptor;
-import feign.RequestInterceptor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -66,7 +64,7 @@ public class BizTraceAutoConfiguration {
 
   // 3. Feign 支持 (按需加载)
   @Configuration(proxyBeanMethods = false)
-  @ConditionalOnClass(RequestInterceptor.class)
+  @ConditionalOnClass(name = "feign.RequestInterceptor")
   static class FeignConfiguration {
     @Bean
     @ConditionalOnMissingBean
@@ -75,16 +73,15 @@ public class BizTraceAutoConfiguration {
     }
   }
 
-  // 4. Retrofit/OkHttp 支持 (按需加载)
-  // 假设你有对应的适配器类 RetrofitTracingInterceptorAdapter
+  // 4. Retrofit 支持 (按需加载)
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(name = "com.github.lianjiatech.retrofit.spring.boot.interceptor.GlobalInterceptor")
   static class RetrofitConfiguration {
+
     @Bean
     @ConditionalOnMissingBean
-    public GlobalInterceptor retrofitTraceInterceptor(TraceContextProperties properties) {
-      // 这里复用 OkHttpTraceInterceptor
-      return chain -> new OkHttpTraceInterceptor(properties).intercept(chain);
+    public RetrofitTraceInterceptor retrofitTraceInterceptor(TraceContextProperties properties) {
+      return new RetrofitTraceInterceptor(properties);
     }
   }
 

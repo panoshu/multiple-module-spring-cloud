@@ -17,12 +17,20 @@ public record TableStrategy(
   DataEndRule dataEnd
 ) implements RegionStrategy, ValueObject {
   public TableStrategy {
-    if (headerRows <= 0) headerRows = 1;
-    if (headerNameRow < 0) headerNameRow = 0;
-    if (headerNameRow > headerRows) headerNameRow = headerRows;
+    if (headerRows <= 0) {
+      headerRows = 1;
+    }
+    if (headerNameRow < 0) {
+      headerNameRow = 0;
+    }
+    if (headerNameRow > headerRows) {
+      headerNameRow = headerRows;
+    }
     matchBy = matchBy == null ? TableMatchBy.HEADER_NAME : matchBy;
     headerAliases = headerAliases == null ? Map.of() : Map.copyOf(headerAliases);
     headerMatching = headerMatching == null ? HeaderMatching.STRICT : headerMatching;
-    if (maxRows < 0) maxRows = 0;
+    if (maxRows < 0) {
+      maxRows = 0;
+    }
   }
 }

@@ -95,7 +95,9 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
                                      UserNo operator, String sourceApp, String sourceIp,
                                      String tokenHash, FileAccessResult result, String failReason) {
     validateCommon(fileId, usage, scope, operator, tokenHash);
-    if (result == null) throw new IllegalArgumentException("result 不能为空");
+    if (result == null) {
+      throw new IllegalArgumentException("result 不能为空");
+    }
     return new FileAccessLog(
       FileAccessLogId.of(UUID.randomUUID().toString()), fileId, FileAccessAction.ACCESS, usage,
       scope.customerNo(), scope.productNo(), operator, sourceApp, sourceIp, tokenHash,
@@ -115,11 +117,21 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
 
   private static void validateCommon(FileId fileId, FileUsage usage, FileAccessScope scope,
                                      UserNo operator, String tokenHash) {
-    if (fileId == null) throw new IllegalArgumentException("fileId 不能为空");
-    if (usage == null) throw new IllegalArgumentException("usage 不能为空");
-    if (scope == null) throw new IllegalArgumentException("scope 不能为空");
-    if (operator == null) throw new IllegalArgumentException("operator 不能为空");
-    if (tokenHash == null || tokenHash.isBlank()) throw new IllegalArgumentException("tokenHash 不能为空");
+    if (fileId == null) {
+      throw new IllegalArgumentException("fileId 不能为空");
+    }
+    if (usage == null) {
+      throw new IllegalArgumentException("usage 不能为空");
+    }
+    if (scope == null) {
+      throw new IllegalArgumentException("scope 不能为空");
+    }
+    if (operator == null) {
+      throw new IllegalArgumentException("operator 不能为空");
+    }
+    if (tokenHash == null || tokenHash.isBlank()) {
+      throw new IllegalArgumentException("tokenHash 不能为空");
+    }
   }
 
   public void markFail(String failReason) {
@@ -130,9 +142,15 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
 
   @Override
   protected void validateInvariants() {
-    if (action == null) throw new IllegalStateException("action 不能为空");
-    if (result == null) throw new IllegalStateException("result 不能为空");
-    if (occurAt == null) throw new IllegalStateException("occurAt 不能为空");
+    if (action == null) {
+      throw new IllegalStateException("action 不能为空");
+    }
+    if (result == null) {
+      throw new IllegalStateException("result 不能为空");
+    }
+    if (occurAt == null) {
+      throw new IllegalStateException("occurAt 不能为空");
+    }
   }
 
   // Getters

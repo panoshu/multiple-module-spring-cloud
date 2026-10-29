@@ -22,11 +22,15 @@ public class DataValidator {
         Object ok = evaluator.evaluate(rule.expr(), data);
         if (!Boolean.TRUE.equals(ok)) {
           errors.add(new ValidationError(rule.field(), rule.message(), rule.expr()));
-          if (policy == ErrorPolicy.FAIL_FAST) break;
+          if (policy == ErrorPolicy.FAIL_FAST) {
+            break;
+          }
         }
       } catch (Exception ex) {
         errors.add(new ValidationError(rule.field(), "表达式执行异常: " + ex.getMessage(), rule.expr()));
-        if (policy == ErrorPolicy.FAIL_FAST) break;
+        if (policy == ErrorPolicy.FAIL_FAST) {
+          break;
+        }
       }
     }
     return new ValidationResult(errors);

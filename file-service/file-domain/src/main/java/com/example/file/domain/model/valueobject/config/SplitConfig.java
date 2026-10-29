@@ -17,6 +17,8 @@ public record SplitConfig(
   public SplitConfig {
     keys = keys == null ? List.of() : List.copyOf(keys);
     onMiss = onMiss == null ? SplitMissPolicy.ERROR : onMiss;
-    if (maxRowsPerSubTask < 0) maxRowsPerSubTask = 0;
+    if (maxRowsPerSubTask < 0) {
+      maxRowsPerSubTask = 0;
+    }
   }
 }

@@ -71,11 +71,11 @@ R15: 2 | 说明内容2
 
 当前 `ExcelParserImpl` 的 3 个不足：
 
-| 问题                    | 当前行为                   | 期望行为                                  |
-|-------------------------|----------------------------|-------------------------------------------|
-| KV 每行多组 label-value | 只读 col1=key, col2=value  | 扫描所有列，按 label-value 对交替读取     |
-| 表格多行表头            | 武断取最后一行作为 headers | 由配置 `headerNameRow` 指定第几行作为列名 |
-| 结束标记行              | 只靠空行退出               | 检查 DataEndRule.markers 匹配             |
+| 问题                  | 当前行为                    | 期望行为                          |
+|---------------------|-------------------------|-------------------------------|
+| KV 每行多组 label-value | 只读 col1=key, col2=value | 扫描所有列，按 label-value 对交替读取     |
+| 表格多行表头              | 武断取最后一行作为 headers       | 由配置 `headerNameRow` 指定第几行作为列名 |
+| 结束标记行               | 只靠空行退出                  | 检查 DataEndRule.markers 匹配     |
 
 ### 3.2 完善方案（需小幅修改领域模型）
 
@@ -276,13 +276,13 @@ sourceTemplates:
 
 **测试数据**: `docs/excel/示例表单.xlsx`（通过相对路径读取）
 
-| 用例                                      | 验证点                                                                                                               |
-|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `openStream_读取所有行`                   | 15 行，R1 非空，R3 空行                                                                                              |
-| `parse_KV区域_多组label_value`            | basic_info 解析出 4 个 KV（planNo/planName/customerNo/customerName）                                                 |
-| `parse_表格区域_指定表头行并映射标准字段` | headerNameRow=1 取 R5 列代码识别，通过 headerAliases 映射后数据行字段为标准名（seq/name/idType/idNo...），3 条数据行 |
-| `parse_表格区域_结束标记`                 | 遇"结束"行停止，不把 R11 当数据                                                                                      |
-| `parse_KV区域2_填表人`                    | filler=张三, reviewer=李四                                                                                           |
+| 用例                         | 验证点                                                                                      |
+|----------------------------|------------------------------------------------------------------------------------------|
+| `openStream_读取所有行`         | 15 行，R1 非空，R3 空行                                                                         |
+| `parse_KV区域_多组label_value` | basic_info 解析出 4 个 KV（planNo/planName/customerNo/customerName）                           |
+| `parse_表格区域_指定表头行并映射标准字段`  | headerNameRow=1 取 R5 列代码识别，通过 headerAliases 映射后数据行字段为标准名（seq/name/idType/idNo...），3 条数据行 |
+| `parse_表格区域_结束标记`          | 遇"结束"行停止，不把 R11 当数据                                                                      |
+| `parse_KV区域2_填表人`          | filler=张三, reviewer=李四                                                                   |
 
 **配置构建**: Java 代码直接构建 `List<RegionDef>`
 
@@ -293,13 +293,13 @@ sourceTemplates:
 
 **测试数据**: 内联 YAML 字符串
 
-| 用例                    | 验证点                             |
-|-------------------------|------------------------------------|
-| `loadFromYaml_基础字段` | bizType、version、errorPolicy      |
+| 用例                  | 验证点                             |
+|---------------------|---------------------------------|
+| `loadFromYaml_基础字段` | bizType、version、errorPolicy     |
 | `loadFromYaml_规范模型` | properties 6 个，tables 1 个       |
-| `loadFromYaml_校验规则` | validationRules 2 条               |
-| `loadFromYaml_拆分配置` | keys 1 个，missPolicy=FAIL         |
-| `loadFromYaml_源模板`   | sourceTemplates 1 个，regions 3 个 |
+| `loadFromYaml_校验规则` | validationRules 2 条             |
+| `loadFromYaml_拆分配置` | keys 1 个，missPolicy=FAIL        |
+| `loadFromYaml_源模板`  | sourceTemplates 1 个，regions 3 个 |
 
 ### 5.3 ParseFlowIntegrationTest（端到端集成测试）
 
@@ -307,11 +307,11 @@ sourceTemplates:
 
 **测试流程**: Excel → ExcelParser.parse → CanonicalModelBuilder → DataValidator → TaskSplitter
 
-| 用例           | 验证点                                                                                                                      |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 用例       | 验证点                                                                                                    |
+|----------|--------------------------------------------------------------------------------------------------------|
 | `完整解析流程` | properties 6 个 KV（planNo/customerNo 等），tables.employees 3 行且字段为标准名（seq/name/idType/idNo 等，非 Excel 列代码） |
-| `校验流程`     | 3 条数据行按标准字段名校验（idNo/name NOT_NULL）                                                                            |
-| `拆分流程`     | 按 customerNo 拆分 1 个子任务                                                                                               |
+| `校验流程`   | 3 条数据行按标准字段名校验（idNo/name NOT_NULL）                                                                     |
+| `拆分流程`   | 按 customerNo 拆分 1 个子任务                                                                                 |
 
 **配置构建**: Java 代码构建 `TemplateConfig`
 

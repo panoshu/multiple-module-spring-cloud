@@ -22,9 +22,13 @@ public class CanonicalModelBuilder {
 
     for (RegionParseResult result : regions) {
       RegionDef def = defByName.get(result.regionName());
-      if (def == null) continue;
+      if (def == null) {
+        continue;
+      }
       String bindTo = def.bindTo();
-      if (bindTo == null || bindTo.isBlank()) continue;
+      if (bindTo == null || bindTo.isBlank()) {
+        continue;
+      }
 
       if (result instanceof KvRegionResult kv) {
         if ("properties".equals(bindTo)) {

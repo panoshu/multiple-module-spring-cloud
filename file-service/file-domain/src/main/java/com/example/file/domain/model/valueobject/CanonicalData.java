@@ -16,8 +16,12 @@ public class CanonicalData {
   public static CanonicalData of(Map<String, Object> properties,
                                  Map<String, List<Map<String, Object>>> tables) {
     CanonicalData data = new CanonicalData();
-    if (properties != null) data.properties.putAll(properties);
-    if (tables != null) tables.forEach((k, v) -> data.tables.put(k, new ArrayList<>(v)));
+    if (properties != null) {
+      data.properties.putAll(properties);
+    }
+    if (tables != null) {
+      tables.forEach((k, v) -> data.tables.put(k, new ArrayList<>(v)));
+    }
     return data;
   }
 

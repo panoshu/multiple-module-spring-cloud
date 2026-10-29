@@ -21,7 +21,10 @@ import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -29,7 +32,7 @@ import java.util.List;
 /**
  * 业务申请单管理 Controller
  *
- * <p>实现 {@link BusinessApplicationApi},入口完成会话解析与功能权限校验,
+ * <p>实现 {@link BusinessApplicationApi}（纯契约接口）,入口完成会话解析与功能权限校验,
  * 调用 {@link BusinessApplicationAppService} 进行申请单处理。
  *
  * <p>后续新增 Controller 方法流程:
@@ -43,7 +46,9 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@RequestMapping("/core/application")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessApplicationController implements BusinessApplicationApi {
 
   private final BusinessApplicationAppService applicationAppService;
@@ -51,6 +56,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
+  @PostMapping("/list")
   @RequirePermission(business = "APPLICATION", action = "VIEW")
   public ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query) {
     SessionContext session = sessionResolver.require();
@@ -65,6 +71,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
   }
 
   @Override
+  @PostMapping("/detail")
   @RequirePermission(business = "APPLICATION", action = "VIEW")
   public ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query) {
     SessionContext session = sessionResolver.require();
@@ -75,6 +82,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
   }
 
   @Override
+  @PostMapping("/advance")
   @RequirePermission(business = "APPLICATION", action = "ADVANCE")
   public ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command) {
     SessionContext session = sessionResolver.require();
@@ -88,6 +96,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
   }
 
   @Override
+  @PostMapping("/submit")
   @RequirePermission(business = "APPLICATION", action = "SUBMIT")
   public ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command) {
     SessionContext session = sessionResolver.require();

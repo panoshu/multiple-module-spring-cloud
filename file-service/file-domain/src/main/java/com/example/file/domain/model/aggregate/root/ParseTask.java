@@ -77,9 +77,15 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
                                  FileId sourceFileId, ErrorPolicy errorPolicy,
                                  List<String> splitKeys, UserNo userNo) {
-    if (bizType == null) throw new IllegalArgumentException("bizType null");
-    if (errorPolicy == null) throw new IllegalArgumentException("errorPolicy null");
-    if (sourceFileName == null || sourceFileName.isBlank()) throw new IllegalArgumentException("sourceFileName empty");
+    if (bizType == null) {
+      throw new IllegalArgumentException("bizType null");
+    }
+    if (errorPolicy == null) {
+      throw new IllegalArgumentException("errorPolicy null");
+    }
+    if (sourceFileName == null || sourceFileName.isBlank()) {
+      throw new IllegalArgumentException("sourceFileName empty");
+    }
     return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo);
   }
 
@@ -100,7 +106,9 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   }
 
   public void recordSubTask(SubTaskSummary summary) {
-    if (summary == null) throw new IllegalArgumentException("summary null");
+    if (summary == null) {
+      throw new IllegalArgumentException("summary null");
+    }
     this.subTaskSummaries.add(summary);
     this.subTaskCount++;
     this.totalRows += summary.totalRows();
@@ -109,7 +117,9 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   }
 
   public void markSuccess() {
-    if (subTaskSummaries.isEmpty()) throw new IllegalStateException("no subtasks recorded");
+    if (subTaskSummaries.isEmpty()) {
+      throw new IllegalStateException("no subtasks recorded");
+    }
     this.status = TaskStatus.SUCCESS;
     this.finishedAt = LocalDateTime.now();
   }
@@ -122,14 +132,20 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   public void markFailed(TaskError error) {
     this.status = TaskStatus.FAILED;
-    if (error != null) this.errors.add(error);
+    if (error != null) {
+      this.errors.add(error);
+    }
     this.finishedAt = LocalDateTime.now();
   }
 
   @Override
   protected void validateInvariants() {
-    if (bizType == null) throw new IllegalStateException("bizType null");
-    if (status == null) throw new IllegalStateException("status null");
+    if (bizType == null) {
+      throw new IllegalStateException("bizType null");
+    }
+    if (status == null) {
+      throw new IllegalStateException("status null");
+    }
   }
 
   // Getters

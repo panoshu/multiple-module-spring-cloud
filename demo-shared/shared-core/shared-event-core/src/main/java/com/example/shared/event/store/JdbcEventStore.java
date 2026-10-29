@@ -76,7 +76,9 @@ public class JdbcEventStore implements EventStore {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void markFailure(long logId, Throwable ex) {
     String errorMsg = ex.getMessage();
-    if (errorMsg != null && errorMsg.length() > 500) errorMsg = errorMsg.substring(0, 500);
+    if (errorMsg != null && errorMsg.length() > 500) {
+      errorMsg = errorMsg.substring(0, 500);
+    }
     String sql = "UPDATE sys_event_dispatch_log SET status = 'FAILED', error_msg = ?, " +
       "retry_count = retry_count + 1, next_retry_at = ?, updated_at = NOW() WHERE id = ?";
     jdbcClient.sql(sql)

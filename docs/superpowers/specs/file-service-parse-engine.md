@@ -2,14 +2,14 @@
 
 ## 文档信息
 
-| 项       | 值                                                                                                  |
-|----------|-----------------------------------------------------------------------------------------------------|
-| 标题     | File Service 表单解析与转换引擎设计                                                                 |
-| 阶段     | Phase 1（入站管线完整闭环）                                                                         |
-| 状态     | 待审阅                                                                                              |
-| 作者     | Trae AI + 用户协作设计                                                                              |
+| 项    | 值                                                                                                   |
+|------|-----------------------------------------------------------------------------------------------------|
+| 标题   | File Service 表单解析与转换引擎设计                                                                            |
+| 阶段   | Phase 1（入站管线完整闭环）                                                                                   |
+| 状态   | 待审阅                                                                                                 |
+| 作者   | Trae AI + 用户协作设计                                                                                    |
 | 创建日期 | 2026-07-18                                                                                          |
-| 技术栈   | JDK 25 / Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL / Apache Fesod 2.0.2 / Aviator 5.4.3 |
+| 技术栈  | JDK 25 / Spring Boot 3.5.14 / MyBatis-Flex 1.11.5 / PostgreSQL / Apache Fesod 2.0.2 / Aviator 5.4.3 |
 
 ---
 
@@ -122,14 +122,14 @@ file-service/
 
 ### 2.4 与现有基础设施的集成
 
-| 能力     | 复用模块                         | 用途                                                    |
-|----------|----------------------------------|---------------------------------------------------------|
-| ID 生成  | `shared-id-starter`              | 生成 `FileTaskId`、`SubTaskId`（ULID）                  |
-| 事件发布 | `shared-event-starter`（重构后） | 事务后异步投递领域事件                                  |
-| 缓存     | `shared-cache-starter`           | 配置缓存（Caffeine + Redisson 双层）                    |
-| 异常     | `shared-exception`               | `BusinessException`/`DomainException`/`SystemException` |
-| Web      | `shared-web-starter`             | 全局异常处理、链路追踪                                  |
-| 日志     | `shared-logging-starter`         | HTTP 请求日志                                           |
+| 能力    | 复用模块                        | 用途                                                      |
+|-------|-----------------------------|---------------------------------------------------------|
+| ID 生成 | `shared-id-starter`         | 生成 `FileTaskId`、`SubTaskId`（ULID）                       |
+| 事件发布  | `shared-event-starter`（重构后） | 事务后异步投递领域事件                                             |
+| 缓存    | `shared-cache-starter`      | 配置缓存（Caffeine + Redisson 双层）                            |
+| 异常    | `shared-exception`          | `BusinessException`/`DomainException`/`SystemException` |
+| Web   | `shared-web-starter`        | 全局异常处理、链路追踪                                             |
+| 日志    | `shared-logging-starter`    | HTTP 请求日志                                               |
 
 ### 2.5 新增顶级依赖
 
@@ -144,11 +144,11 @@ file-service/
 
 3 个聚合根，各自是独立的一致性边界：
 
-| 聚合根                       | 职责                            | 一致性边界                 |
-|------------------------------|---------------------------------|----------------------------|
-| `ParseTask`（解析任务）      | 一次 Excel 上传解析的全过程     | 主任务状态、拆分结果聚合点 |
-| `SubTaskData`（子任务数据）  | 拆分后的一份标准数据 + 校验结果 | 子任务级状态、行数据       |
-| `TemplateConfig`（模板配置） | 业务基线 + 源模板配置           | 配置版本与生效             |
+| 聚合根                    | 职责                | 一致性边界         |
+|------------------------|-------------------|---------------|
+| `ParseTask`（解析任务）      | 一次 Excel 上传解析的全过程 | 主任务状态、拆分结果聚合点 |
+| `SubTaskData`（子任务数据）   | 拆分后的一份标准数据 + 校验结果 | 子任务级状态、行数据    |
+| `TemplateConfig`（模板配置） | 业务基线 + 源模板配置      | 配置版本与生效       |
 
 **为什么是 3 个而不是 1 个大聚合**：
 
@@ -411,17 +411,17 @@ public enum TriggerMatchType { HEADER_SNIFF, REGEX }
 
 ### 3.9 领域服务
 
-| 领域服务                   | 职责                                | 依赖                       |
-|----------------------------|-------------------------------------|----------------------------|
-| `ConfigRepository`(SPI)    | 加载 `TemplateConfig`               | 无（接口）                 |
-| `SourceTemplateIdentifier` | AUTO 模式下根据表头指纹识别         | 纯领域逻辑                 |
-| `CanonicalModelBuilder`    | 把区域解析结果组装为 canonical data | 纯领域逻辑                 |
-| `DataValidator`            | 执行 `ValidationRule`               | SPI: `ExpressionEvaluator` |
-| `DataDeriver`              | 执行 `DerivationRule` 派生字段      | SPI: `ExpressionEvaluator` |
-| `TaskSplitter`             | 按 `SplitConfig` 拆分               | 纯领域逻辑                 |
-| `RegionStateMachine`       | 区域状态机驱动                      | 纯领域逻辑                 |
-| `KeyValueRegionParser`     | KEY_VALUE 区域解析                  | 纯领域逻辑                 |
-| `TableRegionParser`        | TABLE 区域解析                      | 纯领域逻辑                 |
+| 领域服务                       | 职责                        | 依赖                         |
+|----------------------------|---------------------------|----------------------------|
+| `ConfigRepository`(SPI)    | 加载 `TemplateConfig`       | 无（接口）                      |
+| `SourceTemplateIdentifier` | AUTO 模式下根据表头指纹识别          | 纯领域逻辑                      |
+| `CanonicalModelBuilder`    | 把区域解析结果组装为 canonical data | 纯领域逻辑                      |
+| `DataValidator`            | 执行 `ValidationRule`       | SPI: `ExpressionEvaluator` |
+| `DataDeriver`              | 执行 `DerivationRule` 派生字段  | SPI: `ExpressionEvaluator` |
+| `TaskSplitter`             | 按 `SplitConfig` 拆分        | 纯领域逻辑                      |
+| `RegionStateMachine`       | 区域状态机驱动                   | 纯领域逻辑                      |
+| `KeyValueRegionParser`     | KEY_VALUE 区域解析            | 纯领域逻辑                      |
+| `TableRegionParser`        | TABLE 区域解析                | 纯领域逻辑                      |
 
 `ExpressionEvaluator` 是 SPI 接口（在 domain 定义），Aviator 实现在 infrastructure。这样领域层不依赖 Aviator，符合"domain
 层禁止依赖外部库"约束。
@@ -448,11 +448,11 @@ public interface TemplateConfigRepository extends Repository<TemplateConfig, Tem
 
 ### 4.1 应用服务总览
 
-| 应用服务                    | 用例                            | 入口                                                                |
-|-----------------------------|---------------------------------|---------------------------------------------------------------------|
-| `ParseExcelAppService`      | 上传 Excel 并触发解析全流程     | REST POST `/api/v1/parse`                                           |
-| `QueryParsedDataAppService` | 分页拉取子任务数据              | REST GET `/api/v1/parsed-data/{subTaskId}`                          |
-| `QueryParseTaskAppService`  | 查询主任务状态/摘要             | REST GET `/api/v1/parse-tasks/{fileTaskId}`                         |
+| 应用服务                        | 用例                    | 入口                                                                 |
+|-----------------------------|-----------------------|--------------------------------------------------------------------|
+| `ParseExcelAppService`      | 上传 Excel 并触发解析全流程     | REST POST `/api/v1/parse`                                          |
+| `QueryParsedDataAppService` | 分页拉取子任务数据             | REST GET `/api/v1/parsed-data/{subTaskId}`                         |
+| `QueryParseTaskAppService`  | 查询主任务状态/摘要            | REST GET `/api/v1/parse-tasks/{fileTaskId}`                        |
 | `ManageConfigAppService`    | 配置管理（YAML 导入 + DB 查询） | REST POST `/api/v1/configs/import`、GET `/api/v1/configs/{bizType}` |
 
 ### 4.2 核心用例：上传解析全流程
@@ -574,26 +574,26 @@ QueryParsedDataAppService.queryPaged(query):
 
 ### 4.6 错误处理策略
 
-| 错误类型           | 处理方式                                                 | HTTP 状态 |
-|--------------------|----------------------------------------------------------|-----------|
-| 配置不存在         | `BusinessException`                                      | 400       |
-| Excel 格式错误     | `BusinessException`，任务状态 FAILED                     | 400       |
-| 解析过程异常       | 任务状态 FAILED，事件 status=FAILED，返回 200 + 失败状态 | 200       |
-| 校验失败（行级）   | 不抛异常，记入 sub-task，状态 INVALID                    | 200       |
-| 校验失败（任务级） | 视 errorPolicy 决定，可能 FAILED                         | 200       |
-| 子任务过期         | `BusinessException`                                      | 410 Gone  |
-| 系统异常           | `SystemException`                                        | 500       |
+| 错误类型       | 处理方式                                       | HTTP 状态  |
+|------------|--------------------------------------------|----------|
+| 配置不存在      | `BusinessException`                        | 400      |
+| Excel 格式错误 | `BusinessException`，任务状态 FAILED            | 400      |
+| 解析过程异常     | 任务状态 FAILED，事件 status=FAILED，返回 200 + 失败状态 | 200      |
+| 校验失败（行级）   | 不抛异常，记入 sub-task，状态 INVALID                | 200      |
+| 校验失败（任务级）  | 视 errorPolicy 决定，可能 FAILED                 | 200      |
+| 子任务过期      | `BusinessException`                        | 410 Gone |
+| 系统异常       | `SystemException`                          | 500      |
 
 **关键设计**：解析过程中的"业务错误"（如校验失败）不抛异常，而是记入任务状态。HTTP 200 表示"请求已被接受并处理"，具体成败看
 `status` 字段。
 
 ### 4.7 errorPolicy 应用规则
 
-| 策略              | 派生失败             | 必填/类型校验失败                  | 表达式校验失败                     |
-|-------------------|----------------------|------------------------------------|------------------------------------|
-| `FAIL_FAST`       | 抛异常，任务 FAILED  | 第一个错误即停止，sub-task INVALID | 第一个错误即停止，sub-task INVALID |
-| `COLLECT_ALL`     | 跳过该字段，记录错误 | 收集所有错误，sub-task INVALID     | 收集所有错误，sub-task INVALID     |
-| `SKIP_ERROR_ROWS` | 跳过该行             | 跳过该行，不进 sub-task            | 跳过该行，不进 sub-task            |
+| 策略                | 派生失败          | 必填/类型校验失败                 | 表达式校验失败                   |
+|-------------------|---------------|---------------------------|---------------------------|
+| `FAIL_FAST`       | 抛异常，任务 FAILED | 第一个错误即停止，sub-task INVALID | 第一个错误即停止，sub-task INVALID |
+| `COLLECT_ALL`     | 跳过该字段，记录错误    | 收集所有错误，sub-task INVALID   | 收集所有错误，sub-task INVALID   |
+| `SKIP_ERROR_ROWS` | 跳过该行          | 跳过该行，不进 sub-task          | 跳过该行，不进 sub-task          |
 
 `SKIP_ERROR_ROWS` 模式下，被跳过的行不会出现在任何 sub-task 中，但会在 ParseTask.errors 中记录总数。
 
@@ -840,15 +840,15 @@ public class ParseContext {
 
 ### 5.8 边界场景处理
 
-| 场景                       | 处理                                         |
-|----------------------------|----------------------------------------------|
-| 区域无 trigger             | 立即进入（适用于第一个区域或顺序确定的场景） |
-| trigger 未命中             | 跳过该区域，进入下一个（容错）               |
-| 区域内遇到下一区域 trigger | 提前退出当前区域，当前行不消费               |
-| 表头嗅探未达 minMatchCount | 跳过该行继续嗅探                             |
-| dataEnd 未配置             | 默认读到行流结束                             |
-| 表格列为空                 | 该字段值为 null，校验阶段处理 required       |
-| 单元格类型不匹配           | 记录行级错误，按 errorPolicy 决定是否继续    |
+| 场景                   | 处理                          |
+|----------------------|-----------------------------|
+| 区域无 trigger          | 立即进入（适用于第一个区域或顺序确定的场景）      |
+| trigger 未命中          | 跳过该区域，进入下一个（容错）             |
+| 区域内遇到下一区域 trigger    | 提前退出当前区域，当前行不消费             |
+| 表头嗅探未达 minMatchCount | 跳过该行继续嗅探                    |
+| dataEnd 未配置          | 默认读到行流结束                    |
+| 表格列为空                | 该字段值为 null，校验阶段处理 required  |
+| 单元格类型不匹配             | 记录行级错误，按 errorPolicy 决定是否继续 |
 
 ---
 
@@ -1867,20 +1867,20 @@ file-service (生产方)                              business-service (消费�
 
 ### 9.1 `shared-event-starter` 重构文件清单
 
-| 文件                                                                     | 操作 | 说明                                              |
-|--------------------------------------------------------------------------|------|---------------------------------------------------|
-| `shared-domain/.../event/IntegrationEventConverter.java`                 | 新增 | SPI 接口                                          |
-| `shared-event-starter/.../bus/EventBus.java`                             | 修改 | 注入转换器列表，发布时转换                        |
-| `shared-event-starter/.../deliverer/EventDeliverer.java`                 | 修改 | 传递集成事件                                      |
-| `shared-event-starter/.../dispatcher/EventDispatcher.java`               | 修改 | 接口签名加 `integrationEvent` 参数                |
-| `shared-event-starter/.../dispatcher/RocketMQEventDispatcher.java`       | 修改 | 发送集成事件                                      |
-| `shared-event-starter/.../dispatcher/RedisEventDispatcher.java`          | 修改 | 发送集成事件                                      |
-| `shared-event-starter/.../dispatcher/SpringEventDispatcher.java`         | 修改 | 保持发送领域事件（本地）                          |
-| `shared-event-starter/.../store/JdbcEventStore.java`                     | 修改 | 双 payload 落库，补偿任务用 `integration_payload` |
-| `shared-event-starter/.../job/EventRecoveryJob.java`                     | 修改 | 适配新签名                                        |
-| `shared-event-starter/.../autoconfiguration/EventAutoConfiguration.java` | 修改 | 注入转换器列表                                    |
+| 文件                                                                       | 操作 | 说明                                            |
+|--------------------------------------------------------------------------|----|-----------------------------------------------|
+| `shared-domain/.../event/IntegrationEventConverter.java`                 | 新增 | SPI 接口                                        |
+| `shared-event-starter/.../bus/EventBus.java`                             | 修改 | 注入转换器列表，发布时转换                                 |
+| `shared-event-starter/.../deliverer/EventDeliverer.java`                 | 修改 | 传递集成事件                                        |
+| `shared-event-starter/.../dispatcher/EventDispatcher.java`               | 修改 | 接口签名加 `integrationEvent` 参数                   |
+| `shared-event-starter/.../dispatcher/RocketMQEventDispatcher.java`       | 修改 | 发送集成事件                                        |
+| `shared-event-starter/.../dispatcher/RedisEventDispatcher.java`          | 修改 | 发送集成事件                                        |
+| `shared-event-starter/.../dispatcher/SpringEventDispatcher.java`         | 修改 | 保持发送领域事件（本地）                                  |
+| `shared-event-starter/.../store/JdbcEventStore.java`                     | 修改 | 双 payload 落库，补偿任务用 `integration_payload`      |
+| `shared-event-starter/.../job/EventRecoveryJob.java`                     | 修改 | 适配新签名                                         |
+| `shared-event-starter/.../autoconfiguration/EventAutoConfiguration.java` | 修改 | 注入转换器列表                                       |
 | `shared-event-starter/src/main/resources/pg.sql`                         | 修改 | 加 `integration_type`、`integration_payload` 字段 |
-| `shared-event-starter/src/main/resources/mysql.sql`                      | 修改 | 同上                                              |
+| `shared-event-starter/src/main/resources/mysql.sql`                      | 修改 | 同上                                            |
 
 ### 9.2 `file-service` 模块结构
 
@@ -2184,18 +2184,18 @@ server:
 
 ### 9.6 文件数量统计
 
-| 模块                         | 文件数     |
-|------------------------------|------------|
-| shared-event-starter（重构） | 12         |
-| file-types                   | 5          |
-| file-domain                  | 约 45      |
-| file-api                     | 14         |
-| file-application             | 11         |
-| file-adapter                 | 6          |
-| file-infrastructure          | 约 25      |
-| file-starter                 | 5          |
+| 模块                       | 文件数       |
+|--------------------------|-----------|
+| shared-event-starter（重构） | 12        |
+| file-types               | 5         |
+| file-domain              | 约 45      |
+| file-api                 | 14        |
+| file-application         | 11        |
+| file-adapter             | 6         |
+| file-infrastructure      | 约 25      |
+| file-starter             | 5         |
 | 测试文件                     | 约 15      |
-| **总计**                     | **约 138** |
+| **总计**                   | **约 138** |
 
 ---
 
@@ -2203,12 +2203,12 @@ server:
 
 ### 10.1 测试金字塔
 
-| 层级                 | 测试类型   | 范围                        | 数量  |
-|----------------------|------------|-----------------------------|-------|
-| file-domain          | 单元测试   | 领域服务、聚合根、值对象    | 约 12 |
-| file-application     | 集成测试   | 应用服务（mock Repository） | 约 3  |
+| 层级                   | 测试类型  | 范围                    | 数量   |
+|----------------------|-------|-----------------------|------|
+| file-domain          | 单元测试  | 领域服务、聚合根、值对象          | 约 12 |
+| file-application     | 集成测试  | 应用服务（mock Repository） | 约 3  |
 | file-starter         | 端到端测试 | 完整流程（H2）              | 约 1  |
-| shared-event-starter | 单元测试   | 重构后的 EventBus           | 约 3  |
+| shared-event-starter | 单元测试  | 重构后的 EventBus         | 约 3  |
 
 ### 10.2 关键测试用例
 
@@ -2243,14 +2243,14 @@ server:
 
 ## 11. 风险与缓解
 
-| 风险                                    | 影响 | 缓解措施                                   |
-|-----------------------------------------|------|--------------------------------------------|
-| `shared-event-starter` 重构影响其他服务 | 中   | 向后兼容设计：无转换器时降级为发送领域事件 |
-| Fesod 推模式与状态机拉模式的桥接复杂度  | 中   | 阻塞队列 + 虚拟线程，单测覆盖              |
-| Aviator 表达式安全风险                  | 高   | 限制 Feature Set，禁止反射调用             |
-| 大文件内存溢出                          | 高   | Fesod 流式读取 + 分页持久化 + 阻塞队列背压 |
-| PostgreSQL JSONB 查询性能               | 中   | 关键查询字段单独建索引，JSONB 仅用于存储   |
-| 配置错误导致解析失败                    | 中   | 配置加载时 validateInvariants，启动时校验  |
+| 风险                              | 影响 | 缓解措施                           |
+|---------------------------------|----|--------------------------------|
+| `shared-event-starter` 重构影响其他服务 | 中  | 向后兼容设计：无转换器时降级为发送领域事件          |
+| Fesod 推模式与状态机拉模式的桥接复杂度          | 中  | 阻塞队列 + 虚拟线程，单测覆盖               |
+| Aviator 表达式安全风险                 | 高  | 限制 Feature Set，禁止反射调用          |
+| 大文件内存溢出                         | 高  | Fesod 流式读取 + 分页持久化 + 阻塞队列背压    |
+| PostgreSQL JSONB 查询性能           | 中  | 关键查询字段单独建索引，JSONB 仅用于存储        |
+| 配置错误导致解析失败                      | 中  | 配置加载时 validateInvariants，启动时校验 |
 
 ---
 

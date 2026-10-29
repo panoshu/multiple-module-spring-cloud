@@ -53,9 +53,15 @@ public class TableRegionParser implements RegionParser {
         continue;
       }
       // 数据阶段：先检查再消费，trigger 行 / dataEnd 行留给下一个 region 或跳过
-      if (ctx.isNextRegionTrigger(row)) break;
-      if (strategy.maxRows() > 0 && dataRowCount >= strategy.maxRows()) break;
-      if (isDataEnd(row, strategy.dataEnd())) break;
+      if (ctx.isNextRegionTrigger(row)) {
+        break;
+      }
+      if (strategy.maxRows() > 0 && dataRowCount >= strategy.maxRows()) {
+        break;
+      }
+      if (isDataEnd(row, strategy.dataEnd())) {
+        break;
+      }
       stream.next();
       Map<String, Object> dataRow = mapDataRow(row, headers);
       if (!dataRow.isEmpty()) {
@@ -67,9 +73,13 @@ public class TableRegionParser implements RegionParser {
   }
 
   private boolean isDataEnd(RawRow row, DataEndRule dataEnd) {
-    if (dataEnd == null || dataEnd.markers().isEmpty()) return false;
+    if (dataEnd == null || dataEnd.markers().isEmpty()) {
+      return false;
+    }
     String firstCell = row.cells().get(0);
-    if (firstCell == null) return false;
+    if (firstCell == null) {
+      return false;
+    }
     return dataEnd.markers().contains(firstCell.trim());
   }
 
@@ -102,7 +112,9 @@ public class TableRegionParser implements RegionParser {
     for (int i = 0; i <= maxIdx; i++) {
       String key = headers.get(i);
       // 跳过空 header（null 或空串），不映射该列
-      if (key != null && !key.isEmpty()) dataRow.put(key, cells.get(i));
+      if (key != null && !key.isEmpty()) {
+        dataRow.put(key, cells.get(i));
+      }
     }
     return dataRow;
   }

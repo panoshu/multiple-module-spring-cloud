@@ -9,7 +9,9 @@ public record IdentifyRule(
   IdentifyMode mode, List<String> fingerprint
 ) implements ValueObject {
   public IdentifyRule {
-    if (mode == null) mode = IdentifyMode.AUTO;
+    if (mode == null) {
+      mode = IdentifyMode.AUTO;
+    }
     fingerprint = fingerprint == null ? List.of() : List.copyOf(fingerprint);
   }
 }

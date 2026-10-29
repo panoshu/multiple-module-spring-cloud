@@ -9,14 +9,14 @@
 
 体系分四个限界上下文，依赖方向单向：`shared → org/identity → authorization → roletemplate → assignment → channel`。
 
-| 限界上下文                            | 核心概念                                                                                                                                                                    | 职责                                                                                             |
-|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| **identity**（身份与凭证）            | `Account`、`Credential`(sealed: `PasswordCredential`/`UKeyCredential`)、`CredentialOwner`(sealed: `AccountCredentialOwner`/`CustomerCredentialOwner`/`PlanCredentialOwner`) | 账号本身的状态；凭证是独立聚合根，持有者可以是账号、客户或计划                                   |
-| **org**（组织与计划，外部数据投影）   | `CustomerSnapshot`/`ProductSnapshot`/`PlanSnapshot`、`OrgDirectory`                                                                                                         | 客户/产品/计划数据的只读投影，主数据在外部系统                                                   |
-| **authorization**（权限与授权，核心） | `Grant`（唯一的授权记录聚合根）、`ScopeRule`、`Permission`、`AuthorizationEngine`                                                                                           | 能力层配置、代办、跨企业委托、总部主体授权，全部是一条`Grant`，靠`subject`/`origin`/`effect`区分 |
-| **roletemplate**（角色模板）          | `RoleTemplate`、`RoleTemplateResolver`（按PLAN>CUSTOMER>PRODUCT>GLOBAL优先级解析）                                                                                          | "某个角色应该有哪些权限"的静态配方，不跟具体人绑定                                               |
-| **assignment**（身份分配）            | `AgentIdentityAssignment`（账号在某个计划/客户/产品范围内被赋予某角色）、`EffectivePermissionService`（判定的真正入口）                                                     | 角色模板到具体人的落地，以及最终的权限判定编排                                                   |
-| **channel**（渠道与会话）             | `Session`、`EffectiveIdentity`、`IdentityResolutionService`、`SecondaryAuthService`、`PlanSelectionStrategy`                                                                | 三个渠道(网上/总部/网点)的登录、会话、身份解析                                                   |
+| 限界上下文                       | 核心概念                                                                                                                                                                      | 职责                                                                |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| **identity**（身份与凭证）         | `Account`、`Credential`(sealed: `PasswordCredential`/`UKeyCredential`)、`CredentialOwner`(sealed: `AccountCredentialOwner`/`CustomerCredentialOwner`/`PlanCredentialOwner`) | 账号本身的状态；凭证是独立聚合根，持有者可以是账号、客户或计划                                   |
+| **org**（组织与计划，外部数据投影）       | `CustomerSnapshot`/`ProductSnapshot`/`PlanSnapshot`、`OrgDirectory`                                                                                                        | 客户/产品/计划数据的只读投影，主数据在外部系统                                          |
+| **authorization**（权限与授权，核心） | `Grant`（唯一的授权记录聚合根）、`ScopeRule`、`Permission`、`AuthorizationEngine`                                                                                                        | 能力层配置、代办、跨企业委托、总部主体授权，全部是一条`Grant`，靠`subject`/`origin`/`effect`区分 |
+| **roletemplate**（角色模板）      | `RoleTemplate`、`RoleTemplateResolver`（按PLAN>CUSTOMER>PRODUCT>GLOBAL优先级解析）                                                                                                 | "某个角色应该有哪些权限"的静态配方，不跟具体人绑定                                        |
+| **assignment**（身份分配）        | `AgentIdentityAssignment`（账号在某个计划/客户/产品范围内被赋予某角色）、`EffectivePermissionService`（判定的真正入口）                                                                                   | 角色模板到具体人的落地，以及最终的权限判定编排                                           |
+| **channel**（渠道与会话）          | `Session`、`EffectiveIdentity`、`IdentityResolutionService`、`SecondaryAuthService`、`PlanSelectionStrategy`                                                                  | 三个渠道(网上/总部/网点)的登录、会话、身份解析                                         |
 
 **权限判定的核心公式**（`EffectivePermissionService.checkPermission`）：
 
@@ -55,7 +55,8 @@
 
 **关键点：这一步不会创建任何持久化的`Grant`记录。** 这是经过一次重构后的设计——早期版本会在这里把角色模板"物化"成一条
 `Grant`
-，但这样角色模板一旦被修改，已经创建的身份分配就会和模板脱节，需要额外的批量迁移作业去同步。现在改成"创建时只校验、不生成"，真正的权限内容留到
+，但这样角色模板一旦被修改，已经创建的身份分配就会和模板脱节，需要额外的批量迁移作业去同步。现在改成"创建时只校验、不生成"
+，真正的权限内容留到
 **判定的那一刻**由`EffectivePermissionService`
 实时解析对应的角色模板——好处是角色模板改了，所有引用它的人立刻生效，不需要任何补丁作业；代价是每次判定都要多一次模板解析（成本很低，是索引查询，不是全表扫描）。
 

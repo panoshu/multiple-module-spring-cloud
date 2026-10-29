@@ -7,7 +7,11 @@ public record FieldDef(
   String code, FieldType type, boolean required, Integer scale
 ) implements ValueObject {
   public FieldDef {
-    if (code == null || code.isBlank()) throw new IllegalArgumentException("FieldDef.code empty");
-    if (type == null) type = FieldType.STRING;
+    if (code == null || code.isBlank()) {
+      throw new IllegalArgumentException("FieldDef.code empty");
+    }
+    if (type == null) {
+      type = FieldType.STRING;
+    }
   }
 }

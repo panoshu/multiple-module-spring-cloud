@@ -9,23 +9,11 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>intranet-bff-infrastructure</artifactId>
-  <description>内网 BFF - 基础设施层（DB 路由表访问）</description>
+  <description>内网 BFF - 基础设施层（动态路由已移除，待 Strategy 模式重构后按需填充）</description>
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>bff-shared</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-exception</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.mybatis-flex</groupId>
-      <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct</artifactId>
     </dependency>
 
     <dependency>
@@ -36,11 +24,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -18,10 +18,13 @@
       <groupId>com.example</groupId>
       <artifactId>file-infrastructure</artifactId>
     </dependency>
+
+    <!-- Web 服务基础设施：内嵌容器、自动配置、注册中心等 -->
     <dependency>
-      <groupId>com.alibaba.cloud</groupId>
-      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+      <groupId>com.example</groupId>
+      <artifactId>shared-web-starter</artifactId>
     </dependency>
+
     <!-- 负载均衡：支持 lb:// 服务名解析调用 auth-service -->
     <dependency>
       <groupId>org.springframework.cloud</groupId>

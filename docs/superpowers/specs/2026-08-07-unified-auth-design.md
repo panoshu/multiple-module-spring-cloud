@@ -9,26 +9,26 @@
 
 当前体系已具备的能力：
 
-| 能力                         | 实现机制                                                                                              |
-|------------------------------|-------------------------------------------------------------------------------------------------------|
-| 网关层渠道登录校验           | `ChannelAwareSaRouter` 对 `/internet/**`、`/hq/**`、`/branch/**` 路径调用对应 `StpLogic.checkLogin()` |
-| 功能权限校验（垂直越权防护） | `@RequirePermission` 注解 + `RequirePermissionAspect` 切面 → `PermissionCheckApi.check()`             |
-| 范围匹配（部分水平越权防护） | `ScopeMatcher.matches(scopeRules, plan)` 在 `checkPermission` 时判定                                  |
-| DENY 优先 + 白名单语义       | `EffectResolver` 命中 DENY 即拒绝，都未命中默认拒绝                                                   |
-| 内部接口防护                 | `ExcludeRouteFilter` 对 `/internal/**` 返回 403                                                       |
-| 白名单豁免                   | `SaReactorFilter.addExclude` 硬编码豁免路径                                                           |
+| 能力              | 实现机制                                                                                         |
+|-----------------|----------------------------------------------------------------------------------------------|
+| 网关层渠道登录校验       | `ChannelAwareSaRouter` 对 `/internet/**`、`/hq/**`、`/branch/**` 路径调用对应 `StpLogic.checkLogin()` |
+| 功能权限校验（垂直越权防护）  | `@RequirePermission` 注解 + `RequirePermissionAspect` 切面 → `PermissionCheckApi.check()`        |
+| 范围匹配（部分水平越权防护）  | `ScopeMatcher.matches(scopeRules, plan)` 在 `checkPermission` 时判定                             |
+| DENY 优先 + 白名单语义 | `EffectResolver` 命中 DENY 即拒绝，都未命中默认拒绝                                                        |
+| 内部接口防护          | `ExcludeRouteFilter` 对 `/internal/**` 返回 403                                                 |
+| 白名单豁免           | `SaReactorFilter.addExclude` 硬编码豁免路径                                                         |
 
 当前体系存在的 4 个核心缺口：
 
-| 缺口                                       | 影响                                                   | 根因                                                                       |
-|--------------------------------------------|--------------------------------------------------------|----------------------------------------------------------------------------|
-| 非渠道前缀路径在网关层直接放行             | `/admin/**` 等系统管理 API 无登录校验                  | `SaTokenGatewayConfiguration.setAuth` 中 `channel == null` 时直接 `return` |
-| `auth.gateway.public-paths` 配置与代码割裂 | 修改 yml 不生效                                        | `addExclude` 硬编码，未消费 `GatewayProperties`                            |
-| auth-service 自身 API 无功能权限校验       | 任何登录用户都能调用渠道开通、权限元数据查询等敏感操作 | 避免循环调用而未标注 `@RequirePermission`                                  |
-| kernel 权限点未被 PermissionScanner 注册   | `t_auth_permission_item` 表缺少 kernel 权限点元数据    | `PermissionScanner` 只扫描 auth-service 本地 Controller                    |
-| 列表查询缺少行级数据过滤                   | 用户可能看到非授权范围的数据行                         | 仅有 `ScopeMatcher.matches` 单点判定，无批量聚合能力                       |
-| `RouteRuleController` 返回空列表           | RouteRule 机制事实废弃                                 | 设计的 5 种 checkType 与新分层体系冲突                                     |
-| 测试接口进入生产                           | `AnnuityLinkTestController` 无任何校验                 | 缺少环境隔离                                                               |
+| 缺口                                  | 影响                                         | 根因                                                                     |
+|-------------------------------------|--------------------------------------------|------------------------------------------------------------------------|
+| 非渠道前缀路径在网关层直接放行                     | `/admin/**` 等系统管理 API 无登录校验                | `SaTokenGatewayConfiguration.setAuth` 中 `channel == null` 时直接 `return` |
+| `auth.gateway.public-paths` 配置与代码割裂 | 修改 yml 不生效                                 | `addExclude` 硬编码，未消费 `GatewayProperties`                               |
+| auth-service 自身 API 无功能权限校验         | 任何登录用户都能调用渠道开通、权限元数据查询等敏感操作                | 避免循环调用而未标注 `@RequirePermission`                                        |
+| kernel 权限点未被 PermissionScanner 注册   | `t_auth_permission_item` 表缺少 kernel 权限点元数据 | `PermissionScanner` 只扫描 auth-service 本地 Controller                     |
+| 列表查询缺少行级数据过滤                        | 用户可能看到非授权范围的数据行                            | 仅有 `ScopeMatcher.matches` 单点判定，无批量聚合能力                                 |
+| `RouteRuleController` 返回空列表         | RouteRule 机制事实废弃                           | 设计的 5 种 checkType 与新分层体系冲突                                             |
+| 测试接口进入生产                            | `AnnuityLinkTestController` 无任何校验          | 缺少环境隔离                                                                 |
 
 ### 1.2 设计目标
 
@@ -40,17 +40,17 @@
 
 ### 1.3 关键决策（已与用户确认）
 
-| 决策点                   | 选择                                                                    | 理由                                |
-|--------------------------|-------------------------------------------------------------------------|-------------------------------------|
-| 管理类 API 范围          | auth-service 自身 API + 未来系统管理后台 API + 业务服务 PLATFORM 类 API | 统一纳入 PLATFORM 类别              |
-| 水平越权防护层次         | 含行级数据过滤                                                          | 完整防护                            |
-| auth-service 自身防护    | 切面内部短路调用 `EffectivePermissionService`                           | 避免 HttpExchange 循环              |
-| 行级过滤实现机制         | AOP + 注解 + Repository 配合（方案 C）                                  | 平衡自动化与可控性                  |
-| kernel 权限点注册        | 业务服务启动时上报到 auth-service                                       | 统一元数据来源                      |
-| 网关路由防护             | 所有路径都校验登录 + yml 白名单                                         | 简化 RouteRule                      |
-| RouteRule 去留           | 移除                                                                    | yml 白名单 + 所有路径校验登录已覆盖 |
-| 垂直越权防护严格度       | 仅功能权限判定，不引入渠道-路径绑定                                     | 保持灵活                            |
-| 数据可见范围是否新增属性 | 不新增，复用现有 `scopeRules`                                           | 配置一致性，零迁移成本              |
+| 决策点               | 选择                                                       | 理由                    |
+|-------------------|----------------------------------------------------------|-----------------------|
+| 管理类 API 范围        | auth-service 自身 API + 未来系统管理后台 API + 业务服务 PLATFORM 类 API | 统一纳入 PLATFORM 类别      |
+| 水平越权防护层次          | 含行级数据过滤                                                  | 完整防护                  |
+| auth-service 自身防护 | 切面内部短路调用 `EffectivePermissionService`                    | 避免 HttpExchange 循环    |
+| 行级过滤实现机制          | AOP + 注解 + Repository 配合（方案 C）                           | 平衡自动化与可控性             |
+| kernel 权限点注册      | 业务服务启动时上报到 auth-service                                  | 统一元数据来源               |
+| 网关路由防护            | 所有路径都校验登录 + yml 白名单                                      | 简化 RouteRule          |
+| RouteRule 去留      | 移除                                                       | yml 白名单 + 所有路径校验登录已覆盖 |
+| 垂直越权防护严格度         | 仅功能权限判定，不引入渠道-路径绑定                                       | 保持灵活                  |
+| 数据可见范围是否新增属性      | 不新增，复用现有 `scopeRules`                                    | 配置一致性，零迁移成本           |
 
 ## 二、总体架构
 
@@ -79,19 +79,19 @@ SessionContextInjector
 
 ### 2.2 API 分类与处理方式
 
-| API 分类 | 示例                                                     | 功能权限                       | 数据过滤     | 网关层                   |
-|----------|----------------------------------------------------------|--------------------------------|--------------|--------------------------|
-| 业务类   | `/internet/annuity/upload`、`/business/application/list` | `@RequirePermission(BUSINESS)` | `@DataScope` | 渠道登录校验             |
-| 管理类   | `/admin/users/list`、`/permission-metadata/items`        | `@RequirePermission(PLATFORM)` | 不需要       | 通用登录校验             |
-| 登录类   | `/internet/auth/login`、`/admin/auth/login`              | 豁免                           | 不需要       | yml 白名单放行           |
-| 内部类   | `/internal/permissions/check`                            | 不适用                         | 不需要       | `ExcludeRouteFilter` 403 |
+| API 分类 | 示例                                                      | 功能权限                           | 数据过滤         | 网关层                      |
+|--------|---------------------------------------------------------|--------------------------------|--------------|--------------------------|
+| 业务类    | `/internet/annuity/upload`、`/business/application/list` | `@RequirePermission(BUSINESS)` | `@DataScope` | 渠道登录校验                   |
+| 管理类    | `/admin/users/list`、`/permission-metadata/items`        | `@RequirePermission(PLATFORM)` | 不需要          | 通用登录校验                   |
+| 登录类    | `/internet/auth/login`、`/admin/auth/login`              | 豁免                             | 不需要          | yml 白名单放行                |
+| 内部类    | `/internal/permissions/check`                           | 不适用                            | 不需要          | `ExcludeRouteFilter` 403 |
 
 ### 2.3 两层防护
 
-| 防护类型 | 实现机制                                                                | 防护对象                             |
-|----------|-------------------------------------------------------------------------|--------------------------------------|
-| 垂直越权 | `@RequirePermission` 注解 + `PermissionExecutor.check()`                | 功能访问权限（用户能否调用此 API）   |
-| 水平越权 | `@DataScope` 注解 + `DataScopeResolver.resolve()` + Repository 条件拼接 | 数据可见范围（用户能看到哪些数据行） |
+| 防护类型 | 实现机制                                                              | 防护对象                |
+|------|-------------------------------------------------------------------|---------------------|
+| 垂直越权 | `@RequirePermission` 注解 + `PermissionExecutor.check()`            | 功能访问权限（用户能否调用此 API） |
+| 水平越权 | `@DataScope` 注解 + `DataScopeResolver.resolve()` + Repository 条件拼接 | 数据可见范围（用户能看到哪些数据行）  |
 
 ### 2.4 关键设计原则
 
@@ -243,15 +243,15 @@ private String resolveAnyChannelLoginId() {
 
 ### 3.8 RouteRule 相关代码移除
 
-| 移除项                  | 文件                                                                |
-|-------------------------|---------------------------------------------------------------------|
-| RouteRuleLoader         | `demo-gateway/.../RouteRuleLoader.java`                             |
-| RouteRule 值对象        | `demo-gateway/.../RouteRule.java`                                   |
-| RouteRuleTest           | `demo-gateway/src/test/.../RouteRuleTest.java`                      |
-| RouteRuleApi            | `auth-api/.../RouteRuleApi.java`                                    |
-| RouteRuleController     | `auth-adapter/.../RouteRuleController.java`                         |
-| RouteRuleResponse       | `auth-api/dto/RouteRuleResponse.java`                               |
-| httpexchange 客户端配置 | `application.yml` 中 `io.github.danielliu1123.httpexchange.clients` |
+| 移除项                 | 文件                                                                 |
+|---------------------|--------------------------------------------------------------------|
+| RouteRuleLoader     | `demo-gateway/.../RouteRuleLoader.java`                            |
+| RouteRule 值对象       | `demo-gateway/.../RouteRule.java`                                  |
+| RouteRuleTest       | `demo-gateway/src/test/.../RouteRuleTest.java`                     |
+| RouteRuleApi        | `auth-api/.../RouteRuleApi.java`                                   |
+| RouteRuleController | `auth-adapter/.../RouteRuleController.java`                        |
+| RouteRuleResponse   | `auth-api/dto/RouteRuleResponse.java`                              |
+| httpexchange 客户端配置  | `application.yml` 中 `io.github.danielliu1123.httpexchange.clients` |
 
 ### 3.9 改造后的鉴权流程示例
 
@@ -395,16 +395,16 @@ auth-service 中走本地，在业务服务中走远程，业务代码无感知�
 
 短路机制建立后，auth-service 的 Controller 可以安全标注 `@RequirePermission`：
 
-| Controller                           | 方法                   | business            | action  | category               |
-|--------------------------------------|------------------------|---------------------|---------|------------------------|
-| CustomerChannelEntitlementController | enable                 | CHANNEL_ENTITLEMENT | ENABLE  | PLATFORM               |
-| CustomerChannelEntitlementController | disable                | CHANNEL_ENTITLEMENT | DISABLE | PLATFORM               |
-| CustomerChannelEntitlementController | replace                | CHANNEL_ENTITLEMENT | REPLACE | PLATFORM               |
-| CustomerChannelEntitlementController | get                    | CHANNEL_ENTITLEMENT | VIEW    | PLATFORM               |
-| PermissionMetadataController         | listItems              | PERMISSION_METADATA | VIEW    | PLATFORM               |
-| PermissionMetadataController         | listGroupedItems       | PERMISSION_METADATA | VIEW    | PLATFORM               |
-| PermissionCacheController            | getPlatformPermissions | PERMISSION_CACHE    | VIEW    | PLATFORM               |
-| PermissionCacheController            | getBusinessPermissions | PERMISSION_CACHE    | VIEW    | PLATFORM               |
+| Controller                           | 方法                     | business            | action  | category      |
+|--------------------------------------|------------------------|---------------------|---------|---------------|
+| CustomerChannelEntitlementController | enable                 | CHANNEL_ENTITLEMENT | ENABLE  | PLATFORM      |
+| CustomerChannelEntitlementController | disable                | CHANNEL_ENTITLEMENT | DISABLE | PLATFORM      |
+| CustomerChannelEntitlementController | replace                | CHANNEL_ENTITLEMENT | REPLACE | PLATFORM      |
+| CustomerChannelEntitlementController | get                    | CHANNEL_ENTITLEMENT | VIEW    | PLATFORM      |
+| PermissionMetadataController         | listItems              | PERMISSION_METADATA | VIEW    | PLATFORM      |
+| PermissionMetadataController         | listGroupedItems       | PERMISSION_METADATA | VIEW    | PLATFORM      |
+| PermissionCacheController            | getPlatformPermissions | PERMISSION_CACHE    | VIEW    | PLATFORM      |
+| PermissionCacheController            | getBusinessPermissions | PERMISSION_CACHE    | VIEW    | PLATFORM      |
 | PermissionRegistrationController     | register               | —                   | —       | **不标注**（内部接口） |
 | PermissionCheckController            | check / checkBatch     | —                   | —       | **不标注**（内部接口） |
 
@@ -854,13 +854,13 @@ public class AnnuityApplicationService {
 
 两个注解独立工作，各司其职：
 
-| 维度     | @RequirePermission                    | @DataScope                      |
-|----------|---------------------------------------|---------------------------------|
-| 作用     | 功能权限校验（垂直越权防护）          | 行级数据过滤（水平越权防护）    |
-| 触发时机 | 方法执行前                            | 方法执行前（设置 ThreadLocal）  |
-| 实现机制 | AOP 切面 → PermissionExecutor.check() | AOP 切面 → resolveDataScope()   |
-| 失败行为 | 抛 BusinessException                  | 返回空 DataScope → 查询不到数据 |
-| 适用范围 | 所有业务类和管理类 API                | 仅业务类 API（列表查询）        |
+| 维度   | @RequirePermission                  | @DataScope                  |
+|------|-------------------------------------|-----------------------------|
+| 作用   | 功能权限校验（垂直越权防护）                      | 行级数据过滤（水平越权防护）              |
+| 触发时机 | 方法执行前                               | 方法执行前（设置 ThreadLocal）       |
+| 实现机制 | AOP 切面 → PermissionExecutor.check() | AOP 切面 → resolveDataScope() |
+| 失败行为 | 抛 BusinessException                 | 返回空 DataScope → 查询不到数据      |
+| 适用范围 | 所有业务类和管理类 API                       | 仅业务类 API（列表查询）              |
 
 典型组合用法：
 
@@ -903,15 +903,15 @@ null，业务层抛"不存在"异常，达到水平越权防护效果（不抛"�
 
 ### 5.12 边界场景
 
-| 场景                | 处理方式                                                                  |
-|---------------------|---------------------------------------------------------------------------|
-| X-Account-Id 缺失   | DataScope 返回 empty()，查询不到数据（fail-closed）                       |
-| auth-service 不可达 | DataScope 返回 empty()，查询不到数据（fail-closed）                       |
-| 用户无任何授权      | DataScope 返回 empty()（visiblePlans 为空），查询不到数据                 |
-| 用户有 GLOBAL 授权  | DataScope 返回 global()，不拼接条件，返回所有数据                         |
-| 用户有 DENY 授权    | excludedPlans 从 visiblePlans 中排除                                      |
-| 跨表查询（JOIN）    | DataScopeContext 在同一请求内有效，多个 Repository 调用共享同一 DataScope |
-| 异步场景（@Async）  | ThreadLocal 不跨线程传递，需要手动传递 DataScope 或标记不支持异步         |
+| 场景               | 处理方式                                                     |
+|------------------|----------------------------------------------------------|
+| X-Account-Id 缺失  | DataScope 返回 empty()，查询不到数据（fail-closed）                 |
+| auth-service 不可达 | DataScope 返回 empty()，查询不到数据（fail-closed）                 |
+| 用户无任何授权          | DataScope 返回 empty()（visiblePlans 为空），查询不到数据             |
+| 用户有 GLOBAL 授权    | DataScope 返回 global()，不拼接条件，返回所有数据                       |
+| 用户有 DENY 授权      | excludedPlans 从 visiblePlans 中排除                         |
+| 跨表查询（JOIN）       | DataScopeContext 在同一请求内有效，多个 Repository 调用共享同一 DataScope |
+| 异步场景（@Async）     | ThreadLocal 不跨线程传递，需要手动传递 DataScope 或标记不支持异步             |
 
 ### 5.13 性能考量
 
@@ -1276,24 +1276,24 @@ EffectResolver：DENY 优先 + 白名单语义（默认拒绝）
 
 ### 7.2 标注原则
 
-| API 分类   | category         | business 命名规范 | 示例                                           |
-|------------|------------------|-------------------|------------------------------------------------|
-| 渠道业务类 | BUSINESS（默认） | 业务领域大写      | `ANNUITY`、`APPROVAL_INSTANCE`、`FILE_TASK`    |
-| 系统管理类 | PLATFORM         | 领域大写 + 下划线 | `USER`、`ROLE`、`GRANT`、`CHANNEL_ENTITLEMENT` |
+| API 分类 | category     | business 命名规范 | 示例                                          |
+|--------|--------------|---------------|---------------------------------------------|
+| 渠道业务类  | BUSINESS（默认） | 业务领域大写        | `ANNUITY`、`APPROVAL_INSTANCE`、`FILE_TASK`   |
+| 系统管理类  | PLATFORM     | 领域大写 + 下划线    | `USER`、`ROLE`、`GRANT`、`CHANNEL_ENTITLEMENT` |
 
 关键：管理类 API 必须显式声明 `category = PermissionCategory.PLATFORM`，否则默认走 BUSINESS 路径需要 planId，但管理类 API
 没有 planId 上下文。
 
 ### 7.3 未来系统管理后台 API 标注规范
 
-| 规划 Controller      | 路径前缀           | business   | 示例 action                                      |
-|----------------------|--------------------|------------|--------------------------------------------------|
+| 规划 Controller        | 路径前缀               | business   | 示例 action                                    |
+|----------------------|--------------------|------------|----------------------------------------------|
 | UserController       | /admin/users       | USER       | VIEW、CREATE、UPDATE、DISABLE、RESET_PASSWORD    |
 | RoleController       | /admin/roles       | ROLE       | VIEW、CREATE、UPDATE、DELETE、ASSIGN_PERMISSIONS |
 | GrantController      | /admin/grants      | GRANT      | VIEW、CREATE、APPROVE、REJECT、REVOKE            |
-| AssignmentController | /admin/assignments | ASSIGNMENT | VIEW、CREATE、DEACTIVATE                         |
-| CredentialController | /admin/credentials | CREDENTIAL | VIEW、CREATE、RESET、DISABLE                     |
-| ProductController    | /admin/products    | PRODUCT    | VIEW、CREATE、UPDATE                             |
+| AssignmentController | /admin/assignments | ASSIGNMENT | VIEW、CREATE、DEACTIVATE                       |
+| CredentialController | /admin/credentials | CREDENTIAL | VIEW、CREATE、RESET、DISABLE                    |
+| ProductController    | /admin/products    | PRODUCT    | VIEW、CREATE、UPDATE                           |
 
 统一规范：
 
@@ -1304,13 +1304,13 @@ EffectResolver：DENY 优先 + 白名单语义（默认拒绝）
 
 ### 7.4 业务服务现有 PLATFORM 标注清单
 
-| Controller              | business          | 已标注 action                              |
-|-------------------------|-------------------|--------------------------------------------|
-| ApprovalFlowAdapter     | APPROVAL_FLOW     | CREATE、UPDATE、DEPRECATE、VIEW、MATCH     |
+| Controller              | business          | 已标注 action                            |
+|-------------------------|-------------------|---------------------------------------|
+| ApprovalFlowAdapter     | APPROVAL_FLOW     | CREATE、UPDATE、DEPRECATE、VIEW、MATCH    |
 | ApprovalInstanceAdapter | APPROVAL_INSTANCE | CREATE、APPROVE、REJECT、TRANSFER、VIEW 等 |
-| FileTaskAdapter         | FILE_TASK         | CREATE、VIEW、CANCEL、RETRY                |
-| FileAccessAdapter       | FILE_ACCESS       | UPLOAD、DOWNLOAD、VIEW、DELETE             |
-| TradeQueryAdapter       | TRADE_QUERY       | QUERY_BALANCE                              |
+| FileTaskAdapter         | FILE_TASK         | CREATE、VIEW、CANCEL、RETRY              |
+| FileAccessAdapter       | FILE_ACCESS       | UPLOAD、DOWNLOAD、VIEW、DELETE           |
+| TradeQueryAdapter       | TRADE_QUERY       | QUERY_BALANCE                         |
 
 需要补标注：
 
@@ -1320,23 +1320,23 @@ EffectResolver：DENY 优先 + 白名单语义（默认拒绝）
 
 #### 当前体系已具备的能力
 
-| 防护点                                | 实现机制                                         | 状态   |
-|---------------------------------------|--------------------------------------------------|--------|
-| 未登录访问                            | 网关 SaReactorFilter 登录校验                    | 已实现 |
-| 无权限访问功能                        | @RequirePermission + PermissionCheckApi          | 已实现 |
-| 跨业务访问（A 业务用户访问 B 业务）   | businessCode 不匹配 → checkPermission 返回 false | 已实现 |
+| 防护点                           | 实现机制                                        | 状态  |
+|-------------------------------|---------------------------------------------|-----|
+| 未登录访问                         | 网关 SaReactorFilter 登录校验                     | 已实现 |
+| 无权限访问功能                       | @RequirePermission + PermissionCheckApi     | 已实现 |
+| 跨业务访问（A 业务用户访问 B 业务）          | businessCode 不匹配 → checkPermission 返回 false | 已实现 |
 | 跨 action 访问（有 VIEW 但无 CREATE） | actionCode 不匹配 → checkPermission 返回 false   | 已实现 |
-| DENY 覆盖 ALLOW                       | EffectResolver DENY 优先                         | 已实现 |
-| 无任何授权                            | 默认拒绝（白名单语义）                           | 已实现 |
+| DENY 覆盖 ALLOW                 | EffectResolver DENY 优先                      | 已实现 |
+| 无任何授权                         | 默认拒绝（白名单语义）                                 | 已实现 |
 
 #### 本方案补齐的防护点
 
-| 防护点                       | 实现机制                           | 新增   |
-|------------------------------|------------------------------------|--------|
+| 防护点                     | 实现机制                         | 新增  |
+|-------------------------|------------------------------|-----|
 | auth-service 自身 API 无防护 | 短路调用 + 标注 @RequirePermission | 第三节 |
-| kernel 权限点未注册          | 业务服务启动上报                   | 第六节 |
-| 非渠道前缀路径网关放行       | 所有路径都校验登录 + yml 白名单    | 第三节 |
-| 列表查询水平越权             | @DataScope + Repository 条件拼接   | 第五节 |
+| kernel 权限点未注册           | 业务服务启动上报                     | 第六节 |
+| 非渠道前缀路径网关放行             | 所有路径都校验登录 + yml 白名单          | 第三节 |
+| 列表查询水平越权                | @DataScope + Repository 条件拼接 | 第五节 |
 
 ### 7.6 API 标注合规性强制检查
 
@@ -1374,13 +1374,13 @@ if (annotation == null) {
 
 以下接口不需要标注 `@RequirePermission`：
 
-| 接口                                         | 豁免理由                                   |
-|----------------------------------------------|--------------------------------------------|
-| PermissionCheckController.check / checkBatch | 被 PermissionExecutor 调用的内部接口       |
-| PermissionRegistrationController.register    | 业务服务上报权限点的内部接口               |
-| 登录接口（/internet/auth/login 等）          | 登录前无需校验，在 yml public-paths 白名单 |
-| 健康检查（/actuator/**）                     | 监控端点，在 yml public-paths 白名单       |
-| 二次授权发起/确认接口                        | 经办人未完成登录的特殊场景                 |
+| 接口                                           | 豁免理由                           |
+|----------------------------------------------|--------------------------------|
+| PermissionCheckController.check / checkBatch | 被 PermissionExecutor 调用的内部接口   |
+| PermissionRegistrationController.register    | 业务服务上报权限点的内部接口                 |
+| 登录接口（/internet/auth/login 等）                 | 登录前无需校验，在 yml public-paths 白名单 |
+| 健康检查（/actuator/**）                           | 监控端点，在 yml public-paths 白名单    |
+| 二次授权发起/确认接口                                  | 经办人未完成登录的特殊场景                  |
 
 实现方式：这些接口要么路径在 `/internal/**`（被网关 403 拦截），要么在 yml public-paths 白名单。PermissionScanner
 扫描时仍会告警（未标注），但不会误拦截。
@@ -1429,111 +1429,111 @@ empty ()，不抛异常。此错误码预留给未来需要强约束的场景。
 
 ### 8.1 改动总览
 
-| 模块                      | 改动类型           | 文件数 |
-|---------------------------|--------------------|--------|
-| demo-gateway              | 改造 + 删除        | 9      |
-| auth-api                  | 新增 + 改造 + 删除 | 12     |
-| auth-adapter              | 新增 + 改造 + 删除 | 9      |
-| auth-application          | 新增 + 改造        | 3      |
-| auth-infrastructure       | 改造               | 2      |
-| shared-permission-starter | 新增 + 改造        | 11     |
-| business-core-adapter     | 改造               | 1      |
-| 业务服务 starter（4 个）  | 改造               | 4      |
-| 错误码规范                | 更新               | 1      |
+| 模块                        | 改动类型         | 文件数 |
+|---------------------------|--------------|-----|
+| demo-gateway              | 改造 + 删除      | 9   |
+| auth-api                  | 新增 + 改造 + 删除 | 12  |
+| auth-adapter              | 新增 + 改造 + 删除 | 9   |
+| auth-application          | 新增 + 改造      | 3   |
+| auth-infrastructure       | 改造           | 2   |
+| shared-permission-starter | 新增 + 改造      | 11  |
+| business-core-adapter     | 改造           | 1   |
+| 业务服务 starter（4 个）         | 改造           | 4   |
+| 错误码规范                     | 更新           | 1   |
 
 ### 8.2 demo-gateway 改动清单
 
 #### 改造文件
 
-| 文件                               | 改动内容                                                                                                  |
-|------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| 文件                                 | 改动内容                                                                                      |
+|------------------------------------|-------------------------------------------------------------------------------------------|
 | `SaTokenGatewayConfiguration.java` | setAuth 改造：channel==null 时走默认 StpUtil.checkLogin()；移除 addExclude 硬编码，改读 GatewayProperties |
-| `ChannelAwareSaRouter.java`        | 新增 matchChannel(path) 方法；新增 configureDefaultStpLogic() 配置默认 StpLogic 识别所有渠道 token        |
+| `ChannelAwareSaRouter.java`        | 新增 matchChannel(path) 方法；新增 configureDefaultStpLogic() 配置默认 StpLogic 识别所有渠道 token         |
 | `SessionContextInjector.java`      | 扩展支持非渠道前缀路径，调用 resolveAnyChannelLoginId() 注入 X-Account-Id                                 |
-| `GatewayProperties.java`           | 新增配置类，消费 auth.gateway.public-paths                                                                |
-| `application.yml`                  | public-paths 新增 /admin/auth/login；移除 httpexchange RouteRuleApi 配置                                  |
-| `GatewayStpInterfaceImplTest.java` | 调整测试以匹配新的 setAuth 逻辑                                                                           |
+| `GatewayProperties.java`           | 新增配置类，消费 auth.gateway.public-paths                                                        |
+| `application.yml`                  | public-paths 新增 /admin/auth/login；移除 httpexchange RouteRuleApi 配置                         |
+| `GatewayStpInterfaceImplTest.java` | 调整测试以匹配新的 setAuth 逻辑                                                                      |
 
 #### 删除文件
 
-| 文件                   | 原因               |
-|------------------------|--------------------|
+| 文件                     | 原因             |
+|------------------------|----------------|
 | `RouteRuleLoader.java` | RouteRule 机制移除 |
 | `RouteRule.java`       | RouteRule 机制移除 |
 | `RouteRuleTest.java`   | RouteRule 机制移除 |
 
 ### 8.3 auth-api 改动清单
 
-| 文件                                         | 改动类型 | 内容                          |
-|----------------------------------------------|----------|-------------------------------|
-| `PermissionCheckApi.java`                    | 改造     | 新增 resolveDataScope 方法    |
-| `PermissionRegistrationApi.java`             | 新增     | 上报权限点接口                |
-| `annotation/DataScope.java`                  | 新增     | 行级过滤注解                  |
-| `annotation/DataScopeDimension.java`         | 新增     | 过滤维度枚举（PLAN/CUSTOMER） |
-| `dto/DataScope.java`                         | 新增     | 数据可见范围对象              |
-| `command/DataScopeRequest.java`              | 新增     | resolveDataScope 请求 DTO     |
-| `dto/DataScopeResponse.java`                 | 新增     | resolveDataScope 响应 DTO     |
-| `command/PermissionRegistrationRequest.java` | 新增     | 上报请求 DTO                  |
-| `dto/PermissionItemDescriptor.java`          | 新增     | 权限点描述符                  |
-| `dto/PermissionRegistrationResponse.java`    | 新增     | 上报响应 DTO                  |
-| `RouteRuleApi.java`                          | 删除     | RouteRule 移除                |
-| `dto/RouteRuleResponse.java`                 | 删除     | RouteRule 移除                |
+| 文件                                           | 改动类型 | 内容                      |
+|----------------------------------------------|------|-------------------------|
+| `PermissionCheckApi.java`                    | 改造   | 新增 resolveDataScope 方法  |
+| `PermissionRegistrationApi.java`             | 新增   | 上报权限点接口                 |
+| `annotation/DataScope.java`                  | 新增   | 行级过滤注解                  |
+| `annotation/DataScopeDimension.java`         | 新增   | 过滤维度枚举（PLAN/CUSTOMER）   |
+| `dto/DataScope.java`                         | 新增   | 数据可见范围对象                |
+| `command/DataScopeRequest.java`              | 新增   | resolveDataScope 请求 DTO |
+| `dto/DataScopeResponse.java`                 | 新增   | resolveDataScope 响应 DTO |
+| `command/PermissionRegistrationRequest.java` | 新增   | 上报请求 DTO                |
+| `dto/PermissionItemDescriptor.java`          | 新增   | 权限点描述符                  |
+| `dto/PermissionRegistrationResponse.java`    | 新增   | 上报响应 DTO                |
+| `RouteRuleApi.java`                          | 删除   | RouteRule 移除            |
+| `dto/RouteRuleResponse.java`                 | 删除   | RouteRule 移除            |
 
 ### 8.4 auth-adapter 改动清单
 
-| 文件                                        | 改动类型 | 内容                              |
-|---------------------------------------------|----------|-----------------------------------|
-| `PermissionCheckController.java`            | 改造     | 新增 resolveDataScope 端点        |
-| `PermissionRegistrationController.java`     | 新增     | 接收业务服务上报                  |
-| `LocalPermissionExecutor.java`              | 新增     | auth-service 功能权限短路调用实现 |
-| `LocalDataScopeResolver.java`               | 新增     | auth-service 数据范围短路调用实现 |
-| `CustomerChannelEntitlementController.java` | 改造     | 标注 @RequirePermission(PLATFORM) |
-| `PermissionMetadataController.java`         | 改造     | 标注 @RequirePermission(PLATFORM) |
-| `PermissionCacheController.java`            | 改造     | 标注 @RequirePermission(PLATFORM) |
-| `RouteRuleController.java`                  | 删除     | RouteRule 移除                    |
-| `pom.xml`                                   | 改造     | 引入 shared-permission-starter    |
+| 文件                                          | 改动类型 | 内容                              |
+|---------------------------------------------|------|---------------------------------|
+| `PermissionCheckController.java`            | 改造   | 新增 resolveDataScope 端点          |
+| `PermissionRegistrationController.java`     | 新增   | 接收业务服务上报                        |
+| `LocalPermissionExecutor.java`              | 新增   | auth-service 功能权限短路调用实现         |
+| `LocalDataScopeResolver.java`               | 新增   | auth-service 数据范围短路调用实现         |
+| `CustomerChannelEntitlementController.java` | 改造   | 标注 @RequirePermission(PLATFORM) |
+| `PermissionMetadataController.java`         | 改造   | 标注 @RequirePermission(PLATFORM) |
+| `PermissionCacheController.java`            | 改造   | 标注 @RequirePermission(PLATFORM) |
+| `RouteRuleController.java`                  | 删除   | RouteRule 移除                    |
+| `pom.xml`                                   | 改造   | 引入 shared-permission-starter    |
 
 ### 8.5 auth-application 改动清单
 
-| 文件                            | 改动类型 | 内容                                     |
-|---------------------------------|----------|------------------------------------------|
-| `PermissionQueryService.java`   | 改造     | 新增 resolveDataScope 方法               |
-| `PermissionScannerService.java` | 新增     | 扫描逻辑抽取 + registerFromExternal 方法 |
-| `CheckPermissionQuery.java`     | 改造     | 新增 ResolveDataScopeQuery               |
+| 文件                              | 改动类型 | 内容                               |
+|---------------------------------|------|----------------------------------|
+| `PermissionQueryService.java`   | 改造   | 新增 resolveDataScope 方法           |
+| `PermissionScannerService.java` | 新增   | 扫描逻辑抽取 + registerFromExternal 方法 |
+| `CheckPermissionQuery.java`     | 改造   | 新增 ResolveDataScopeQuery         |
 
 ### 8.6 auth-infrastructure 改动清单
 
-| 文件                                | 改动类型 | 内容                                                                              |
-|-------------------------------------|----------|-----------------------------------------------------------------------------------|
-| `PermissionScanner.java`            | 改造     | 简化为委托 PermissionScannerService                                               |
-| `PermissionItemRepositoryImpl.java` | 改造     | upsertAll 返回新增/更新数量；markStaleForUnscanned 只处理 auth-service 自身权限点 |
+| 文件                                  | 改动类型 | 内容                                                               |
+|-------------------------------------|------|------------------------------------------------------------------|
+| `PermissionScanner.java`            | 改造   | 简化为委托 PermissionScannerService                                   |
+| `PermissionItemRepositoryImpl.java` | 改造   | upsertAll 返回新增/更新数量；markStaleForUnscanned 只处理 auth-service 自身权限点 |
 
 ### 8.7 shared-permission-starter 改动清单
 
-| 文件                                  | 改动类型 | 内容                                                              |
-|---------------------------------------|----------|-------------------------------------------------------------------|
-| `RequirePermissionAspect.java`        | 改造     | 改为依赖 PermissionExecutor 接口，不再直接依赖 PermissionCheckApi |
-| `PermissionExecutor.java`             | 新增     | 权限校验执行接口                                                  |
-| `HttpExchangePermissionExecutor.java` | 新增     | 业务服务默认实现（HttpExchange）                                  |
-| `DataScopeResolver.java`              | 新增     | 数据可见范围解析接口                                              |
-| `DefaultDataScopeResolver.java`       | 新增     | 默认实现（调用 PermissionCheckApi.resolveDataScope）              |
-| `DataScopeAspect.java`                | 新增     | @DataScope 切面                                                   |
-| `DataScopeContext.java`               | 新增     | ThreadLocal 传递                                                  |
-| `DataScopeQueryHelper.java`           | 新增     | Repository 条件拼接工具                                           |
-| `PermissionRegistrationRunner.java`   | 新增     | 业务服务启动上报权限点                                            |
-| `errorcode/PermissionErrorCode.java`  | 改造     | 新增 DATA_SCOPE_RESOLVE_FAILED                                    |
-| `pom.xml`                             | 改造     | 引入 spring-web（已存在）、Caffeine（可选）                       |
+| 文件                                    | 改动类型 | 内容                                                   |
+|---------------------------------------|------|------------------------------------------------------|
+| `RequirePermissionAspect.java`        | 改造   | 改为依赖 PermissionExecutor 接口，不再直接依赖 PermissionCheckApi |
+| `PermissionExecutor.java`             | 新增   | 权限校验执行接口                                             |
+| `HttpExchangePermissionExecutor.java` | 新增   | 业务服务默认实现（HttpExchange）                               |
+| `DataScopeResolver.java`              | 新增   | 数据可见范围解析接口                                           |
+| `DefaultDataScopeResolver.java`       | 新增   | 默认实现（调用 PermissionCheckApi.resolveDataScope）         |
+| `DataScopeAspect.java`                | 新增   | @DataScope 切面                                        |
+| `DataScopeContext.java`               | 新增   | ThreadLocal 传递                                       |
+| `DataScopeQueryHelper.java`           | 新增   | Repository 条件拼接工具                                    |
+| `PermissionRegistrationRunner.java`   | 新增   | 业务服务启动上报权限点                                          |
+| `errorcode/PermissionErrorCode.java`  | 改造   | 新增 DATA_SCOPE_RESOLVE_FAILED                         |
+| `pom.xml`                             | 改造   | 引入 spring-web（已存在）、Caffeine（可选）                      |
 
 ### 8.8 business-core-adapter 改动清单
 
-| 文件                          | 改动类型 | 内容                                    |
-|-------------------------------|----------|-----------------------------------------|
-| `BusinessFormController.java` | 改造     | 补标注 status 方法的 @RequirePermission |
+| 文件                            | 改动类型 | 内容                                |
+|-------------------------------|------|-----------------------------------|
+| `BusinessFormController.java` | 改造   | 补标注 status 方法的 @RequirePermission |
 
 ### 8.9 业务服务 starter 改动清单
 
-| 文件                                        | 改动内容                                            |
-|---------------------------------------------|-----------------------------------------------------|
+| 文件                                          | 改动内容                                              |
+|---------------------------------------------|---------------------------------------------------|
 | `approval-starter/application-local.yml`    | httpexchange clients 新增 PermissionRegistrationApi |
 | `file-starter/application-local.yml`        | httpexchange clients 新增 PermissionRegistrationApi |
 | `integration-starter/application-local.yml` | httpexchange clients 新增 PermissionRegistrationApi |
@@ -1541,8 +1541,8 @@ empty ()，不抛异常。此错误码预留给未来需要强约束的场景。
 
 ### 8.10 规范文档更新
 
-| 文件               | 改动内容                                            |
-|--------------------|-----------------------------------------------------|
+| 文件            | 改动内容                                            |
+|---------------|-------------------------------------------------|
 | `08-错误码规范.md` | SHARED.PERM 模块新增 0005 DATA_SCOPE_RESOLVE_FAILED |
 
 ## 九、实施顺序
@@ -1584,43 +1584,43 @@ empty ()，不抛异常。此错误码预留给未来需要强约束的场景。
 
 ### 10.1 单元测试
 
-| 测试类                                        | 验证点                                                                |
-|-----------------------------------------------|-----------------------------------------------------------------------|
-| `GatewayPropertiesTest`                       | yml 配置被正确消费，isPublicPath 行为正确                             |
-| `SaTokenGatewayConfigurationTest`             | 渠道前缀走渠道 StpLogic，非渠道前缀走默认 StpLogic                    |
-| `SessionContextInjectorTest`                  | 非渠道前缀路径也能注入 X-Account-Id                                   |
+| 测试类                                           | 验证点                                                           |
+|-----------------------------------------------|---------------------------------------------------------------|
+| `GatewayPropertiesTest`                       | yml 配置被正确消费，isPublicPath 行为正确                                 |
+| `SaTokenGatewayConfigurationTest`             | 渠道前缀走渠道 StpLogic，非渠道前缀走默认 StpLogic                            |
+| `SessionContextInjectorTest`                  | 非渠道前缀路径也能注入 X-Account-Id                                      |
 | `LocalPermissionExecutorTest`                 | 本地调用 PermissionQueryService，不发起 HttpExchange                  |
 | `LocalDataScopeResolverTest`                  | 本地调用 PermissionQueryService.resolveDataScope，不发起 HttpExchange |
-| `RequirePermissionAspectTest`                 | auth-service 走本地短路，业务服务走 HttpExchange                      |
-| `DataScopeAspectTest`                         | 切面正确设置和清理 ThreadLocal                                        |
-| `DataScopeContextTest`                        | ThreadLocal 的 get/set/clear 行为                                     |
-| `DataScopeQueryHelperTest`                    | QueryWrapper 条件拼接正确性                                           |
-| `PermissionScannerServiceTest`                | scanLocal 和 registerFromExternal 的 upsert 行为                      |
-| `PermissionRegistrationRunnerTest`            | 扫描本地 Controller 并上报，fail-soft 行为                            |
-| `PermissionQueryService.resolveDataScopeTest` | 聚合逻辑（GLOBAL/PLAN/CUSTOMER/DENY）                                 |
+| `RequirePermissionAspectTest`                 | auth-service 走本地短路，业务服务走 HttpExchange                         |
+| `DataScopeAspectTest`                         | 切面正确设置和清理 ThreadLocal                                         |
+| `DataScopeContextTest`                        | ThreadLocal 的 get/set/clear 行为                                |
+| `DataScopeQueryHelperTest`                    | QueryWrapper 条件拼接正确性                                          |
+| `PermissionScannerServiceTest`                | scanLocal 和 registerFromExternal 的 upsert 行为                  |
+| `PermissionRegistrationRunnerTest`            | 扫描本地 Controller 并上报，fail-soft 行为                              |
+| `PermissionQueryService.resolveDataScopeTest` | 聚合逻辑（GLOBAL/PLAN/CUSTOMER/DENY）                               |
 
 ### 10.2 集成测试
 
-| 场景                           | 验证点                                                            |
-|--------------------------------|-------------------------------------------------------------------|
-| 非渠道前缀路径登录校验         | `/admin/users/list` 未登录 → 401；已登录 → 通过                   |
+| 场景                       | 验证点                                                        |
+|--------------------------|------------------------------------------------------------|
+| 非渠道前缀路径登录校验              | `/admin/users/list` 未登录 → 401；已登录 → 通过                     |
 | auth-service 自身 API 权限校验 | 无权限用户访问 CustomerChannelEntitlementController → 403         |
-| 业务服务权限点上报             | annuity-service 启动 → t_auth_permission_item 表有 ANNUITY 权限点 |
-| 行级数据过滤                   | 用户 A 有 P001 可见范围，查询列表仅返回 P001 数据                 |
-| 水平越权防护                   | 用户 A 访问 P002 详情 → 返回 null（不抛异常）                     |
-| 垂直越权防护                   | 用户 A 无 USER:VIEW → 访问 `/admin/users/list` → 403              |
-| DENY 优先                      | 用户 A 同时有 ALLOW 和 DENY → 拒绝                                |
+| 业务服务权限点上报                | annuity-service 启动 → t_auth_permission_item 表有 ANNUITY 权限点 |
+| 行级数据过滤                   | 用户 A 有 P001 可见范围，查询列表仅返回 P001 数据                           |
+| 水平越权防护                   | 用户 A 访问 P002 详情 → 返回 null（不抛异常）                            |
+| 垂直越权防护                   | 用户 A 无 USER:VIEW → 访问 `/admin/users/list` → 403            |
+| DENY 优先                  | 用户 A 同时有 ALLOW 和 DENY → 拒绝                                 |
 
 ## 十一、风险与缓解
 
-| 风险                                      | 缓解措施                                                    |
-|-------------------------------------------|-------------------------------------------------------------|
-| auth-service 启动顺序依赖                 | 业务服务 PermissionRegistrationRunner fail-soft，不阻断启动 |
-| ThreadLocal 内存泄漏                      | DataScopeAspect finally 块强制 clear                        |
-| resolveDataScope 性能                     | 初版不缓存，后续按性能测试结果引入 Caffeine 缓存            |
-| 大列表 IN 查询性能                        | 初版接受损耗，后续改用 EXISTS 子查询                        |
-| 默认 StpLogic 配置错误导致所有 token 失效 | 单元测试覆盖默认 StpLogic 识别所有渠道 token                |
-| PermissionScanner 强制模式误拦截          | 初版保持宽松模式（strict-mode=false）                       |
+| 风险                            | 缓解措施                                              |
+|-------------------------------|---------------------------------------------------|
+| auth-service 启动顺序依赖           | 业务服务 PermissionRegistrationRunner fail-soft，不阻断启动 |
+| ThreadLocal 内存泄漏              | DataScopeAspect finally 块强制 clear                 |
+| resolveDataScope 性能           | 初版不缓存，后续按性能测试结果引入 Caffeine 缓存                     |
+| 大列表 IN 查询性能                   | 初版接受损耗，后续改用 EXISTS 子查询                            |
+| 默认 StpLogic 配置错误导致所有 token 失效 | 单元测试覆盖默认 StpLogic 识别所有渠道 token                    |
+| PermissionScanner 强制模式误拦截     | 初版保持宽松模式（strict-mode=false）                       |
 
 ## 十二、不在本次范围内
 

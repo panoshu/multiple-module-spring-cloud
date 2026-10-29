@@ -100,9 +100,15 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
 
   @Override
   protected void validateInvariants() {
-    if (fileTaskId == null) throw new IllegalStateException("fileTaskId null");
-    if (bizType == null) throw new IllegalStateException("bizType null");
-    if (status == null) throw new IllegalStateException("status null");
+    if (fileTaskId == null) {
+      throw new IllegalStateException("fileTaskId null");
+    }
+    if (bizType == null) {
+      throw new IllegalStateException("bizType null");
+    }
+    if (status == null) {
+      throw new IllegalStateException("status null");
+    }
   }
 
   public SubTaskSummary toSummary() {

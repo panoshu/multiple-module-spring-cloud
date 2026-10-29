@@ -22,8 +22,12 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
   public SourceTemplateDef(TemplateCode templateCode, IdentifyMode mode,
                            List<String> fingerprint, List<RegionDef> regions, UserNo userNo) {
     super(templateCode, userNo);
-    if (mode == null) throw new IllegalArgumentException("identifyMode null");
-    if (regions == null || regions.isEmpty()) throw new IllegalArgumentException("regions empty");
+    if (mode == null) {
+      throw new IllegalArgumentException("identifyMode null");
+    }
+    if (regions == null || regions.isEmpty()) {
+      throw new IllegalArgumentException("regions empty");
+    }
     this.identifyMode = mode;
     this.fingerprint = fingerprint == null ? List.of() : List.copyOf(fingerprint);
     this.regions = List.copyOf(regions);
@@ -56,7 +60,11 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
 
   @Override
   protected void validateInvariants() {
-    if (identifyMode == null) throw new IllegalStateException("identifyMode null");
-    if (regions == null || regions.isEmpty()) throw new IllegalStateException("regions empty");
+    if (identifyMode == null) {
+      throw new IllegalStateException("identifyMode null");
+    }
+    if (regions == null || regions.isEmpty()) {
+      throw new IllegalStateException("regions empty");
+    }
   }
 }

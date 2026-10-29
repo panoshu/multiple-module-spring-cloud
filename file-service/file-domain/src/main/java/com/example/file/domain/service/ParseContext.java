@@ -21,10 +21,14 @@ public class ParseContext {
 
   public boolean isNextRegionTrigger(RawRow row) {
     int nextIdx = currentRegionIdx + 1;
-    if (nextIdx >= regions.size()) return false;
+    if (nextIdx >= regions.size()) {
+      return false;
+    }
     RegionDef next = regions.get(nextIdx);
     RegionTrigger trigger = next.trigger();
-    if (trigger == null) return false;
+    if (trigger == null) {
+      return false;
+    }
     return matchesTrigger(row, trigger, next);
   }
 
@@ -37,7 +41,9 @@ public class ParseContext {
   }
 
   private boolean matchesTrigger(RawRow row, RegionTrigger trigger, RegionDef region) {
-    if (row == null || row.isBlank()) return false;
+    if (row == null || row.isBlank()) {
+      return false;
+    }
     if (trigger.matchType() == TriggerMatchType.HEADER_SNIFF) {
       // 优先使用 region strategy 中的指纹值（labelAliases / headerAliases）做精确匹配，
       // 避免数据行（非空单元格数多但不含表头/标签字面量）误触发下一个 region。

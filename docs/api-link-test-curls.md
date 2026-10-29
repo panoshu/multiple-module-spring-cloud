@@ -11,7 +11,7 @@
 
 ## 服务端口规划
 
-| 服务                | 端口  | Nacos 服务名     |
+| 服务                  | 端口    | Nacos 服务名        |
 |---------------------|-------|------------------|
 | demo-gateway        | 18080 | gateway          |
 | approval-service    | 18081 | approval-service |
@@ -165,15 +165,15 @@ curl -X POST http://localhost:18080/integration/api/v1/trade/portfolio/balance \
 
 ## 链路覆盖矩阵
 
-| 编号 | 链路                         | 验证点                                                 |
-|------|------------------------------|--------------------------------------------------------|
-| 1    | 网关 → annuity               | 网关路由配置 + annuity 服务启动                        |
-| 2    | 网关 → annuity → approval    | @HttpExchange 客户端 + LoadBalancer + approval 服务    |
-| 3    | 网关 → annuity → file        | @HttpExchange 客户端 + LoadBalancer + file 服务        |
-| 4    | 网关 → annuity → integration | @HttpExchange 客户端 + LoadBalancer + integration 服务 |
-| 5    | 网关 → approval              | 网关路由 + approval 服务直接访问                       |
-| 6    | 网关 → file                  | 网关路由 + file 服务直接访问                           |
-| 7    | 网关 → integration           | 网关路由 + integration 服务直接访问                    |
+| 编号 | 链路                         | 验证点                                               |
+|----|----------------------------|---------------------------------------------------|
+| 1  | 网关 → annuity               | 网关路由配置 + annuity 服务启动                             |
+| 2  | 网关 → annuity → approval    | @HttpExchange 客户端 + LoadBalancer + approval 服务    |
+| 3  | 网关 → annuity → file        | @HttpExchange 客户端 + LoadBalancer + file 服务        |
+| 4  | 网关 → annuity → integration | @HttpExchange 客户端 + LoadBalancer + integration 服务 |
+| 5  | 网关 → approval              | 网关路由 + approval 服务直接访问                            |
+| 6  | 网关 → file                  | 网关路由 + file 服务直接访问                                |
+| 7  | 网关 → integration           | 网关路由 + integration 服务直接访问                         |
 
 ## 测试说明
 

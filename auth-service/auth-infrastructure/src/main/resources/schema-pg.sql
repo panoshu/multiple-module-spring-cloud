@@ -662,3 +662,84 @@ ON COLUMN t_auth_customer_channel_entitlement.enabled_channels IS '已开通渠�
 
 CREATE UNIQUE INDEX uk_t_auth_customer_channel_entitlement_customer
   ON t_auth_customer_channel_entitlement (customer_no) WHERE deleted = FALSE;
+
+-- ========== PermissionMenu 表 ==========
+-- 权限菜单聚合根 PermissionMenu 持久化
+-- 管理端维护的树形菜单节点，与自动扫描的 PermissionItem 生命周期分离
+
+CREATE TABLE IF NOT EXISTS t_auth_permission_menu
+(
+  id           VARCHAR(32)  NOT NULL,
+  menu_code    VARCHAR(128) NOT NULL,
+  menu_name    VARCHAR(128) NOT NULL,
+  menu_path    VARCHAR(512),
+  parent_id    VARCHAR(32),
+  depth        INT          NOT NULL DEFAULT 0,
+  sort_order   INT          NOT NULL DEFAULT 0,
+  icon         VARCHAR(128),
+  route        VARCHAR(256),
+  menu_category VARCHAR(16) NOT NULL,
+  visibility   VARCHAR(24)  NOT NULL DEFAULT 'WITH_PERMISSION',
+  enabled      BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_by   VARCHAR(64)  NOT NULL,
+  create_time  TIMESTAMP    NOT NULL,
+  updated_by   VARCHAR(64),
+  update_time  TIMESTAMP,
+  deleted      BOOLEAN      NOT NULL DEFAULT FALSE,
+  version      INT          NOT NULL DEFAULT 0,
+  CONSTRAINT pk_t_auth_permission_menu PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_auth_permission_menu IS '权限菜单表';
+COMMENT ON COLUMN t_auth_permission_menu.menu_code IS '菜单编码（冒号分隔，如 annuity:batch:submit），创建后不可变';
+COMMENT ON COLUMN t_auth_permission_menu.menu_name IS '菜单名称';
+COMMENT ON COLUMN t_auth_permission_menu.menu_path IS '物化路径（如 /年金/缴费/办理），自动计算';
+COMMENT ON COLUMN t_auth_permission_menu.parent_id IS '父菜单ID，NULL 表示根节点';
+COMMENT ON COLUMN t_auth_permission_menu.depth IS '树深度，根=0';
+COMMENT ON COLUMN t_auth_permission_menu.sort_order IS '同级排序序号';
+COMMENT ON COLUMN t_auth_permission_menu.icon IS '图标标识';
+COMMENT ON COLUMN t_auth_permission_menu.route IS '前端路由路径';
+COMMENT ON COLUMN t_auth_permission_menu.menu_category IS '菜单类别：BUSINESS/PLATFORM';
+COMMENT ON COLUMN t_auth_permission_menu.visibility IS '可见性规则：ALWAYS/WITH_PERMISSION/WITH_ANY_CHILD';
+COMMENT ON COLUMN t_auth_permission_menu.enabled IS '是否启用';
+
+CREATE UNIQUE INDEX uk_permission_menu_code
+  ON t_auth_permission_menu (menu_code) WHERE deleted = FALSE;
+
+CREATE INDEX idx_permission_menu_parent
+  ON t_auth_permission_menu (parent_id) WHERE deleted = FALSE;
+
+CREATE INDEX idx_permission_menu_category
+  ON t_auth_permission_menu (menu_category) WHERE deleted = FALSE;
+
+CREATE INDEX idx_permission_menu_path
+  ON t_auth_permission_menu (menu_path) WHERE deleted = FALSE;
+
+-- ========== MenuPermissionBinding 表 ==========
+-- 菜单-权限绑定关系，一个菜单可绑定多个权限点（OR 语义）
+
+CREATE TABLE IF NOT EXISTS t_auth_menu_permission_binding
+(
+  id            VARCHAR(32)  NOT NULL,
+  menu_id       VARCHAR(32)  NOT NULL,
+  business_code VARCHAR(64)  NOT NULL,
+  action_code   VARCHAR(64),
+  created_by    VARCHAR(64),
+  create_time   TIMESTAMP    NOT NULL,
+  updated_by    VARCHAR(64),
+  update_time   TIMESTAMP,
+  deleted       BOOLEAN      NOT NULL DEFAULT FALSE,
+  version       INT          NOT NULL DEFAULT 0,
+  CONSTRAINT pk_t_auth_menu_permission_binding PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE t_auth_menu_permission_binding IS '菜单权限绑定表';
+COMMENT ON COLUMN t_auth_menu_permission_binding.menu_id IS '菜单ID';
+COMMENT ON COLUMN t_auth_menu_permission_binding.business_code IS '业务编码';
+COMMENT ON COLUMN t_auth_menu_permission_binding.action_code IS '操作编码（NULL 表示整个业务）';
+
+CREATE UNIQUE INDEX uk_menu_binding_menu_biz_action
+  ON t_auth_menu_permission_binding (menu_id, business_code, action_code) WHERE deleted = FALSE;
+
+CREATE INDEX idx_menu_binding_menu
+  ON t_auth_menu_permission_binding (menu_id) WHERE deleted = FALSE;

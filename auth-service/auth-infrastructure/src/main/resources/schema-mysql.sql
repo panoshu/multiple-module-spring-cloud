@@ -658,3 +658,53 @@ CREATE TABLE IF NOT EXISTS t_auth_customer_channel_entitlement
   deleted
 )
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户渠道开通记录表';
+
+-- ========== PermissionMenu 表 ==========
+-- 权限菜单聚合根 PermissionMenu 持久化
+
+CREATE TABLE IF NOT EXISTS t_auth_permission_menu
+(
+  id            VARCHAR(32)  NOT NULL COMMENT '菜单ID(ULID)',
+  menu_code     VARCHAR(128) NOT NULL COMMENT '菜单编码（冒号分隔，创建后不可变）',
+  menu_name     VARCHAR(128) NOT NULL COMMENT '菜单名称',
+  menu_path     VARCHAR(512)          COMMENT '物化路径',
+  parent_id     VARCHAR(32)           COMMENT '父菜单ID',
+  depth         INT          NOT NULL DEFAULT 0 COMMENT '树深度，根=0',
+  sort_order    INT          NOT NULL DEFAULT 0 COMMENT '同级排序序号',
+  icon          VARCHAR(128)          COMMENT '图标标识',
+  route         VARCHAR(256)          COMMENT '前端路由路径',
+  menu_category VARCHAR(16)  NOT NULL COMMENT '菜单类别：BUSINESS/PLATFORM',
+  visibility    VARCHAR(24)  NOT NULL DEFAULT 'WITH_PERMISSION' COMMENT '可见性规则',
+  enabled       TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '是否启用',
+  created_by    VARCHAR(64)  NOT NULL,
+  create_time   DATETIME     NOT NULL,
+  updated_by    VARCHAR(64),
+  update_time   DATETIME,
+  deleted       TINYINT(1)   NOT NULL DEFAULT 0,
+  version       INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_permission_menu_code (menu_code, deleted),
+  KEY idx_permission_menu_parent (parent_id, deleted),
+  KEY idx_permission_menu_category (menu_category, deleted),
+  KEY idx_permission_menu_path (menu_path, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限菜单表';
+
+-- ========== MenuPermissionBinding 表 ==========
+-- 菜单-权限绑定关系
+
+CREATE TABLE IF NOT EXISTS t_auth_menu_permission_binding
+(
+  id            VARCHAR(32)  NOT NULL COMMENT '绑定ID',
+  menu_id       VARCHAR(32)  NOT NULL COMMENT '菜单ID',
+  business_code VARCHAR(64)  NOT NULL COMMENT '业务编码',
+  action_code   VARCHAR(64)           COMMENT '操作编码（NULL 表示整个业务）',
+  created_by    VARCHAR(64),
+  create_time   DATETIME     NOT NULL,
+  updated_by    VARCHAR(64),
+  update_time   DATETIME,
+  deleted       TINYINT(1)   NOT NULL DEFAULT 0,
+  version       INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_menu_binding_menu_biz_action (menu_id, business_code, action_code),
+  KEY idx_menu_binding_menu (menu_id, deleted)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单权限绑定表';

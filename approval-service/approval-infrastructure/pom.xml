@@ -43,8 +43,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
+      <groupId>com.oceanbase</groupId>
+      <artifactId>oceanbase-client</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>

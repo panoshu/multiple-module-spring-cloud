@@ -125,12 +125,24 @@ public class FileMetadata extends AggregateRoot<FileId> {
                                              FileAccessScope accessScope,
                                              String targetId, StorageType storageType,
                                              UserNo uploader, LocalDateTime expiresAt) {
-    if (id == null) throw new IllegalArgumentException("id 不能为空");
-    if (usage == null) throw new IllegalArgumentException("usage 不能为空");
-    if (accessScope == null) throw new IllegalArgumentException("accessScope 不能为空");
-    if (targetId == null || targetId.isBlank()) throw new IllegalArgumentException("targetId 不能为空");
-    if (storageType == null) throw new IllegalArgumentException("storageType 不能为空");
-    if (uploader == null) throw new IllegalArgumentException("uploader 不能为空");
+    if (id == null) {
+      throw new IllegalArgumentException("id 不能为空");
+    }
+    if (usage == null) {
+      throw new IllegalArgumentException("usage 不能为空");
+    }
+    if (accessScope == null) {
+      throw new IllegalArgumentException("accessScope 不能为空");
+    }
+    if (targetId == null || targetId.isBlank()) {
+      throw new IllegalArgumentException("targetId 不能为空");
+    }
+    if (storageType == null) {
+      throw new IllegalArgumentException("storageType 不能为空");
+    }
+    if (uploader == null) {
+      throw new IllegalArgumentException("uploader 不能为空");
+    }
     return new FileMetadata(id, usage, bizType, sourceApp, businessBatchId,
       accessScope, targetId, storageType, uploader, expiresAt);
   }
@@ -151,13 +163,27 @@ public class FileMetadata extends AggregateRoot<FileId> {
                                     FileUsage usage, String bizType, String sourceApp, BatchId businessBatchId,
                                     String targetId, StorageType storageType,
                                     UserNo uploadedBy, LocalDateTime expiresAt) {
-    if (id == null) throw new IllegalArgumentException("id 不能为空");
-    if (originalName == null || originalName.isBlank()) throw new IllegalArgumentException("originalName 不能为空");
-    if (size < 0) throw new IllegalArgumentException("size 不能为负");
-    if (usage == null) throw new IllegalArgumentException("usage 不能为空");
-    if (targetId == null || targetId.isBlank()) throw new IllegalArgumentException("targetId 不能为空");
-    if (storageType == null) throw new IllegalArgumentException("storageType 不能为空");
-    if (uploadedBy == null) throw new IllegalArgumentException("uploadedBy 不能为空");
+    if (id == null) {
+      throw new IllegalArgumentException("id 不能为空");
+    }
+    if (originalName == null || originalName.isBlank()) {
+      throw new IllegalArgumentException("originalName 不能为空");
+    }
+    if (size < 0) {
+      throw new IllegalArgumentException("size 不能为负");
+    }
+    if (usage == null) {
+      throw new IllegalArgumentException("usage 不能为空");
+    }
+    if (targetId == null || targetId.isBlank()) {
+      throw new IllegalArgumentException("targetId 不能为空");
+    }
+    if (storageType == null) {
+      throw new IllegalArgumentException("storageType 不能为空");
+    }
+    if (uploadedBy == null) {
+      throw new IllegalArgumentException("uploadedBy 不能为空");
+    }
     return new FileMetadata(id, originalName, size, contentType, usage, bizType, sourceApp,
       businessBatchId, targetId, storageType, uploadedBy, expiresAt);
   }

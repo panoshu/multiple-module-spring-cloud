@@ -53,18 +53,14 @@ class BffSystemControllerTest {
   }
 
   @Test
-  @DisplayName("POST /management/system/business-types 返回业务类型列表")
+  @DisplayName("POST /management/system/business-types 返回业务类型列表（待 Strategy 重构后补充真实数据）")
   void listBusinessTypes_returnsList() throws Exception {
-    List<BffBusinessTypeResponse> list = List.of(
-      new BffBusinessTypeResponse("ACC_PLAN_CREATE", "annuity-service", "INTRANET"),
-      new BffBusinessTypeResponse("LOAN_APPLY", "loan-service", "ALL")
-    );
-    when(systemManagementService.listBusinessTypes()).thenReturn(ApiResult.success(list));
+    when(systemManagementService.listBusinessTypes()).thenReturn(ApiResult.success(List.of()));
 
     mockMvc.perform(post("/management/system/business-types")
         .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.data[0].businessType").value("ACC_PLAN_CREATE"))
-      .andExpect(jsonPath("$.data[1].serviceName").value("loan-service"));
+      .andExpect(jsonPath("$.data").isArray())
+      .andExpect(jsonPath("$.data").isEmpty());
   }
 }

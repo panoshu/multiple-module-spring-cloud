@@ -14,13 +14,16 @@ import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 业务进度查询 Controller
  *
- * <p>实现 {@link BusinessProgressApi},入口完成会话解析与功能权限校验,
+ * <p>实现 {@link BusinessProgressApi}（纯契约接口）,入口完成会话解析与功能权限校验,
  * 调用 {@link BusinessProgressAppService} 查询进度数据。
  *
  * <p>后续新增 Controller 方法流程:
@@ -34,7 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
+@RequestMapping("/core/progress")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessProgressController implements BusinessProgressApi {
 
   private final BusinessProgressAppService progressAppService;
@@ -42,6 +47,7 @@ public class BusinessProgressController implements BusinessProgressApi {
   private final SessionContextResolver sessionResolver;
 
   @Override
+  @PostMapping("/batch")
   @RequirePermission(business = "PROGRESS", action = "VIEW")
   public ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query) {
     SessionContext session = sessionResolver.require();

@@ -11,8 +11,14 @@ public record RegionDef(
   RegionStrategy strategy
 ) implements ValueObject {
   public RegionDef {
-    if (name == null || name.isBlank()) throw new IllegalArgumentException("RegionDef.name empty");
-    if (type == null) throw new IllegalArgumentException("RegionDef.type null");
-    if (strategy == null) throw new IllegalArgumentException("RegionDef.strategy null");
+    if (name == null || name.isBlank()) {
+      throw new IllegalArgumentException("RegionDef.name empty");
+    }
+    if (type == null) {
+      throw new IllegalArgumentException("RegionDef.type null");
+    }
+    if (strategy == null) {
+      throw new IllegalArgumentException("RegionDef.strategy null");
+    }
   }
 }

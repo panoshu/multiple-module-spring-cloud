@@ -8,7 +8,9 @@ public record FieldLocation(
 ) implements ValueObject {
   public static FieldLocation parse(String path) {
     int dot = path.indexOf('.');
-    if (dot < 0) return new FieldLocation(null, path);
+    if (dot < 0) {
+      return new FieldLocation(null, path);
+    }
     return new FieldLocation(path.substring(0, dot), path.substring(dot + 1));
   }
 

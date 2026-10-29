@@ -186,16 +186,16 @@ iam-service/
 
 ### 3.1 聚合总览
 
-| 限界上下文     | 聚合根               | 类型           | 核心职责                    |
-|----------------|----------------------|----------------|-----------------------------|
-| authentication | User                 | 聚合根         | 用户身份与状态(三渠道统一)  |
-| authentication | Credential           | 聚合根         | 多类型凭据管理              |
-| authentication | SecondaryAuthSession | 聚合根         | 网点二次授权会话 + 权限快照 |
-| authentication | LoginLog             | 聚合根         | 登录流水审计                |
-| authorization  | PermissionRule       | 聚合根         | 多维度权限规则              |
-| authorization  | PlanDelegation       | 聚合根         | 计划间代办关系              |
-| authorization  | BusinessDefinition   | 实体(非聚合根) | 业务元数据定义              |
-| authorization  | RouteRule            | 实体(非聚合根) | 网关路由权限规则            |
+| 限界上下文          | 聚合根                  | 类型       | 核心职责            |
+|----------------|----------------------|----------|-----------------|
+| authentication | User                 | 聚合根      | 用户身份与状态(三渠道统一)  |
+| authentication | Credential           | 聚合根      | 多类型凭据管理         |
+| authentication | SecondaryAuthSession | 聚合根      | 网点二次授权会话 + 权限快照 |
+| authentication | LoginLog             | 聚合根      | 登录流水审计          |
+| authorization  | PermissionRule       | 聚合根      | 多维度权限规则         |
+| authorization  | PlanDelegation       | 聚合根      | 计划间代办关系         |
+| authorization  | BusinessDefinition   | 实体(非聚合根) | 业务元数据定义         |
+| authorization  | RouteRule            | 实体(非聚合根) | 网关路由权限规则        |
 
 ### 3.2 聚合独立性论证
 
@@ -581,11 +581,11 @@ PermissionResolver.resolve(userId, planId)
 
 每个渠道独立的 StpLogic 实例,Token 互不干扰。
 
-| 渠道     | 工具类            | loginType  | Token Header       | 默认有效期 |
-|----------|-------------------|------------|--------------------|------------|
-| 网上渠道 | `StpInternetUtil` | `internet` | `satoken-internet` | 30 天      |
-| 总部渠道 | `StpHqUtil`       | `hq`       | `satoken-hq`       | 8 小时     |
-| 网点渠道 | `StpBranchUtil`   | `branch`   | `satoken-branch`   | 8 小时     |
+| 渠道   | 工具类               | loginType  | Token Header       | 默认有效期 |
+|------|-------------------|------------|--------------------|-------|
+| 网上渠道 | `StpInternetUtil` | `internet` | `satoken-internet` | 30 天  |
+| 总部渠道 | `StpHqUtil`       | `hq`       | `satoken-hq`       | 8 小时  |
+| 网点渠道 | `StpBranchUtil`   | `branch`   | `satoken-branch`   | 8 小时  |
 
 **工具类结构**(以 `StpInternetUtil` 为例):
 
@@ -1029,25 +1029,25 @@ public class FeignTokenInterceptor implements RequestInterceptor {
 
 #### 5.1.1 认证域事件
 
-| 事件                          | 发布者               | 触发时机         |
-|-------------------------------|----------------------|------------------|
-| `UserCreatedEvent`            | User 聚合            | 创建用户         |
-| `UserDisabledEvent`           | User 聚合            | 禁用用户         |
-| `UserEnabledEvent`            | User 聚合            | 启用用户         |
-| `UserLoginSucceededEvent`     | LoginLog 聚合        | 登录成功         |
-| `UserLoginFailedEvent`        | LoginLog 聚合        | 登录失败         |
-| `CredentialCreatedEvent`      | Credential 聚合      | 创建凭据         |
-| `CredentialChangedEvent`      | Credential 聚合      | 修改凭据         |
-| `CredentialExpiredEvent`      | Credential 聚合      | 凭据过期         |
-| `SecondaryAuthInitiatedEvent` | SecondaryAuthSession | 发起二次授权     |
-| `SecondaryAuthCompletedEvent` | SecondaryAuthSession | 完成二次授权     |
-| `SecondaryAuthRevokedEvent`   | SecondaryAuthSession | 撤销二次授权     |
+| 事件                            | 发布者                  | 触发时机     |
+|-------------------------------|----------------------|----------|
+| `UserCreatedEvent`            | User 聚合              | 创建用户     |
+| `UserDisabledEvent`           | User 聚合              | 禁用用户     |
+| `UserEnabledEvent`            | User 聚合              | 启用用户     |
+| `UserLoginSucceededEvent`     | LoginLog 聚合          | 登录成功     |
+| `UserLoginFailedEvent`        | LoginLog 聚合          | 登录失败     |
+| `CredentialCreatedEvent`      | Credential 聚合        | 创建凭据     |
+| `CredentialChangedEvent`      | Credential 聚合        | 修改凭据     |
+| `CredentialExpiredEvent`      | Credential 聚合        | 凭据过期     |
+| `SecondaryAuthInitiatedEvent` | SecondaryAuthSession | 发起二次授权   |
+| `SecondaryAuthCompletedEvent` | SecondaryAuthSession | 完成二次授权   |
+| `SecondaryAuthRevokedEvent`   | SecondaryAuthSession | 撤销二次授权   |
 | `SecondaryAuthExpiredEvent`   | SecondaryAuthSession | 二次授权会话过期 |
 
 #### 5.1.2 授权域事件
 
-| 事件                           | 发布者         | 触发时机     |
-|--------------------------------|----------------|--------------|
+| 事件                             | 发布者            | 触发时机   |
+|--------------------------------|----------------|--------|
 | `PermissionRuleCreatedEvent`   | PermissionRule | 创建权限规则 |
 | `PermissionRuleDisabledEvent`  | PermissionRule | 禁用权限规则 |
 | `PermissionRuleEnabledEvent`   | PermissionRule | 启用权限规则 |
@@ -1118,12 +1118,12 @@ public class IamDomainEventListener {
 
 部分领域事件需要发布到 RocketMQ,供其他服务消费:
 
-| 集成事件                                 | MQ Topic                       | 消费者                                               |
-|------------------------------------------|--------------------------------|------------------------------------------------------|
+| 集成事件                                     | MQ Topic                       | 消费者                                                |
+|------------------------------------------|--------------------------------|----------------------------------------------------|
 | `UserDisabledIntegrationEvent`           | `iam.user.disabled`            | approval-service、file-service、business-core-kernel |
-| `SecondaryAuthCompletedIntegrationEvent` | `iam.secondary-auth.completed` | business-core-kernel、audit-service                  |
-| `PermissionRuleChangedIntegrationEvent`  | `iam.permission.rule.changed`  | 所有业务服务(清除本地缓存)                           |
-| `PlanDelegationChangedIntegrationEvent`  | `iam.plan-delegation.changed`  | 所有业务服务                                         |
+| `SecondaryAuthCompletedIntegrationEvent` | `iam.secondary-auth.completed` | business-core-kernel、audit-service                 |
+| `PermissionRuleChangedIntegrationEvent`  | `iam.permission.rule.changed`  | 所有业务服务(清除本地缓存)                                     |
+| `PlanDelegationChangedIntegrationEvent`  | `iam.plan-delegation.changed`  | 所有业务服务                                             |
 
 **转换流程**: 领域事件 → `IntegrationEventConverter` 转换 → 集成事件 DTO → `EventBus.publishIntegrationEvent()` →
 RocketMQ
@@ -1179,16 +1179,16 @@ RocketMQ
 
 共 13 张表,使用 `t_iam_` 前缀:
 
-| 限界上下文     | 表名                               | 关联聚合                                   |
-|----------------|------------------------------------|--------------------------------------------|
-| authentication | `t_iam_user`                       | User 聚合根                                |
+| 限界上下文          | 表名                                 | 关联聚合                                     |
+|----------------|------------------------------------|------------------------------------------|
+| authentication | `t_iam_user`                       | User 聚合根                                 |
 | authentication | `t_iam_user_profile`               | User (UserProfile 实体)                    |
-| authentication | `t_iam_credential`                 | Credential 聚合根                          |
-| authentication | `t_iam_secondary_auth_session`     | SecondaryAuthSession 聚合根                |
-| authentication | `t_iam_login_log`                  | LoginLog 聚合根                            |
+| authentication | `t_iam_credential`                 | Credential 聚合根                           |
+| authentication | `t_iam_secondary_auth_session`     | SecondaryAuthSession 聚合根                 |
+| authentication | `t_iam_login_log`                  | LoginLog 聚合根                             |
 | authentication | `t_iam_login_failure_record`       | LoginLog (LoginFailureRecord 实体)         |
-| authorization  | `t_iam_permission_rule`            | PermissionRule 聚合根                      |
-| authorization  | `t_iam_plan_delegation`            | PlanDelegation 聚合根                      |
+| authorization  | `t_iam_permission_rule`            | PermissionRule 聚合根                       |
+| authorization  | `t_iam_plan_delegation`            | PlanDelegation 聚合根                       |
 | authorization  | `t_iam_plan_delegation_operator`   | PlanDelegation (DelegationOperator 实体)   |
 | authorization  | `t_iam_plan_delegation_permission` | PlanDelegation (DelegationPermission 实体) |
 | authorization  | `t_iam_business_definition`        | BusinessDefinition 实体                    |
@@ -1335,12 +1335,12 @@ CREATE UNIQUE INDEX uk_iam_user_channel_login
 
 ### 6.4 JSON 字段处理
 
-| 字段                  | PG 类型 | MySQL 类型 | Java 类型             |
-|-----------------------|---------|------------|-----------------------|
-| `permission_snapshot` | JSONB   | JSON       | `Set<String>`         |
-| `allowed_actions`     | JSONB   | JSON       | `Set<String>`         |
-| `supported_actions`   | JSONB   | JSON       | `Set<String>`         |
-| `aux_data`            | JSONB   | JSON       | `Map<String, Object>` |
+| 字段                    | PG 类型 | MySQL 类型 | Java 类型               |
+|-----------------------|-------|----------|-----------------------|
+| `permission_snapshot` | JSONB | JSON     | `Set<String>`         |
+| `allowed_actions`     | JSONB | JSON     | `Set<String>`         |
+| `supported_actions`   | JSONB | JSON     | `Set<String>`         |
+| `aux_data`            | JSONB | JSON     | `Map<String, Object>` |
 
 MyBatis-Flex 自动处理 JSON 类型序列化/反序列化。
 
@@ -1654,9 +1654,9 @@ public class PlanMetadataConverter {
 
 新增 `IAM` 缩写到 SERVICE 域:
 
-| 域      | 模块缩写 | 模块        | 错误码区间            |
-|---------|----------|-------------|-----------------------|
-| SERVICE | IAM      | iam-service | SERVICE.IAM.0001-9999 |
+| 域       | 模块缩写 | 模块          | 错误码区间                 |
+|---------|------|-------------|-----------------------|
+| SERVICE | IAM  | iam-service | SERVICE.IAM.0001-9999 |
 
 ### 8.2 错误码分组
 
@@ -1685,136 +1685,136 @@ SERVICE.IAM.0200-0299   系统层(system)
 
 按限界上下文分为三个错误码枚举类:
 
-| 枚举类               | 所属域 | 包路径                                |
-|----------------------|--------|---------------------------------------|
+| 枚举类                  | 所属域 | 包路径                                   |
+|----------------------|-----|---------------------------------------|
 | `IamAuthErrorCode`   | 认证域 | `iam.domain.authentication.errorcode` |
 | `IamAuthzErrorCode`  | 授权域 | `iam.domain.authorization.errorcode`  |
 | `IamSystemErrorCode` | 系统层 | `iam.domain.system.errorcode`         |
 
 ### 8.4 认证域错误码 (IamAuthErrorCode)
 
-| 错误码           | 常量名                                     | 含义                          | 异常类型          |
-|------------------|--------------------------------------------|-------------------------------|-------------------|
-| SERVICE.IAM.0001 | USER_NOT_FOUND                             | 用户不存在                    | BusinessException |
-| SERVICE.IAM.0002 | USER_ALREADY_EXISTS                        | 用户已存在                    | BusinessException |
-| SERVICE.IAM.0003 | USER_STATUS_INVALID                        | 用户状态不允许此操作          | DomainException   |
-| SERVICE.IAM.0004 | ACCOUNT_DISABLED                           | 账号已禁用                    | BusinessException |
-| SERVICE.IAM.0005 | ACCOUNT_LOCKED                             | 账号已锁定                    | BusinessException |
-| SERVICE.IAM.0006 | LOGIN_NAME_DUPLICATE                       | 登录名重复                    | BusinessException |
-| SERVICE.IAM.0007 | CHANNEL_TYPE_INVALID                       | 渠道类型无效                  | DomainException   |
-| SERVICE.IAM.0008 | USER_PROFILE_NOT_FOUND                     | 用户档案不存在                | BusinessException |
-| SERVICE.IAM.0009 | NOT_LOGGED_IN                              | 当前请求未登录                | BusinessException |
-| SERVICE.IAM.0010 | USER_PROFILE_INCOMPLETE                    | 用户档案信息不完整            | BusinessException |
-| SERVICE.IAM.0020 | CREDENTIAL_INVALID                         | 凭据无效                      | BusinessException |
-| SERVICE.IAM.0021 | CREDENTIAL_EXPIRED                         | 凭据已过期                    | DomainException   |
-| SERVICE.IAM.0022 | CREDENTIAL_NOT_FOUND                       | 凭据不存在                    | BusinessException |
-| SERVICE.IAM.0023 | CREDENTIAL_TYPE_NOT_SUPPORTED              | 不支持的凭据类型              | DomainException   |
-| SERVICE.IAM.0024 | CREDENTIAL_VALIDATION_FAILED               | 凭据校验失败                  | BusinessException |
-| SERVICE.IAM.0025 | CREDENTIAL_REVOKED                         | 凭据已撤销                    | DomainException   |
-| SERVICE.IAM.0026 | CREDENTIAL_TYPE_DUPLICATE                  | 同类型凭据已存在              | BusinessException |
-| SERVICE.IAM.0027 | CREDENTIAL_OWNER_MISMATCH                  | 凭据归属不匹配                | DomainException   |
-| SERVICE.IAM.0040 | LOGIN_FAIL_LIMIT_EXCEEDED                  | 登录失败次数超限              | BusinessException |
-| SERVICE.IAM.0041 | LOGIN_NAME_OR_PASSWORD_ERROR               | 登录名或密码错误              | BusinessException |
-| SERVICE.IAM.0042 | CAPTCHA_INVALID                            | 验证码无效                    | BusinessException |
-| SERVICE.IAM.0043 | LOGIN_LOG_NOT_FOUND                        | 登录日志不存在                | BusinessException |
-| SERVICE.IAM.0044 | LOGIN_FAILURE_RECORD_NOT_FOUND             | 登录失败记录不存在            | BusinessException |
-| SERVICE.IAM.0060 | SECONDARY_AUTH_SESSION_NOT_FOUND           | 二次授权会话不存在            | BusinessException |
-| SERVICE.IAM.0061 | SECONDARY_AUTH_SESSION_EXPIRED             | 二次授权会话已过期            | BusinessException |
-| SERVICE.IAM.0062 | SECONDARY_AUTH_SESSION_COMPLETED           | 二次授权会话已完成            | BusinessException |
-| SERVICE.IAM.0063 | SECONDARY_AUTH_SESSION_REVOKED             | 二次授权会话已撤销            | BusinessException |
-| SERVICE.IAM.0064 | SECONDARY_AUTH_STRATEGY_NOT_SUPPORTED      | 不支持的二次授权策略          | DomainException   |
-| SERVICE.IAM.0065 | SECONDARY_AUTH_REQUIRED                    | 需要完成二次授权              | BusinessException |
-| SERVICE.IAM.0066 | SECONDARY_AUTH_PENDING                     | 已有待处理的二次授权请求      | BusinessException |
-| SERVICE.IAM.0067 | SECONDARY_AUTH_APPROVER_MISMATCH           | 二次授权经办人不匹配          | BusinessException |
-| SERVICE.IAM.0068 | SECONDARY_AUTH_PERMISSION_SNAPSHOT_MISSING | 权限快照缺失                  | SystemException   |
+| 错误码              | 常量名                                        | 含义              | 异常类型              |
+|------------------|--------------------------------------------|-----------------|-------------------|
+| SERVICE.IAM.0001 | USER_NOT_FOUND                             | 用户不存在           | BusinessException |
+| SERVICE.IAM.0002 | USER_ALREADY_EXISTS                        | 用户已存在           | BusinessException |
+| SERVICE.IAM.0003 | USER_STATUS_INVALID                        | 用户状态不允许此操作      | DomainException   |
+| SERVICE.IAM.0004 | ACCOUNT_DISABLED                           | 账号已禁用           | BusinessException |
+| SERVICE.IAM.0005 | ACCOUNT_LOCKED                             | 账号已锁定           | BusinessException |
+| SERVICE.IAM.0006 | LOGIN_NAME_DUPLICATE                       | 登录名重复           | BusinessException |
+| SERVICE.IAM.0007 | CHANNEL_TYPE_INVALID                       | 渠道类型无效          | DomainException   |
+| SERVICE.IAM.0008 | USER_PROFILE_NOT_FOUND                     | 用户档案不存在         | BusinessException |
+| SERVICE.IAM.0009 | NOT_LOGGED_IN                              | 当前请求未登录         | BusinessException |
+| SERVICE.IAM.0010 | USER_PROFILE_INCOMPLETE                    | 用户档案信息不完整       | BusinessException |
+| SERVICE.IAM.0020 | CREDENTIAL_INVALID                         | 凭据无效            | BusinessException |
+| SERVICE.IAM.0021 | CREDENTIAL_EXPIRED                         | 凭据已过期           | DomainException   |
+| SERVICE.IAM.0022 | CREDENTIAL_NOT_FOUND                       | 凭据不存在           | BusinessException |
+| SERVICE.IAM.0023 | CREDENTIAL_TYPE_NOT_SUPPORTED              | 不支持的凭据类型        | DomainException   |
+| SERVICE.IAM.0024 | CREDENTIAL_VALIDATION_FAILED               | 凭据校验失败          | BusinessException |
+| SERVICE.IAM.0025 | CREDENTIAL_REVOKED                         | 凭据已撤销           | DomainException   |
+| SERVICE.IAM.0026 | CREDENTIAL_TYPE_DUPLICATE                  | 同类型凭据已存在        | BusinessException |
+| SERVICE.IAM.0027 | CREDENTIAL_OWNER_MISMATCH                  | 凭据归属不匹配         | DomainException   |
+| SERVICE.IAM.0040 | LOGIN_FAIL_LIMIT_EXCEEDED                  | 登录失败次数超限        | BusinessException |
+| SERVICE.IAM.0041 | LOGIN_NAME_OR_PASSWORD_ERROR               | 登录名或密码错误        | BusinessException |
+| SERVICE.IAM.0042 | CAPTCHA_INVALID                            | 验证码无效           | BusinessException |
+| SERVICE.IAM.0043 | LOGIN_LOG_NOT_FOUND                        | 登录日志不存在         | BusinessException |
+| SERVICE.IAM.0044 | LOGIN_FAILURE_RECORD_NOT_FOUND             | 登录失败记录不存在       | BusinessException |
+| SERVICE.IAM.0060 | SECONDARY_AUTH_SESSION_NOT_FOUND           | 二次授权会话不存在       | BusinessException |
+| SERVICE.IAM.0061 | SECONDARY_AUTH_SESSION_EXPIRED             | 二次授权会话已过期       | BusinessException |
+| SERVICE.IAM.0062 | SECONDARY_AUTH_SESSION_COMPLETED           | 二次授权会话已完成       | BusinessException |
+| SERVICE.IAM.0063 | SECONDARY_AUTH_SESSION_REVOKED             | 二次授权会话已撤销       | BusinessException |
+| SERVICE.IAM.0064 | SECONDARY_AUTH_STRATEGY_NOT_SUPPORTED      | 不支持的二次授权策略      | DomainException   |
+| SERVICE.IAM.0065 | SECONDARY_AUTH_REQUIRED                    | 需要完成二次授权        | BusinessException |
+| SERVICE.IAM.0066 | SECONDARY_AUTH_PENDING                     | 已有待处理的二次授权请求    | BusinessException |
+| SERVICE.IAM.0067 | SECONDARY_AUTH_APPROVER_MISMATCH           | 二次授权经办人不匹配      | BusinessException |
+| SERVICE.IAM.0068 | SECONDARY_AUTH_PERMISSION_SNAPSHOT_MISSING | 权限快照缺失          | SystemException   |
 | SERVICE.IAM.0069 | NOT_BRANCH_USER_CANNOT_SWITCH_BACK         | 当前身份非柜员,无法切换回柜员 | BusinessException |
-| SERVICE.IAM.0070 | SECONDARY_AUTH_APPROVER_INVALID            | 二次授权经办人无效            | BusinessException |
-| SERVICE.IAM.0071 | SECONDARY_AUTH_PLAN_MISMATCH               | 二次授权计划不匹配            | BusinessException |
+| SERVICE.IAM.0070 | SECONDARY_AUTH_APPROVER_INVALID            | 二次授权经办人无效       | BusinessException |
+| SERVICE.IAM.0071 | SECONDARY_AUTH_PLAN_MISMATCH               | 二次授权计划不匹配       | BusinessException |
 
 ### 8.5 授权域错误码 (IamAuthzErrorCode)
 
-| 错误码           | 常量名                             | 含义                     | 异常类型          |
-|------------------|------------------------------------|--------------------------|-------------------|
-| SERVICE.IAM.0100 | PERMISSION_RULE_NOT_FOUND          | 权限规则不存在           | BusinessException |
-| SERVICE.IAM.0101 | PERMISSION_RULE_CODE_DUPLICATE     | 规则编码重复             | BusinessException |
-| SERVICE.IAM.0102 | PERMISSION_RULE_STATUS_INVALID     | 规则状态不允许此操作     | DomainException   |
-| SERVICE.IAM.0103 | SUBJECT_TYPE_INVALID               | 主体类型无效             | DomainException   |
-| SERVICE.IAM.0104 | SUBJECT_ID_REQUIRED                | 主体标识不能为空         | DomainException   |
-| SERVICE.IAM.0105 | OVERRIDE_MODE_INVALID              | 覆盖模式无效             | DomainException   |
-| SERVICE.IAM.0106 | ACTION_EMPTY                       | 动作集合不能为空         | DomainException   |
-| SERVICE.IAM.0107 | BUSINESS_CODE_INVALID              | 业务编码无效             | DomainException   |
-| SERVICE.IAM.0108 | PRIORITY_INVALID                   | 优先级无效               | DomainException   |
-| SERVICE.IAM.0109 | RULE_EFFECTIVE_PERIOD_INVALID      | 规则生效时间区间无效     | DomainException   |
-| SERVICE.IAM.0120 | PLAN_DELEGATION_NOT_FOUND          | 计划代办关系不存在       | BusinessException |
-| SERVICE.IAM.0121 | PLAN_DELEGATION_CODE_DUPLICATE     | 代办编码重复             | BusinessException |
-| SERVICE.IAM.0122 | PLAN_DELEGATION_STATUS_INVALID     | 代办状态不允许此操作     | DomainException   |
-| SERVICE.IAM.0123 | PLAN_DELEGATION_DUPLICATE          | 代办关系已存在           | BusinessException |
+| 错误码              | 常量名                                | 含义           | 异常类型              |
+|------------------|------------------------------------|--------------|-------------------|
+| SERVICE.IAM.0100 | PERMISSION_RULE_NOT_FOUND          | 权限规则不存在      | BusinessException |
+| SERVICE.IAM.0101 | PERMISSION_RULE_CODE_DUPLICATE     | 规则编码重复       | BusinessException |
+| SERVICE.IAM.0102 | PERMISSION_RULE_STATUS_INVALID     | 规则状态不允许此操作   | DomainException   |
+| SERVICE.IAM.0103 | SUBJECT_TYPE_INVALID               | 主体类型无效       | DomainException   |
+| SERVICE.IAM.0104 | SUBJECT_ID_REQUIRED                | 主体标识不能为空     | DomainException   |
+| SERVICE.IAM.0105 | OVERRIDE_MODE_INVALID              | 覆盖模式无效       | DomainException   |
+| SERVICE.IAM.0106 | ACTION_EMPTY                       | 动作集合不能为空     | DomainException   |
+| SERVICE.IAM.0107 | BUSINESS_CODE_INVALID              | 业务编码无效       | DomainException   |
+| SERVICE.IAM.0108 | PRIORITY_INVALID                   | 优先级无效        | DomainException   |
+| SERVICE.IAM.0109 | RULE_EFFECTIVE_PERIOD_INVALID      | 规则生效时间区间无效   | DomainException   |
+| SERVICE.IAM.0120 | PLAN_DELEGATION_NOT_FOUND          | 计划代办关系不存在    | BusinessException |
+| SERVICE.IAM.0121 | PLAN_DELEGATION_CODE_DUPLICATE     | 代办编码重复       | BusinessException |
+| SERVICE.IAM.0122 | PLAN_DELEGATION_STATUS_INVALID     | 代办状态不允许此操作   | DomainException   |
+| SERVICE.IAM.0123 | PLAN_DELEGATION_DUPLICATE          | 代办关系已存在      | BusinessException |
 | SERVICE.IAM.0124 | PLAN_DELEGATION_SELF_DELEGATION    | 授权方和被授权方不能相同 | DomainException   |
-| SERVICE.IAM.0125 | DELEGATION_TYPE_INVALID            | 代办类型无效             | DomainException   |
-| SERVICE.IAM.0126 | DELEGATION_OPERATOR_NOT_SPECIFIED  | 未指定代办操作员         | DomainException   |
-| SERVICE.IAM.0127 | DELEGATION_PERMISSION_EMPTY        | 代办权限不能为空         | DomainException   |
-| SERVICE.IAM.0128 | DELEGATION_OPERATOR_DUPLICATE      | 代办操作员重复指定       | DomainException   |
-| SERVICE.IAM.0129 | DELEGATION_PERMISSION_DUPLICATE    | 代办权限重复指定         | DomainException   |
-| SERVICE.IAM.0140 | BUSINESS_DEFINITION_NOT_FOUND      | 业务定义不存在           | BusinessException |
-| SERVICE.IAM.0141 | BUSINESS_CODE_DUPLICATE            | 业务编码重复             | BusinessException |
+| SERVICE.IAM.0125 | DELEGATION_TYPE_INVALID            | 代办类型无效       | DomainException   |
+| SERVICE.IAM.0126 | DELEGATION_OPERATOR_NOT_SPECIFIED  | 未指定代办操作员     | DomainException   |
+| SERVICE.IAM.0127 | DELEGATION_PERMISSION_EMPTY        | 代办权限不能为空     | DomainException   |
+| SERVICE.IAM.0128 | DELEGATION_OPERATOR_DUPLICATE      | 代办操作员重复指定    | DomainException   |
+| SERVICE.IAM.0129 | DELEGATION_PERMISSION_DUPLICATE    | 代办权限重复指定     | DomainException   |
+| SERVICE.IAM.0140 | BUSINESS_DEFINITION_NOT_FOUND      | 业务定义不存在      | BusinessException |
+| SERVICE.IAM.0141 | BUSINESS_CODE_DUPLICATE            | 业务编码重复       | BusinessException |
 | SERVICE.IAM.0142 | BUSINESS_DEFINITION_STATUS_INVALID | 业务定义状态不允许此操作 | DomainException   |
-| SERVICE.IAM.0143 | BUSINESS_ACTION_NOT_SUPPORTED      | 业务不支持该动作         | DomainException   |
-| SERVICE.IAM.0144 | BUSINESS_ACTION_DUPLICATE          | 业务动作重复             | DomainException   |
-| SERVICE.IAM.0160 | ROUTE_RULE_NOT_FOUND               | 路由规则不存在           | BusinessException |
-| SERVICE.IAM.0161 | ROUTE_PATTERN_DUPLICATE            | 路由匹配模式重复         | BusinessException |
-| SERVICE.IAM.0162 | ROUTE_RULE_CHECK_TYPE_INVALID      | 路由校验类型无效         | DomainException   |
-| SERVICE.IAM.0163 | ROUTE_RULE_PRIORITY_INVALID        | 路由规则优先级无效       | DomainException   |
-| SERVICE.IAM.0180 | PLAN_NOT_FOUND                     | 计划不存在               | BusinessException |
-| SERVICE.IAM.0181 | PLAN_NOT_SELECTABLE                | 计划不可选择             | BusinessException |
-| SERVICE.IAM.0182 | PLAN_NOT_AUTHORIZED                | 计划未授权               | BusinessException |
-| SERVICE.IAM.0183 | CUSTOMER_NOT_FOUND                 | 客户不存在               | BusinessException |
-| SERVICE.IAM.0184 | PRODUCT_NOT_FOUND                  | 产品不存在               | BusinessException |
-| SERVICE.IAM.0185 | OPERATION_MODE_INVALID             | 运作模式无效             | DomainException   |
-| SERVICE.IAM.0186 | ACCOUNT_MANAGER_CODE_INVALID       | 账管人编号无效           | DomainException   |
-| SERVICE.IAM.0187 | CUSTOMER_TYPE_INVALID              | 客户类型无效             | DomainException   |
-| SERVICE.IAM.0188 | NO_SELECTABLE_PLAN                 | 无可选计划               | BusinessException |
+| SERVICE.IAM.0143 | BUSINESS_ACTION_NOT_SUPPORTED      | 业务不支持该动作     | DomainException   |
+| SERVICE.IAM.0144 | BUSINESS_ACTION_DUPLICATE          | 业务动作重复       | DomainException   |
+| SERVICE.IAM.0160 | ROUTE_RULE_NOT_FOUND               | 路由规则不存在      | BusinessException |
+| SERVICE.IAM.0161 | ROUTE_PATTERN_DUPLICATE            | 路由匹配模式重复     | BusinessException |
+| SERVICE.IAM.0162 | ROUTE_RULE_CHECK_TYPE_INVALID      | 路由校验类型无效     | DomainException   |
+| SERVICE.IAM.0163 | ROUTE_RULE_PRIORITY_INVALID        | 路由规则优先级无效    | DomainException   |
+| SERVICE.IAM.0180 | PLAN_NOT_FOUND                     | 计划不存在        | BusinessException |
+| SERVICE.IAM.0181 | PLAN_NOT_SELECTABLE                | 计划不可选择       | BusinessException |
+| SERVICE.IAM.0182 | PLAN_NOT_AUTHORIZED                | 计划未授权        | BusinessException |
+| SERVICE.IAM.0183 | CUSTOMER_NOT_FOUND                 | 客户不存在        | BusinessException |
+| SERVICE.IAM.0184 | PRODUCT_NOT_FOUND                  | 产品不存在        | BusinessException |
+| SERVICE.IAM.0185 | OPERATION_MODE_INVALID             | 运作模式无效       | DomainException   |
+| SERVICE.IAM.0186 | ACCOUNT_MANAGER_CODE_INVALID       | 账管人编号无效      | DomainException   |
+| SERVICE.IAM.0187 | CUSTOMER_TYPE_INVALID              | 客户类型无效       | DomainException   |
+| SERVICE.IAM.0188 | NO_SELECTABLE_PLAN                 | 无可选计划        | BusinessException |
 
 ### 8.6 系统层错误码 (IamSystemErrorCode)
 
-| 错误码           | 常量名                            | 含义                     | 异常类型        |
-|------------------|-----------------------------------|--------------------------|-----------------|
-| SERVICE.IAM.0200 | PERMISSION_CALCULATION_FAILED     | 权限计算失败             | SystemException |
-| SERVICE.IAM.0201 | PERMISSION_CACHE_EVICT_FAILED     | 权限缓存失效失败         | SystemException |
-| SERVICE.IAM.0202 | PERMISSION_STRATEGY_NOT_FOUND     | 权限组合策略未找到       | SystemException |
-| SERVICE.IAM.0203 | PERMISSION_SNAPSHOT_BUILD_FAILED  | 权限快照构建失败         | SystemException |
-| SERVICE.IAM.0204 | PERMISSION_SNAPSHOT_EXPIRED       | 权限快照已过期           | SystemException |
-| SERVICE.IAM.0205 | PERMISSION_CONTEXT_INVALID        | 权限计算上下文无效       | SystemException |
-| SERVICE.IAM.0206 | PERMISSION_RULE_LOAD_FAILED       | 权限规则加载失败         | SystemException |
-| SERVICE.IAM.0220 | SA_TOKEN_SESSION_UPDATE_FAILED    | sa-token 会话更新失败    | SystemException |
-| SERVICE.IAM.0221 | SA_TOKEN_KICKOUT_FAILED           | 踢人下线失败             | SystemException |
-| SERVICE.IAM.0222 | SA_TOKEN_CONFIG_INVALID           | sa-token 配置无效        | SystemException |
+| 错误码              | 常量名                               | 含义                    | 异常类型            |
+|------------------|-----------------------------------|-----------------------|-----------------|
+| SERVICE.IAM.0200 | PERMISSION_CALCULATION_FAILED     | 权限计算失败                | SystemException |
+| SERVICE.IAM.0201 | PERMISSION_CACHE_EVICT_FAILED     | 权限缓存失效失败              | SystemException |
+| SERVICE.IAM.0202 | PERMISSION_STRATEGY_NOT_FOUND     | 权限组合策略未找到             | SystemException |
+| SERVICE.IAM.0203 | PERMISSION_SNAPSHOT_BUILD_FAILED  | 权限快照构建失败              | SystemException |
+| SERVICE.IAM.0204 | PERMISSION_SNAPSHOT_EXPIRED       | 权限快照已过期               | SystemException |
+| SERVICE.IAM.0205 | PERMISSION_CONTEXT_INVALID        | 权限计算上下文无效             | SystemException |
+| SERVICE.IAM.0206 | PERMISSION_RULE_LOAD_FAILED       | 权限规则加载失败              | SystemException |
+| SERVICE.IAM.0220 | SA_TOKEN_SESSION_UPDATE_FAILED    | sa-token 会话更新失败       | SystemException |
+| SERVICE.IAM.0221 | SA_TOKEN_KICKOUT_FAILED           | 踢人下线失败                | SystemException |
+| SERVICE.IAM.0222 | SA_TOKEN_CONFIG_INVALID           | sa-token 配置无效         | SystemException |
 | SERVICE.IAM.0223 | SA_TOKEN_STP_LOGIC_NOT_FOUND      | sa-token StpLogic 未找到 | SystemException |
-| SERVICE.IAM.0224 | SA_TOKEN_CHANNEL_NOT_RECOGNIZED   | 无法识别当前请求渠道     | SystemException |
-| SERVICE.IAM.0225 | SA_TOKEN_PERMISSION_LOAD_FAILED   | sa-token 权限加载失败    | SystemException |
-| SERVICE.IAM.0240 | EXTERNAL_API_CALL_FAILED          | 外部系统调用失败         | SystemException |
-| SERVICE.IAM.0241 | EXTERNAL_API_TIMEOUT              | 外部系统调用超时         | SystemException |
-| SERVICE.IAM.0242 | EXTERNAL_API_RESPONSE_INVALID     | 外部系统响应无效         | SystemException |
-| SERVICE.IAM.0243 | EXTERNAL_API_UNAVAILABLE          | 外部系统不可用           | SystemException |
-| SERVICE.IAM.0244 | PLAN_METADATA_LOAD_FAILED         | 计划元数据加载失败       | SystemException |
-| SERVICE.IAM.0245 | CUSTOMER_INFO_LOAD_FAILED         | 客户信息加载失败         | SystemException |
-| SERVICE.IAM.0246 | PRODUCT_INFO_LOAD_FAILED          | 产品信息加载失败         | SystemException |
-| SERVICE.IAM.0247 | ORGANIZATION_INFO_LOAD_FAILED     | 组织架构信息加载失败     | SystemException |
-| SERVICE.IAM.0248 | EXTERNAL_API_DESERIALIZE_FAILED   | 外部系统响应反序列化失败 | SystemException |
-| SERVICE.IAM.0260 | CONFIG_INVALID                    | 配置无效                 | SystemException |
-| SERVICE.IAM.0261 | CHANNEL_CONFIG_NOT_FOUND          | 渠道配置未找到           | SystemException |
-| SERVICE.IAM.0262 | PERMISSION_CONFIG_INVALID         | 权限配置无效             | SystemException |
-| SERVICE.IAM.0263 | SECONDARY_AUTH_CONFIG_INVALID     | 二次授权配置无效         | SystemException |
-| SERVICE.IAM.0264 | EXTERNAL_API_CONFIG_INVALID       | 外部系统 API 配置无效    | SystemException |
-| SERVICE.IAM.0265 | BUSINESS_REGISTRY_NOT_INITIALIZED | 业务注册表未初始化       | SystemException |
+| SERVICE.IAM.0224 | SA_TOKEN_CHANNEL_NOT_RECOGNIZED   | 无法识别当前请求渠道            | SystemException |
+| SERVICE.IAM.0225 | SA_TOKEN_PERMISSION_LOAD_FAILED   | sa-token 权限加载失败       | SystemException |
+| SERVICE.IAM.0240 | EXTERNAL_API_CALL_FAILED          | 外部系统调用失败              | SystemException |
+| SERVICE.IAM.0241 | EXTERNAL_API_TIMEOUT              | 外部系统调用超时              | SystemException |
+| SERVICE.IAM.0242 | EXTERNAL_API_RESPONSE_INVALID     | 外部系统响应无效              | SystemException |
+| SERVICE.IAM.0243 | EXTERNAL_API_UNAVAILABLE          | 外部系统不可用               | SystemException |
+| SERVICE.IAM.0244 | PLAN_METADATA_LOAD_FAILED         | 计划元数据加载失败             | SystemException |
+| SERVICE.IAM.0245 | CUSTOMER_INFO_LOAD_FAILED         | 客户信息加载失败              | SystemException |
+| SERVICE.IAM.0246 | PRODUCT_INFO_LOAD_FAILED          | 产品信息加载失败              | SystemException |
+| SERVICE.IAM.0247 | ORGANIZATION_INFO_LOAD_FAILED     | 组织架构信息加载失败            | SystemException |
+| SERVICE.IAM.0248 | EXTERNAL_API_DESERIALIZE_FAILED   | 外部系统响应反序列化失败          | SystemException |
+| SERVICE.IAM.0260 | CONFIG_INVALID                    | 配置无效                  | SystemException |
+| SERVICE.IAM.0261 | CHANNEL_CONFIG_NOT_FOUND          | 渠道配置未找到               | SystemException |
+| SERVICE.IAM.0262 | PERMISSION_CONFIG_INVALID         | 权限配置无效                | SystemException |
+| SERVICE.IAM.0263 | SECONDARY_AUTH_CONFIG_INVALID     | 二次授权配置无效              | SystemException |
+| SERVICE.IAM.0264 | EXTERNAL_API_CONFIG_INVALID       | 外部系统 API 配置无效         | SystemException |
+| SERVICE.IAM.0265 | BUSINESS_REGISTRY_NOT_INITIALIZED | 业务注册表未初始化             | SystemException |
 
 ### 8.7 错误码统计
 
-| 枚举类             | 码段      | 已用码值数 | 预留码值数 | 总容量  |
-|--------------------|-----------|------------|------------|---------|
-| IamAuthErrorCode   | 0001-0079 | 35         | 44         | 79      |
-| IamAuthzErrorCode  | 0100-0199 | 38         | 61         | 99      |
-| IamSystemErrorCode | 0200-0299 | 28         | 71         | 99      |
-| **合计**           | 0001-0299 | **101**    | **176**    | **277** |
+| 枚举类                | 码段        | 已用码值数   | 预留码值数   | 总容量     |
+|--------------------|-----------|---------|---------|---------|
+| IamAuthErrorCode   | 0001-0079 | 35      | 44      | 79      |
+| IamAuthzErrorCode  | 0100-0199 | 38      | 61      | 99      |
+| IamSystemErrorCode | 0200-0299 | 28      | 71      | 99      |
+| **合计**             | 0001-0299 | **101** | **176** | **277** |
 
 ### 8.8 错误码规范文档更新
 
@@ -1921,25 +1921,25 @@ iam-starter     → iam-adapter + iam-infrastructure + sa-token-redis-template +
 
 ## 10. 关键设计要点总结
 
-| 设计点                        | 方案                                          | 理由                              |
-|-------------------------------|-----------------------------------------------|-----------------------------------|
-| 服务架构                      | 单服务 iam-service + 两个限界上下文           | 复杂度匹配,未来可平滑拆分         |
+| 设计点                       | 方案                                 | 理由                |
+|---------------------------|------------------------------------|-------------------|
+| 服务架构                      | 单服务 iam-service + 两个限界上下文          | 复杂度匹配,未来可平滑拆分     |
 | 用户模型                      | 统一 User 聚合 + UserProfile 实体(渠道档案表) | 三渠道统一管理,差异通过档案表表达 |
-| Credential 独立聚合           | 因扩展性独立(多凭据类型)                      | 避免 User 膨胀,独立审计           |
-| SecondaryAuthSession 独立聚合 | 因状态机复杂性独立                            | 独立不变量 + 独立事务边界         |
-| 权限快照                      | 授权瞬间冻结                                  | 避免授权后权限变更导致安全漏洞    |
-| BusinessDefinition 非聚合根   | 配置驱动的元数据                              | 符合开闭原则,新增业务类型不改聚合 |
-| sa-token 多 StpLogic          | 每渠道独立 StpLogic                           | Token 互不干扰,便于独立管理       |
-| Token Header 命名             | `satoken-{channel}`                           | 避免冲突,便于识别                 |
-| 权限缓存位置                  | sa-token Token-Session                        | 随会话生命周期管理,无需手动维护   |
-| 权限计算时机                  | 选择计划时                                    | 避免每次请求都计算,性能优化       |
-| 网点渠道权限                  | 使用快照不重算                                | 保证授权后权限一致性,安全考虑     |
-| 计划切换 API                  | 统一接口三渠道共用                            | 减少代码重复,便于维护             |
-| 优先级算法 SPI                | 算法可扩展,顺序可配置                         | 符合开闭原则,业务规则调整不改代码 |
-| 防腐层 Mock 实现              | 当前返回固定内容                              | 等外部接口提供后再编码            |
-| 软删除唯一索引                | PG 部分索引 / MySQL 联合唯一索引              | 兼容两种数据库                    |
-| JSON 字段                     | PG 用 JSONB,MySQL 用 JSON                     | 充分利用各自优势                  |
-| 跨聚合一致性                  | 领域事件 + 异步处理                           | 最终一致性,业务可容忍             |
+| Credential 独立聚合           | 因扩展性独立(多凭据类型)                      | 避免 User 膨胀,独立审计   |
+| SecondaryAuthSession 独立聚合 | 因状态机复杂性独立                          | 独立不变量 + 独立事务边界    |
+| 权限快照                      | 授权瞬间冻结                             | 避免授权后权限变更导致安全漏洞   |
+| BusinessDefinition 非聚合根   | 配置驱动的元数据                           | 符合开闭原则,新增业务类型不改聚合 |
+| sa-token 多 StpLogic       | 每渠道独立 StpLogic                     | Token 互不干扰,便于独立管理 |
+| Token Header 命名           | `satoken-{channel}`                | 避免冲突,便于识别         |
+| 权限缓存位置                    | sa-token Token-Session             | 随会话生命周期管理,无需手动维护  |
+| 权限计算时机                    | 选择计划时                              | 避免每次请求都计算,性能优化    |
+| 网点渠道权限                    | 使用快照不重算                            | 保证授权后权限一致性,安全考虑   |
+| 计划切换 API                  | 统一接口三渠道共用                          | 减少代码重复,便于维护       |
+| 优先级算法 SPI                 | 算法可扩展,顺序可配置                        | 符合开闭原则,业务规则调整不改代码 |
+| 防腐层 Mock 实现               | 当前返回固定内容                           | 等外部接口提供后再编码       |
+| 软删除唯一索引                   | PG 部分索引 / MySQL 联合唯一索引             | 兼容两种数据库           |
+| JSON 字段                   | PG 用 JSONB,MySQL 用 JSON            | 充分利用各自优势          |
+| 跨聚合一致性                    | 领域事件 + 异步处理                        | 最终一致性,业务可容忍       |
 
 ---
 
@@ -1947,19 +1947,19 @@ iam-starter     → iam-adapter + iam-infrastructure + sa-token-redis-template +
 
 以下为设计过程中采用的默认假设,如需调整请在审查时指出:
 
-| 事项                 | 假设默认值                                     |
-|----------------------|------------------------------------------------|
-| 凭据加密算法         | BCrypt(密码)、RSA(UKEY)                        |
-| Token 有效期         | 配置化,默认 30 天(internet)/ 8 小时(hq/branch) |
-| 二次授权会话有效期   | 配置化,默认 2 小时                             |
-| 待授权会话过期时间   | 配置化,默认 5 分钟                             |
-| 登录失败锁定阈值     | 配置化,默认 5 次                               |
-| 权限缓存有效期       | 配置化,默认 30 分钟                            |
-| 同一柜员待授权会话数 | 1 个(互斥)                                     |
-| 网上渠道同端互斥     | 是(防止账号被盗用)                             |
-| 总部渠道多端登录     | 允许                                           |
-| 业务定义管理界面     | 不在本次范围(仅表结构和领域服务接口)           |
-| 路由规则管理界面     | 不在本次范围(仅表结构和加载机制)               |
+| 事项         | 假设默认值                                  |
+|------------|----------------------------------------|
+| 凭据加密算法     | BCrypt(密码)、RSA(UKEY)                   |
+| Token 有效期  | 配置化,默认 30 天(internet)/ 8 小时(hq/branch) |
+| 二次授权会话有效期  | 配置化,默认 2 小时                            |
+| 待授权会话过期时间  | 配置化,默认 5 分钟                            |
+| 登录失败锁定阈值   | 配置化,默认 5 次                             |
+| 权限缓存有效期    | 配置化,默认 30 分钟                           |
+| 同一柜员待授权会话数 | 1 个(互斥)                                |
+| 网上渠道同端互斥   | 是(防止账号被盗用)                             |
+| 总部渠道多端登录   | 允许                                     |
+| 业务定义管理界面   | 不在本次范围(仅表结构和领域服务接口)                    |
+| 路由规则管理界面   | 不在本次范围(仅表结构和加载机制)                      |
 
 ---
 
@@ -1967,13 +1967,13 @@ iam-starter     → iam-adapter + iam-infrastructure + sa-token-redis-template +
 
 本次自审发现并修复了以下 5 处问题:
 
-| 编号 | 类型 | 位置               | 问题                                                                                            | 修复方式                                                  |
-|------|------|--------------------|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| 1    | 矛盾 | 第 8.7 节          | 错误码统计数字与实际枚举数不符(写 92,实 101)                                                    | 重新统计:35/38/28,合计 101                                |
-| 2    | 矛盾 | 第 6.2 节          | ER 图缺失 `t_iam_business_action` 表(6.1 列出 13 张,ER 图仅 12 张)                              | 补全 ER 图,展示与 `t_iam_business_definition` 的 1:N 关系 |
-| 3    | 矛盾 | 第 4.5 节          | 网关权限校验使用默认 `StpUtil.checkPermission`,与 4.1 节定义的三套 StpLogic 矛盾                | 改为通过 `ChannelContext.checkPermission` 渠道分派        |
-| 4    | 歧义 | 第 3.7 节          | `PermissionResolver.resolve` 返回类型不明确(描述说"权限码集合",4.6 节使用 `PermissionSnapshot`) | 明确返回 `PermissionSnapshot` 值对象,补充接口签名         |
-| 5    | 歧义 | 第 4.3.3 节第 7 步 | 柜员 Token-Session 更新时机不明(轮询接口是否写会话?)                                            | 拆分为步骤 7(查询)+ 7a(异步事件更新会话),明确职责         |
+| 编号 | 类型 | 位置             | 问题                                                                            | 修复方式                                             |
+|----|----|----------------|-------------------------------------------------------------------------------|--------------------------------------------------|
+| 1  | 矛盾 | 第 8.7 节        | 错误码统计数字与实际枚举数不符(写 92,实 101)                                                   | 重新统计:35/38/28,合计 101                             |
+| 2  | 矛盾 | 第 6.2 节        | ER 图缺失 `t_iam_business_action` 表(6.1 列出 13 张,ER 图仅 12 张)                      | 补全 ER 图,展示与 `t_iam_business_definition` 的 1:N 关系 |
+| 3  | 矛盾 | 第 4.5 节        | 网关权限校验使用默认 `StpUtil.checkPermission`,与 4.1 节定义的三套 StpLogic 矛盾                 | 改为通过 `ChannelContext.checkPermission` 渠道分派       |
+| 4  | 歧义 | 第 3.7 节        | `PermissionResolver.resolve` 返回类型不明确(描述说"权限码集合",4.6 节使用 `PermissionSnapshot`) | 明确返回 `PermissionSnapshot` 值对象,补充接口签名             |
+| 5  | 歧义 | 第 4.3.3 节第 7 步 | 柜员 Token-Session 更新时机不明(轮询接口是否写会话?)                                           | 拆分为步骤 7(查询)+ 7a(异步事件更新会话),明确职责                   |
 
 **遗留说明**:
 

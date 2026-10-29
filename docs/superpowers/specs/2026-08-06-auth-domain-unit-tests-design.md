@@ -22,16 +22,20 @@ auth-service 经过近期迭代已落地 7 个子域、约 180
 **核心缺陷**：
 
 1.
-**权限判定无测试**：[AuthorizationEngine](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\authorization\service\AuthorizationEngine.java)
+
+**权限判定无测试
+**：[AuthorizationEngine](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\authorization\service\AuthorizationEngine.java)
 两层 AND
 判定逻辑、[EffectResolver](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\authorization\service\EffectResolver.java)
 DENY
 优先策略、[ScopeMatcher](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\main\java\com\pension\permission\domain\authorization\service\ScopeMatcher.java)
 范围匹配全部裸奔。
+
 2. **聚合根状态机无测试**：Grant、AgentIdentityAssignment、Session、RoleTemplate、UserAggregate 等聚合根的业务规则和状态流转未被验证。
 3. **凭证安全无测试**：PasswordCredential、UKeyCredential 的密码加密、轮换、撤销等安全相关逻辑无保护。
 4. **Mockito
-   未引入**：[auth-domain/pom.xml](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\pom.xml)
+   未引入
+   **：[auth-domain/pom.xml](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\pom.xml)
    仅依赖 junit + assertj，复杂领域服务（如 AuthorizationEngine 依赖 3 个 SPI）难以纯手写桩实现测试。
 
 ### 1.2 设计目标
@@ -55,15 +59,15 @@ DENY
 
 auth-domain 共 7 个子域，测试覆盖优先级如下：
 
-| 子域          | 聚合根                               | 领域服务                                                                           | 值对象                                                        | 测试优先级 | 批次  |
-|---------------|--------------------------------------|------------------------------------------------------------------------------------|---------------------------------------------------------------|------------|-------|
-| authorization | Grant                                | AuthorizationEngine、EffectResolver、ScopeMatcher                                  | subject 系列、Permission、ScopeRule、ActionCode、BusinessCode | P0         | 批次1 |
-| assignment    | AgentIdentityAssignment              | EffectivePermissionService、GrantProvisioningService、PlanReachabilityService      | RoleVisibilityScope                                           | P0         | 批次2 |
-| channel       | Session（已有 SecondaryAuthSession） | DefaultSecondaryAuthService、IdentityResolutionService、3 个 PlanSelectionStrategy | EffectiveIdentity、SelectablePlanScope                        | P0         | 批次3 |
-| credential    | PasswordCredential、UKeyCredential   | CredentialAuthenticator                                                            | owner 系列                                                    | P1         | 批次4 |
-| role          | RoleTemplate                         | RoleTemplateResolver、RoleVisibilityResolver                                       | -                                                             | P1         | 批次4 |
-| user          | UserAggregate                        | AuthenticationProvider                                                             | -                                                             | P1         | 批次4 |
-| product       | -                                    | -                                                                                  | -                                                             | 不测       | -     |
+| 子域            | 聚合根                               | 领域服务                                                                            | 值对象                                                     | 测试优先级 | 批次  |
+|---------------|-----------------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|-------|-----|
+| authorization | Grant                             | AuthorizationEngine、EffectResolver、ScopeMatcher                                 | subject 系列、Permission、ScopeRule、ActionCode、BusinessCode | P0    | 批次1 |
+| assignment    | AgentIdentityAssignment           | EffectivePermissionService、GrantProvisioningService、PlanReachabilityService     | RoleVisibilityScope                                     | P0    | 批次2 |
+| channel       | Session（已有 SecondaryAuthSession）  | DefaultSecondaryAuthService、IdentityResolutionService、3 个 PlanSelectionStrategy | EffectiveIdentity、SelectablePlanScope                   | P0    | 批次3 |
+| credential    | PasswordCredential、UKeyCredential | CredentialAuthenticator                                                         | owner 系列                                                | P1    | 批次4 |
+| role          | RoleTemplate                      | RoleTemplateResolver、RoleVisibilityResolver                                     | -                                                       | P1    | 批次4 |
+| user          | UserAggregate                     | AuthenticationProvider                                                          | -                                                       | P1    | 批次4 |
+| product       | -                                 | -                                                                               | -                                                       | 不测    | -   |
 
 ### 2.2 不测试的类
 
@@ -136,6 +140,7 @@ auth-domain 共 7 个子域，测试覆盖优先级如下：
 - `AuthorizationEngine` 依赖 `ProductGateway`、`GrantRepository`、`PlanMembershipLookup` 三个 SPI
 - `EffectivePermissionService`、`GrantProvisioningService` 依赖 `AssignmentRepository`、`GrantRepository` 等
 -
+
 手写桩实现（参考现有 [SecondaryAuthSessionTest](file:///d:\WorkSpace\Trae\multiple-module-spring-cloud\auth-service\auth-domain\src\test\java\com\pension\permission\domain\channel\aggregate\SecondaryAuthSessionTest.java)
 中的 `acceptHasher`/`rejectHasher`）在单依赖场景可行，但多依赖场景下 Mockito 更简洁、可读性更好
 
@@ -146,14 +151,14 @@ auth-domain 共 7 个子域，测试覆盖优先级如下：
 按子域创建 Fixture 类，集中管理测试数据和辅助构造方法，路径：
 `auth-service/auth-domain/src/test/java/com/pension/permission/domain/fixture/`
 
-| Fixture 类              | 职责                                                                                                |
-|-------------------------|-----------------------------------------------------------------------------------------------------|
-| `AuthorizationFixtures` | Grant、Permission、ScopeRule、subject 系列、BusinessCode/ActionCode 构造                            |
-| `AssignmentFixtures`    | AgentIdentityAssignment、RoleVisibilityScope 构造                                                   |
+| Fixture 类               | 职责                                                                                       |
+|-------------------------|------------------------------------------------------------------------------------------|
+| `AuthorizationFixtures` | Grant、Permission、ScopeRule、subject 系列、BusinessCode/ActionCode 构造                         |
+| `AssignmentFixtures`    | AgentIdentityAssignment、RoleVisibilityScope 构造                                           |
 | `ChannelFixtures`       | Session、EffectiveIdentity、SelectablePlanScope 构造（复用现有 SecondaryAuthSessionTest 的 helper） |
-| `CredentialFixtures`    | PasswordCredential、UKeyCredential、owner 系列构造                                                  |
-| `RoleFixtures`          | RoleTemplate 构造                                                                                   |
-| `UserFixtures`          | UserAggregate 构造                                                                                  |
+| `CredentialFixtures`    | PasswordCredential、UKeyCredential、owner 系列构造                                             |
+| `RoleFixtures`          | RoleTemplate 构造                                                                          |
+| `UserFixtures`          | UserAggregate 构造                                                                         |
 
 **Fixture 设计原则**：
 
@@ -290,12 +295,12 @@ class AuthorizationEngineTest {
 
 ## 七、风险与缓解
 
-| 风险                                                             | 缓解措施                                                                               |
-|------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| 部分类可能因设计问题难以测试（如构造函数可见性、依赖注入不友好） | 记录为技术债，不在本批次重构；测试中使用反射或包可见性访问，必要时跳过并在 spec 中标注 |
-| SPI 依赖较多，Mock 桩代码冗长                                    | 通过 Fixture 类封装 Mock 构造，避免每个测试类重复 setup                                |
-| 状态机分支组合爆炸                                               | 按"正常路径 + 每个非法状态一次"原则覆盖，不追求全组合                                  |
-| 现有 SecondaryAuthSessionTest 的 helper 与新 Fixture 重复        | 批次3 中将现有 helper 迁移到 `ChannelFixtures`，现有测试改为引用 Fixture               |
+| 风险                                                 | 缓解措施                                                   |
+|----------------------------------------------------|--------------------------------------------------------|
+| 部分类可能因设计问题难以测试（如构造函数可见性、依赖注入不友好）                   | 记录为技术债，不在本批次重构；测试中使用反射或包可见性访问，必要时跳过并在 spec 中标注         |
+| SPI 依赖较多，Mock 桩代码冗长                                | 通过 Fixture 类封装 Mock 构造，避免每个测试类重复 setup                 |
+| 状态机分支组合爆炸                                          | 按"正常路径 + 每个非法状态一次"原则覆盖，不追求全组合                          |
+| 现有 SecondaryAuthSessionTest 的 helper 与新 Fixture 重复 | 批次3 中将现有 helper 迁移到 `ChannelFixtures`，现有测试改为引用 Fixture |
 
 ## 八、后续规划
 

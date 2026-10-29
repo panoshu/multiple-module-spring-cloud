@@ -10,6 +10,8 @@ public record DataEndRule(
 ) implements ValueObject {
   public DataEndRule {
     markers = markers == null ? List.of() : List.copyOf(markers);
-    if (blankRowCount < 0) blankRowCount = 0;
+    if (blankRowCount < 0) {
+      blankRowCount = 0;
+    }
   }
 }

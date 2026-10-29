@@ -208,11 +208,16 @@ public final class EffectivePermissionService {
       for (ScopeRule rule : g.scopeRules()) {
         switch (rule.dimension()) {
           case GLOBAL -> {
-            if (isAllow) isGlobal = true;
+            if (isAllow) {
+              isGlobal = true;
+            }
           }
           case PLAN -> {
-            if (isAllow) visiblePlans.add(rule.value());
-            else deniedPlans.add(rule.value());
+            if (isAllow) {
+              visiblePlans.add(rule.value());
+            } else {
+              deniedPlans.add(rule.value());
+            }
           }
           case CUSTOMER -> {
             if (isAllow) {

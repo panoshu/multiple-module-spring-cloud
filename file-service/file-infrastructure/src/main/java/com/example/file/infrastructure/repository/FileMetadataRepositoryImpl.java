@@ -33,14 +33,18 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
 
   @Override
   public Optional<FileMetadata> load(FileId id) {
-    if (id == null) return Optional.empty();
+    if (id == null) {
+      return Optional.empty();
+    }
     FileMetadataDO aDo = mapper.selectOneById(id.value());
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
 
   @Override
   public void save(FileMetadata file) {
-    if (file == null) throw new IllegalArgumentException("file 不能为空");
+    if (file == null) {
+      throw new IllegalArgumentException("file 不能为空");
+    }
     FileMetadataDO aDo = converter.toDO(file);
     if (mapper.selectOneById(aDo.getId()) == null) {
       mapper.insert(aDo);
@@ -54,14 +58,18 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
 
   @Override
   public void delete(FileMetadata file) {
-    if (file == null) return;
+    if (file == null) {
+      return;
+    }
     file.markDeleted(file.updatedBy() != null ? file.updatedBy() : file.createdBy());
     save(file);
   }
 
   @Override
   public void deleteById(FileId id) {
-    if (id == null) return;
+    if (id == null) {
+      return;
+    }
     FileMetadataDO aDo = mapper.selectOneById(id.value());
     if (aDo != null) {
       FileMetadata file = converter.toDomain(aDo);
@@ -78,13 +86,17 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
 
   @Override
   public void streamByAppId(FileId id, Consumer<AggregateRoot<FileId>> processor) {
-    if (id == null || processor == null) return;
+    if (id == null || processor == null) {
+      return;
+    }
     load(id).ifPresent(processor);
   }
 
   @Override
   public List<FileMetadata> findByBusinessBatchId(String businessBatchId) {
-    if (businessBatchId == null) return List.of();
+    if (businessBatchId == null) {
+      return List.of();
+    }
     List<FileMetadataDO> list = mapper.selectListByQuery(
       QueryWrapper.create().where(FILE_METADATA_DO.BUSINESS_BATCH_ID.eq(businessBatchId))
     );
@@ -94,15 +106,21 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
   @Override
   public List<FileMetadata> findByUsageAndBizType(FileUsage usage, String bizType) {
     QueryWrapper wrapper = QueryWrapper.create();
-    if (usage != null) wrapper.and(FILE_METADATA_DO.USAGE.eq(usage.name()));
-    if (bizType != null) wrapper.and(FILE_METADATA_DO.BIZ_TYPE.eq(bizType));
+    if (usage != null) {
+      wrapper.and(FILE_METADATA_DO.USAGE.eq(usage.name()));
+    }
+    if (bizType != null) {
+      wrapper.and(FILE_METADATA_DO.BIZ_TYPE.eq(bizType));
+    }
     List<FileMetadataDO> list = mapper.selectListByQuery(wrapper);
     return list.stream().map(converter::toDomain).toList();
   }
 
   @Override
   public List<FileMetadata> findExpiredBefore(LocalDateTime before) {
-    if (before == null) return List.of();
+    if (before == null) {
+      return List.of();
+    }
     List<FileMetadataDO> list = mapper.selectListByQuery(
       QueryWrapper.create()
         .where(FILE_METADATA_DO.EXPIRES_AT.lt(before))
@@ -113,7 +131,9 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
 
   private void publishDomainEvents(FileMetadata file) {
     List<DomainEvent> events = file.domainEvents();
-    if (events.isEmpty()) return;
+    if (events.isEmpty()) {
+      return;
+    }
     for (DomainEvent event : events) {
       try {
         eventPublisher.publishEvent(event);

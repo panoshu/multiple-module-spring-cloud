@@ -42,16 +42,16 @@ sa-token (避免强绑定),业务服务无状态,水平扩展时不需要本地 
 
 ### 2.2 字段 (超集,各渠道按需填充)
 
-| 分组     | 字段                                                                                      | 来源                | 适用渠道        | 说明                                          |
-|----------|-------------------------------------------------------------------------------------------|---------------------|-----------------|-----------------------------------------------|
-| 身份     | `userNo` / `userType` / `loginName` / `displayName`                                       | 登录                | 全部            | USER / PARTNER / SYSTEM                       |
-| 渠道     | `channelType` / `clientId` / `clientIp`                                                   | 登录                | 全部            | INTERNET / HQ / BRANCH                        |
-| 客户     | `customerNo` / `customerName`                                                             | 选计划时确定        | 全部            |                                               |
-| 计划     | `planNo` / `planName` / `productNo` / `productName` / `operationModel` / `accountManager` | 选计划时写入        | 全部            | `accountManager` 为账管人枚举(CJP/CMB/BOC 等) |
-| 代办     | `isProxy` / `onBehalfOfUserNo` / `onBehalfOfLoginName`                                    | 发起代办时          | **仅 INTERNET** | 网上渠道代办办理,代办人代实际用户办理业务     |
-| 二次授权 | `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId`                      | 二次授权完成时      | **仅 BRANCH**   | 网点渠道借用企业授权人身份办理                |
-| 权限     | `permissionCodes: Set<String>`                                                            | 选计划 / 权限变更时 | 全部            | 功能权限码 + 业务类型办理权限码               |
-| 代办范围 | `delegatedPlanNos: Set<String>`                                                           | 选计划时写入        | **仅 INTERNET** | 当前用户可代办的计划列表                      |
+| 分组   | 字段                                                                                        | 来源          | 适用渠道           | 说明                                     |
+|------|-------------------------------------------------------------------------------------------|-------------|----------------|----------------------------------------|
+| 身份   | `userNo` / `userType` / `loginName` / `displayName`                                       | 登录          | 全部             | USER / PARTNER / SYSTEM                |
+| 渠道   | `channelType` / `clientId` / `clientIp`                                                   | 登录          | 全部             | INTERNET / HQ / BRANCH                 |
+| 客户   | `customerNo` / `customerName`                                                             | 选计划时确定      | 全部             |                                        |
+| 计划   | `planNo` / `planName` / `productNo` / `productName` / `operationModel` / `accountManager` | 选计划时写入      | 全部             | `accountManager` 为账管人枚举(CJP/CMB/BOC 等) |
+| 代办   | `isProxy` / `onBehalfOfUserNo` / `onBehalfOfLoginName`                                    | 发起代办时       | **仅 INTERNET** | 网上渠道代办办理,代办人代实际用户办理业务                  |
+| 二次授权 | `hasSecondaryAuth` / `secondaryAuthSessionId` / `borrowedApproverId`                      | 二次授权完成时     | **仅 BRANCH**   | 网点渠道借用企业授权人身份办理                        |
+| 权限   | `permissionCodes: Set<String>`                                                            | 选计划 / 权限变更时 | 全部             | 功能权限码 + 业务类型办理权限码                      |
+| 代办范围 | `delegatedPlanNos: Set<String>`                                                           | 选计划时写入      | **仅 INTERNET** | 当前用户可代办的计划列表                           |
 
 > **渠道办理语义**:
 > - **INTERNET (网上渠道)**:可代办办理,`isProxy=true` 时表示代办,需校验 `planNo` 在 `delegatedPlanNos` 内
@@ -88,15 +88,15 @@ gateway 在请求转发前,从 sa-token `Token-Session` 读取 SessionContext,�
 
 ### 3.2 字段与来源划分
 
-| 字段                          | 来源                         | 说明                                                          |
-|-------------------------------|------------------------------|---------------------------------------------------------------|
-| `businessType`                | **前端传**(Command)          | 用户本次要办理的业务类型,如 `ANNUITY_OPEN`                    |
-| `planNo`                      | **前端传**(Command)          | 用户本次办理所针对的计划编号,用于与 SessionContext 校验一致性 |
-| `customerNo` / `customerName` | **后端组装**(SessionContext) | 选计划时已确定,前端无需传                                     |
-| `productNo` / `productName`   | **后端组装**(SessionContext) | 选计划时已确定                                                |
-| `operationModel`              | **后端组装**(SessionContext) | 选计划时已确定                                                |
-| `accountManager`              | **后端组装**(SessionContext) | 账管人枚举,选计划时已确定                                     |
-| `planName`                    | **后端组装**(SessionContext) | 选计划时已确定                                                |
+| 字段                            | 来源                       | 说明                                      |
+|-------------------------------|--------------------------|-----------------------------------------|
+| `businessType`                | **前端传**(Command)         | 用户本次要办理的业务类型,如 `ANNUITY_OPEN`           |
+| `planNo`                      | **前端传**(Command)         | 用户本次办理所针对的计划编号,用于与 SessionContext 校验一致性 |
+| `customerNo` / `customerName` | **后端组装**(SessionContext) | 选计划时已确定,前端无需传                           |
+| `productNo` / `productName`   | **后端组装**(SessionContext) | 选计划时已确定                                 |
+| `operationModel`              | **后端组装**(SessionContext) | 选计划时已确定                                 |
+| `accountManager`              | **后端组装**(SessionContext) | 账管人枚举,选计划时已确定                           |
+| `planName`                    | **后端组装**(SessionContext) | 选计划时已确定                                 |
 
 **完整 record (kernel 内部使用)**:
 
@@ -231,38 +231,38 @@ public ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody CreateBat
 
 ### 5.1 BusinessBatchApi (`/core/batch`)
 
-| 方法       | 路径      | 入参                                                       | 返回                   | 说明                                                          |
-|------------|-----------|------------------------------------------------------------|------------------------|---------------------------------------------------------------|
-| findActive | `/active` | `FindActiveBatchQuery{planNo, businessType}`               | `BatchSummaryResponse` | 查询未完成 / 处理中批次                                       |
+| 方法         | 路径        | 入参                                                         | 返回                     | 说明                                       |
+|------------|-----------|------------------------------------------------------------|------------------------|------------------------------------------|
+| findActive | `/active` | `FindActiveBatchQuery{planNo, businessType}`               | `BatchSummaryResponse` | 查询未完成 / 处理中批次                            |
 | create     | `/create` | `CreateBatchCommand{businessType, planNo, operatorRemark}` | `BatchCreatedResponse` | 创建新批次(前端只传意图,后端从 SessionContext 组装完整元数据) |
-| detail     | `/detail` | `GetBatchDetailQuery{batchId}`                             | `BatchDetailResponse`  | 批次详情(含表单 / 申请单摘要)                                 |
-| cancel     | `/cancel` | `CancelBatchCommand{batchId, reason}`                      | `Void`                 | 取消未提交批次                                                |
+| detail     | `/detail` | `GetBatchDetailQuery{batchId}`                             | `BatchDetailResponse`  | 批次详情(含表单 / 申请单摘要)                        |
+| cancel     | `/cancel` | `CancelBatchCommand{batchId, reason}`                      | `Void`                 | 取消未提交批次                                  |
 
 ### 5.2 BusinessFormApi (`/core/form`)
 
-| 方法             | 路径              | 入参                                                                | 返回                  | 说明                      |
-|------------------|-------------------|---------------------------------------------------------------------|-----------------------|---------------------------|
-| applyUploadToken | `/upload-token`   | `ApplyUploadTokenCommand{batchId, fileName, fileSize, contentType}` | `UploadTokenResponse` | 向文件服务申请上传 token  |
-| confirmUpload    | `/confirm-upload` | `ConfirmUploadCommand{batchId, formId, fileMd5}`                    | `Void`                | 确认上传完成,触发表单解析 |
-| delete           | `/delete`         | `DeleteFormCommand{batchId, formId}`                                | `Void`                | 删除已上传表单            |
+| 方法               | 路径                | 入参                                                                  | 返回                    | 说明              |
+|------------------|-------------------|---------------------------------------------------------------------|-----------------------|-----------------|
+| applyUploadToken | `/upload-token`   | `ApplyUploadTokenCommand{batchId, fileName, fileSize, contentType}` | `UploadTokenResponse` | 向文件服务申请上传 token |
+| confirmUpload    | `/confirm-upload` | `ConfirmUploadCommand{batchId, formId, fileMd5}`                    | `Void`                | 确认上传完成,触发表单解析   |
+| delete           | `/delete`         | `DeleteFormCommand{batchId, formId}`                                | `Void`                | 删除已上传表单         |
 | status           | `/status`         | `GetFormStatusQuery{formId}`                                        | `FormStatusResponse`  | 查询表单解析进度 / 结果   |
 
 ### 5.3 BusinessApplicationApi (`/core/application`)
 
-| 方法    | 路径       | 入参                                                                    | 返回                               | 说明                                                                                    |
-|---------|------------|-------------------------------------------------------------------------|------------------------------------|-----------------------------------------------------------------------------------------|
-| list    | `/list`    | `FindApplicationListQuery{batchId, status?}`                            | `List<ApplicationSummaryResponse>` | 批次下申请单列表                                                                        |
-| detail  | `/detail`  | `GetApplicationDetailQuery{applicationId}`                              | `ApplicationDetailResponse`        | 申请单详情                                                                              |
+| 方法      | 路径         | 入参                                                                      | 返回                                 | 说明                                                              |
+|---------|------------|-------------------------------------------------------------------------|------------------------------------|-----------------------------------------------------------------|
+| list    | `/list`    | `FindApplicationListQuery{batchId, status?}`                            | `List<ApplicationSummaryResponse>` | 批次下申请单列表                                                        |
+| detail  | `/detail`  | `GetApplicationDetailQuery{applicationId}`                              | `ApplicationDetailResponse`        | 申请单详情                                                           |
 | advance | `/advance` | `AdvanceStepCommand{applicationId, actionPayload: Map<String,Object>?}` | `AdvanceStepResponse`              | 推进到下一节点;`actionPayload` 为可选的业务参数,由各业务服务的 `StepActionHandler` 解析 |
-| submit  | `/submit`  | `SubmitApplicationCommand{applicationId}`                               | `SubmitResponse`                   | 最终提交(触发审批判断)                                                                  |
+| submit  | `/submit`  | `SubmitApplicationCommand{applicationId}`                               | `SubmitResponse`                   | 最终提交(触发审批判断)                                                    |
 
 ### 5.4 MaterialAppApi (`/core/material`)
 
-| 方法              | 路径               | 入参                                                           | 返回                    | 说明           |
-|-------------------|--------------------|----------------------------------------------------------------|-------------------------|----------------|
-| bindIndividual    | `/individual/bind` | `BindIndividualMaterialCommand{applicationId, materialItem}`   | `Void`                  | 单个材料绑定   |
-| bindPackage       | `/package/bind`    | `BindPackageMaterialCommand{applicationId, materialPackageId}` | `Void`                  | 材料包绑定     |
-| unbind            | `/unbind`          | `UnbindMaterialCommand{applicationId, materialItemId}`         | `Void`                  | 解绑材料       |
+| 方法                | 路径                 | 入参                                                             | 返回                      | 说明      |
+|-------------------|--------------------|----------------------------------------------------------------|-------------------------|---------|
+| bindIndividual    | `/individual/bind` | `BindIndividualMaterialCommand{applicationId, materialItem}`   | `Void`                  | 单个材料绑定  |
+| bindPackage       | `/package/bind`    | `BindPackageMaterialCommand{applicationId, materialPackageId}` | `Void`                  | 材料包绑定   |
+| unbind            | `/unbind`          | `UnbindMaterialCommand{applicationId, materialItemId}`         | `Void`                  | 解绑材料    |
 | list              | `/list`            | `ListMaterialsQuery{applicationId}`                            | `List<MaterialItemDTO>` | 申请单材料清单 |
 | checkCompleteness | `/completeness`    | `CheckCompletenessQuery{applicationId}`                        | `CompletenessResponse`  | 校验材料完整性 |
 
@@ -270,8 +270,8 @@ public ApiResult<BatchCreatedResponse> createBatch(@Valid @RequestBody CreateBat
 
 可选,基于事件订阅的进度推送查询兜底。
 
-| 方法          | 路径             | 入参                             | 返回                    | 说明                                     |
-|---------------|------------------|----------------------------------|-------------------------|------------------------------------------|
+| 方法            | 路径               | 入参                               | 返回                      | 说明                       |
+|---------------|------------------|----------------------------------|-------------------------|--------------------------|
 | batchProgress | `/batch/summary` | `GetBatchProgressQuery{batchId}` | `BatchProgressResponse` | 批次整体进度(表单数 / 申请单数 / 成功率) |
 
 > 实时推送走 SSE / WebSocket 由 BFF 层处理,kernel 只提供查询兜底。
@@ -370,10 +370,10 @@ public class AnnuitySpecialController implements AnnuitySpecialApi {
 
 ## 9. 风险与待办
 
-| 风险 / 待办                                | 处理方式                                                                     |
-|--------------------------------------------|------------------------------------------------------------------------------|
-| `X-Session-Context` header 被伪造          | 由 gateway 统一签名 / 加密,kernel 侧 `SessionContextResolver` 校验签名       |
-| 业务服务需要覆盖默认 `BusinessAccessGuard` | 通过 `@ConditionalOnMissingBean` 兜底,业务服务自定义实现优先                 |
-| 公共 API 与业务服务个性化 API 路径冲突     | 公共 API 统一 `/core` 前缀,业务服务用 `/annuity` 等业务前缀,从命名空间上隔离 |
-| 实时进度推送协议未定                       | 本 spec 仅提供查询兜底,推送协议由 BFF spec 负责                              |
-| iam-service 写入 SessionContext 的具体实现 | 由 `2026-07-26-iam-service-design.md` 负责                                   |
+| 风险 / 待办                             | 处理方式                                                       |
+|-------------------------------------|------------------------------------------------------------|
+| `X-Session-Context` header 被伪造      | 由 gateway 统一签名 / 加密,kernel 侧 `SessionContextResolver` 校验签名 |
+| 业务服务需要覆盖默认 `BusinessAccessGuard`    | 通过 `@ConditionalOnMissingBean` 兜底,业务服务自定义实现优先              |
+| 公共 API 与业务服务个性化 API 路径冲突            | 公共 API 统一 `/core` 前缀,业务服务用 `/annuity` 等业务前缀,从命名空间上隔离       |
+| 实时进度推送协议未定                          | 本 spec 仅提供查询兜底,推送协议由 BFF spec 负责                           |
+| iam-service 写入 SessionContext 的具体实现 | 由 `2026-07-26-iam-service-design.md` 负责                    |

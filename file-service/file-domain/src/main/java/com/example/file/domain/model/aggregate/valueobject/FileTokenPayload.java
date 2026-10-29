@@ -36,12 +36,26 @@ public record FileTokenPayload(
   LocalDateTime expireAt
 ) implements ValueObject {
   public FileTokenPayload {
-    if (tokenId == null || tokenId.isBlank()) throw new IllegalArgumentException("tokenId 不能为空");
-    if (fileId == null) throw new IllegalArgumentException("fileId 不能为空");
-    if (usage == null) throw new IllegalArgumentException("usage 不能为空");
-    if (customerNo == null) throw new IllegalArgumentException("customerNo 不能为空");
-    if (productNo == null) throw new IllegalArgumentException("productNo 不能为空");
-    if (operator == null) throw new IllegalArgumentException("operator 不能为空");
-    if (expireAt == null) throw new IllegalArgumentException("expireAt 不能为空");
+    if (tokenId == null || tokenId.isBlank()) {
+      throw new IllegalArgumentException("tokenId 不能为空");
+    }
+    if (fileId == null) {
+      throw new IllegalArgumentException("fileId 不能为空");
+    }
+    if (usage == null) {
+      throw new IllegalArgumentException("usage 不能为空");
+    }
+    if (customerNo == null) {
+      throw new IllegalArgumentException("customerNo 不能为空");
+    }
+    if (productNo == null) {
+      throw new IllegalArgumentException("productNo 不能为空");
+    }
+    if (operator == null) {
+      throw new IllegalArgumentException("operator 不能为空");
+    }
+    if (expireAt == null) {
+      throw new IllegalArgumentException("expireAt 不能为空");
+    }
   }
 }
