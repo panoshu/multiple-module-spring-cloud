@@ -8,7 +8,14 @@ import com.example.core.domain.business.aggregate.valueobject.business.Operation
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.*;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

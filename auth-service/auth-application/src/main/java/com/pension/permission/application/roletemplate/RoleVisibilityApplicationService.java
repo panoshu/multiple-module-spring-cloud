@@ -1,7 +1,7 @@
 package com.pension.permission.application.roletemplate;
 
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.pension.permission.domain.role.repository.RoleVisibilityRepository;
 import com.pension.permission.domain.role.service.RoleVisibilityResolver;
 import com.pension.permission.domain.role.valueobject.RoleVisibilityScope;

@@ -3,7 +3,7 @@ package com.pension.permission.infrastructure.credential.converter;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.fasterxml.jackson.core.JsonProcessingException;

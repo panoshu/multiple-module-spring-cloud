@@ -1,6 +1,6 @@
 package com.pension.permission.domain.fixture;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.aggregate.Grant;
@@ -140,7 +140,7 @@ public final class AuthorizationFixtures {
   public static PlanSnapshot planSnapshot(String planNo) {
     return new PlanSnapshot(
       PlanNo.of(planNo),
-      com.example.shared.identifier.id.ProductNo.of("PROD-001"),
+      com.example.core.types.ProductNo.of("PROD-001"),
       com.example.shared.identifier.id.CustomerNo.of("CUST-001"),
       Optional.empty(),
       "测试计划",

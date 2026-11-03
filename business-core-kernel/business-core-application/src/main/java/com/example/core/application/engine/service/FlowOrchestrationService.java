@@ -14,7 +14,7 @@ import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.shared.domain.event.EventBus;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -137,6 +137,20 @@ public class FlowOrchestrationService {
       case APPROVAL_RESULT_WITHDRAWN -> withdrawApplication(appId);
       default -> throw new IllegalArgumentException("未知的审批结果类型: " + result);
     }
+  }
+
+  /**
+   * 根据出站文件生成结果推进业务申请单。
+   * <p>
+   * 由 {@code OutboundFileEventListener} 在收到出站文件生成完成事件后调用。
+   * 出站请求中的 {@code fileTaskId} 等于 {@code applicationId}，因此可直接加载申请单并推进。
+   *
+   * @param fileTaskId 文件任务 ID（等于 applicationId）
+   */
+  @Transactional
+  public void advanceByOutboundFile(String fileTaskId) {
+    ApplicationId appId = new ApplicationId(fileTaskId);
+    advanceStep(appId);
   }
 
   private void rejectApplication(ApplicationId appId) {

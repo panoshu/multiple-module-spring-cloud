@@ -5,7 +5,7 @@ import com.example.annuity.domain.dto.AnnuityEmployeeDTO;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.annotation.DomainService;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 
 import java.util.UUID;

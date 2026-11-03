@@ -1,4 +1,4 @@
-package com.example.shared.identifier.id;
+package com.example.core.types;
 
 import com.example.shared.identifier.contract.IdDefinition;
 import com.example.shared.identifier.contract.IdType;

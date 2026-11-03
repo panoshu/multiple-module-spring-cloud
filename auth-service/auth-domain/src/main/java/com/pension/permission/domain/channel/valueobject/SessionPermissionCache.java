@@ -1,7 +1,7 @@
 package com.pension.permission.domain.channel.valueobject;
 
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.pension.permission.domain.authorization.enumeration.PermissionCategory;
 import com.pension.permission.domain.authorization.valueobject.Permission;
 

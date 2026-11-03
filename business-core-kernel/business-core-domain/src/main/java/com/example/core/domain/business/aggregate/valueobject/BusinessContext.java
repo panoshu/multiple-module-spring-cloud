@@ -4,8 +4,8 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 
 /**
  * BusinessContext

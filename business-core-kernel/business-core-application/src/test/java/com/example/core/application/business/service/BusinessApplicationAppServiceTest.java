@@ -3,8 +3,8 @@ package com.example.core.application.business.service;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
-import com.example.shared.identifier.id.ApplicationId;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

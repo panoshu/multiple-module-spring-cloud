@@ -5,8 +5,9 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.event.FileParsedEventDTO;
+import com.example.file.api.event.OutboundFileGeneratedEventDTO;
 import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.FormId;
+import com.example.core.types.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +27,10 @@ import java.util.UUID;
  * 当流程触发异步解析时，本 Mock 立即通过 {@link IntegrationEventSimulator} 发布
  * {@link FileParsedEventDTO}，模拟 file-service 解析完成回调，从而驱动
  * {@code FileParsedEventListener} 推进业务流程。
+ * <p>
+ * 当流程触发出站文件生成时，本 Mock 立即发布 {@link OutboundFileGeneratedEventDTO}，
+ * 模拟 file-service 出站文件生成完成回调，从而驱动
+ * {@code OutboundFileEventListener} 推进业务流程。
  * <p>
  * <b>【@Primary 覆盖】</b>kernel 的 {@code FileServiceIntegrationGateway} 也是 {@code @Component}，
  * 通过 {@link Primary} 注解让本 Mock 在 Spring 容器中优先被注入，避免两个 Bean 冲突。
@@ -104,6 +110,19 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
   }
 
   /**
+   * 触发出站文件生成（Mock 实现）
+   * <p>
+   * 使用 {@code fileTaskId}(= applicationId) 作为关联键，立即发布生成完成事件。
+   * Mock 返回一个生成的文件信息（subTaskId 和 outboundFileId 均为模拟值）。
+   */
+  @Override
+  public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                         Map<String, Object> supplementalData, String operator) {
+    log.info("[Mock] 立即模拟出站文件生成完成, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
+    publishOutboundFileGeneratedEvent(fileTaskId, targetTemplateId);
+  }
+
+  /**
    * 构造并发布 FileParsedEventDTO 模拟 file-service 解析完成回调
    */
   private void publishFileParsedEvent(String fileTaskId) {
@@ -119,5 +138,24 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
     );
     eventSimulator.publish(event);
     log.info("[Mock] 已发布 FileParsedEventDTO, fileTaskId={}, status={}", fileTaskId, STATUS_SUCCESS);
+  }
+
+  /**
+   * 构造并发布 OutboundFileGeneratedEventDTO 模拟 file-service 出站文件生成完成回调
+   */
+  private void publishOutboundFileGeneratedEvent(String fileTaskId, String targetTemplateId) {
+    OutboundFileGeneratedEventDTO event = new OutboundFileGeneratedEventDTO(
+      UUID.randomUUID().toString(),
+      fileTaskId,
+      targetTemplateId,
+      List.of(new OutboundFileGeneratedEventDTO.GeneratedFileInfoDTO(
+        "mock-subtask-" + UUID.randomUUID(),
+        "default-split-key",
+        "mock-outbound-file-" + UUID.randomUUID()
+      )),
+      LocalDateTime.now()
+    );
+    eventSimulator.publish(event);
+    log.info("[Mock] 已发布 OutboundFileGeneratedEventDTO, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
   }
 }

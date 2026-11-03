@@ -1,6 +1,6 @@
 package com.pension.permission.domain.authorization.valueobject.subject;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.spi.PlanMembershipLookup;
 import com.pension.permission.types.RoleCode;

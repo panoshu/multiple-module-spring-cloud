@@ -13,7 +13,7 @@ import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

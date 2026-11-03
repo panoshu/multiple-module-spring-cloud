@@ -3,10 +3,10 @@ package com.example.core.domain.business.repository;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.identifier.id.ApplicationId;
-import com.example.shared.identifier.id.BatchId;
-import com.example.shared.identifier.id.FormId;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
+import com.example.core.types.PlanNo;
 
 import java.util.Optional;
 

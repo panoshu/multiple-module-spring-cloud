@@ -65,7 +65,12 @@ public enum FileErrorCodes implements ErrorDefinition {
   FILE_NOT_DOWNLOADABLE("SERVICE.FILE.0029", "文件当前状态不允许下载"),
   FILE_DIGEST_MISMATCH("SERVICE.FILE.0030", "文件摘要校验失败"),
   FILE_TOKEN_SECRET_NOT_CONFIGURED("SERVICE.FILE.0031", "文件 token 密钥未配置"),
-  FILE_SESSION_HEADER_MISSING("SERVICE.FILE.0032", "会话 Header 缺失");
+  FILE_SESSION_HEADER_MISSING("SERVICE.FILE.0032", "会话 Header 缺失"),
+
+  // ==================== 出站相关（SERVICE.FILE.0033-0035） ====================
+  SUPPLEMENTAL_DATA_PREFIX_INVALID("SERVICE.FILE.0033", "补充数据字段必须使用biz_前缀"),
+  OUTBOUND_TEMPLATE_NOT_FOUND("SERVICE.FILE.0034", "目标模板不存在"),
+  OUTBOUND_GENERATION_FAILED("SERVICE.FILE.0035", "出站文件生成失败");
 
   private final String code;
   private final String message;

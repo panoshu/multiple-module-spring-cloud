@@ -9,7 +9,12 @@ import com.example.core.domain.business.aggregate.valueobject.business.AnnuityCh
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.*;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -7,7 +7,7 @@ import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
-import com.example.shared.identifier.id.FormId;
+import com.example.core.types.FormId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

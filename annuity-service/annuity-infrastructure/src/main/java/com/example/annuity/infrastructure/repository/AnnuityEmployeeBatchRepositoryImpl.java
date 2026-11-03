@@ -12,7 +12,7 @@ import com.example.annuity.infrastructure.mapper.AnnuityEmployeeDetailMapper;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

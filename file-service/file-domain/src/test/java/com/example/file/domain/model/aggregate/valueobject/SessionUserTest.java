@@ -1,7 +1,7 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

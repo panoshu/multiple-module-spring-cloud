@@ -9,7 +9,7 @@ import com.example.auth.api.command.RevokeSecondaryAuthRequest;
 import com.example.auth.api.dto.InitiateSecondaryAuthResponse;
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import com.pension.permission.application.channel.SecondaryAuthAppService;

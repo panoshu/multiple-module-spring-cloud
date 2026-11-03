@@ -15,6 +15,7 @@
   <modules>
     <module>shared-crypto-starter</module>
     <module>shared-cache-starter</module>
+    <module>shared-lock-starter</module>
     <module>shared-id-starter</module>
     <module>shared-event-starter</module>
     <module>shared-logging-starter</module>

@@ -3,9 +3,10 @@ package com.example.core.domain.engine.gateway;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.FormId;
+import com.example.core.types.FormId;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,4 +55,18 @@ public interface FileIntegrationGateway {
    * 供 BFF 层或应用层申请，直接返回给前端用于直传给文件服务，避免文件流经过业务服务。
    */
   String applyUploadToken(String clientIp, String userId, long maxSize);
+
+  /**
+   * 4. 触发出站文件生成
+   * <p>
+   * 将业务申请单关联的标准数据按目标模板填充为 Excel，由 file-service 异步生成并存储。
+   * 完成后 file-service 发布 {@code OutboundFileGeneratedEventDTO}，由监听器推进流程。
+   *
+   * @param fileTaskId        入站解析时 file-service 返回的文件任务 ID（标准数据凭证）
+   * @param targetTemplateId  目标模板 ID（对应 {@code TemplateConfig.targetTemplateRef}）
+   * @param supplementalData  业务侧补充数据，字段必须以 {@code biz_} 为前缀
+   * @param operator          操作人编号
+   */
+  void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                  Map<String, Object> supplementalData, String operator);
 }

@@ -5,7 +5,7 @@ import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.aggregate.Session;
 import com.pension.permission.domain.channel.event.SecondaryAuthCompleted;
@@ -255,7 +255,7 @@ class SessionApplicationServiceTest {
       Session session = activeSession(OPERATOR_NO, ONLINE_CHANNEL);
       when(sessionRepository.loadOrThrow(SESSION_ID)).thenReturn(session);
       SelectPlanCommand command = new SelectPlanCommand(
-        SESSION_ID, com.example.shared.identifier.id.PlanNo.of("plan-001"), OPERATOR_NO);
+        SESSION_ID, com.example.core.types.PlanNo.of("plan-001"), OPERATOR_NO);
 
       service.selectPlan(command);
 
@@ -263,7 +263,7 @@ class SessionApplicationServiceTest {
       verify(sessionRepository).save(sessionCaptor.capture());
       Session saved = sessionCaptor.getValue();
       assertThat(saved.selectedPlanId())
-        .isEqualTo(com.example.shared.identifier.id.PlanNo.of("plan-001"));
+        .isEqualTo(com.example.core.types.PlanNo.of("plan-001"));
       verify(eventBus, atLeastOnce()).publish(any(DomainEvent.class));
     }
   }

@@ -3,7 +3,7 @@ package com.pension.permission.infrastructure.channel.converter;
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

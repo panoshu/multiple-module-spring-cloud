@@ -22,7 +22,7 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
+      <artifactId>shared-lock-starter</artifactId>
     </dependency>
 
     <dependency>

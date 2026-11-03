@@ -5,7 +5,7 @@ import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.enumeration.SessionStatus;
 import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;

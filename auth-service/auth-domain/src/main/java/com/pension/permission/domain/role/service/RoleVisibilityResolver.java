@@ -1,7 +1,7 @@
 package com.pension.permission.domain.role.service;
 
 import com.example.shared.domain.annotation.DomainService;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.pension.permission.domain.product.PlanSnapshot;
 import com.pension.permission.domain.product.ProductGateway;
 import com.pension.permission.domain.role.aggregate.RoleTemplate;

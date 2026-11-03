@@ -7,7 +7,7 @@ import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.annuity.domain.service.AnnuityEmployeeMaterialRule;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

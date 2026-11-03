@@ -18,6 +18,11 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>business-core-types</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-utils</artifactId>
     </dependency>
     <dependency>

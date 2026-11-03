@@ -1,10 +1,9 @@
-package com.example.shared.identifier.id;
-
+package com.example.core.types;
 
 import com.example.shared.identifier.contract.Identifier;
 
 /**
- * description
+ * 计划编号
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0

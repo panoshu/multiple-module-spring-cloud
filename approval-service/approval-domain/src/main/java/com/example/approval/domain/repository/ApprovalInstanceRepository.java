@@ -4,7 +4,7 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 
 import java.util.List;

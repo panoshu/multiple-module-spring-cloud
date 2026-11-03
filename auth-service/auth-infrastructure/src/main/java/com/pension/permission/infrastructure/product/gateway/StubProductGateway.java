@@ -1,8 +1,8 @@
 package com.pension.permission.infrastructure.product.gateway;
 
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 import com.pension.permission.domain.product.CustomerSnapshot;
 import com.pension.permission.domain.product.PlanSnapshot;
 import com.pension.permission.domain.product.ProductGateway;

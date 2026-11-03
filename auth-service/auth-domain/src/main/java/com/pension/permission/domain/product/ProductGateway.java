@@ -2,8 +2,8 @@ package com.pension.permission.domain.product;
 
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 
 import java.util.List;
 import java.util.Optional;

@@ -8,7 +8,7 @@ import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.application.channel.command.*;
 import com.pension.permission.application.channel.config.SecondaryAuthConfig;

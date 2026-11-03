@@ -6,7 +6,11 @@ import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.*;
+import com.example.core.types.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

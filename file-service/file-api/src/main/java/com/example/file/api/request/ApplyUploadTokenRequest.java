@@ -1,7 +1,7 @@
 package com.example.file.api.request;
 
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.UserNo;
 
 import java.time.Duration;

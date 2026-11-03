@@ -9,7 +9,7 @@ import com.example.core.api.progress.query.GetBatchProgressQuery;
 import com.example.core.api.progress.response.BatchProgressResponse;
 import com.example.core.application.business.service.BusinessProgressAppService;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

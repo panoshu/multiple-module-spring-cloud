@@ -1,7 +1,7 @@
 package com.pension.permission.domain.role.repository;
 
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.pension.permission.domain.role.valueobject.RoleVisibilityScope;
 
 import java.util.Optional;

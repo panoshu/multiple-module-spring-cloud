@@ -1,6 +1,6 @@
 package com.pension.permission.infrastructure.permission;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.domain.authorization.event.GrantApproved;

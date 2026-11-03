@@ -7,9 +7,9 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
-import com.example.shared.identifier.id.BatchId;
-import com.example.shared.identifier.id.FormId;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
+import com.example.core.types.PlanNo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

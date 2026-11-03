@@ -412,3 +412,21 @@ CREATE TABLE IF NOT EXISTS `t_file_template_config`
   `effective_to`
 )
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件模板配置表';
+
+
+-- 出站目标模板表
+CREATE TABLE IF NOT EXISTS t_target_template (
+  `id`              VARCHAR(64) NOT NULL,
+  `template_id`     VARCHAR(64) NOT NULL,
+  `template_name`   VARCHAR(255) NOT NULL,
+  `file_id`         VARCHAR(64) NOT NULL,
+  `description`     VARCHAR(512) DEFAULT NULL,
+  `created_by`      VARCHAR(64) NOT NULL,
+  `updated_by`      VARCHAR(64) DEFAULT NULL,
+  `create_time`     DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time`     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted`         TINYINT(1) DEFAULT 0,
+  `version`         INT DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_target_template_template_id` (`template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='出站目标模板表';

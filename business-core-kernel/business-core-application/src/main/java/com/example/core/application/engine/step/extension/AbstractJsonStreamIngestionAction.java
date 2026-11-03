@@ -5,7 +5,7 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.spi.StepExtensionAction;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.FileId;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;

@@ -2,7 +2,7 @@ package com.pension.permission.domain.channel.event;
 
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.identifier.id.EventId;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.types.SessionId;
 

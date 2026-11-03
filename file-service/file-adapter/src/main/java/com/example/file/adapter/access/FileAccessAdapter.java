@@ -21,7 +21,7 @@ import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.UserNo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

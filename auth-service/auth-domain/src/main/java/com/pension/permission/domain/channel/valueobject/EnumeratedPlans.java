@@ -1,6 +1,6 @@
 package com.pension.permission.domain.channel.valueobject;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 
 import java.util.List;
 

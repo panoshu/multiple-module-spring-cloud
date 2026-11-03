@@ -4,7 +4,7 @@ import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.identifier.contract.IdService;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.application.channel.command.*;
 import com.pension.permission.application.channel.config.SecondaryAuthConfig;

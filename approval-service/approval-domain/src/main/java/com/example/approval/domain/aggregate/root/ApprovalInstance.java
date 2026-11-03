@@ -20,7 +20,7 @@ import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;

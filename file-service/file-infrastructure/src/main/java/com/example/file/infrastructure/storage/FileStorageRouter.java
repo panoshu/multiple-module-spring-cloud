@@ -13,7 +13,7 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.exception.SystemException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.identifier.id.FileId;
 import lombok.extern.slf4j.Slf4j;
 

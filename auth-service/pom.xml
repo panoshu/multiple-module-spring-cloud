@@ -59,6 +59,11 @@
         <artifactId>auth-types</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>business-core-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

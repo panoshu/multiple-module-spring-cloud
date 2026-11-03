@@ -9,7 +9,7 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.infrastructure.entity.FileMetadataDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;

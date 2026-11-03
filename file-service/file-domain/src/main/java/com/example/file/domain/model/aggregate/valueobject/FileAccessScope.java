@@ -2,7 +2,7 @@ package com.example.file.domain.model.aggregate.valueobject;
 
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 
 /**
  * 文件访问范围值对象（企业 + 产品）

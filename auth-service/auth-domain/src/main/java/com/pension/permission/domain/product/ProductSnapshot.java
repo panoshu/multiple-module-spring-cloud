@@ -1,7 +1,7 @@
 package com.pension.permission.domain.product;
 
 import com.example.shared.annuity.OperatingMode;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 import com.pension.permission.types.AccountMgrNo;
 
 import java.time.LocalDateTime;

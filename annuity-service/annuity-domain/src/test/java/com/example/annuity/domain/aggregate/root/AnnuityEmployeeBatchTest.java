@@ -5,7 +5,7 @@ import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeBatchStat
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

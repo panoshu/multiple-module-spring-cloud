@@ -3,7 +3,7 @@ package com.pension.permission.application.channel;
 import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.aggregate.Session;
 import com.pension.permission.domain.channel.errorcode.SecondaryAuthErrorCode;

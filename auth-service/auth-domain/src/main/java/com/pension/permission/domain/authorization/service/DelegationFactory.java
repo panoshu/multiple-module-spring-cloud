@@ -4,7 +4,7 @@ package com.pension.permission.domain.authorization.service;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.aggregate.Grant;

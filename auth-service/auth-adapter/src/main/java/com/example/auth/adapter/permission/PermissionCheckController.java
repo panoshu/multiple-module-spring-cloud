@@ -6,7 +6,7 @@ import com.example.auth.api.query.DataScopeRequest;
 import com.example.auth.api.query.PermissionCheckBatchRequest;
 import com.example.auth.api.query.PermissionCheckItemRequest;
 import com.example.auth.api.query.PermissionCheckRequest;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import com.pension.permission.application.authorization.CheckPermissionQuery;

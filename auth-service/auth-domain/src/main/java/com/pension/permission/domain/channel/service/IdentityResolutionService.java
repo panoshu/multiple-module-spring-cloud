@@ -5,7 +5,7 @@ import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.contactinfo.Mobile;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.assignment.aggregate.AgentIdentityAssignment;
 import com.pension.permission.domain.assignment.repository.AssignmentRepository;

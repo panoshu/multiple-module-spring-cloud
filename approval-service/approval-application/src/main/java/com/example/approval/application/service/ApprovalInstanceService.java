@@ -15,7 +15,7 @@ import com.example.approval.domain.valueobject.RejectTarget;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;

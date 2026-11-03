@@ -5,7 +5,7 @@ import com.example.core.api.application.response.ApplicationDetailResponse;
 import com.example.core.api.application.response.ApplicationSummaryResponse;
 import com.example.core.api.application.response.SubmitResponse;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import org.mapstruct.Mapper;
 
 /**

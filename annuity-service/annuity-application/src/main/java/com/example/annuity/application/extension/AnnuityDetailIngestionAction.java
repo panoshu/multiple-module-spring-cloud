@@ -8,7 +8,7 @@ import com.example.annuity.domain.service.AnnuityEmployeeMapper;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.core.application.engine.step.extension.AbstractJsonStreamIngestionAction;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;

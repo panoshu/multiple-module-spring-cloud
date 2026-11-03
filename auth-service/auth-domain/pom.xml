@@ -21,6 +21,10 @@
       <groupId>com.example</groupId>
       <artifactId>auth-types</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-types</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.projectlombok</groupId>

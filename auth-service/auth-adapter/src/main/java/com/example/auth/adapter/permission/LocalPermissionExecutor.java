@@ -1,6 +1,6 @@
 package com.example.auth.adapter.permission;
 
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.permission.PermissionCheckContext;
 import com.example.shared.permission.PermissionCheckResult;

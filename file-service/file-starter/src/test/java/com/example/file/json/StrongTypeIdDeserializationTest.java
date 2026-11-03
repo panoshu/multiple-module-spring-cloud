@@ -5,7 +5,7 @@ import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.shared.event.jackson.DddJacksonModule;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.ProductNo;
+import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

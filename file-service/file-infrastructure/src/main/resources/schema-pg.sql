@@ -537,3 +537,35 @@ COMMENT
 ON COLUMN t_file_template_config.effective_from IS '生效开始时间';
 COMMENT
 ON COLUMN t_file_template_config.effective_to IS '生效结束时间';
+
+
+-- 出站目标模板表
+CREATE TABLE IF NOT EXISTS t_target_template (
+  id              VARCHAR(64) NOT NULL,
+  template_id     VARCHAR(64) NOT NULL,
+  template_name   VARCHAR(255) NOT NULL,
+  file_id         VARCHAR(64) NOT NULL,
+  description     VARCHAR(512),
+  created_by      VARCHAR(64) NOT NULL,
+  updated_by      VARCHAR(64),
+  create_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted         BOOLEAN DEFAULT FALSE,
+  version         INT DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_target_template_template_id
+  ON t_target_template(template_id) WHERE deleted = FALSE;
+
+COMMENT ON TABLE  t_target_template IS '出站目标模板表';
+COMMENT ON COLUMN t_target_template.id IS '主键';
+COMMENT ON COLUMN t_target_template.template_id IS '目标模板标识（业务键）';
+COMMENT ON COLUMN t_target_template.template_name IS '模板名称';
+COMMENT ON COLUMN t_target_template.file_id IS '模板文件ID（关联FileMetadata）';
+COMMENT ON COLUMN t_target_template.description IS '模板描述';
+COMMENT ON COLUMN t_target_template.created_by IS '创建人';
+COMMENT ON COLUMN t_target_template.updated_by IS '更新人';
+COMMENT ON COLUMN t_target_template.create_time IS '创建时间';
+COMMENT ON COLUMN t_target_template.update_time IS '更新时间';
+COMMENT ON COLUMN t_target_template.deleted IS '逻辑删除标志';
+COMMENT ON COLUMN t_target_template.version IS '乐观锁版本号';

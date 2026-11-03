@@ -3,7 +3,7 @@ package com.example.file.domain.event;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.identifier.id.EventId;
 import com.example.shared.identifier.id.FileId;
 

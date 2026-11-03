@@ -6,7 +6,7 @@ import com.example.auth.api.annotation.PermissionCategory;
 import com.example.auth.api.annotation.RequirePermission;
 import com.example.auth.api.dto.MenuTreeNodeResponse;
 import com.example.auth.api.query.GetMenuTreeRequest;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import com.pension.permission.application.permission.PermissionMenuApplicationService;

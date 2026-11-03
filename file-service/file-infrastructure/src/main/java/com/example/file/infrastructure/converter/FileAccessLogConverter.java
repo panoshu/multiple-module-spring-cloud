@@ -6,7 +6,11 @@ import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.infrastructure.entity.FileAccessLogDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.*;
+import com.example.core.types.ProductNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.UserNo;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

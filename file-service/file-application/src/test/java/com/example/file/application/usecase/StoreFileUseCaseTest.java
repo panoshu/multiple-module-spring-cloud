@@ -10,7 +10,7 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.BeforeEach;

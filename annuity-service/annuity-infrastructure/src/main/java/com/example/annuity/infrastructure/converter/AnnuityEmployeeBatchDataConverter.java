@@ -5,7 +5,7 @@ import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeBatchStat
 import com.example.annuity.infrastructure.entity.AnnuityEmployeeBatchDO;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.UserNo;
 import org.mapstruct.Mapper;
 

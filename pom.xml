@@ -110,6 +110,11 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>business-core-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-exception</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -211,6 +216,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>shared-lock</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-lock-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

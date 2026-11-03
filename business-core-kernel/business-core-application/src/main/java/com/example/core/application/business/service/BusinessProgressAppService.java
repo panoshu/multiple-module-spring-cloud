@@ -2,7 +2,7 @@ package com.example.core.application.business.service;
 
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.repository.BatchRepository;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -9,7 +9,7 @@ import com.example.core.domain.business.event.BatchStatusChangedEvent;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;

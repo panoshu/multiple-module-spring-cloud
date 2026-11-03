@@ -1,7 +1,7 @@
 package com.pension.permission.domain.channel.aggregate;
 
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.channel.enumeration.SessionStatus;
 import com.pension.permission.domain.channel.event.SessionClosed;

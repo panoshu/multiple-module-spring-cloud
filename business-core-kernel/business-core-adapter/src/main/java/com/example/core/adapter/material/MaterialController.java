@@ -15,7 +15,7 @@ import com.example.core.api.material.response.MaterialItemResponse;
 import com.example.core.application.engine.step.service.MaterialAppService;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;

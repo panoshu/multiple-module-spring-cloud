@@ -1,7 +1,7 @@
 package com.pension.permission.infrastructure.role.repository;
 
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.pension.permission.domain.role.enumeration.RoleTemplateScopeDimension;
 import com.pension.permission.domain.role.repository.RoleVisibilityRepository;

@@ -53,7 +53,7 @@ public class Sm4Encryptor implements Encryptor {
     }
     if (this.secretKey.length != IV_LENGTH) {
       throw new SystemException(CryptoErrorCode.SECRET_KEY_INVALID)
-        .withLogDetail("SM4 密钥长度必须为 16 字节，实际: " + this.secretKey.length);
+        .withLogDetail("SM4 密钥长度必须为 " + IV_LENGTH +" 字节，实际: " + this.secretKey.length);
     }
   }
 

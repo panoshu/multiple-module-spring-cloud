@@ -4,7 +4,7 @@ import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.PlanNo;
+import com.example.core.types.PlanNo;
 import com.pension.permission.domain.channel.aggregate.CustomerChannelEntitlement;
 import com.pension.permission.domain.channel.errorcode.ChannelErrorCode;
 import com.pension.permission.domain.channel.repository.CustomerChannelEntitlementRepository;

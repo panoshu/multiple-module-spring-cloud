@@ -5,8 +5,8 @@ import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.infrastructure.business.converter.BusinessApplicationConverter;
 import com.example.core.infrastructure.business.entity.BusinessApplicationDO;
 import com.example.core.infrastructure.business.mapper.BusinessApplicationMapper;
-import com.example.shared.identifier.id.ApplicationId;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
 import com.mybatisflex.core.BaseMapper;
 import org.springframework.context.ApplicationEventPublisher;
 

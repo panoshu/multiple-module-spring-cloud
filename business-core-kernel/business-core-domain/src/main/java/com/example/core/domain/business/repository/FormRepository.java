@@ -2,8 +2,8 @@ package com.example.core.domain.business.repository;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.identifier.id.ApplicationId;
-import com.example.shared.identifier.id.FormId;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.FormId;
 
 import java.util.Optional;
 

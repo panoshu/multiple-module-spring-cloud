@@ -5,7 +5,7 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.business.repository.ApplicationRepository;
-import com.example.shared.identifier.id.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.example.shared.identifier.id.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,14 @@
 package com.example.shared.primitives.identity;
 
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.*;
+import com.example.shared.identifier.id.AcceptanceNo;
+import com.example.shared.identifier.id.CustomerNo;
+import com.example.shared.identifier.id.EventId;
+import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.shared.identifier.id.FileId;
+import com.example.shared.identifier.id.SerialNo;
+import com.example.shared.identifier.id.TaskId;
+import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,15 +42,10 @@ class IdentifierValidationTest {
   static Stream<Arguments> allIdConstructors() {
     return Stream.of(
       Arguments.of("AcceptanceNo", (Function<String, Object>) AcceptanceNo::new),
-      Arguments.of("ApplicationId", (Function<String, Object>) ApplicationId::new),
-      Arguments.of("BatchId", (Function<String, Object>) BatchId::new),
       Arguments.of("CustomerNo", (Function<String, Object>) CustomerNo::new),
       Arguments.of("EventId", (Function<String, Object>) EventId::new),
       Arguments.of("FileAccessLogId", (Function<String, Object>) FileAccessLogId::new),
       Arguments.of("FileId", (Function<String, Object>) FileId::new),
-      Arguments.of("FormId", (Function<String, Object>) FormId::new),
-      Arguments.of("PlanNo", (Function<String, Object>) PlanNo::new),
-      Arguments.of("ProductNo", (Function<String, Object>) ProductNo::new),
       Arguments.of("SerialNo", (Function<String, Object>) SerialNo::new),
       Arguments.of("TaskId", (Function<String, Object>) TaskId::new),
       Arguments.of("UserNo", (Function<String, Object>) UserNo::new)
@@ -90,22 +92,6 @@ class IdentifierValidationTest {
     assertThatThrownBy(() -> new AcceptanceNo(null))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("AcceptanceNo");
-  }
-
-  @Test
-  @DisplayName("PlanNo 的错误消息应包含自身名称而非 CustomerNo")
-  void planNo_error_message_should_contain_own_name() {
-    assertThatThrownBy(() -> new PlanNo(null))
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("PlanNo");
-  }
-
-  @Test
-  @DisplayName("ProductNo 的错误消息应包含自身名称而非 CustomerNo")
-  void productNo_error_message_should_contain_own_name() {
-    assertThatThrownBy(() -> new ProductNo(null))
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("ProductNo");
   }
 
   // ==================== EventId 特殊行为 ====================

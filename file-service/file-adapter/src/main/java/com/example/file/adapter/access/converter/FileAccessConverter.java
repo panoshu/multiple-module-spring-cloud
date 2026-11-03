@@ -5,7 +5,7 @@ import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.file.application.command.ApplyDownloadTokenCommand;
 import com.example.file.application.command.ApplyUploadTokenCommand;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.shared.identifier.id.BatchId;
+import com.example.core.types.BatchId;
 import org.mapstruct.Mapper;
 
 import java.time.Duration;

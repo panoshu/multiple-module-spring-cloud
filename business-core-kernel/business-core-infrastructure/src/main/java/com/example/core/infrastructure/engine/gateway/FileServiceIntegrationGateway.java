@@ -7,15 +7,18 @@ import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
+import com.example.file.api.OutboundApi;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
 import com.example.file.api.request.ApplyUploadTokenRequest;
+import com.example.file.api.request.GenerateOutboundFileRequest;
 import com.example.file.api.request.UploadFileRequest;
 import com.example.file.api.response.ApplyDownloadTokenResponse;
 import com.example.file.api.response.ApplyUploadTokenResponse;
 import com.example.file.api.response.FileTaskIdResponse;
+import com.example.file.api.response.OutboundFileIdResponse;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.FormId;
+import com.example.core.types.FormId;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +66,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   private final FileAccessApi fileAccessApi;
   private final FileTaskApi fileTaskApi;
+  private final OutboundApi outboundApi;
 
   @Override
   public void triggerAsyncParsing(BusinessForm businessForm, BusinessMetaContext businessMetaContext) {
@@ -188,6 +192,21 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
     );
     ApplyUploadTokenResponse response = fileAccessApi.applyUploadToken(request);
     return response != null ? response.token() : null;
+  }
+
+  @Override
+  public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                          Map<String, Object> supplementalData, String operator) {
+    GenerateOutboundFileRequest request = new GenerateOutboundFileRequest(
+      fileTaskId, targetTemplateId, supplementalData, operator
+    );
+    ApiResult<OutboundFileIdResponse> result = outboundApi.generate(request);
+    if (result == null || !result.isSuccess()) {
+      log.error("file-service 出站文件生成任务派发失败, fileTaskId={}, targetTemplateId={}, result={}",
+        fileTaskId, targetTemplateId, result);
+      return;
+    }
+    log.info("已派发出站文件生成任务, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
   }
 
   /**
