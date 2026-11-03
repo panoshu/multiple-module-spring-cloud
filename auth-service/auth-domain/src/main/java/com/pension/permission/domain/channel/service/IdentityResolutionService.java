@@ -2,7 +2,7 @@ package com.pension.permission.domain.channel.service;
 
 
 import com.example.shared.annuity.AnnuityChannel;
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.core.types.PlanNo;

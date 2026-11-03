@@ -1,6 +1,6 @@
 package com.pension.permission.domain.channel.aggregate;
 
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.authorization.valueobject.ActionCode;

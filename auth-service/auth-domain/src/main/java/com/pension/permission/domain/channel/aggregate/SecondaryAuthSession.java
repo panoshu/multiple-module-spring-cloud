@@ -1,6 +1,6 @@
 package com.pension.permission.domain.channel.aggregate;
 
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;

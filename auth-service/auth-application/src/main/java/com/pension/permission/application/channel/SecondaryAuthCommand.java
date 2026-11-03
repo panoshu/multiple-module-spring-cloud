@@ -1,7 +1,7 @@
 package com.pension.permission.application.channel;
 
 
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.identifier.id.UserNo;
 import com.pension.permission.domain.credential.valueobject.owner.CredentialOwner;
 import com.pension.permission.types.SessionId;

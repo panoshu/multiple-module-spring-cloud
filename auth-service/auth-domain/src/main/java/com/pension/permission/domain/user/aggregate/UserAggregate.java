@@ -1,6 +1,6 @@
 package com.pension.permission.domain.user.aggregate;
 
-import com.example.shared.contactinfo.*;
+import com.pension.permission.domain.user.valueobject.*;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;

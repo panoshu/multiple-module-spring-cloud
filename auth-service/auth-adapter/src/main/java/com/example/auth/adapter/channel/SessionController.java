@@ -6,7 +6,7 @@ import com.example.auth.api.command.SelectPlanRequest;
 import com.example.auth.api.dto.LoginResponse;
 import com.example.auth.api.dto.SelectablePlansResponse;
 import com.example.shared.annuity.AnnuityChannel;
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;

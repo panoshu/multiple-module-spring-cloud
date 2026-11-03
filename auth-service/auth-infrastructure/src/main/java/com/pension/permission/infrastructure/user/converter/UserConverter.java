@@ -1,6 +1,6 @@
 package com.pension.permission.infrastructure.user.converter;
 
-import com.example.shared.contactinfo.*;
+import com.pension.permission.domain.user.valueobject.*;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.UserNo;
 import com.example.shared.identity.DocumentNumber;

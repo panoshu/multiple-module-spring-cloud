@@ -1,7 +1,7 @@
 package com.pension.permission.application.channel;
 
 import com.example.shared.annuity.AnnuityChannel;
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.BusinessException;

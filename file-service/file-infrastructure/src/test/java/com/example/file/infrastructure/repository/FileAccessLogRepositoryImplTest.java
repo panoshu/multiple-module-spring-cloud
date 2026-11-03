@@ -9,7 +9,7 @@ import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.infrastructure.FileInfrastructureTestConfiguration;
 import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.file.types.FileAccessLogId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;

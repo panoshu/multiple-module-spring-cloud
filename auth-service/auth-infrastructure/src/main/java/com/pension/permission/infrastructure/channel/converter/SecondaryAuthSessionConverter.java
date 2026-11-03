@@ -1,6 +1,6 @@
 package com.pension.permission.infrastructure.channel.converter;
 
-import com.example.shared.contactinfo.Mobile;
+import com.pension.permission.domain.user.valueobject.Mobile;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.core.types.PlanNo;
