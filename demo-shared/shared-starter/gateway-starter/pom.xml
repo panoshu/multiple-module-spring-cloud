@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.example</groupId>
-    <artifactId>shared-lib</artifactId>
+    <artifactId>shared-starter</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>gateway-shared</artifactId>
+  <artifactId>gateway-starter</artifactId>
   <description>网关公共组件（认证、加解密、会话注入、路由排除），供各网关应用复用</description>
 
   <dependencies>

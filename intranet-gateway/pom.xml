@@ -20,7 +20,7 @@
     <!-- 网关公共组件 -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>gateway-shared</artifactId>
+      <artifactId>gateway-starter</artifactId>
     </dependency>
 
     <!-- httpexchange: 注册 @HttpExchange 标注的 auth-api 接口为远程客户端 -->

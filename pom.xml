@@ -200,7 +200,7 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>gateway-shared</artifactId>
+        <artifactId>gateway-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

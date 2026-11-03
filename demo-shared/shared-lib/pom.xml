@@ -21,7 +21,6 @@
     <module>shared-crypto</module>
     <module>shared-json</module>
     <module>shared-lock</module>
-    <module>gateway-shared</module>
     <module>bff-shared</module>
   </modules>
 </project>

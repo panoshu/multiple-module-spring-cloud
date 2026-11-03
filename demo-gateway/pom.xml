@@ -15,7 +15,7 @@
     <!-- 网关公共组件（认证/加解密/会话注入/路由排除） -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>gateway-shared</artifactId>
+      <artifactId>gateway-starter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
