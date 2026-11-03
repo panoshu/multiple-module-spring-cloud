@@ -21,6 +21,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>annuity-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>approval-api</artifactId>
     </dependency>
     <dependency>

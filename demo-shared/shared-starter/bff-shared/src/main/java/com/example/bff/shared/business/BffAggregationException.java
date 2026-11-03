@@ -8,12 +8,12 @@ package com.example.bff.shared.business;
  *
  * @author bff
  */
-class BffAggregationException extends RuntimeException {
+public class BffAggregationException extends RuntimeException {
 
-  final String code;
-  final String message;
+  public final String code;
+  public final String message;
 
-  BffAggregationException(String code, String message) {
+  public BffAggregationException(String code, String message) {
     super(message);
     this.code = code;
     this.message = message;

@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author bff
  */
-final class BffResponseAssembler {
+public final class BffResponseAssembler {
 
   private BffResponseAssembler() {
   }
@@ -24,7 +24,7 @@ final class BffResponseAssembler {
    * @param progress     批次进度（可能为 null）
    * @param applications 申请单列表（可能为 null）
    */
-  static BatchOverviewResponse assemble(
+  public static BatchOverviewResponse assemble(
     BatchDetailResponse batchDetail,
     BatchProgressResponse progress,
     List<ApplicationSummaryResponse> applications) {

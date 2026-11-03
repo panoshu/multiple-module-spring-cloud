@@ -1,10 +1,11 @@
-package com.example.bff.shared.business;
+package com.example.bff.intranet.application;
 
 import com.example.annuity.api.kernel.AnnuityApplicationApi;
 import com.example.annuity.api.kernel.AnnuityBatchApi;
 import com.example.annuity.api.kernel.AnnuityFormApi;
 import com.example.annuity.api.kernel.AnnuityMaterialApi;
 import com.example.annuity.api.kernel.AnnuityProgressApi;
+import com.example.bff.shared.business.BffAggregationException;
 import com.example.bff.shared.business.dto.BatchOverviewResponse;
 import com.example.bff.shared.business.dto.BffApplicationDetailRequest;
 import com.example.bff.shared.business.dto.BffBatchDetailRequest;
