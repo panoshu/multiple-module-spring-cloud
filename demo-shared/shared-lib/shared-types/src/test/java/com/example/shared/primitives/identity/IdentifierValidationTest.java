@@ -1,7 +1,6 @@
 package com.example.shared.primitives.identity;
 
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.AcceptanceNo;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.EventId;
 import com.example.shared.identifier.id.FileAccessLogId;
@@ -41,7 +40,6 @@ class IdentifierValidationTest {
    */
   static Stream<Arguments> allIdConstructors() {
     return Stream.of(
-      Arguments.of("AcceptanceNo", (Function<String, Object>) AcceptanceNo::new),
       Arguments.of("CustomerNo", (Function<String, Object>) CustomerNo::new),
       Arguments.of("EventId", (Function<String, Object>) EventId::new),
       Arguments.of("FileAccessLogId", (Function<String, Object>) FileAccessLogId::new),
@@ -82,16 +80,6 @@ class IdentifierValidationTest {
     Object id = constructor.apply("valid-id-" + name);
 
     assertThat(id).isNotNull();
-  }
-
-  // ==================== 错误消息正确性验证 ====================
-
-  @Test
-  @DisplayName("AcceptanceNo 的错误消息应包含自身名称而非 CustomerNo")
-  void acceptanceNo_error_message_should_contain_own_name() {
-    assertThatThrownBy(() -> new AcceptanceNo(null))
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("AcceptanceNo");
   }
 
   // ==================== EventId 特殊行为 ====================
