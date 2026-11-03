@@ -47,8 +47,8 @@ class DistributedLockFactoryTest {
     DistributedLock local = localLock();
     DistributedLock redis = redisLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
-    lockMap.put("localDistributedLock", local);
-    lockMap.put("redissonDistributedLock", redis);
+    lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
+    lockMap.put(DistributedLock.REDISSON_BEAN_NAME, redis);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
@@ -61,8 +61,8 @@ class DistributedLockFactoryTest {
     DistributedLock local = localLock();
     DistributedLock redis = redisLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
-    lockMap.put("localDistributedLock", local);
-    lockMap.put("redissonDistributedLock", redis);
+    lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
+    lockMap.put(DistributedLock.REDISSON_BEAN_NAME, redis);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
@@ -74,7 +74,7 @@ class DistributedLockFactoryTest {
   void getLock_redis_should_fallback_to_local_when_redis_missing() {
     DistributedLock local = localLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
-    lockMap.put("localDistributedLock", local);
+    lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
@@ -99,7 +99,7 @@ class DistributedLockFactoryTest {
     DistributedLock local = localLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
     lockMap.put("redissonLockL2", wrongNamed);  // 错误的 bean 名
-    lockMap.put("localDistributedLock", local);
+    lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 

@@ -1,5 +1,8 @@
 package com.example.shared.lock;
 
+import com.example.shared.exception.SystemException;
+import com.example.shared.lock.errorcode.LockErrorDefinition;
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -21,7 +24,7 @@ public interface DistributedLock {
         unlock(key);
       }
     } else {
-      throw new RuntimeException("Failed to acquire lock: %s".formatted(key));
+      throw new SystemException(LockErrorDefinition.GET_LOCK_FAILED).withLogDetail("Failed to acquire lock: " + key);
     }
   }
 
