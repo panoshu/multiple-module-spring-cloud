@@ -15,12 +15,12 @@ public class DistributedLockFactory {
    * @param type "local" 或 "redis"
    */
   public DistributedLock getLock(LockType type) {
-    String beanName = type == LockType.LOCAL ? "localDistributedLock" : "redissonDistributedLock";
+    String beanName = type == LockType.LOCAL
+        ? DistributedLock.LOCAL_BEAN_NAME
+        : DistributedLock.REDISSON_BEAN_NAME;
     DistributedLock lock = lockMap.get(beanName);
     if (lock == null) {
-      // 降级策略：如果请求 Redis 锁但没配置 Redisson，降级为 Local 或者抛异常
-      // 这里演示降级为 Local
-      return lockMap.get("localDistributedLock");
+      return lockMap.get(DistributedLock.LOCAL_BEAN_NAME);
     }
     return lock;
   }

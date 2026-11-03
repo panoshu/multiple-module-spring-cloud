@@ -35,7 +35,7 @@ public class DistributedLockAutoConfiguration {
   @ConditionalOnClass(name = "org.redisson.api.RedissonClient")
   static class RedissonLockConfiguration {
 
-    @Bean("redissonDistributedLock")
+    @Bean(DistributedLock.REDISSON_BEAN_NAME)
     @ConditionalOnMissingBean(DistributedLock.class)
     public DistributedLock redissonDistributedLock(org.redisson.api.RedissonClient client) {
       log.info("Initialized RedissonDistributedLock");
