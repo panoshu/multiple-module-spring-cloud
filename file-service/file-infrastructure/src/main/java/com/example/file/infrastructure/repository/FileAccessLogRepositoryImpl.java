@@ -7,7 +7,7 @@ import com.example.file.infrastructure.converter.FileAccessLogConverter;
 import com.example.file.infrastructure.entity.FileAccessLogDO;
 import com.example.file.infrastructure.mapper.FileAccessLogMapper;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.file.types.FileAccessLogId;
 import com.example.shared.identifier.id.FileId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;

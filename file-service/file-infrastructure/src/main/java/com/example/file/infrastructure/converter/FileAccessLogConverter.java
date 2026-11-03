@@ -8,7 +8,7 @@ import com.example.file.infrastructure.entity.FileAccessLogDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ProductNo;
 import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.file.types.FileAccessLogId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.UserNo;
 import org.mapstruct.Mapper;

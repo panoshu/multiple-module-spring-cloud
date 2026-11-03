@@ -3,7 +3,6 @@ package com.example.shared.primitives.identity;
 import com.example.shared.identifier.contract.Identifier;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.EventId;
-import com.example.shared.identifier.id.FileAccessLogId;
 import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.SerialNo;
 import com.example.shared.identifier.id.TaskId;
@@ -42,7 +41,6 @@ class IdentifierValidationTest {
     return Stream.of(
       Arguments.of("CustomerNo", (Function<String, Object>) CustomerNo::new),
       Arguments.of("EventId", (Function<String, Object>) EventId::new),
-      Arguments.of("FileAccessLogId", (Function<String, Object>) FileAccessLogId::new),
       Arguments.of("FileId", (Function<String, Object>) FileId::new),
       Arguments.of("SerialNo", (Function<String, Object>) SerialNo::new),
       Arguments.of("TaskId", (Function<String, Object>) TaskId::new),

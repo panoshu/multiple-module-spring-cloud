@@ -1,4 +1,4 @@
-package com.example.shared.identifier.id;
+package com.example.file.types;
 
 import com.example.shared.identifier.contract.IdDefinition;
 import com.example.shared.identifier.contract.IdType;
@@ -8,7 +8,7 @@ import com.example.shared.identifier.contract.Identifier;
  * 文件访问流水 ID
  * <p>
  * 唯一标识一条文件访问（APPLY / ACCESS）流水记录。
- * 与 {@link FileId} 区分：FileId 标识文件本体，FileAccessLogId 标识访问流水。
+ * 与 FileId 区分：FileId 标识文件本体，FileAccessLogId 标识访问流水。
  */
 @IdDefinition(type = IdType.ULID)
 public record FileAccessLogId(String value) implements Identifier<String> {

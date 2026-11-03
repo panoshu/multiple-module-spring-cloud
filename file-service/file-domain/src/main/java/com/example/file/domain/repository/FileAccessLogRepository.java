@@ -3,7 +3,7 @@ package com.example.file.domain.repository;
 import com.example.file.domain.model.aggregate.root.FileAccessLog;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessAction;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.identifier.id.FileAccessLogId;
+import com.example.file.types.FileAccessLogId;
 import com.example.shared.identifier.id.FileId;
 
 import java.time.LocalDateTime;
