@@ -3,7 +3,7 @@ package com.pension.permission.domain.authorization.service;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.domain.authorization.enumeration.Effect;
 import com.pension.permission.domain.authorization.enumeration.GrantOrigin;

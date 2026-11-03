@@ -4,7 +4,7 @@ import com.example.shared.annuity.AnnuityChannel;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.pension.permission.domain.credential.enumeration.CredentialStatus;
 import com.pension.permission.domain.credential.enumeration.CredentialType;
 import com.pension.permission.domain.credential.errorcode.CredentialError;

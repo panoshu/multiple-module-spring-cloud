@@ -4,7 +4,7 @@ import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.enumeration.Effect;
 import com.pension.permission.domain.authorization.enumeration.GrantOrigin;
 import com.pension.permission.domain.authorization.enumeration.GrantStatus;

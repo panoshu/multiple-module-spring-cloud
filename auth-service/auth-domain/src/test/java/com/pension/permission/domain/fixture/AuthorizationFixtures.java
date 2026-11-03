@@ -2,7 +2,7 @@ package com.pension.permission.domain.fixture;
 
 import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.pension.permission.domain.authorization.aggregate.Grant;
 import com.pension.permission.domain.authorization.enumeration.*;
 import com.pension.permission.domain.authorization.repository.GrantRepository;

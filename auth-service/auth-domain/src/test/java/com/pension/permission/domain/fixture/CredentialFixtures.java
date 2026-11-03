@@ -1,7 +1,7 @@
 package com.pension.permission.domain.fixture;
 
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.pension.permission.domain.credential.aggregate.PasswordCredential;
 import com.pension.permission.domain.credential.aggregate.UKeyCredential;
 import com.pension.permission.domain.credential.valueobject.owner.UserCredentialOwner;

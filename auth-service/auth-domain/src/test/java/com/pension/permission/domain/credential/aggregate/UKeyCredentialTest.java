@@ -38,7 +38,7 @@ class UKeyCredentialTest {
         new com.pension.permission.domain.credential.valueobject.owner.UserCredentialOwner(UserNo.of("user-1")),
         "  ",
         java.util.Set.of(),
-        com.example.shared.valueobject.ValidityPeriod.infinite(),
+        com.pension.permission.domain.credential.valueobject.ValidityPeriod.infinite(),
         UserNo.of("creator-1")))
         .isInstanceOf(DomainException.class);
     }

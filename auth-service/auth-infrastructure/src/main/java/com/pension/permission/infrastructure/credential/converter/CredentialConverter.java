@@ -5,7 +5,7 @@ import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.id.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.shared.identifier.id.UserNo;
-import com.example.shared.valueobject.ValidityPeriod;
+import com.pension.permission.domain.credential.valueobject.ValidityPeriod;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
