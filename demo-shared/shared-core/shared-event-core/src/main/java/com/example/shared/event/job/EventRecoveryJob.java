@@ -1,7 +1,7 @@
 package com.example.shared.event.job;
 
-import com.example.shared.domain.event.EventDispatcher;
-import com.example.shared.domain.event.EventStore;
+import com.example.shared.event.contract.EventDispatcher;
+import com.example.shared.event.contract.EventStore;
 import com.example.shared.event.deliverer.EventDeliverer;
 import com.example.shared.lock.DistributedLock;
 import jakarta.annotation.PostConstruct;

@@ -22,6 +22,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>shared-event-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>shared-id-starter</artifactId>
     </dependency>
     <dependency>

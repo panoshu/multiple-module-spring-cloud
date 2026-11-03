@@ -1,7 +1,7 @@
 package com.example.shared.event.store;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.domain.event.EventStore;
+import com.example.shared.event.contract.EventStore;
 import com.example.shared.identifier.id.EventId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

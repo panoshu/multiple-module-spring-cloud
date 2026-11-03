@@ -1,4 +1,6 @@
-package com.example.shared.domain.event;
+package com.example.shared.event.contract;
+
+import com.example.shared.domain.event.DomainEvent;
 
 public interface EventDispatcher {
   /**

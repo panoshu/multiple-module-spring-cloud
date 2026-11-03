@@ -3,7 +3,7 @@ package com.example.approval.infrastructure.event;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
 import com.example.approval.api.event.IntegrationEventTypes;
 import com.example.approval.domain.event.ApprovalInstanceWithdrawn;
-import com.example.shared.domain.event.IntegrationEventConverter;
+import com.example.shared.event.contract.IntegrationEventConverter;
 import org.springframework.stereotype.Component;
 
 /**

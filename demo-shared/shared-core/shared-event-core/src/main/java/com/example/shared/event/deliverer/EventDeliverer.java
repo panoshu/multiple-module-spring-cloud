@@ -1,8 +1,8 @@
 package com.example.shared.event.deliverer;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.domain.event.EventDispatcher;
-import com.example.shared.domain.event.EventStore;
+import com.example.shared.event.contract.EventDispatcher;
+import com.example.shared.event.contract.EventStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

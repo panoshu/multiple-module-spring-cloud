@@ -1,8 +1,8 @@
 package com.example.shared.event.autoconfiguration;
 
-import com.example.shared.domain.event.EventDispatcher;
-import com.example.shared.domain.event.EventStore;
-import com.example.shared.domain.event.IntegrationEventConverter;
+import com.example.shared.event.contract.EventDispatcher;
+import com.example.shared.event.contract.EventStore;
+import com.example.shared.event.contract.IntegrationEventConverter;
 import com.example.shared.event.bus.DefaultEventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
 import com.example.shared.event.dispatcher.RedisEventDispatcher;
