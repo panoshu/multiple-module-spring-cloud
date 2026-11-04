@@ -21,4 +21,14 @@ public interface PermissionCacheStore {
   void evict(UserNo accountId);
 
   void evictAll(Set<UserNo> accountIds);
+
+  /**
+   * 清空全部权限缓存（权限码表/角色模板全局变更时使用）.
+   *
+   * <p>实现应采用 SCAN 游标遍历（避免 KEYS 阻塞生产 Redis）。默认不支持时
+   * 由调用方回退到 TTL 兜底并记录 WARN.
+   */
+  default void clearAll() {
+    throw new UnsupportedOperationException("当前 PermissionCacheStore 实现不支持全局清空，回退 TTL 兜底");
+  }
 }

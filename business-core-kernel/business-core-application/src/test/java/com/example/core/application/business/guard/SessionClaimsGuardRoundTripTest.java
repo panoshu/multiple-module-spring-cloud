@@ -44,7 +44,7 @@ class SessionClaimsGuardRoundTripTest {
       "P001", "Plan A", "PRD001", "Product A", "MODEL_A", "CJP",
       isProxy, isProxy ? "U002" : null, isProxy ? "bob" : null,
       hasSecondaryAuth, hasSecondaryAuth ? 100L : null, hasSecondaryAuth ? "U003" : null,
-      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of("P001")
+      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of("P001"), 0L
     );
   }
 

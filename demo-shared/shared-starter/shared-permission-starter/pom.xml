@@ -44,6 +44,18 @@
       <artifactId>caffeine</artifactId>
     </dependency>
 
+    <!-- P0-H2：权限失效事件 Redis 订阅（宿主服务有 Redis 时才装配，optional 不传递） -->
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-redis</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- AOP 切面支持 -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

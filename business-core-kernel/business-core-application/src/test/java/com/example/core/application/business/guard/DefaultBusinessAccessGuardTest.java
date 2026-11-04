@@ -33,7 +33,7 @@ class DefaultBusinessAccessGuardTest {
       "P001", "Plan A", "PRD001", "Product A", "MODEL_A", "CJP",
       isProxy, "U002", "bob",
       false, null, null,
-      permissions, delegatedPlanNos
+      permissions, delegatedPlanNos, 0L
     );
   }
 
@@ -45,7 +45,7 @@ class DefaultBusinessAccessGuardTest {
       "P001", "Plan A", "PRD001", "Product A", "MODEL_A", "CJP",
       false, null, null,
       hasSecondaryAuth, hasSecondaryAuth ? 100L : null, hasSecondaryAuth ? "U003" : null,
-      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of()
+      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of(), 0L
     );
   }
 
@@ -57,7 +57,7 @@ class DefaultBusinessAccessGuardTest {
       "P001", "Plan A", "PRD001", "Product A", "MODEL_A", "CJP",
       false, null, null,
       false, null, null,
-      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of()
+      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of(), 0L
     );
   }
 

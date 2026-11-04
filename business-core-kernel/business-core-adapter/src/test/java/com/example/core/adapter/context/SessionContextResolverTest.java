@@ -37,7 +37,7 @@ class SessionContextResolverTest {
       "P001", "Plan A", "PRD001", "Product A", "MODEL_A", "CJP",
       true, "U002", "bob",
       false, null, null,
-      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of("P001")
+      Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"), Set.of("P001"), 0L
     );
     MockHttpServletRequest request = new MockHttpServletRequest();
     String json = objectMapper.writeValueAsString(session);

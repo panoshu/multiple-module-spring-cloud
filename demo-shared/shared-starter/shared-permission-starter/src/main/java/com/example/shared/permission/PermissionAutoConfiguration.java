@@ -94,4 +94,26 @@ public class PermissionAutoConfiguration {
       "shared.permission.registration.refresh-interval-ms", Long.class, 300_000L);
     return new PermissionRegistrationRefresher(runner, interval);
   }
+
+  /**
+   * P0-H2：跨服务失效通道收端——订阅 Redis topic {@code event.PermissionChangedEvent}
+   * （auth 中继广播）→ 清本地 Caffeine。宿主服务具备 Redis（spring-data-redis 在
+   * classpath 且存在 RedisConnectionFactory bean）且未显式关闭时装配.
+   */
+  @Bean(destroyMethod = "destroy")
+  @ConditionalOnMissingBean
+  @org.springframework.boot.autoconfigure.condition.ConditionalOnClass(
+    org.springframework.data.redis.connection.RedisConnectionFactory.class)
+  @ConditionalOnBean(
+    org.springframework.data.redis.connection.RedisConnectionFactory.class)
+  @ConditionalOnProperty(
+    prefix = "shared.permission.invalidation.redis", name = "enabled",
+    havingValue = "true", matchIfMissing = true)
+  public PermissionInvalidationRedisSubscriber permissionInvalidationRedisSubscriber(
+    org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory,
+    PermissionCacheInvalidationListener invalidationListener,
+    com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+    return new PermissionInvalidationRedisSubscriber(
+      connectionFactory, invalidationListener, objectMapper);
+  }
 }

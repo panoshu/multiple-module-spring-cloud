@@ -119,8 +119,13 @@ public class SessionClaimsWriter {
 
   /**
    * 定位 token 所属渠道的 Token-Session，读取既有声明 JSON 并合并写入.
+   *
+   * <p><b>并发防护（P0-H4）</b>：五个会话事件可能并发触发对同一 Token-Session 单键的
+   * read-modify-write（如选计划与二次授权同时完成）——后写者会整体覆盖 JSON 导致前者的
+   * 字段丢失。会话事件为低频生命周期操作，方法级互斥即可消除竞态；同时递增
+   * {@code revision} 修订号，供下游观测声明版本.
    */
-  private void merge(String sessionId, java.util.function.Consumer<ObjectNode> merger) {
+  private synchronized void merge(String sessionId, java.util.function.Consumer<ObjectNode> merger) {
     for (Map.Entry<Channel, StpLogic> entry : channelStpLogicMap.entrySet()) {
       try {
         StpLogic stpLogic = entry.getValue();
@@ -134,15 +139,25 @@ public class SessionClaimsWriter {
           ? (ObjectNode) objectMapper.readTree(json)
           : objectMapper.createObjectNode();
         merger.accept(claims);
+        long revision = revisionOf(claims) + 1;
+        claims.put("revision", revision);
         tokenSession.set(SessionClaims.SESSION_CLAIMS_KEY, objectMapper.writeValueAsString(claims));
-        log.info("会话声明已更新: sessionId={}, channel={}, keys={}",
-          sessionId, entry.getKey(), claims.fieldNames().next() != null ? "..." : "empty");
+        log.info("会话声明已更新: sessionId={}, channel={}, revision={}",
+          sessionId, entry.getKey(), revision);
         return;
       } catch (Exception ignored) {
         // 该渠道不认识此 token，继续尝试
       }
     }
     log.warn("未找到 token 对应的 StpLogic，会话声明未写入: sessionId={}", sessionId);
+  }
+
+  /**
+   * 读取声明 JSON 中的修订号（缺省/非法视为 0）.
+   */
+  private long revisionOf(JsonNode claims) {
+    JsonNode node = claims.get("revision");
+    return node != null && node.canConvertToLong() ? node.asLong() : 0L;
   }
 
   /**

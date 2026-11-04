@@ -41,11 +41,31 @@ import java.util.Set;
   Long secondaryAuthSessionId,
   String borrowedApproverId,
   Set<String> permissionCodes,
-  Set<String> delegatedPlanNos
+  Set<String> delegatedPlanNos,
+  long revision
 ) {
 
   /**
    * Token-Session 中存储完整会话声明的键（auth 写入完整 JSON，网关整体读取透传）.
    */
   public static final String SESSION_CLAIMS_KEY = "sessionClaims";
+
+  /**
+   * 兼容旧 JSON（无 revision 字段时 Jackson 注入 0）并保证非负.
+   */
+  public SessionClaims {
+    if (revision < 0) {
+      revision = 0;
+    }
+  }
+
+  /**
+   * 声明修订号：auth 每次事件合并写入时递增（SessionClaimsWriter）.
+   *
+   * <p>用途：① 并发写检测——两次合并若读到相同 revision 说明有更新被覆盖；
+   * ② 下游可观测——网关日志/Guard 排查时定位声明版本。旧声明（无此字段）反序列化为 0.
+   */
+  public long revision() {
+    return revision;
+  }
 }

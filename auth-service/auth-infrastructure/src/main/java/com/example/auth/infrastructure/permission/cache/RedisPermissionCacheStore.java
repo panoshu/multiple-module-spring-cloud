@@ -79,6 +79,34 @@ public class RedisPermissionCacheStore implements PermissionCacheStore {
     }
   }
 
+  /**
+   * 全局清空（P0-H3）：SCAN 游标遍历前缀键批量删除——权限码表/角色模板全局变更时，
+   * 前端权限缓存（auth:perm:cache:*）与后端校验同步收口，不再等 5min TTL.
+   * <p>采用 SCAN 而非 KEYS，避免生产 Redis 阻塞；每批 500 键.
+   */
+  @Override
+  public void clearAll() {
+    var options = org.springframework.data.redis.core.ScanOptions.scanOptions()
+      .match(KEY_PREFIX + "*")
+      .count(500)
+      .build();
+    long deleted = 0;
+    try (var cursor = redisTemplate.scan(options)) {
+      java.util.List<String> batch = new java.util.ArrayList<>(500);
+      while (cursor.hasNext()) {
+        batch.add(new String(cursor.next()));
+        if (batch.size() >= 500) {
+          deleted += redisTemplate.delete(batch);
+          batch.clear();
+        }
+      }
+      if (!batch.isEmpty()) {
+        deleted += redisTemplate.delete(batch);
+      }
+    }
+    log.info("全局清除权限缓存: 删除 {} 个键 (prefix={})", deleted, KEY_PREFIX);
+  }
+
   private String keyOf(UserNo accountId) {
     return KEY_PREFIX + accountId.value();
   }
