@@ -1,8 +1,8 @@
 package com.example.auth.api.command;
 
-import com.example.shared.annuity.AnnuityChannel;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.Channel;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.UserNo;
 
 /**
  * 开通渠道命令.
@@ -13,7 +13,7 @@ import com.example.shared.identifier.id.UserNo;
  */
 public record EnableChannelCommand(
   CustomerNo customerNo,
-  AnnuityChannel channel,
+  Channel channel,
   UserNo operator
 ) {
 }

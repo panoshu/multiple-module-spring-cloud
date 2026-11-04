@@ -21,7 +21,7 @@ import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    */
   private ApprovalInstance(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                            ApplicationId businessApplicationId, String businessType,
-                           String initiatorPlan, UserNo operator) {
+                           String initiatorPlan, String operator) {
     super(id, operator);
     this.flowId = flowId;
     this.flowVersion = flowVersion;
@@ -104,7 +104,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
   private ApprovalInstance(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                            ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                            String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
-                           UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                           String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.flowId = flowId;
     this.flowVersion = flowVersion;
@@ -132,7 +132,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    */
   public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                                         ApplicationId businessApplicationId, String businessType,
-                                        String initiatorPlan, UserNo operator) {
+                                        String initiatorPlan, String operator) {
     if (flowId == null) {
       throw new IllegalArgumentException("审批流ID不能为空");
     }
@@ -158,7 +158,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
   public static ApprovalInstance reconstitute(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                                               ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                                               String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
-                                              UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                              String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
       initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version);
   }
@@ -168,7 +168,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    *
    * @param operator 操作人
    */
-  public void start(UserNo operator) {
+  public void start(String operator) {
     if (this.status != InstanceStatus.PENDING) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_ALREADY_PENDING)
         .withLogDetail("只有待审批状态的实例才能启动, ApprovalInstanceId: %s, status: %s".formatted(this.id(), this.status));
@@ -185,7 +185,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param opinion    审批意见
    * @param operator   操作人
    */
-  public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, UserNo operator) {
+  public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, String operator) {
     validateCanApprove(approverId);
 
     // 创建审批记录
@@ -219,7 +219,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator     操作人
    */
   public void reject(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                     RejectTarget rejectTarget, UserNo operator) {
+                     RejectTarget rejectTarget, String operator) {
     validateCanApprove(approverId);
 
     // 创建审批记录
@@ -251,7 +251,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator   操作人
    */
   public void transfer(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                       UserNo transferTo, UserNo operator) {
+                       UserNo transferTo, String operator) {
     validateCanApprove(approverId);
 
     // 创建审批记录
@@ -269,7 +269,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    *
    * @param operator 操作人
    */
-  public void withdraw(UserNo operator) {
+  public void withdraw(String operator) {
     // 只有发起人可以撤回
     if (!this.createdBy().equals(operator)) {
       throw new DomainException(ApprovalDomainErrorCode.WITHDRAW_NOT_BY_INITIATOR)
@@ -295,7 +295,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param currentNode 当前节点
    * @param operator    操作人
    */
-  private void moveToNextNode(ApprovalNode currentNode, UserNo operator) {
+  private void moveToNextNode(ApprovalNode currentNode, String operator) {
     NodeOrder nextOrder = currentNodeOrder.next();
     this.currentNodeOrder = nextOrder;
 
@@ -313,7 +313,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param rejectTarget 驳回目标
    * @param operator     操作人
    */
-  private void handleRejection(RejectTarget rejectTarget, UserNo operator) {
+  private void handleRejection(RejectTarget rejectTarget, String operator) {
     if (rejectTarget.isTerminate()) {
       // 终止流程
       this.status = InstanceStatus.REJECTED;
@@ -352,7 +352,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator 操作人
    * @return 节点执行记录
    */
-  private NodeExecution getOrCreateCurrentExecution(ApprovalNode node, UserNo operator) {
+  private NodeExecution getOrCreateCurrentExecution(ApprovalNode node, String operator) {
     return nodeExecutions.stream()
       .filter(e -> e.nodeOrder().equals(currentNodeOrder))
       .findFirst()

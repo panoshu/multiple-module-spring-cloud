@@ -1,9 +1,9 @@
 package com.example.annuity.adapter.controller.kernel;
 
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.progress.converter.ProgressConverter;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.core.api.progress.BusinessProgressApi;
 import com.example.core.api.progress.query.GetBatchProgressQuery;
 import com.example.core.api.progress.response.BatchProgressResponse;
@@ -40,7 +40,7 @@ public class AnnuityKernelProgressController implements BusinessProgressApi {
   @PostMapping("/batch")
   @RequirePermission(business = "PROGRESS", action = "VIEW")
   public ApiResult<BatchProgressResponse> batchProgress(@Valid @RequestBody GetBatchProgressQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("查询批次进度: batchId={}, userNo={}", query.batchId(), session.userNo());
 
     BusinessBatch batch = progressAppService.getBatchProgress(new BatchId(query.batchId()));

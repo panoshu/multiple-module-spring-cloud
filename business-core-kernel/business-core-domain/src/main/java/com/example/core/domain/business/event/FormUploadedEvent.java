@@ -2,7 +2,7 @@ package com.example.core.domain.business.event;
 
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.identifier.id.EventId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
 
 import java.time.LocalDateTime;

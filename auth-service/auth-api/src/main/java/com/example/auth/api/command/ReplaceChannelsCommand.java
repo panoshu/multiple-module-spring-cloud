@@ -1,8 +1,8 @@
 package com.example.auth.api.command;
 
-import com.example.shared.annuity.AnnuityChannel;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.Channel;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.UserNo;
 
 import java.util.Set;
 
@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public record ReplaceChannelsCommand(
   CustomerNo customerNo,
-  Set<AnnuityChannel> channels,
+  Set<Channel> channels,
   UserNo operator
 ) {
 }

@@ -8,7 +8,6 @@ import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
-import com.example.shared.identifier.id.UserNo;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
@@ -23,7 +22,7 @@ public class YamlConfigLoader implements ConfigLoader {
   @Override
   public TemplateConfig loadFromYaml(BizType bizType, String baselineYaml,
                                      List<String> sourceTemplateYamls, String version,
-                                     UserNo operator) {
+                                     String operator) {
     Yaml yaml = new Yaml();
 
     Map<String, Object> baseline = yaml.load(baselineYaml);
@@ -43,7 +42,7 @@ public class YamlConfigLoader implements ConfigLoader {
   @SuppressWarnings("unchecked")
   private TemplateConfig buildTemplateConfig(BizType bizType, Map<String, Object> baseline,
                                              List<Map<String, Object>> sourceTemplates,
-                                             String version, UserNo operator) {
+                                             String version, String operator) {
     TemplateConfigId id = TemplateConfigId.of(generateId());
 
     ErrorPolicy errorPolicy = parseEnum(baseline, "errorPolicy", ErrorPolicy.class, ErrorPolicy.FAIL_FAST);
@@ -164,7 +163,7 @@ public class YamlConfigLoader implements ConfigLoader {
   }
 
   @SuppressWarnings("unchecked")
-  private SourceTemplateDef parseSourceTemplate(Map<String, Object> st, UserNo operator) {
+  private SourceTemplateDef parseSourceTemplate(Map<String, Object> st, String operator) {
     TemplateCode code = TemplateCode.of((String) st.get("id"));
     IdentifyMode mode = parseEnum(st, "identifyMode", IdentifyMode.class, IdentifyMode.AUTO);
     List<String> fingerprint = (List<String>) st.getOrDefault("fingerprint", List.of());

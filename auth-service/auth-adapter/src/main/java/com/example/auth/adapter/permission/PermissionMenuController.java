@@ -2,15 +2,15 @@ package com.example.auth.adapter.permission;
 
 import com.example.auth.adapter.converter.PermissionMenuConverter;
 import com.example.auth.api.PermissionMenuApi;
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.auth.api.dto.MenuTreeNodeResponse;
 import com.example.auth.api.query.GetMenuTreeRequest;
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.application.permission.PermissionMenuApplicationService;
-import com.pension.permission.domain.permission.aggregate.valueobject.MenuTreeNode;
+import com.example.auth.application.permission.PermissionMenuApplicationService;
+import com.example.auth.domain.permission.aggregate.valueobject.MenuTreeNode;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 

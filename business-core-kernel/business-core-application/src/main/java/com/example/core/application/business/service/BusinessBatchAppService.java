@@ -43,7 +43,7 @@ public class BusinessBatchAppService {
   /**
    * 创建业务批次。
    *
-   * @param context  业务上下文(从 SessionContext 组装)
+   * @param context  业务上下文(从 SessionClaims 组装)
    * @param operator 操作人信息
    * @return 创建的批次聚合根
    */

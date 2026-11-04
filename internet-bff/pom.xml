@@ -14,10 +14,7 @@
   <description>互联网渠道 BFF - 请求路由、数据聚合、接口适配</description>
 
   <modules>
-    <module>internet-bff-api</module>
-    <module>internet-bff-application</module>
-    <module>internet-bff-adapter</module>
-    <module>internet-bff-infrastructure</module>
+    <module>internet-bff-web</module>
     <module>internet-bff-starter</module>
   </modules>
 
@@ -25,27 +22,12 @@
     <dependencies>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>internet-bff-api</artifactId>
+        <artifactId>internet-bff-web</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>internet-bff-application</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>internet-bff-adapter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>internet-bff-infrastructure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>bff-shared</artifactId>
+        <artifactId>bff-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

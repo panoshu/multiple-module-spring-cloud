@@ -8,7 +8,7 @@ import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.domain.repository.FileAccessLogRepository;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;

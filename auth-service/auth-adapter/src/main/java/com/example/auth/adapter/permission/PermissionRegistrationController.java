@@ -1,11 +1,11 @@
 package com.example.auth.adapter.permission;
 
 import com.example.auth.api.PermissionRegistrationApi;
-import com.example.auth.api.command.PermissionRegistrationRequest;
-import com.example.auth.api.dto.PermissionRegistrationResponse;
+import com.example.shared.security.permission.PermissionRegistrationRequest;
+import com.example.shared.security.permission.PermissionRegistrationResponse;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.infrastructure.permission.PermissionRegistrationResult;
-import com.pension.permission.infrastructure.permission.PermissionScannerService;
+import com.example.auth.infrastructure.permission.PermissionRegistrationResult;
+import com.example.auth.infrastructure.permission.PermissionScannerService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 

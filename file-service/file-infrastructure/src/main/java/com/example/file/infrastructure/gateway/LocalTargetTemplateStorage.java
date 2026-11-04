@@ -6,7 +6,7 @@ import com.example.file.domain.gateway.TargetTemplateStorage;
 import com.example.file.infrastructure.entity.TargetTemplateDO;
 import com.example.file.infrastructure.mapper.TargetTemplateMapper;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;

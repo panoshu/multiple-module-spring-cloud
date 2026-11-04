@@ -1,0 +1,108 @@
+package com.example.auth.application.assignment;
+
+
+import com.example.shared.domain.event.EventBus;
+import com.example.shared.identifier.contract.IdService;
+import com.example.shared.security.permission.PermissionChangedEvent;
+import com.example.core.types.PlanNo;
+import com.example.core.types.UserNo;
+import com.example.auth.domain.assignment.aggregate.AgentIdentityAssignment;
+import com.example.auth.domain.assignment.repository.AssignmentRepository;
+import com.example.auth.domain.assignment.service.GrantProvisioningService;
+import com.example.auth.domain.assignment.service.PlanReachabilityService;
+import com.example.auth.types.AssignmentId;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * 身份分配用例的编排入口：创建/变更角色/停用都通过GrantProvisioningService，
+ * 这一层只负责事务边界和事件发布，不包含业务判断逻辑(那些都在领域层)。
+ * <p>
+ * 注意：GrantProvisioningService现在不再产生/撤销任何Grant(角色模板派生的权限已经
+ * 改成实时解析，见EffectivePermissionService)，所以这里只需要发布assignment自己的事件。
+ */
+@Service
+@RequiredArgsConstructor
+public class AssignmentApplicationService {
+
+  private final AssignmentRepository assignmentRepository;
+  private final GrantProvisioningService grantProvisioningService;
+  private final PlanReachabilityService planReachabilityService;
+  private final EventBus eventBus;
+  private final IdService idService;
+  private final ApplicationEventPublisher permissionInvalidationPublisher;
+
+
+  @Transactional
+  public AssignmentId createAssignment(CreateAssignmentCommand command) {
+
+    AgentIdentityAssignment assignment = AgentIdentityAssignment.create(
+      idService.nextId(AssignmentId.class),
+      command.operator(),
+      command.accountId(),
+      command.roleCode(),
+      command.scopeDimension(),
+      command.scopeValue(),
+      command.inheritable()
+    );
+
+    grantProvisioningService.onAssignmentCreated(assignment);
+    assignment.domainEvents().forEach(eventBus::publish);
+    publishInvalidation(command.accountId());
+    return assignment.id();
+  }
+
+  public void changeRole(ChangeAssignmentRoleCommand command) {
+
+    AgentIdentityAssignment assignment = assignmentRepository.load(command.assignmentId())
+      .orElseThrow(() -> new IllegalArgumentException(
+        "身份分配不存在: " + command.assignmentId().value()));
+    grantProvisioningService.onAssignmentRoleChanged(assignment, command.newRoleCode());
+    assignment.domainEvents().forEach(eventBus::publish);
+    publishInvalidation(assignment.userNo());
+
+  }
+
+  @Transactional
+  public void deactivate(DeactivateAssignmentCommand command) {
+    AgentIdentityAssignment assignment = assignmentRepository.load(command.assignmentId())
+      .orElseThrow(() -> new IllegalArgumentException(
+        "身份分配不存在: " + command.assignmentId().value()));
+
+    grantProvisioningService.onAssignmentDeactivated(assignment);
+    assignment.domainEvents().forEach(eventBus::publish);
+    publishInvalidation(assignment.userNo());
+
+  }
+
+  /**
+   * Phase D 失效接线：身份分配直接作用于具体账号 → 定向失效（比 Grant 的全局失效精细）.
+   * 主体不可解析（null）时保守升级为全局失效.
+   */
+  private void publishInvalidation(UserNo accountId) {
+    if (accountId == null) {
+      permissionInvalidationPublisher.publishEvent(PermissionChangedEvent.global("auth-service"));
+      return;
+    }
+    permissionInvalidationPublisher.publishEvent(
+      PermissionChangedEvent.forAccount(accountId.value(), null, "auth-service"));
+  }
+
+  /**
+   * 网上渠道"我可以选哪些计划"查询
+   */
+  public List<PlanNo> listSelectablePlans(UserNo accountId) {
+    return planReachabilityService.listSelectablePlans(accountId);
+  }
+
+  /**
+   * 管理台"这个计划下有哪些经办"查询
+   */
+  public List<AgentIdentityAssignment> listAssignmentsForPlan(PlanNo planId) {
+    return planReachabilityService.listAssignmentsForPlan(planId);
+  }
+}

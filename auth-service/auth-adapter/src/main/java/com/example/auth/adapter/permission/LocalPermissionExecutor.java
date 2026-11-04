@@ -1,14 +1,14 @@
 package com.example.auth.adapter.permission;
 
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.permission.PermissionCheckContext;
 import com.example.shared.permission.PermissionCheckResult;
 import com.example.shared.permission.PermissionExecutor;
-import com.pension.permission.application.authorization.CheckPermissionQuery;
-import com.pension.permission.application.authorization.PermissionQueryService;
-import com.pension.permission.domain.authorization.valueobject.ActionCode;
-import com.pension.permission.domain.authorization.valueobject.BusinessCode;
+import com.example.auth.application.authorization.CheckPermissionQuery;
+import com.example.auth.application.authorization.PermissionQueryService;
+import com.example.auth.domain.authorization.valueobject.ActionCode;
+import com.example.auth.domain.authorization.valueobject.BusinessCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;

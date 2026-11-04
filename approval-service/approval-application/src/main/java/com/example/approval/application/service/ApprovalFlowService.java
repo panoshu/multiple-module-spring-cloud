@@ -11,7 +11,7 @@ import com.example.approval.domain.valueobject.MatchRules;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +60,7 @@ public class ApprovalFlowService {
       FlowName.of(request.flowName()),
       matchRules,
       nodes,
-      UserNo.of(request.createdBy())
+      request.createdBy()
     );
 
     // 保存审批流
@@ -95,7 +95,7 @@ public class ApprovalFlowService {
       FlowName.of(request.flowName()),
       matchRules,
       nodes,
-      UserNo.of(request.updatedBy())
+      request.updatedBy()
     );
 
     // 保存审批流
@@ -119,7 +119,7 @@ public class ApprovalFlowService {
     ApprovalFlow flow = loadFlowOrThrow(request.flowId());
 
     // 废弃审批流
-    flow.deprecate(UserNo.of(request.operatedBy()));
+    flow.deprecate(request.operatedBy());
 
     // 保存审批流
     flowRepository.save(flow);
@@ -255,7 +255,7 @@ public class ApprovalFlowService {
         : List.of(),
       null, // roleIds
       com.example.approval.types.enums.SignMode.OR_SIGN, // 默认或签
-      UserNo.of("SYSTEM") // TODO: 从上下文获取操作人
+      "SYSTEM" // TODO: 从上下文获取操作人
     );
   }
 
@@ -271,7 +271,7 @@ public class ApprovalFlowService {
       flow.flowVersion().value(),
       convertToMatchRulesDTO(flow.matchRules()),
       flow.getNodes().stream().map(this::convertToNodeDTO).toList(),
-      flow.createdBy().value(),
+      flow.createdBy(),
       flow.createdAt(),
       flow.updatedAt()
     );

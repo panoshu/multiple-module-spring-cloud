@@ -13,11 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>intranet-bff-adapter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>intranet-bff-infrastructure</artifactId>
+      <artifactId>intranet-bff-web</artifactId>
     </dependency>
 
     <!-- Web 服务基础设施：内嵌容器、自动配置、注册中心等 -->

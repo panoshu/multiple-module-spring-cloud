@@ -10,8 +10,8 @@ import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import com.tencent.kona.crypto.KonaCryptoProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +107,7 @@ class FileStorageRouterTest {
       "local-1", StorageType.LOCAL, "annuity/" + datePartition + "/BATCH_001/01H8FILE002/test.txt",
       FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
       FileStatus.UPLOADED, UserNo.of("u1"), LocalDateTime.now(), null,
-      UserNo.of("u1"), UserNo.of("u1"), null, null, null
+      "u1", "u1", null, null, null
     );
     when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
     when(targetResolver.resolveById("local-1")).thenReturn(target);
@@ -143,7 +143,7 @@ class FileStorageRouterTest {
       "local-1", StorageType.LOCAL, "test.txt",
       FileUsage.SOURCE, "annuity", "biz", BatchId.of("BATCH_001"),
       FileStatus.UPLOADED, UserNo.of("u1"), LocalDateTime.now(), null,
-      UserNo.of("u1"), UserNo.of("u1"), null, null, null
+      "u1", "u1", null, null, null
     );
     when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
     when(targetResolver.resolveById("local-1")).thenReturn(target);

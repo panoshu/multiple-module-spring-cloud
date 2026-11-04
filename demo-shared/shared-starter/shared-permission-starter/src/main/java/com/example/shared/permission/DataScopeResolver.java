@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.dto.DataScope;
+import com.example.shared.security.permission.DataScope;
 
 /**
  * 数据可见范围解析器抽象接口.

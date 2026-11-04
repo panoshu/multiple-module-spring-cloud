@@ -2,7 +2,7 @@ package com.example.approval.infrastructure.gateway;
 
 import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

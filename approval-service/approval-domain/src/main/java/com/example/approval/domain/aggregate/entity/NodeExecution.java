@@ -8,7 +8,7 @@ import com.example.approval.types.enums.ExecutionStatus;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class NodeExecution extends Entity<ExecutionId> {
   /**
    * 场景1: 业务创建
    */
-  private NodeExecution(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, UserNo operator) {
+  private NodeExecution(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, String operator) {
     super(id, operator);
     this.nodeId = nodeId;
     this.nodeOrder = nodeOrder;
@@ -72,7 +72,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    */
   private NodeExecution(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, ExecutionStatus status,
                         List<ApprovalRecord> approvals, LocalDateTime startedAt, LocalDateTime completedAt,
-                        UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                        String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.nodeId = nodeId;
     this.nodeOrder = nodeOrder;
@@ -92,7 +92,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    * @param operator  操作人
    * @return NodeExecution 实例
    */
-  public static NodeExecution create(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, UserNo operator) {
+  public static NodeExecution create(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, String operator) {
     if (nodeId == null) {
       throw new IllegalArgumentException("节点ID不能为空");
     }
@@ -110,7 +110,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    */
   public static NodeExecution reconstitute(ExecutionId id, NodeId nodeId, NodeOrder nodeOrder, ExecutionStatus status,
                                            List<ApprovalRecord> approvals, LocalDateTime startedAt, LocalDateTime completedAt,
-                                           UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                           String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new NodeExecution(id, nodeId, nodeOrder, status, approvals, startedAt, completedAt,
       createdBy, updatedBy, createdAt, updatedAt, version);
   }
@@ -120,7 +120,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    *
    * @param operator 操作人
    */
-  public void start(UserNo operator) {
+  public void start(String operator) {
     if (this.status != ExecutionStatus.PENDING) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_NOT_APPROVING)
         .withLogDetail("只有待执行状态的节点才能开始执行, ExecutionId: %s, status: %s".formatted(this.id(), this.status));
@@ -136,7 +136,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    * @param record   审批记录
    * @param operator 操作人
    */
-  public void addApprovalRecord(ApprovalRecord record, UserNo operator) {
+  public void addApprovalRecord(ApprovalRecord record, String operator) {
     if (this.isCompleted()) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_ALREADY_COMPLETED)
         .withLogDetail("已完成的节点不能再添加审批记录, ExecutionId: %s".formatted(this.id()));
@@ -157,7 +157,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    *
    * @param operator 操作人
    */
-  public void markApproved(UserNo operator) {
+  public void markApproved(String operator) {
     if (this.isCompleted()) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_ALREADY_COMPLETED)
         .withLogDetail("节点已完成，不能再次标记, ExecutionId: %s, status: %s".formatted(this.id(), this.status));
@@ -172,7 +172,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    *
    * @param operator 操作人
    */
-  public void markRejected(UserNo operator) {
+  public void markRejected(String operator) {
     if (this.isCompleted()) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_ALREADY_COMPLETED)
         .withLogDetail("节点已完成，不能再次标记, ExecutionId: %s, status: %s".formatted(this.id(), this.status));
@@ -187,7 +187,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    *
    * @param operator 操作人
    */
-  public void markSkipped(UserNo operator) {
+  public void markSkipped(String operator) {
     if (this.isCompleted()) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_ALREADY_COMPLETED)
         .withLogDetail("节点已完成，不能再次标记, ExecutionId: %s, status: %s".formatted(this.id(), this.status));

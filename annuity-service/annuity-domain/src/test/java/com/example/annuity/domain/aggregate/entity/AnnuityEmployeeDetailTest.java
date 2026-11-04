@@ -5,7 +5,6 @@ import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("AnnuityEmployeeDetail 实体行为")
 class AnnuityEmployeeDetailTest {
 
-  private static final UserNo OPERATOR = UserNo.of("U-TEST");
+  private static final String OPERATOR = "U-TEST";
 
   @Test
   @DisplayName("verify 成功后状态变为 VERIFIED")

@@ -4,7 +4,7 @@ import com.example.file.domain.model.aggregate.root.FileAccessLog;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessAction;
 import com.example.shared.domain.repository.Repository;
 import com.example.file.types.FileAccessLogId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;

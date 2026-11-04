@@ -1,12 +1,9 @@
 package com.example.shared.primitives.identity;
 
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.CustomerNo;
 import com.example.shared.identifier.id.EventId;
-import com.example.shared.identifier.id.FileId;
 import com.example.shared.identifier.id.SerialNo;
 import com.example.shared.identifier.id.TaskId;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,12 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 所有 {@link Identifier} 实现的校验契约测试。
+ * shared-types 内 {@link Identifier} 实现的校验契约测试。
  * <p>
  * 验证每个 ID 类型（record）的紧凑构造函数对 null/blank value 的防御性校验，
  * 以及工厂方法 {@code of()} 的行为一致性。
  * <p>
- * 标杆实现：{@link CustomerNo}、{@link UserNo}（已有完整校验和 of() 方法）。
+ * 注意：迁移至 business-core-types / file-types 的 ID 类型由各自模块的测试覆盖。
  *
  * @author panoshu
  * @since 2026/7/24
@@ -34,17 +31,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IdentifierValidationTest {
 
   /**
-   * 所有 ID 类型的构造函数引用。
-   * 用于参数化测试，确保每个 ID 都遵守相同的校验契约。
+   * shared-types 内所有 ID 类型的构造函数引用。
    */
   static Stream<Arguments> allIdConstructors() {
     return Stream.of(
-      Arguments.of("CustomerNo", (Function<String, Object>) CustomerNo::new),
       Arguments.of("EventId", (Function<String, Object>) EventId::new),
-      Arguments.of("FileId", (Function<String, Object>) FileId::new),
       Arguments.of("SerialNo", (Function<String, Object>) SerialNo::new),
-      Arguments.of("TaskId", (Function<String, Object>) TaskId::new),
-      Arguments.of("UserNo", (Function<String, Object>) UserNo::new)
+      Arguments.of("TaskId", (Function<String, Object>) TaskId::new)
     );
   }
 

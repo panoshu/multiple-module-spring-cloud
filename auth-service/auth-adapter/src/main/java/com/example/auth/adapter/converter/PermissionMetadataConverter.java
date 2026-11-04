@@ -3,8 +3,8 @@ package com.example.auth.adapter.converter;
 import com.example.auth.api.dto.PermissionGroupResponse;
 import com.example.auth.api.dto.PermissionItemResponse;
 import com.example.auth.api.dto.PermissionResponse;
-import com.pension.permission.domain.authorization.valueobject.Permission;
-import com.pension.permission.domain.permission.aggregate.PermissionItem;
+import com.example.auth.domain.authorization.valueobject.Permission;
+import com.example.auth.domain.permission.aggregate.PermissionItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

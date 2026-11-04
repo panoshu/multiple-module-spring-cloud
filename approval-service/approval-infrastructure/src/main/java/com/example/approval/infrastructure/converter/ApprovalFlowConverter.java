@@ -12,7 +12,7 @@ import com.example.approval.types.enums.FlowStatus;
 import com.example.approval.types.enums.NodeType;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,8 +52,8 @@ public interface ApprovalFlowConverter {
   // createTime/updateTime 由数据库 @Column(onInsertValue/onUpdateValue) 自动管理
   @Mapping(target = "createTime", ignore = true)
   @Mapping(target = "updateTime", ignore = true)
-  @Mapping(target = "createdBy", expression = "java(flow.createdBy() != null ? flow.createdBy().value() : null)")
-  @Mapping(target = "updatedBy", expression = "java(flow.updatedBy() != null ? flow.updatedBy().value() : null)")
+  @Mapping(target = "createdBy", expression = "java(flow.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(flow.updatedBy())")
   @Mapping(target = "version", expression = "java(flow.version() != null ? (int) flow.version().value() : null)")
   @Mapping(target = "deleted", constant = "false")
   ApprovalFlowDO toDO(ApprovalFlow flow);
@@ -75,8 +75,8 @@ public interface ApprovalFlowConverter {
       null,
       toFlowVersion(flowDO.getFlowVersion()),
       stringToFlowStatus(flowDO.getStatus()),
-      toUserNo(flowDO.getCreatedBy()),
-      toUserNo(flowDO.getUpdatedBy()),
+      flowDO.getCreatedBy(),
+      flowDO.getUpdatedBy(),
       flowDO.getCreateTime(),
       flowDO.getUpdateTime(),
       toVersion(flowDO.getVersion())
@@ -102,8 +102,8 @@ public interface ApprovalFlowConverter {
   // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
   @Mapping(target = "createTime", expression = "java(node.createdAt())")
   @Mapping(target = "updateTime", expression = "java(node.updatedAt())")
-  @Mapping(target = "createdBy", expression = "java(node.createdBy() != null ? node.createdBy().value() : null)")
-  @Mapping(target = "updatedBy", expression = "java(node.updatedBy() != null ? node.updatedBy().value() : null)")
+  @Mapping(target = "createdBy", expression = "java(node.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(node.updatedBy())")
   @Mapping(target = "version", expression = "java(node.version() != null ? (int) node.version().value() : null)")
   @Mapping(target = "deleted", constant = "false")
   ApprovalNodeDO toNodeDO(ApprovalNode node);
@@ -128,8 +128,8 @@ public interface ApprovalFlowConverter {
       jsonToUserNoList(nodeDO.getApproverIds()),
       jsonToStringList(nodeDO.getRoleIds()),
       stringToSignMode(nodeDO.getSignMode()),
-      toUserNo(nodeDO.getCreatedBy()),
-      toUserNo(nodeDO.getUpdatedBy()),
+      nodeDO.getCreatedBy(),
+      nodeDO.getUpdatedBy(),
       nodeDO.getCreateTime(),
       nodeDO.getUpdateTime(),
       toVersion(nodeDO.getVersion())

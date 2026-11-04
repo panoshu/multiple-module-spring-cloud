@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.annotation.DataScope;
+import com.example.shared.security.annotation.DataScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -32,7 +32,7 @@ public class DataScopeAspect {
   @Around("@annotation(dataScope)")
   public Object applyDataScope(ProceedingJoinPoint joinPoint, DataScope dataScope) throws Throwable {
     try {
-      com.example.auth.api.dto.DataScope scope = dataScopeResolver.resolve(dataScope.business());
+      com.example.shared.security.permission.DataScope scope = dataScopeResolver.resolve(dataScope.business());
       DataScopeContext.set(scope);
       return joinPoint.proceed();
     } finally {

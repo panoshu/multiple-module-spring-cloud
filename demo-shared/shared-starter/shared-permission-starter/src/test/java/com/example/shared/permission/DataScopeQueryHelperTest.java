@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.dto.DataScope;
+import com.example.shared.security.permission.DataScope;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;

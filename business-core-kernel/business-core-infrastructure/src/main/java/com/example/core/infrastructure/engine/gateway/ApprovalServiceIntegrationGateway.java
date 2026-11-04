@@ -57,7 +57,7 @@ public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGat
       matchedFlow.flowId(),
       application.id().value(),
       resolveBusinessType(context),
-      application.createdBy().value()
+      application.createdBy()
     );
 
     ApiResult<ApprovalInstanceIdResponse> result = approvalInstanceApi.start(startReq);

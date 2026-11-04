@@ -6,7 +6,7 @@ import com.example.annuity.api.dto.ApplicationResponse;
 import com.example.annuity.api.dto.BatchStatusResponse;
 import com.example.annuity.api.dto.UploadFormRequest;
 import com.example.annuity.application.service.AnnuityAppService;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.shared.web.core.api.ApiResult;

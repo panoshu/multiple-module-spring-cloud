@@ -1,7 +1,7 @@
 package com.example.core.adapter.context;
 
 import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class BusinessMetaContextAssemblerTest {
 
   @Test
   void should_assemble_meta_context_from_command_and_session() {
-    SessionContext session = new SessionContext(
+    SessionClaims session = new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "INTERNET", "CLI001", "127.0.0.1",
       "C001", "Customer A",
@@ -47,7 +47,7 @@ class BusinessMetaContextAssemblerTest {
 
   @Test
   void should_throw_when_plan_no_mismatch() {
-    SessionContext session = new SessionContext(
+    SessionClaims session = new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "INTERNET", "CLI001", "127.0.0.1",
       "C001", "Customer A",

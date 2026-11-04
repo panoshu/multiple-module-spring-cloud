@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>bff-shared</artifactId>
+      <artifactId>bff-framework</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>

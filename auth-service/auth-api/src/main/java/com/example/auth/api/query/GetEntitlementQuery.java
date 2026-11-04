@@ -1,6 +1,6 @@
 package com.example.auth.api.query;
 
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 
 /**
  * 查询客户渠道开通记录查询对象.

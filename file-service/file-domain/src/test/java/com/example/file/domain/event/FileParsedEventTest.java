@@ -5,8 +5,8 @@ import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +18,7 @@ class FileParsedEventTest {
   @Test
   void should_build_event_from_task() {
     ParseTask task = ParseTask.create(FileTaskId.of("tsk1"), BizType.of("import_declare"),
-      "f.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL, List.of("detailList.deptCode"), UserNo.of("u1"));
+      "f.xlsx", new FileId("01H8SAMPLEFILE001"), ErrorPolicy.COLLECT_ALL, List.of("detailList.deptCode"), "u1");
     task.markParsing();
     task.markSplitting();
     task.markValidating();

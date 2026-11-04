@@ -9,7 +9,6 @@ import com.example.file.infrastructure.entity.TemplateConfigDO;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,8 +38,8 @@ public interface TemplateConfigConverter {
   @Mapping(target = "status", expression = "java(configStatusToString(config.status()))")
   @Mapping(target = "effectiveFrom", expression = "java(config.effectiveFrom())")
   @Mapping(target = "effectiveTo", expression = "java(config.effectiveTo())")
-  @Mapping(target = "createdBy", expression = "java(config.createdBy().value())")
-  @Mapping(target = "updatedBy", expression = "java(config.updatedBy().value())")
+  @Mapping(target = "createdBy", expression = "java(config.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(config.updatedBy())")
   @Mapping(target = "createTime", expression = "java(config.createdAt())")
   @Mapping(target = "updateTime", expression = "java(config.updatedAt())")
   @Mapping(target = "version", expression = "java((int) config.version().value())")
@@ -57,8 +56,8 @@ public interface TemplateConfigConverter {
   @Mapping(target = "sourceTemplates", source = "sourceTemplates", qualifiedByName = "jsonToSourceTemplateList")
   @Mapping(target = "targetMapping", source = "targetMapping", qualifiedByName = "jsonToTargetMapping")
   @Mapping(target = "status", source = "status", qualifiedByName = "stringToConfigStatus")
-  @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-  @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
+  @Mapping(target = "createdBy", source = "createdBy")
+  @Mapping(target = "updatedBy", source = "updatedBy")
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version1", source = "version", qualifiedByName = "toVersion")
@@ -67,11 +66,6 @@ public interface TemplateConfigConverter {
   @Named("toTemplateConfigId")
   default TemplateConfigId toTemplateConfigId(String id) {
     return id != null ? TemplateConfigId.of(id) : null;
-  }
-
-  @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
   }
 
   @Named("toVersion")

@@ -1,9 +1,9 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.PermissionCheckApi;
-import com.example.auth.api.dto.DataScope;
-import com.example.auth.api.dto.DataScopeResponse;
-import com.example.auth.api.query.DataScopeRequest;
+import com.example.shared.security.permission.PermissionCheckPort;
+import com.example.shared.security.permission.DataScope;
+import com.example.shared.security.permission.DataScopeResponse;
+import com.example.shared.security.permission.DataScopeRequest;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +24,11 @@ import java.util.Set;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnBean(PermissionCheckApi.class)
+@ConditionalOnBean(PermissionCheckPort.class)
 @ConditionalOnMissingBean(DataScopeResolver.class)
 public class DefaultDataScopeResolver implements DataScopeResolver {
 
-  private final PermissionCheckApi permissionCheckApi;
+  private final PermissionCheckPort permissionCheckApi;
   private final AccountIdResolver accountIdResolver;
 
   @Override

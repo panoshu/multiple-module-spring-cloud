@@ -3,7 +3,7 @@ package com.example.file.infrastructure.gateway;
 import com.example.file.domain.gateway.ConfigLoader;
 import com.example.file.domain.model.aggregate.root.TemplateConfig;
 import com.example.file.types.BizType;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -97,7 +97,7 @@ class YamlConfigLoaderTest {
     TemplateConfig config = loader.loadFromYaml(
       BizType.of("ENTERPRISE_PLAN"), BASELINE_YAML,
       List.of(SOURCE_TEMPLATE_YAML), "1.0",
-      UserNo.of("test-user"));
+      "test-user");
 
     assertThat(config.bizType().value()).isEqualTo("ENTERPRISE_PLAN");
     assertThat(config.templateVersion()).isEqualTo("1.0");
@@ -109,7 +109,7 @@ class YamlConfigLoaderTest {
     TemplateConfig config = loader.loadFromYaml(
       BizType.of("ENTERPRISE_PLAN"), BASELINE_YAML,
       List.of(SOURCE_TEMPLATE_YAML), "1.0",
-      UserNo.of("test-user"));
+      "test-user");
 
     assertThat(config.canonicalModel().properties()).hasSize(6);
     assertThat(config.canonicalModel().tables()).hasSize(1);
@@ -121,7 +121,7 @@ class YamlConfigLoaderTest {
     TemplateConfig config = loader.loadFromYaml(
       BizType.of("ENTERPRISE_PLAN"), BASELINE_YAML,
       List.of(SOURCE_TEMPLATE_YAML), "1.0",
-      UserNo.of("test-user"));
+      "test-user");
 
     assertThat(config.validationRules()).hasSize(2);
     assertThat(config.validationRules().get(0).field()).isEqualTo("idNo");
@@ -133,7 +133,7 @@ class YamlConfigLoaderTest {
     TemplateConfig config = loader.loadFromYaml(
       BizType.of("ENTERPRISE_PLAN"), BASELINE_YAML,
       List.of(SOURCE_TEMPLATE_YAML), "1.0",
-      UserNo.of("test-user"));
+      "test-user");
 
     assertThat(config.splitConfig().keys()).contains("customerNo");
     assertThat(config.splitConfig().splitKey().sourcePath()).isEqualTo("employees.customerNo");
@@ -145,7 +145,7 @@ class YamlConfigLoaderTest {
     TemplateConfig config = loader.loadFromYaml(
       BizType.of("ENTERPRISE_PLAN"), BASELINE_YAML,
       List.of(SOURCE_TEMPLATE_YAML), "1.0",
-      UserNo.of("test-user"));
+      "test-user");
 
     assertThat(config.sourceTemplates()).hasSize(1);
     assertThat(config.sourceTemplates().get(0).id().value()).isEqualTo("STANDARD_TEMPLATE");

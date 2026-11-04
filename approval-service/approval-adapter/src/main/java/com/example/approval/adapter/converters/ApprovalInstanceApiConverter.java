@@ -34,7 +34,7 @@ public final class ApprovalInstanceApiConverter {
       instance.businessApplicationId().value(),
       null, // businessType
       instance.status().name(),
-      instance.createdBy().value(),
+      instance.createdBy(),
       instance.currentNodeOrder().toString(),
       instance.getNodeExecutions().stream()
         .map(ApprovalInstanceApiConverter::toNodeExecutionDTO)

@@ -1,7 +1,8 @@
 package com.example.shared.permission;
+import com.example.shared.security.annotation.PlanIdAware;
 
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import org.aspectj.lang.ProceedingJoinPoint;
 
 /**

@@ -8,8 +8,8 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class OpenFileUseCaseTest {
       "local-1", StorageType.LOCAL, "key",
       FileUsage.SOURCE, "annuity", "biz", BatchId.of("B001"),
       FileStatus.DELETED, UserNo.of("u1"), null, null,
-      UserNo.of("u1"), UserNo.of("u1"), null, null, Version.initial()
+      "u1", "u1", null, null, Version.initial()
     );
     when(metadataRepository.loadOrThrow(fileId)).thenReturn(file);
 

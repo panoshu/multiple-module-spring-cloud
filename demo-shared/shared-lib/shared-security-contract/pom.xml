@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>shared-lib</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>shared-security-contract</artifactId>
+  <description>安全横切契约（零依赖纯契约）：会话声明 SessionClaims、渠道枚举 ChannelType、权限注解族（@RequirePermission/@DataScope 等）、PlanIdAware。
+    依赖方向铁律：本模块不得依赖任何业务 artifact 与传输层注解；网关框架、kernel、auth、permission-starter 等四方只单向引用本契约。</description>
+
+  <dependencies>
+    <!-- 权限校验端口复用通用响应信封 + 契约 DTO 校验注解 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+    </dependency>
+      <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

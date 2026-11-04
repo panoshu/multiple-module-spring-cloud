@@ -13,7 +13,6 @@ import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,12 +33,12 @@ public class BusinessForm extends AggregateRoot<FormId> {
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
 
-  protected BusinessForm(FormId formId, UserNo userNo) {
+  protected BusinessForm(FormId formId, String userNo) {
     super(formId, userNo);
     this.validateInvariants();
   }
 
-  protected BusinessForm(FormId formId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessForm(FormId formId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(formId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
   }
@@ -79,8 +78,8 @@ public class BusinessForm extends AggregateRoot<FormId> {
    */
   public static BusinessForm reconstitute(
     FormId formId,
-    UserNo createdBy,
-    UserNo updatedBy,
+    String createdBy,
+    String updatedBy,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     Version version,

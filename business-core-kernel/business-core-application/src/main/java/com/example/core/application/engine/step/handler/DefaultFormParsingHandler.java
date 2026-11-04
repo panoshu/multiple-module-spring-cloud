@@ -9,7 +9,7 @@ import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

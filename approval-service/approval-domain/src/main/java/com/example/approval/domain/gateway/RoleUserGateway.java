@@ -1,7 +1,7 @@
 package com.example.approval.domain.gateway;
 
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.util.List;
 

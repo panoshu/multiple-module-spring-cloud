@@ -2,16 +2,16 @@ package com.example.auth.adapter.channel;
 
 import com.example.auth.adapter.converter.CustomerChannelEntitlementConverter;
 import com.example.auth.api.CustomerChannelEntitlementApi;
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.auth.api.command.DisableChannelRequest;
 import com.example.auth.api.command.EnableChannelRequest;
 import com.example.auth.api.command.ReplaceChannelsRequest;
 import com.example.auth.api.dto.CustomerChannelEntitlementResponse;
 import com.example.auth.api.query.GetEntitlementRequest;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.application.channel.CustomerChannelEntitlementService;
+import com.example.auth.application.channel.CustomerChannelEntitlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 

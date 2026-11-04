@@ -13,7 +13,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
 import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

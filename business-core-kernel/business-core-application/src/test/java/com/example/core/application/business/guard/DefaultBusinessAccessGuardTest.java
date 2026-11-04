@@ -1,7 +1,7 @@
 package com.example.core.application.business.guard;
 
 import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,8 +25,8 @@ class DefaultBusinessAccessGuardTest {
     guard = new DefaultBusinessAccessGuard();
   }
 
-  private SessionContext internetSession(boolean isProxy, Set<String> delegatedPlanNos, Set<String> permissions) {
-    return new SessionContext(
+  private SessionClaims internetSession(boolean isProxy, Set<String> delegatedPlanNos, Set<String> permissions) {
+    return new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "INTERNET", "CLI001", "127.0.0.1",
       "C001", "Customer A",
@@ -37,8 +37,8 @@ class DefaultBusinessAccessGuardTest {
     );
   }
 
-  private SessionContext branchSession(boolean hasSecondaryAuth) {
-    return new SessionContext(
+  private SessionClaims branchSession(boolean hasSecondaryAuth) {
+    return new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "BRANCH", "CLI001", "127.0.0.1",
       "C001", "Customer A",
@@ -49,8 +49,8 @@ class DefaultBusinessAccessGuardTest {
     );
   }
 
-  private SessionContext hqSession() {
-    return new SessionContext(
+  private SessionClaims hqSession() {
+    return new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "HQ", "CLI001", "127.0.0.1",
       "C001", "Customer A",
@@ -68,14 +68,14 @@ class DefaultBusinessAccessGuardTest {
 
   @Test
   void should_pass_for_internet_non_proxy_with_permission() {
-    SessionContext session = internetSession(false, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
+    SessionClaims session = internetSession(false, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
     assertThatCode(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .doesNotThrowAnyException();
   }
 
   @Test
   void should_fail_when_business_type_permission_missing() {
-    SessionContext session = internetSession(false, Set.of(), Set.of());
+    SessionClaims session = internetSession(false, Set.of(), Set.of());
     assertThatThrownBy(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .isInstanceOf(BusinessException.class)
       .extracting(ex -> ((BusinessException) ex).displayMessage())
@@ -85,7 +85,7 @@ class DefaultBusinessAccessGuardTest {
 
   @Test
   void should_fail_when_plan_no_mismatch() {
-    SessionContext session = internetSession(false, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
+    SessionClaims session = internetSession(false, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
     assertThatThrownBy(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P999")))
       .isInstanceOf(BusinessException.class)
       .extracting(ex -> ((BusinessException) ex).displayMessage())
@@ -95,14 +95,14 @@ class DefaultBusinessAccessGuardTest {
 
   @Test
   void should_pass_for_internet_proxy_with_delegated_plan() {
-    SessionContext session = internetSession(true, Set.of("P001"), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
+    SessionClaims session = internetSession(true, Set.of("P001"), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
     assertThatCode(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .doesNotThrowAnyException();
   }
 
   @Test
   void should_fail_for_internet_proxy_without_delegation() {
-    SessionContext session = internetSession(true, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
+    SessionClaims session = internetSession(true, Set.of(), Set.of("BUSINESS_ANNUITY_OPEN_HANDLE"));
     assertThatThrownBy(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .isInstanceOf(BusinessException.class)
       .extracting(ex -> ((BusinessException) ex).displayMessage())
@@ -112,14 +112,14 @@ class DefaultBusinessAccessGuardTest {
 
   @Test
   void should_pass_for_branch_with_secondary_auth() {
-    SessionContext session = branchSession(true);
+    SessionClaims session = branchSession(true);
     assertThatCode(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .doesNotThrowAnyException();
   }
 
   @Test
   void should_fail_for_branch_without_secondary_auth() {
-    SessionContext session = branchSession(false);
+    SessionClaims session = branchSession(false);
     assertThatThrownBy(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .isInstanceOf(BusinessException.class)
       .extracting(ex -> ((BusinessException) ex).displayMessage())
@@ -129,7 +129,7 @@ class DefaultBusinessAccessGuardTest {
 
   @Test
   void should_pass_for_hq_channel() {
-    SessionContext session = hqSession();
+    SessionClaims session = hqSession();
     assertThatCode(() -> guard.checkCanHandle(session, metaWith("ANNUITY_OPEN", "P001")))
       .doesNotThrowAnyException();
   }

@@ -8,7 +8,6 @@ import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    * 业务创建构造器
    */
   private AnnuityEmployeeBatch(AnnuityEmployeeBatchId id, ApplicationId applicationId,
-                               int totalEmployeeCount, UserNo createdBy) {
+                               int totalEmployeeCount, String createdBy) {
     super(id, createdBy);
     this.applicationId = Objects.requireNonNull(applicationId, "applicationId cannot be null");
     if (totalEmployeeCount < 0) {
@@ -56,7 +55,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
   public AnnuityEmployeeBatch(AnnuityEmployeeBatchId id, ApplicationId applicationId,
                               List<AnnuityEmployeeDetail> details, AnnuityEmployeeBatchStatus status,
                               int totalEmployeeCount, int processedCount, int anomalyCount,
-                              UserNo createdBy, UserNo updatedBy,
+                              String createdBy, String updatedBy,
                               LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.applicationId = applicationId;
@@ -72,7 +71,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
    * 工厂方法:创建新批次
    */
   public static AnnuityEmployeeBatch create(AnnuityEmployeeBatchId id, ApplicationId applicationId,
-                                            int totalEmployeeCount, UserNo createdBy) {
+                                            int totalEmployeeCount, String createdBy) {
     return new AnnuityEmployeeBatch(id, applicationId, totalEmployeeCount, createdBy);
   }
 
@@ -100,7 +99,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
   /**
    * 标记明细已处理
    */
-  public void markDetailProcessed(AnnuityEmployeeDetailId detailId, UserNo operator) {
+  public void markDetailProcessed(AnnuityEmployeeDetailId detailId, String operator) {
     AnnuityEmployeeDetail detail = findDetailOrThrow(detailId);
     if (detail.status() != AnnuityEmployeeDetailStatus.PENDING) {
       throw new IllegalStateException("明细非 PENDING 状态,不可重复处理: " + detailId);
@@ -113,7 +112,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
   /**
    * 标记明细异常
    */
-  public void markDetailAnomaly(AnnuityEmployeeDetailId detailId, String reason, UserNo operator) {
+  public void markDetailAnomaly(AnnuityEmployeeDetailId detailId, String reason, String operator) {
     AnnuityEmployeeDetail detail = findDetailOrThrow(detailId);
     if (detail.status() == AnnuityEmployeeDetailStatus.ANOMALY) {
       throw new IllegalStateException("明细已标记为异常,不可重复标记: " + detailId);
@@ -126,7 +125,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
   /**
    * 完成批次
    */
-  public void complete(UserNo operator) {
+  public void complete(String operator) {
     if (!isAllProcessed()) {
       throw new IllegalStateException("尚有明细未全部处理,无法完成批次");
     }
@@ -137,7 +136,7 @@ public class AnnuityEmployeeBatch extends AggregateRoot<AnnuityEmployeeBatchId> 
   /**
    * 批次失败
    */
-  public void fail(String reason, UserNo operator) {
+  public void fail(String reason, String operator) {
     this.status = AnnuityEmployeeBatchStatus.FAILED;
     this.markUpdated(operator);
   }

@@ -1,6 +1,6 @@
 package com.example.file.domain.gateway;
 
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 
 /**
  * 文件复制结果

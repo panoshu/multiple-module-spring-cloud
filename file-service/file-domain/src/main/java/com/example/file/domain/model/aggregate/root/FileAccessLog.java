@@ -7,10 +7,10 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.file.types.FileAccessLogId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,7 +41,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
                         CustomerNo customerNo, ProductNo productNo, UserNo operator,
                         String sourceApp, String sourceIp, String tokenHash,
                         FileAccessResult result, String failReason, LocalDateTime occurAt) {
-    super(id, operator);
+    super(id, operator.value());
     this.fileId = fileId;
     this.action = action;
     this.usage = usage;
@@ -62,7 +62,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
                        CustomerNo customerNo, ProductNo productNo, UserNo operator,
                        String sourceApp, String sourceIp, String tokenHash,
                        FileAccessResult result, String failReason, LocalDateTime occurAt,
-                       UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                       String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.fileId = fileId;
     this.action = action;
@@ -113,7 +113,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
                                            CustomerNo customerNo, ProductNo productNo, UserNo operator,
                                            String sourceApp, String sourceIp, String tokenHash,
                                            FileAccessResult result, String failReason, LocalDateTime occurAt,
-                                           UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                           String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new FileAccessLog(id, fileId, action, usage, customerNo, productNo, operator,
       sourceApp, sourceIp, tokenHash, result, failReason, occurAt,
       createdBy, updatedBy, createdAt, updatedAt, version);
@@ -141,7 +141,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
   public void markFail(String failReason) {
     this.result = FileAccessResult.FAIL;
     this.failReason = failReason;
-    markUpdated(operator);
+    markUpdated(operator.value());
   }
 
   @Override

@@ -6,7 +6,7 @@ import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.event.FileParsedEventDTO;
 import com.example.file.api.event.OutboundFileGeneratedEventDTO;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

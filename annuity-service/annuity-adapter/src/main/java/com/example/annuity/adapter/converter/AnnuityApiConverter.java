@@ -10,13 +10,13 @@ import com.example.annuity.application.result.UploadFormResult;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.OperatingMode;
+import com.example.shared.enumeration.EnumCodeCache;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.UserNo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -78,7 +78,7 @@ public interface AnnuityApiConverter {
       null,
       PlanNo.of(request.planNo()),
       null,
-      request.operationModel() != null ? OperationModel.valueOf(request.operationModel()) : null,
+      request.operationModel() != null ? EnumCodeCache.get(OperatingMode.class, request.operationModel()) : null,
       request.accountManager() != null ? AccountManager.valueOf(request.accountManager()) : null
     );
   }
@@ -88,8 +88,8 @@ public interface AnnuityApiConverter {
    */
   default OperatorInfo toOperatorInfo(UploadFormRequest request) {
     return new OperatorInfo(
-      request.channel() != null ? AnnuityChannel.valueOf(request.channel()) : null,
-      UserNo.of(request.operatorId()),
+      request.channel() != null ? EnumCodeCache.get(Channel.class, request.channel()) : null,
+      request.operatorId(),
       request.operatorName(),
       false
     );

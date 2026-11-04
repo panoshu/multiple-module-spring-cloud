@@ -8,7 +8,8 @@ import com.example.file.infrastructure.entity.FileMetadataDO;
 import com.example.file.infrastructure.mapper.FileMetadataMapper;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
     if (file == null) {
       return;
     }
-    file.markDeleted(file.updatedBy() != null ? file.updatedBy() : file.createdBy());
+    file.markDeleted(UserNo.of(file.updatedBy() != null ? file.updatedBy() : file.createdBy()));
     save(file);
   }
 

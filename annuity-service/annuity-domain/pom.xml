@@ -25,6 +25,11 @@
       <artifactId>business-core-domain</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-types</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>

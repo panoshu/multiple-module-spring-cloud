@@ -9,7 +9,7 @@ import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.NodeId;
 import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.SignMode;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("ApprovalFlow 审批流聚合根测试")
 class ApprovalFlowTest {
 
-  private static final UserNo OPERATOR = UserNo.of("user-001");
+  private static final String OPERATOR = "user-001";
 
   private ApprovalNode singleNode() {
     return ApprovalNode.createSamePlanNode(

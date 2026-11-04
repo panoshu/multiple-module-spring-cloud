@@ -21,7 +21,7 @@ import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -190,9 +190,9 @@ public class AnnuityAppService {
       ext != null ? ext.planType() : null,
       ext != null ? ext.initialContribution() : null,
       ext != null ? ext.hasForeignInvestment() : null,
-      app.createdBy() != null ? app.createdBy().value() : null,
+      app.createdBy(),
       app.createdAt(),
-      app.updatedBy() != null ? app.updatedBy().value() : null,
+      app.updatedBy(),
       app.updatedAt()
     );
   }

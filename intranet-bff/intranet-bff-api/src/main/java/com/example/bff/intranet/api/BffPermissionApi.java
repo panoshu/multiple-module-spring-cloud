@@ -1,6 +1,14 @@
 package com.example.bff.intranet.api;
 
 import com.example.auth.api.dto.*;
+import com.example.shared.security.permission.DataScopeRequest;
+import com.example.shared.security.permission.DataScopeResponse;
+import com.example.shared.security.permission.PermissionCheckRequest;
+import com.example.shared.security.permission.PermissionCheckResponse;
+import com.example.shared.security.permission.DataScopeRequest;
+import com.example.shared.security.permission.DataScopeResponse;
+import com.example.shared.security.permission.PermissionCheckRequest;
+import com.example.shared.security.permission.PermissionCheckResponse;
 import com.example.auth.api.query.*;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;

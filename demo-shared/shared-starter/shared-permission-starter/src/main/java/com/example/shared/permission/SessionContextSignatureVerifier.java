@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.util.SessionSignatureUtils;
+import com.example.shared.utils.session.SessionSignatureUtils;
 
 /**
  * 会话上下文签名验证 SPI。

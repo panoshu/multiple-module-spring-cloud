@@ -2,16 +2,16 @@ package com.example.auth.adapter.permission;
 
 import com.example.auth.adapter.converter.PermissionMetadataConverter;
 import com.example.auth.api.PermissionCacheApi;
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.auth.api.dto.PermissionResponse;
 import com.example.auth.api.query.GetBusinessPermissionsRequest;
 import com.example.auth.api.query.GetPlatformPermissionsRequest;
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.application.permission.PermissionCacheService;
-import com.pension.permission.domain.authorization.valueobject.Permission;
+import com.example.auth.application.permission.PermissionCacheService;
+import com.example.auth.domain.authorization.valueobject.Permission;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 

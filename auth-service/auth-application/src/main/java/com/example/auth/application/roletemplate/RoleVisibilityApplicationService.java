@@ -1,0 +1,34 @@
+package com.example.auth.application.roletemplate;
+
+
+import com.example.core.types.PlanNo;
+import com.example.auth.domain.role.repository.RoleVisibilityRepository;
+import com.example.auth.domain.role.service.RoleVisibilityResolver;
+import com.example.auth.domain.role.valueobject.RoleVisibilityScope;
+import com.example.auth.types.RoleCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * "给这个计划分配经办时，下拉框展示哪些角色"的查询用例，以及可见性开关的配置用例
+ */
+@Service
+@RequiredArgsConstructor
+public class RoleVisibilityApplicationService {
+
+  private final RoleVisibilityResolver roleVisibilityResolver;
+  private final RoleVisibilityRepository roleVisibilityRepository;
+
+  public List<RoleCode> listSelectableRoles(PlanNo planId) {
+    return roleVisibilityResolver.listSelectableRoles(planId);
+  }
+
+  @Transactional
+  public void setVisibility(SetRoleVisibilityCommand command) {
+    roleVisibilityRepository.save(
+      new RoleVisibilityScope(command.dimension(), command.value(), command.mode()));
+  }
+}

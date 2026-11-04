@@ -10,7 +10,6 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   // 业务创建
   private SubTaskData(SubTaskId id, FileTaskId fileTaskId, BizType bizType, String splitKeyValue,
                       BusinessContext context, Map<String, Object> properties,
-                      Map<String, List<Map<String, Object>>> tables, int rowCount, UserNo userNo,
+                      Map<String, List<Map<String, Object>>> tables, int rowCount, String userNo,
                       LocalDateTime expiresAt) {
     super(id, userNo);
     this.fileTaskId = fileTaskId;
@@ -56,7 +55,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
                      BusinessContext context, Map<String, Object> properties,
                      Map<String, List<Map<String, Object>>> tables, int rowCount, SubTaskStatus status,
                      List<ValidationError> validationErrors, LocalDateTime expiresAt, LocalDateTime consumedAt,
-                     UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                     String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.fileTaskId = fileTaskId;
     this.bizType = bizType;
@@ -76,7 +75,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
                                    String splitKeyValue, BusinessContext context,
                                    Map<String, Object> properties,
                                    Map<String, List<Map<String, Object>>> tables, int rowCount,
-                                   UserNo userNo, LocalDateTime expiresAt) {
+                                   String userNo, LocalDateTime expiresAt) {
     return new SubTaskData(id, fileTaskId, bizType, splitKeyValue, context, properties,
       tables, rowCount, userNo, expiresAt);
   }

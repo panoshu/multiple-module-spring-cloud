@@ -17,9 +17,9 @@ import com.example.file.api.response.ApplyUploadTokenResponse;
 import com.example.file.api.response.FileTaskIdResponse;
 import com.example.file.api.response.OutboundFileIdResponse;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -227,7 +227,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   private String resolveUploader(BusinessForm businessForm) {
     return businessForm.operatorInfo() != null
-      ? businessForm.operatorInfo().operatorId().value()
+      ? businessForm.operatorInfo().operatorId()
       : "system";
   }
 

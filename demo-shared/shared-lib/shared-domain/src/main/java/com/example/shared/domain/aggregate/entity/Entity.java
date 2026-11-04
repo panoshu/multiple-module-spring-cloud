@@ -2,7 +2,6 @@ package com.example.shared.domain.aggregate.entity;
 
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.UserNo;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -17,20 +16,20 @@ import java.time.LocalDateTime;
 
 public abstract class Entity<ID extends Identifier<?>> implements Serializable {
   private final ID id;
-  private final UserNo createdBy;
+  private final String createdBy;
   private final LocalDateTime createdAt; // 创建时间
-  private UserNo updatedBy;
+  private String updatedBy;
   private LocalDateTime updatedAt; // 更新时间
   private Version version;      // 乐观锁版本号
 
   // 场景1: 业务创建新对象 (New)
-  protected Entity(ID id, UserNo createdBy) {
+  protected Entity(ID id, String createdBy) {
     LocalDateTime now = LocalDateTime.now();
     this(id, createdBy, createdBy, now, now, Version.initial());
   }
 
   // 场景2: 从数据库重建对象 (Reconstitute) - [新增]
-  protected Entity(ID id, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected Entity(ID id, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     if (id == null) {
       throw new IllegalArgumentException("Entity ID cannot be null.");
     }
@@ -47,9 +46,9 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
   }
 
   // 通常在更新操作时调用，更新updatedAt并增加版本
-  protected void markUpdated(UserNo operator) {
+  protected void markUpdated(String operator) {
     if (operator == null) {
-      throw new IllegalArgumentException("Operator (UserNo) cannot be null for update operation.");
+      throw new IllegalArgumentException("Operator cannot be null for update operation.");
     }
     this.updatedBy = operator;
     this.updatedAt = LocalDateTime.now();
@@ -64,11 +63,11 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     return this.id;
   }
 
-  public UserNo createdBy() {
+  public String createdBy() {
     return this.createdBy;
   }
 
-  public UserNo updatedBy() {
+  public String updatedBy() {
     return this.updatedBy;
   }
 

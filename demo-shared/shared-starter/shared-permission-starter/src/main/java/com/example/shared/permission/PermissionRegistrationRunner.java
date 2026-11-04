@@ -1,10 +1,10 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.PermissionRegistrationApi;
-import com.example.auth.api.annotation.RequirePermission;
-import com.example.auth.api.command.PermissionRegistrationRequest;
-import com.example.auth.api.dto.PermissionItemDescriptor;
-import com.example.auth.api.dto.PermissionRegistrationResponse;
+import com.example.shared.security.permission.PermissionRegistrationPort;
+import com.example.shared.security.annotation.RequirePermission;
+import com.example.shared.security.permission.PermissionRegistrationRequest;
+import com.example.shared.security.permission.PermissionItemDescriptor;
+import com.example.shared.security.permission.PermissionRegistrationResponse;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * <p>装配条件：
  * <ul>
- *   <li>{@code @ConditionalOnBean(PermissionRegistrationApi.class)} - 业务服务配置了 httpexchange 客户端</li>
+ *   <li>{@code @ConditionalOnBean(PermissionRegistrationPort.class)} - 业务服务配置了 httpexchange 客户端</li>
  *   <li>{@code @ConditionalOnExpression} 排除 auth-service 自身</li>
  * </ul>
  *
@@ -39,22 +39,33 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnBean(PermissionRegistrationApi.class)
+@ConditionalOnBean(PermissionRegistrationPort.class)
 @ConditionalOnExpression("'${spring.application.name}' != 'auth-service'")
 public class PermissionRegistrationRunner implements ApplicationRunner {
 
   private final RequestMappingHandlerMapping handlerMapping;
-  private final PermissionRegistrationApi registrationApi;
+  private final PermissionRegistrationPort registrationApi;
   private final Environment environment;
 
   @Override
   public void run(ApplicationArguments args) {
+    registerNow();
+  }
+
+  /**
+   * 执行一次权限点上报（幂等：auth 侧 upsert，内容不变则 no-op）.
+   *
+   * <p>除启动时 {@link #run(ApplicationArguments)} 调用外，
+   * {@link PermissionRegistrationRefresher}（TTL 心跳）定时重复调用——
+   * 重注册即续期，防止服务长期运行后 auth 侧注册表陈旧。
+   */
+  public void registerNow() {
     String serviceName = environment.getProperty("spring.application.name", "unknown");
 
     try {
       List<PermissionItemDescriptor> descriptors = extractDescriptors();
       if (descriptors.isEmpty()) {
-        log.info("[PermissionRegistration] 服务 {} 未发现 @RequirePermission 注解，跳过上报", serviceName);
+        log.debug("[PermissionRegistration] 服务 {} 无 @RequirePermission 注解，跳过上报", serviceName);
         return;
       }
 

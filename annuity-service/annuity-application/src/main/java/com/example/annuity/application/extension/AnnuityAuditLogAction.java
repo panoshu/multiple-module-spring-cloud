@@ -31,7 +31,7 @@ public class AnnuityAuditLogAction implements StepExtensionAction {
     log.info("[审计] applicationId={}, step={}, operator={}",
       app.id().value(),
       app.currentStep(),
-      app.operatorInfo() != null ? app.operatorInfo().operatorId().value() : "UNKNOWN");
+      app.operatorInfo() != null ? app.operatorInfo().operatorId() : "UNKNOWN");
     return ExtensionExecutionResult.success();
   }
 }

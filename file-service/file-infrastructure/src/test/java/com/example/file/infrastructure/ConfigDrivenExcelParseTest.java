@@ -18,7 +18,7 @@ import com.example.file.infrastructure.gateway.ExcelParserImpl;
 import com.example.file.infrastructure.gateway.FesodExcelExporter;
 import com.example.file.infrastructure.gateway.YamlConfigLoader;
 import com.example.file.types.BizType;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.apache.fesod.sheet.FesodSheet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -292,7 +292,7 @@ class ConfigDrivenExcelParseTest {
       baselineYaml,
       List.of(sourceTemplateYaml),
       "1.0",
-      UserNo.of("test-user"));
+      "test-user");
   }
 
   /**

@@ -9,8 +9,8 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   // 业务创建
   private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, FileId sourceFileId,
-                    ErrorPolicy errorPolicy, List<String> splitKeys, UserNo userNo) {
+                    ErrorPolicy errorPolicy, List<String> splitKeys, String userNo) {
     super(id, userNo);
     this.bizType = bizType;
     this.sourceFileName = sourceFileName;
@@ -54,7 +54,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
                    int totalRows, int subTaskCount, int validCount, int invalidCount,
                    List<SubTaskSummary> subTaskSummaries, List<TaskError> errors,
                    LocalDateTime startedAt, LocalDateTime finishedAt,
-                   UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                   String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.bizType = bizType;
     this.templateCode = templateCode;
@@ -76,7 +76,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
                                  FileId sourceFileId, ErrorPolicy errorPolicy,
-                                 List<String> splitKeys, UserNo userNo) {
+                                 List<String> splitKeys, String userNo) {
     if (bizType == null) {
       throw new IllegalArgumentException("bizType null");
     }

@@ -6,7 +6,7 @@ import com.example.file.domain.model.valueobject.config.*;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -49,9 +49,9 @@ class TemplateConfigTest {
       null, new KvStrategy(KvValuePosition.RIGHT, java.util.Map.of(), 3));
     SourceTemplateDef source = new SourceTemplateDef(TemplateCode.of("CUST_A_V2"),
       IdentifyMode.AUTO, List.of("申报单位", "申报日期", "明细列表"),
-      List.of(region), UserNo.of("u1"));
+      List.of(region), "u1");
     return TemplateConfig.create(TemplateConfigId.of("cfg1"), BizType.of("import_declare"),
       "v1", ErrorPolicy.COLLECT_ALL, model, List.of(), List.of(), split,
-      List.of(source), UserNo.of("u1"));
+      List.of(source), "u1");
   }
 }

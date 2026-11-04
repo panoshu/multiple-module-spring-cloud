@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.dto.DataScope;
+import com.example.shared.security.permission.DataScope;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryWrapper;
 

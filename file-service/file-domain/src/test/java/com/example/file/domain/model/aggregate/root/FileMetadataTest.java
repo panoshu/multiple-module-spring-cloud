@@ -7,8 +7,8 @@ import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -129,7 +129,7 @@ class FileMetadataTest {
       "oss-source", StorageType.OSS, "storage/key",
       FileUsage.SOURCE, "annuity", "business-core", TEST_BATCH_ID,
       FileStatus.UPLOADED, TEST_USER, now, null,
-      TEST_USER, TEST_USER, now, now, null
+      TEST_USER.value(), TEST_USER.value(), now, now, null
     );
 
     assertThat(file.id()).isEqualTo(TEST_FILE_ID);

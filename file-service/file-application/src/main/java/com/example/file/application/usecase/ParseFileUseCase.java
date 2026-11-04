@@ -16,7 +16,6 @@ import com.example.file.domain.repository.TemplateConfigRepository;
 import com.example.file.domain.service.*;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
-import com.example.shared.identifier.id.UserNo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +72,7 @@ public class ParseFileUseCase {
     ParseTask task = parseTaskRepository.findById(taskId)
       .orElseThrow(() -> new IllegalArgumentException("Task not found: " + cmd.fileTaskId()));
 
-    UserNo operator = UserNo.of(cmd.operator());
+    String operator = cmd.operator();
     task.markParsing();
     parseTaskRepository.save(task);
 

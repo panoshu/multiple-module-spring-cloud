@@ -14,7 +14,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.exception.SystemException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

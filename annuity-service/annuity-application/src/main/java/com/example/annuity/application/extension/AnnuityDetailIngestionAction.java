@@ -9,7 +9,6 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.core.application.engine.step.extension.AbstractJsonStreamIngestionAction;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -63,7 +62,7 @@ public class AnnuityDetailIngestionAction extends AbstractJsonStreamIngestionAct
     AnnuityEmployeeBatchId batchId = details.get(0).batchId();
     AnnuityEmployeeBatch batch = batchRepository.findByApplicationId(appId)
       .orElseGet(() -> AnnuityEmployeeBatch.create(batchId, appId, details.size(),
-        UserNo.of("SYSTEM")));
+        "SYSTEM"));
     details.forEach(batch::addDetail);
     batchRepository.save(batch);
   }

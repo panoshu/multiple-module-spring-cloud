@@ -2,7 +2,6 @@ package com.example.shared.domain.aggregate.entity;
 
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.identifier.contract.Identifier;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,12 +37,12 @@ class EntityTest {
    * 测试用具体实体 A
    */
   static class TestEntityA extends Entity<TestId> {
-    TestEntityA(TestId id, UserNo createdBy) {
+    TestEntityA(TestId id, String createdBy) {
       super(id, createdBy);
       this.validateInvariants();
     }
 
-    TestEntityA(TestId id, UserNo createdBy, UserNo updatedBy,
+    TestEntityA(TestId id, String createdBy, String updatedBy,
                 LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
       super(id, createdBy, updatedBy, createdAt, updatedAt, version);
       this.validateInvariants();
@@ -54,7 +53,7 @@ class EntityTest {
       // 测试用空实现，由具体测试场景验证校验调用
     }
 
-    void update(UserNo operator) {
+    void update(String operator) {
       markUpdated(operator);
     }
   }
@@ -63,7 +62,7 @@ class EntityTest {
    * 测试用具体实体 B（与 A 不同类型，用于验证类型敏感的 equals）
    */
   static class TestEntityB extends Entity<TestId> {
-    TestEntityB(TestId id, UserNo createdBy) {
+    TestEntityB(TestId id, String createdBy) {
       super(id, createdBy);
       this.validateInvariants();
     }
@@ -78,7 +77,7 @@ class EntityTest {
    * 不变性校验会抛异常的实体，用于验证重建路径的校验调用
    */
   static class StrictEntity extends Entity<TestId> {
-    StrictEntity(TestId id, UserNo createdBy, UserNo updatedBy,
+    StrictEntity(TestId id, String createdBy, String updatedBy,
                  LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
       super(id, createdBy, updatedBy, createdAt, updatedAt, version);
       this.validateInvariants();
@@ -98,9 +97,8 @@ class EntityTest {
     @DisplayName("相同类型相同ID应相等")
     void should_be_equal_when_same_type_and_same_id() {
       TestId id = new TestId("id-1");
-      UserNo user = UserNo.of("user-1");
-      TestEntityA e1 = new TestEntityA(id, user);
-      TestEntityA e2 = new TestEntityA(id, user);
+      TestEntityA e1 = new TestEntityA(id, "user-1");
+      TestEntityA e2 = new TestEntityA(id, "user-1");
 
       assertThat(e1).isEqualTo(e2);
     }
@@ -108,9 +106,8 @@ class EntityTest {
     @Test
     @DisplayName("相同类型不同ID不应相等")
     void should_not_be_equal_when_same_type_but_different_id() {
-      UserNo user = UserNo.of("user-1");
-      TestEntityA e1 = new TestEntityA(new TestId("id-1"), user);
-      TestEntityA e2 = new TestEntityA(new TestId("id-2"), user);
+      TestEntityA e1 = new TestEntityA(new TestId("id-1"), "user-1");
+      TestEntityA e2 = new TestEntityA(new TestId("id-2"), "user-1");
 
       assertThat(e1).isNotEqualTo(e2);
     }
@@ -119,9 +116,8 @@ class EntityTest {
     @DisplayName("不同类型即使ID相同也不应相等")
     void should_not_be_equal_when_different_type_even_same_id() {
       TestId id = new TestId("id-1");
-      UserNo user = UserNo.of("user-1");
-      TestEntityA entityA = new TestEntityA(id, user);
-      TestEntityB entityB = new TestEntityB(id, user);
+      TestEntityA entityA = new TestEntityA(id, "user-1");
+      TestEntityB entityB = new TestEntityB(id, "user-1");
 
       assertThat(entityA).isNotEqualTo(entityB);
     }
@@ -129,7 +125,7 @@ class EntityTest {
     @Test
     @DisplayName("与null比较应返回false")
     void should_return_false_when_compare_with_null() {
-      TestEntityA entity = new TestEntityA(new TestId("id-1"), UserNo.of("user-1"));
+      TestEntityA entity = new TestEntityA(new TestId("id-1"), "user-1");
 
       assertThat(entity).isNotEqualTo(null);
     }
@@ -137,7 +133,7 @@ class EntityTest {
     @Test
     @DisplayName("与非Entity对象比较应返回false")
     void should_return_false_when_compare_with_non_entity() {
-      TestEntityA entity = new TestEntityA(new TestId("id-1"), UserNo.of("user-1"));
+      TestEntityA entity = new TestEntityA(new TestId("id-1"), "user-1");
 
       assertThat(entity).isNotEqualTo("id-1");
     }
@@ -145,7 +141,7 @@ class EntityTest {
     @Test
     @DisplayName("与自身比较应返回true")
     void should_return_true_when_compare_with_self() {
-      TestEntityA entity = new TestEntityA(new TestId("id-1"), UserNo.of("user-1"));
+      TestEntityA entity = new TestEntityA(new TestId("id-1"), "user-1");
 
       assertThat(entity).isEqualTo(entity);
     }
@@ -159,9 +155,8 @@ class EntityTest {
     @DisplayName("相同ID应返回相同hashCode")
     void should_return_same_hashCode_for_same_id() {
       TestId id = new TestId("id-1");
-      UserNo user = UserNo.of("user-1");
-      TestEntityA e1 = new TestEntityA(id, user);
-      TestEntityA e2 = new TestEntityA(id, user);
+      TestEntityA e1 = new TestEntityA(id, "user-1");
+      TestEntityA e2 = new TestEntityA(id, "user-1");
 
       assertThat(e1.hashCode()).isEqualTo(e2.hashCode());
     }
@@ -169,9 +164,8 @@ class EntityTest {
     @Test
     @DisplayName("不同ID通常应返回不同hashCode")
     void should_return_different_hashCode_for_different_id() {
-      UserNo user = UserNo.of("user-1");
-      TestEntityA e1 = new TestEntityA(new TestId("id-1"), user);
-      TestEntityA e2 = new TestEntityA(new TestId("id-2"), user);
+      TestEntityA e1 = new TestEntityA(new TestId("id-1"), "user-1");
+      TestEntityA e2 = new TestEntityA(new TestId("id-2"), "user-1");
 
       assertThat(e1.hashCode()).isNotEqualTo(e2.hashCode());
     }
@@ -185,8 +179,8 @@ class EntityTest {
     @DisplayName("应正确保留所有字段")
     void should_preserve_all_fields() {
       TestId id = new TestId("id-1");
-      UserNo createdBy = UserNo.of("creator");
-      UserNo updatedBy = UserNo.of("updater");
+      String createdBy = "creator";
+      String updatedBy = "updater";
       LocalDateTime createdAt = LocalDateTime.of(2026, 1, 1, 10, 0);
       LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 11, 30);
       Version version = Version.of(5);
@@ -205,7 +199,7 @@ class EntityTest {
     @DisplayName("ID为null时应抛出IllegalArgumentException")
     void should_throw_when_id_is_null() {
       assertThatThrownBy(() ->
-        new TestEntityA(null, UserNo.of("u"), UserNo.of("u"),
+        new TestEntityA(null, "u", "u",
           LocalDateTime.now(), LocalDateTime.now(), Version.initial()))
         .isInstanceOf(IllegalArgumentException.class);
     }
@@ -214,7 +208,7 @@ class EntityTest {
     @DisplayName("重建时应调用validateInvariants进行不变性校验")
     void should_invoke_validateInvariants_when_reconstitute() {
       assertThatThrownBy(() ->
-        new StrictEntity(new TestId("id-1"), UserNo.of("u"), UserNo.of("u"),
+        new StrictEntity(new TestId("id-1"), "u", "u",
           LocalDateTime.now(), LocalDateTime.now(), Version.initial()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("invariant violated");
@@ -228,9 +222,9 @@ class EntityTest {
     @Test
     @DisplayName("应更新updatedBy和updatedAt并递增版本号")
     void should_update_fields_and_increment_version() {
-      TestEntityA entity = new TestEntityA(new TestId("id-1"), UserNo.of("creator"));
+      TestEntityA entity = new TestEntityA(new TestId("id-1"), "creator");
       Version oldVersion = entity.version();
-      UserNo operator = UserNo.of("operator");
+      String operator = "operator";
 
       entity.update(operator);
 
@@ -242,7 +236,7 @@ class EntityTest {
     @Test
     @DisplayName("operator为null时应抛出异常")
     void should_throw_when_operator_is_null() {
-      TestEntityA entity = new TestEntityA(new TestId("id-1"), UserNo.of("creator"));
+      TestEntityA entity = new TestEntityA(new TestId("id-1"), "creator");
 
       assertThatThrownBy(() -> entity.update(null))
         .isInstanceOf(IllegalArgumentException.class);

@@ -1,6 +1,6 @@
 package com.example.core.adapter.context;
 
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class SessionContextResolverTest {
 
   @Test
   void should_resolve_session_context_from_header() throws Exception {
-    SessionContext session = new SessionContext(
+    SessionClaims session = new SessionClaims(
       "U001", "USER", "alice", "Alice",
       "INTERNET", "CLI001", "127.0.0.1",
       "C001", "Customer A",
@@ -43,7 +43,7 @@ class SessionContextResolverTest {
     String json = objectMapper.writeValueAsString(session);
     request.addHeader("X-Session-Context", Base64.getEncoder().encodeToString(json.getBytes()));
 
-    SessionContext resolved = resolver.require(request);
+    SessionClaims resolved = resolver.require(request);
 
     assertThat(resolved).isEqualTo(session);
     assertThat(resolved.userNo()).isEqualTo("U001");

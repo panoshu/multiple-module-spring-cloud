@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.dto.DataScope;
+import com.example.shared.security.permission.DataScope;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.permission.errorcode.PermissionErrorCode;
 

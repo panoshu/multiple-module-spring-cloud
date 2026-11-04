@@ -14,7 +14,7 @@ import com.example.approval.types.enums.InstanceStatus;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("ApprovalInstance 领域事件派发测试")
 class ApprovalInstanceEventTest {
 
-  private static final UserNo INITIATOR = UserNo.of("user-initiator");
+  private static final String INITIATOR = "user-initiator";
   private static final UserNo APPROVER = UserNo.of("user-001");
   private static final ApplicationId BUSINESS_APP_ID = new ApplicationId("app-001");
   private static final String BUSINESS_TYPE = "ANNUITY";
@@ -99,7 +99,7 @@ class ApprovalInstanceEventTest {
     ApprovalNode node = singleOrSignUserNode();
 
     // when
-    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER);
+    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER.value());
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.APPROVED);
@@ -126,7 +126,7 @@ class ApprovalInstanceEventTest {
 
     // when
     instance.reject(node, APPROVER, ApprovalOpinion.of("不同意"),
-      RejectTarget.terminate(), APPROVER);
+      RejectTarget.terminate(), APPROVER.value());
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.REJECTED);

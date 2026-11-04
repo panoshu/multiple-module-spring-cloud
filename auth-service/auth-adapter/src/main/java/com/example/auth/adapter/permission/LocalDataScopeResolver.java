@@ -1,12 +1,12 @@
 package com.example.auth.adapter.permission;
 
-import com.example.auth.api.dto.DataScope;
-import com.example.shared.identifier.id.UserNo;
+import com.example.shared.security.permission.DataScope;
+import com.example.core.types.UserNo;
 import com.example.shared.permission.AccountIdResolver;
 import com.example.shared.permission.DataScopeResolver;
-import com.pension.permission.application.authorization.PermissionQueryService;
-import com.pension.permission.application.authorization.ResolveDataScopeQuery;
-import com.pension.permission.domain.authorization.valueobject.BusinessCode;
+import com.example.auth.application.authorization.PermissionQueryService;
+import com.example.auth.application.authorization.ResolveDataScopeQuery;
+import com.example.auth.domain.authorization.valueobject.BusinessCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;

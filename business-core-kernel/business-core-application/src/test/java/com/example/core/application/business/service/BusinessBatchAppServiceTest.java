@@ -4,9 +4,9 @@ import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.shared.domain.event.EventBus;
@@ -15,8 +15,7 @@ import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -54,15 +53,15 @@ class BusinessBatchAppServiceTest {
       new CustomerNo("C001"), "Customer A",
       new ProductNo("PRD001"), "Product A",
       new PlanNo("P001"), "Plan A",
-      OperationModel.Single_Trustee,
+      OperatingMode.TRUSTEE_ONLY,
       AccountManager.CJP
     );
   }
 
   private OperatorInfo sampleOperator() {
     return new OperatorInfo(
-      AnnuityChannel.CJ_TELLER,
-      new UserNo("U001"),
+      Channel.TELLER,
+      "U001",
       "alice",
       false
     );

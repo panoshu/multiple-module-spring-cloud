@@ -23,7 +23,5 @@
     <module>shared-client-starter</module>
     <module>shared-pdf-starter</module>
     <module>shared-permission-starter</module>
-    <module>gateway-starter</module>
-    <module>bff-shared</module>
   </modules>
 </project>

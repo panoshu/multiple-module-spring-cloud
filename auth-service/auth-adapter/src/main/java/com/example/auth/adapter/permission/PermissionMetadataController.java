@@ -3,24 +3,24 @@ package com.example.auth.adapter.permission;
 import com.example.auth.adapter.converter.PermissionMenuConverter;
 import com.example.auth.adapter.converter.PermissionMetadataConverter;
 import com.example.auth.api.PermissionMetadataApi;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.auth.api.dto.*;
 import com.example.auth.api.query.GetMenuNodeRequest;
 import com.example.auth.api.query.ListMenuRequest;
 import com.example.auth.api.query.ListPermissionItemsRequest;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.application.permission.PermissionMenuApplicationService;
-import com.pension.permission.application.permission.PermissionMetadataApplicationService;
-import com.pension.permission.domain.permission.aggregate.PermissionItem;
-import com.pension.permission.domain.permission.aggregate.PermissionMenu;
-import com.pension.permission.domain.permission.aggregate.valueobject.PermissionBinding;
-import com.pension.permission.domain.permission.enumeration.MenuCategory;
-import com.pension.permission.domain.permission.enumeration.MenuVisibility;
-import com.pension.permission.domain.permission.errorcode.PermissionMenuError;
-import com.pension.permission.types.MenuCode;
-import com.pension.permission.types.PermissionMenuId;
+import com.example.auth.application.permission.PermissionMenuApplicationService;
+import com.example.auth.application.permission.PermissionMetadataApplicationService;
+import com.example.auth.domain.permission.aggregate.PermissionItem;
+import com.example.auth.domain.permission.aggregate.PermissionMenu;
+import com.example.auth.domain.permission.aggregate.valueobject.PermissionBinding;
+import com.example.auth.domain.permission.enumeration.MenuCategory;
+import com.example.auth.domain.permission.enumeration.MenuVisibility;
+import com.example.auth.domain.permission.errorcode.PermissionMenuError;
+import com.example.auth.types.MenuCode;
+import com.example.auth.types.PermissionMenuId;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,17 +46,17 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   // ── 权限项查询 ──
 
   @Override
-  @RequirePermission(business = "PERMISSION_METADATA", action = "VIEW", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_METADATA", action = "VIEW", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<List<PermissionItemResponse>> listItems(ListPermissionItemsRequest request) {
-    com.pension.permission.domain.authorization.enumeration.PermissionCategory cat = resolveCategory(request.category());
+    com.example.auth.domain.authorization.enumeration.PermissionCategory cat = resolveCategory(request.category());
     List<PermissionItem> items = service.listItems(cat);
     return ApiResult.success(converter.toResponseList(items));
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_METADATA", action = "VIEW", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_METADATA", action = "VIEW", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<List<PermissionGroupResponse>> listGroupedItems(ListPermissionItemsRequest request) {
-    com.pension.permission.domain.authorization.enumeration.PermissionCategory cat = resolveCategory(request.category());
+    com.example.auth.domain.authorization.enumeration.PermissionCategory cat = resolveCategory(request.category());
     Map<String, List<PermissionItem>> grouped = service.listGroupedItems(cat);
     return ApiResult.success(converter.toGroupedResponse(grouped));
   }
@@ -64,7 +64,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   // ── 菜单管理端 ──
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<List<MenuNodeResponse>> listMenus(ListMenuRequest request) {
     MenuCategory cat = resolveMenuCategory(request.category());
     List<PermissionMenu> menus = menuAppService.listMenus(cat);
@@ -72,7 +72,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<MenuNodeResponse> getMenu(GetMenuNodeRequest request) {
     PermissionMenuId menuId = new PermissionMenuId(request.menuId());
     PermissionMenu menu = menuAppService.getMenu(menuId)
@@ -81,7 +81,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<String> createMenu(CreateMenuCommand command) {
     UserNo operator = resolveCurrentUser();
     PermissionMenuId menuId = menuAppService.createMenu(
@@ -99,7 +99,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<Void> updateMenu(UpdateMenuCommand command) {
     UserNo operator = resolveCurrentUser();
     menuAppService.updateMenu(
@@ -114,7 +114,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<Void> moveMenu(MoveMenuCommand command) {
     UserNo operator = resolveCurrentUser();
     menuAppService.moveMenu(
@@ -127,7 +127,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<Void> deleteMenu(DeleteMenuCommand command) {
     UserNo operator = resolveCurrentUser();
     menuAppService.deleteMenu(new PermissionMenuId(command.menuId()), operator);
@@ -135,7 +135,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<Void> replaceBindings(ReplaceBindingsCommand command) {
     UserNo operator = resolveCurrentUser();
     List<PermissionBinding> bindings = menuConverter.toBindingList(command.bindings());
@@ -148,7 +148,7 @@ public class PermissionMetadataController implements PermissionMetadataApi {
   }
 
   @Override
-  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.auth.api.annotation.PermissionCategory.PLATFORM)
+  @RequirePermission(business = "PERMISSION_MENU", action = "MANAGE", category = com.example.shared.security.annotation.PermissionCategory.PLATFORM)
   public ApiResult<Void> toggleMenu(ToggleMenuCommand command) {
     UserNo operator = resolveCurrentUser();
     menuAppService.toggleMenu(new PermissionMenuId(command.menuId()), operator);
@@ -157,9 +157,9 @@ public class PermissionMetadataController implements PermissionMetadataApi {
 
   // ── 内部辅助 ──
 
-  private com.pension.permission.domain.authorization.enumeration.PermissionCategory resolveCategory(String category) {
+  private com.example.auth.domain.authorization.enumeration.PermissionCategory resolveCategory(String category) {
     return category != null && !category.isBlank()
-      ? com.pension.permission.domain.authorization.enumeration.PermissionCategory.valueOf(category)
+      ? com.example.auth.domain.authorization.enumeration.PermissionCategory.valueOf(category)
       : null;
   }
 

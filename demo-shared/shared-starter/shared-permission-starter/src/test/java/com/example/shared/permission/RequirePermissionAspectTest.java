@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.permission.errorcode.PermissionErrorCode;
 import org.aspectj.lang.ProceedingJoinPoint;

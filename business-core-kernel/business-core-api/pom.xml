@@ -21,6 +21,10 @@
       <groupId>com.example</groupId>
       <artifactId>shared-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-security-contract</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

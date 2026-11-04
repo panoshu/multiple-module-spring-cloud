@@ -12,9 +12,10 @@
   <description>Parent project for Spring Cloud microservices</description>
 
   <modules>
-    <module>internet-gateway</module>
-    <module>intranet-gateway</module>
-    <module>demo-gateway</module>
+    <module>channel-gateway</module>
+    <module>arch-tests</module>
+    <module>gateway-framework</module>
+    <module>bff-framework</module>
     <module>demo-shared</module>
     <module>integration-service</module>
     <module>business-core-kernel</module>
@@ -120,6 +121,11 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>shared-security-contract</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-domain</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -185,12 +191,7 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>bff-shared</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>internet-bff-api</artifactId>
+        <artifactId>bff-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -200,7 +201,37 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>gateway-starter</artifactId>
+        <artifactId>gateway-framework</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-infrastructure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-adapter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

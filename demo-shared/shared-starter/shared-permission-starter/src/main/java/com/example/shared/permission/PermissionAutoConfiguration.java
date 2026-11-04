@@ -1,7 +1,7 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.PermissionCheckApi;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.permission.PermissionCheckPort;
+import com.example.shared.security.annotation.RequirePermission;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -17,17 +17,18 @@ import org.springframework.context.annotation.Bean;
  * <p>装配条件：
  * <ul>
  *   <li>{@code @ConditionalOnClass(RequirePermission.class)} - auth-api 在 classpath</li>
- *   <li>{@code @ConditionalOnBean(PermissionCheckApi.class)} - 业务服务配置了 httpexchange 客户端</li>
+ *   <li>{@code @ConditionalOnBean(PermissionCheckPort.class)} - 业务服务配置了 httpexchange 客户端</li>
  * </ul>
  *
- * <p>后端实时鉴权，不引入缓存层。权限变更天然立即生效。
+ * <p>Phase C 后本地 Caffeine 缓存 + Phase D 事件失效/TTL 心跳已接线：
+ * 权限变更经 {@code PermissionChangedEvent} 即时失效，TTL 300s 兜底。
  *
  * @author shared-permission-starter
  */
 @Slf4j
 @AutoConfiguration
 @ConditionalOnClass(RequirePermission.class)
-@EnableConfigurationProperties(PermissionProperties.class)
+@EnableConfigurationProperties({PermissionProperties.class, PermissionCacheProperties.class})
 public class PermissionAutoConfiguration {
 
   @Bean
@@ -53,7 +54,7 @@ public class PermissionAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnBean(PermissionCheckApi.class)
+  @ConditionalOnBean(PermissionCheckPort.class)
   public RequirePermissionAspect requirePermissionAspect(
     PermissionExecutor permissionExecutor,
     AccountIdResolver accountIdResolver,
@@ -67,5 +68,30 @@ public class PermissionAutoConfiguration {
   @ConditionalOnBean(DataScopeResolver.class)
   public DataScopeAspect dataScopeAspect(DataScopeResolver dataScopeResolver) {
     return new DataScopeAspect(dataScopeResolver);
+  }
+
+  /**
+   * Phase D 失效接线：权限变更事件 → 本地缓存失效（spec §5 失效链消费端）.
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnBean(HttpExchangePermissionExecutor.class)
+  public PermissionCacheInvalidationListener permissionCacheInvalidationListener(
+    HttpExchangePermissionExecutor executor) {
+    return new PermissionCacheInvalidationListener(executor);
+  }
+
+  /**
+   * Phase D 治理：权限自注册 TTL 心跳（重注册即续期，间隔可配，&le;0 禁用）.
+   */
+  @Bean(destroyMethod = "destroy")
+  @ConditionalOnMissingBean
+  @ConditionalOnBean(PermissionRegistrationRunner.class)
+  public PermissionRegistrationRefresher permissionRegistrationRefresher(
+    PermissionRegistrationRunner runner,
+    org.springframework.core.env.Environment environment) {
+    long interval = environment.getProperty(
+      "shared.permission.registration.refresh-interval-ms", Long.class, 300_000L);
+    return new PermissionRegistrationRefresher(runner, interval);
   }
 }

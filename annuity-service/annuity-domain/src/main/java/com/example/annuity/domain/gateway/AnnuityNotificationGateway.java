@@ -1,7 +1,6 @@
 package com.example.annuity.domain.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.NotificationType;
-import com.example.shared.identifier.id.UserNo;
 
 /**
  * 年金通知网关接口
@@ -20,5 +19,5 @@ public interface AnnuityNotificationGateway {
    * @param type       通知类型
    * @param content    通知内容
    */
-  void notifyOperator(UserNo operatorNo, NotificationType type, String content);
+  void notifyOperator(String operatorNo, NotificationType type, String content);
 }

@@ -1,7 +1,7 @@
 package com.example.file.adapter.access;
 
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.file.adapter.access.converter.FileAccessConverter;
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
@@ -20,9 +20,9 @@ import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.model.aggregate.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

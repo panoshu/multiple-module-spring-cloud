@@ -2,9 +2,9 @@ package com.example.core.domain.business.aggregate.root;
 
 import com.example.core.domain.business.aggregate.valueobject.*;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
@@ -13,9 +13,8 @@ import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,7 @@ class BusinessApplicationAccessorTest {
   void operatorInfo_returnsOperatorInfo() {
     BusinessApplication app = buildTestApp();
     assertThat(app.operatorInfo()).isNotNull();
-    assertThat(app.operatorInfo().operatorId().value()).isEqualTo("U-TEST");
+    assertThat(app.operatorInfo().operatorId()).isEqualTo("U-TEST");
   }
 
   @Test
@@ -72,7 +71,7 @@ class BusinessApplicationAccessorTest {
     MaterialItem item = new MaterialItem("M1", "材料1", null, null, null, Optional.empty());
 
     BusinessApplication app = BusinessApplication.reconstitute(
-      new ApplicationId("APP-R"), UserNo.of("U-C"), UserNo.of("U-U"),
+      new ApplicationId("APP-R"), "U-C", "U-U",
       now.minusDays(1), now, Version.of(3L),
       BatchId.of("B-1"), new FormId("F-1"),
       buildContext(), buildOperator(), null,
@@ -109,13 +108,13 @@ class BusinessApplicationAccessorTest {
       CustomerNo.of("C-001"), "客户",
       ProductNo.of("P-001"), "产品",
       PlanNo.of("PL-001"), "方案",
-      OperationModel.Single_Trustee, AccountManager.CJP
+      OperatingMode.TRUSTEE_ONLY, AccountManager.CJP
     );
   }
 
   private OperatorInfo buildOperator() {
     return new OperatorInfo(
-      AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
+      Channel.NETAPP, "U-TEST", "操作人", false
     );
   }
 }

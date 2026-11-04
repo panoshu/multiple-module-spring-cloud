@@ -3,7 +3,7 @@ package com.example.file.domain.event;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.identifier.id.EventId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 

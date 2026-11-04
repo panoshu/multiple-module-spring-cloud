@@ -1,10 +1,10 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;

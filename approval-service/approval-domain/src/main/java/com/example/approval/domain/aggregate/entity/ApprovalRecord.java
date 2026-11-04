@@ -6,7 +6,7 @@ import com.example.approval.types.RecordId;
 import com.example.approval.types.enums.ApprovalAction;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 
@@ -53,7 +53,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 通过
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo operator) {
+  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.APPROVE;
@@ -67,7 +67,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 拒绝
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, UserNo operator) {
+  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.REJECT;
@@ -81,7 +81,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 转交
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, UserNo operator) {
+  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.TRANSFER;
@@ -97,7 +97,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    */
   private ApprovalRecord(RecordId id, UserNo approverId, ApprovalAction action, ApprovalOpinion opinion,
                          RejectTarget rejectTarget, UserNo transferTo, LocalDateTime operatedAt,
-                         UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                         String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.approverId = approverId;
     this.action = action;
@@ -117,7 +117,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator   操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord approve(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo operator) {
+  public static ApprovalRecord approve(RecordId id, UserNo approverId, ApprovalOpinion opinion, String operator) {
     if (approverId == null) {
       throw new IllegalArgumentException("审批人ID不能为空");
     }
@@ -137,7 +137,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator     操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord reject(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, UserNo operator) {
+  public static ApprovalRecord reject(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
     if (approverId == null) {
       throw new IllegalArgumentException("审批人ID不能为空");
     }
@@ -160,7 +160,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator   操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord transfer(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, UserNo operator) {
+  public static ApprovalRecord transfer(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, String operator) {
     if (approverId == null) {
       throw new IllegalArgumentException("审批人ID不能为空");
     }
@@ -178,7 +178,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    */
   public static ApprovalRecord reconstitute(RecordId id, UserNo approverId, ApprovalAction action, ApprovalOpinion opinion,
                                             RejectTarget rejectTarget, UserNo transferTo, LocalDateTime operatedAt,
-                                            UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                            String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalRecord(id, approverId, action, opinion, rejectTarget, transferTo, operatedAt, createdBy, updatedBy, createdAt, updatedAt, version);
   }
 

@@ -3,7 +3,6 @@ package com.example.annuity.domain.service;
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -65,7 +64,7 @@ class AnnuityEmployeeVerificationRuleTest {
     return new AnnuityEmployeeDetail(
       AnnuityEmployeeDetailId.of("D-001"),
       AnnuityEmployeeBatchId.of("B-001"),
-      "张三", idCard, age, salary, contribution, UserNo.of("U-TEST")
+      "张三", idCard, age, salary, contribution, "U-TEST"
     );
   }
 }

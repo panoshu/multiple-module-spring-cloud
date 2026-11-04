@@ -5,25 +5,26 @@ import com.example.auth.api.command.LoginRequest;
 import com.example.auth.api.command.SelectPlanRequest;
 import com.example.auth.api.dto.LoginResponse;
 import com.example.auth.api.dto.SelectablePlansResponse;
-import com.example.shared.annuity.AnnuityChannel;
-import com.pension.permission.domain.user.valueobject.Mobile;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.Channel;
+import com.example.shared.enumeration.EnumCodeCache;
+import com.example.core.types.contact.Mobile;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.PlanNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
-import com.pension.permission.application.channel.LogoutCommand;
-import com.pension.permission.application.channel.OpenSessionWithCredentialCommand;
-import com.pension.permission.application.channel.SelectPlanCommand;
-import com.pension.permission.application.channel.SessionApplicationService;
-import com.pension.permission.domain.channel.spi.LoginTokenService;
-import com.pension.permission.domain.channel.valueobject.AllPlans;
-import com.pension.permission.domain.channel.valueobject.EnumeratedPlans;
-import com.pension.permission.domain.channel.valueobject.SelectablePlanScope;
-import com.pension.permission.domain.credential.valueobject.owner.CredentialOwner;
-import com.pension.permission.domain.credential.valueobject.owner.CustomerCredentialOwner;
-import com.pension.permission.domain.credential.valueobject.owner.PlanCredentialOwner;
-import com.pension.permission.domain.credential.valueobject.owner.UserCredentialOwner;
-import com.pension.permission.types.SessionId;
+import com.example.auth.application.channel.LogoutCommand;
+import com.example.auth.application.channel.OpenSessionWithCredentialCommand;
+import com.example.auth.application.channel.SelectPlanCommand;
+import com.example.auth.application.channel.SessionApplicationService;
+import com.example.auth.domain.channel.spi.LoginTokenService;
+import com.example.auth.domain.channel.valueobject.AllPlans;
+import com.example.auth.domain.channel.valueobject.EnumeratedPlans;
+import com.example.auth.domain.channel.valueobject.SelectablePlanScope;
+import com.example.auth.domain.credential.valueobject.owner.CredentialOwner;
+import com.example.auth.domain.credential.valueobject.owner.CustomerCredentialOwner;
+import com.example.auth.domain.credential.valueobject.owner.PlanCredentialOwner;
+import com.example.auth.domain.credential.valueobject.owner.UserCredentialOwner;
+import com.example.auth.types.SessionId;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,7 +47,7 @@ public class SessionController implements SessionApi {
 
   @Override
   public ApiResult<LoginResponse> login(LoginRequest request) {
-    AnnuityChannel channel = AnnuityChannel.valueOf(request.channel());
+    Channel channel = EnumCodeCache.get(Channel.class, request.channel());
     CredentialOwner owner = resolveOwner(request.ownerType(), request.ownerId());
     Mobile phone = request.phoneNumber() != null ? new Mobile(request.phoneNumber()) : null;
 

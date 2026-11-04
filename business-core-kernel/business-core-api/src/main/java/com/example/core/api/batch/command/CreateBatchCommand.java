@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
  * 创建业务批次命令
  *
  * <p>前端只传办理意图(businessType + planNo),客户/产品/账管人等敏感字段
- * 由后端从 SessionContext 组装,杜绝前端伪造。
+ * 由后端从 SessionClaims 组装,杜绝前端伪造。
  *
  * @author panoshu
  */

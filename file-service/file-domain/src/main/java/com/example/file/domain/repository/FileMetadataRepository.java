@@ -3,7 +3,7 @@ package com.example.file.domain.repository;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.domain.repository.Repository;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -16,7 +16,7 @@ import com.example.approval.types.ApprovalInstanceId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,11 +61,11 @@ public class ApprovalInstanceService {
       new ApplicationId(request.businessNo()),
       request.businessType(),
       null, // initiatorPlan
-      UserNo.of(request.initiator())
+      request.initiator()
     );
 
     // 启动审批流程
-    instance.start(UserNo.of(request.initiator()));
+    instance.start(request.initiator());
 
     // 保存审批实例
     instanceRepository.save(instance);
@@ -101,7 +101,7 @@ public class ApprovalInstanceService {
       currentNode,
       UserNo.of(request.approver()),
       ApprovalOpinion.of(request.comment()),
-      UserNo.of(request.approver())
+      request.approver()
     );
 
     // 保存审批实例
@@ -137,7 +137,7 @@ public class ApprovalInstanceService {
       UserNo.of(request.approver()),
       ApprovalOpinion.of(request.reason()),
       RejectTarget.terminate(),
-      UserNo.of(request.approver())
+      request.approver()
     );
 
     // 保存审批实例
@@ -174,7 +174,7 @@ public class ApprovalInstanceService {
       UserNo.of(request.currentApprover()),
       ApprovalOpinion.of(request.reason()),
       UserNo.of(request.targetApprover()),
-      UserNo.of(request.currentApprover())
+      request.currentApprover()
     );
 
     // 保存审批实例
@@ -199,7 +199,7 @@ public class ApprovalInstanceService {
     ApprovalInstance instance = loadInstanceOrThrow(request.instanceId());
 
     // 执行撤回
-    instance.withdraw(UserNo.of(request.initiator()));
+    instance.withdraw(request.initiator());
 
     // 保存审批实例
     instanceRepository.save(instance);
@@ -279,7 +279,7 @@ public class ApprovalInstanceService {
       instance.businessApplicationId().value(),
       instance.businessType(),
       instance.status().name(),
-      instance.createdBy().value(),
+      instance.createdBy(),
       instance.currentNodeOrder().toString(),
       instance.getNodeExecutions().stream()
         .map(this::convertToNodeExecutionDTO)

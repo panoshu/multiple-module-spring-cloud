@@ -1,7 +1,7 @@
 package com.example.integration.adapter.trade;
 
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.integration.adapter.trade.mapper.PortfolioBalanceConverter;
 import com.example.integration.adapter.trade.mapper.PortfolioConverter;
 import com.example.integration.api.core.trade.api.TradeQueryApi;

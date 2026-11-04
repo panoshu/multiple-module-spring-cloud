@@ -10,8 +10,8 @@ import com.example.file.infrastructure.entity.FileMetadataDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mapstruct.Mapper;
@@ -47,8 +47,8 @@ public interface FileMetadataConverter {
     aDo.setAccessScope(scopeToJson(file.accessScope()));
     aDo.setDigest(file.digest());
     aDo.setDigestAlgorithm(file.digestAlgorithm());
-    aDo.setCreatedBy(file.createdBy() != null ? file.createdBy().value() : null);
-    aDo.setUpdatedBy(file.updatedBy() != null ? file.updatedBy().value() : null);
+    aDo.setCreatedBy(file.createdBy());
+    aDo.setUpdatedBy(file.updatedBy());
     aDo.setCreateTime(file.createdAt());
     aDo.setUpdateTime(file.updatedAt());
     aDo.setDeleted(false);
@@ -80,8 +80,8 @@ public interface FileMetadataConverter {
       aDo.getUploadedBy() != null ? UserNo.of(aDo.getUploadedBy()) : null,
       aDo.getUploadedAt(),
       aDo.getExpiresAt(),
-      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreatedBy(),
+      aDo.getUpdatedBy(),
       aDo.getCreateTime(),
       aDo.getUpdateTime(),
       aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : null

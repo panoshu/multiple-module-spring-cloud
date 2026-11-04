@@ -15,7 +15,7 @@ import com.example.file.domain.model.valueobject.parse.RawRow;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -78,7 +78,7 @@ class SourceTemplateIdentifierTest {
       new RegionDef("basic", RegionType.KEY_VALUE, "properties", null,
         new KvStrategy(KvValuePosition.RIGHT, Map.of(), 3))
     );
-    return new SourceTemplateDef(new TemplateCode(code), mode, fingerprint, regions, UserNo.of("test"));
+    return new SourceTemplateDef(new TemplateCode(code), mode, fingerprint, regions, "test");
   }
 
   private TemplateConfig createConfig(List<SourceTemplateDef> templates) {
@@ -92,7 +92,7 @@ class SourceTemplateIdentifierTest {
       List.of(),
       new SplitConfig(List.of(), null, null, null, null, false, 0),
       templates,
-      UserNo.of("test")
+      "test"
     );
   }
 

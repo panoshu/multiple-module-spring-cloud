@@ -4,7 +4,6 @@ import com.example.file.domain.model.enums.IdentifyMode;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.entity.Entity;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +19,7 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
 
   // 业务创建
   public SourceTemplateDef(TemplateCode templateCode, IdentifyMode mode,
-                           List<String> fingerprint, List<RegionDef> regions, UserNo userNo) {
+                           List<String> fingerprint, List<RegionDef> regions, String userNo) {
     super(templateCode, userNo);
     if (mode == null) {
       throw new IllegalArgumentException("identifyMode null");
@@ -36,7 +35,7 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
 
   // 数据库重建
   public SourceTemplateDef(TemplateCode id, IdentifyMode identifyMode, List<String> fingerprint,
-                           List<RegionDef> regions, UserNo createdBy, UserNo updatedBy,
+                           List<RegionDef> regions, String createdBy, String updatedBy,
                            LocalDateTime createdAt, LocalDateTime updatedAt,
                            com.example.shared.domain.aggregate.valueobject.Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);

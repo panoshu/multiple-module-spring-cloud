@@ -1,7 +1,7 @@
 package com.example.file.adapter.controllers;
 
-import com.example.auth.api.annotation.PermissionCategory;
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.file.adapter.converter.FileTaskConverter;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.request.CancelFileTaskRequest;

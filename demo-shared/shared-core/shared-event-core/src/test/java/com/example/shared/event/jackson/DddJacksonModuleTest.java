@@ -2,9 +2,9 @@ package com.example.shared.event.jackson;
 
 import com.example.core.types.BatchId;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

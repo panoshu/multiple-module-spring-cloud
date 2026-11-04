@@ -15,9 +15,7 @@
 
   <modules>
     <module>intranet-bff-api</module>
-    <module>intranet-bff-application</module>
-    <module>intranet-bff-adapter</module>
-    <module>intranet-bff-infrastructure</module>
+    <module>intranet-bff-web</module>
     <module>intranet-bff-starter</module>
   </modules>
 
@@ -30,22 +28,12 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>intranet-bff-application</artifactId>
+        <artifactId>intranet-bff-web</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>intranet-bff-adapter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>intranet-bff-infrastructure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>bff-shared</artifactId>
+        <artifactId>bff-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

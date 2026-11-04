@@ -56,7 +56,7 @@ public class ArchiveSubmissionHandler implements StepActionHandler {
     String fileTaskId = app.id().value();
     String targetTemplateId = resolveTargetTemplateId(context);
     Map<String, Object> supplementalData = resolveSupplementalData(context);
-    String operator = app.updatedBy() != null ? app.updatedBy().value() : "SYSTEM";
+    String operator = app.updatedBy() != null ? app.updatedBy() : "SYSTEM";
 
     log.info("开始触发出站文件生成, applicationId={}, targetTemplateId={}", app.id(), targetTemplateId);
 

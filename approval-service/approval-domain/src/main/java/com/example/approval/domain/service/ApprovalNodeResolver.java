@@ -5,7 +5,7 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.approval.types.enums.NodeType;
 import com.example.shared.domain.annotation.DomainService;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.util.ArrayList;
 import java.util.List;

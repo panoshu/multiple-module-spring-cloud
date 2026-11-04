@@ -1,9 +1,9 @@
 package com.example.core.adapter.material;
 
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.material.converter.MaterialConverter;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.core.api.material.MaterialAppApi;
 import com.example.core.api.material.command.BindIndividualMaterialCommand;
 import com.example.core.api.material.command.BindPackageMaterialCommand;
@@ -16,7 +16,7 @@ import com.example.core.application.engine.step.service.MaterialAppService;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +60,7 @@ public class MaterialController implements MaterialAppApi {
   @PostMapping("/bind-individual")
   @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("逐个绑定材料: applicationId={}, materialCode={}, userNo={}",
       command.applicationId(), command.materialCode(), session.userNo());
 
@@ -82,7 +82,7 @@ public class MaterialController implements MaterialAppApi {
   @PostMapping("/bind-package")
   @RequirePermission(business = "MATERIAL", action = "BIND")
   public ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("打包绑定材料: applicationId={}, fileId={}, userNo={}",
       command.applicationId(), command.fileId(), session.userNo());
 
@@ -103,7 +103,7 @@ public class MaterialController implements MaterialAppApi {
   @PostMapping("/unbind")
   @RequirePermission(business = "MATERIAL", action = "UNBIND")
   public ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("解绑材料: applicationId={}, materialCode={}, fileId={}, userNo={}",
       command.applicationId(), command.materialCode(), command.fileId(), session.userNo());
 
@@ -119,7 +119,7 @@ public class MaterialController implements MaterialAppApi {
   @PostMapping("/list")
   @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("查询材料列表: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
     List<MaterialItem> items = materialAppService.listMaterials(
@@ -132,7 +132,7 @@ public class MaterialController implements MaterialAppApi {
   @PostMapping("/check-completeness")
   @RequirePermission(business = "MATERIAL", action = "VIEW")
   public ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("校验材料完整性: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
     Map<String, Object> conditionContext = query.conditionContext() != null

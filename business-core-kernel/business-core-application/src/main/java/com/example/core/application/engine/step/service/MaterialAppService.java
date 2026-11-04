@@ -6,7 +6,7 @@ import com.example.core.domain.business.aggregate.valueobject.MaterialConditionC
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

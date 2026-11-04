@@ -1,8 +1,8 @@
 package com.example.file.api.request;
 
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

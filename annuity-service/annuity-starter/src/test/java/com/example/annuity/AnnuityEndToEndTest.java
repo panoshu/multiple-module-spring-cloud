@@ -12,9 +12,9 @@ import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
@@ -24,9 +24,8 @@ import com.example.file.api.event.FileParsedEventDTO;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -268,12 +267,12 @@ class AnnuityEndToEndTest {
       "测试产品",
       PlanNo.of("PL-TEST-001"),
       "测试方案",
-      OperationModel.Single_Trustee,
+      OperatingMode.TRUSTEE_ONLY,
       AccountManager.CJP
     );
     OperatorInfo operator = new OperatorInfo(
-      AnnuityChannel.NETAPP,
-      UserNo.of("U-TEST-001"),
+      Channel.NETAPP,
+      "U-TEST-001",
       "测试操作人",
       false
     );
@@ -300,14 +299,14 @@ class AnnuityEndToEndTest {
   /**
    * 通过反射设置 BusinessApplication 的 updatedBy 私有字段。
    * <p>
-   * Entity.markUpdated(UserNo) 是 protected 方法，测试无法直接调用。
+   * Entity.markUpdated(String) 是 protected 方法，测试无法直接调用。
    * AnnuityDataVerificationHandler 使用 app.updatedBy() 作为操作人调用
    * batch.markDetailProcessed()，若为 null 会抛 IllegalArgumentException。
    *
    * @param app      业务申请单
    * @param operator 操作人
    */
-  private void setUpdatedBy(BusinessApplication app, UserNo operator) {
+  private void setUpdatedBy(BusinessApplication app, String operator) {
     try {
       Field field = com.example.shared.domain.aggregate.entity.Entity.class.getDeclaredField("updatedBy");
       field.setAccessible(true);

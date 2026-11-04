@@ -1,6 +1,6 @@
 package com.example.core.adapter.context;
 
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.CommonError;
 import com.example.shared.permission.SessionContextSignatureVerifier;
@@ -21,7 +21,7 @@ import java.util.Optional;
 /**
  * 会话上下文解析器（带签名验证）。
  *
- * <p>从 HTTP 请求的 {@code X-Session-Context} header 解析 {@link SessionContext}，
+ * <p>从 HTTP 请求的 {@code X-Session-Context} header 解析 {@link SessionClaims}，
  * 并通过 {@link SessionContextSignatureVerifier} 验证签名，防止请求头被伪造。
  *
  * <p>header 内容为 Base64 编码的 JSON，由 gateway 从 sa-token Token-Session 读取后写入，
@@ -31,7 +31,7 @@ import java.util.Optional;
  * <ol>
  *   <li>读取 {@code X-Session-Context}、{@code X-Session-Sig}、{@code X-Session-Expire} header</li>
  *   <li>通过 {@link SessionContextSignatureVerifier} 验证签名 + 过期</li>
- *   <li>验签通过后解析 Base64 JSON 为 {@link SessionContext}</li>
+ *   <li>验签通过后解析 Base64 JSON 为 {@link SessionClaims}</li>
  *   <li>验签失败返回 empty（调用方按 fail-closed 处理）</li>
  * </ol>
  *
@@ -80,7 +80,7 @@ public class SessionContextResolver {
   /**
    * 解析会话上下文，header 缺失或验签失败时返回 empty。
    */
-  public Optional<SessionContext> optional() {
+  public Optional<SessionClaims> optional() {
     HttpServletRequest request = currentRequest();
     if (request == null) {
       return Optional.empty();
@@ -91,7 +91,7 @@ public class SessionContextResolver {
   /**
    * 解析会话上下文，header 缺失时抛 BusinessException。
    */
-  public SessionContext require() {
+  public SessionClaims require() {
     return optional()
       .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
         .withUserDetail("会话上下文缺失，请重新登录")
@@ -101,7 +101,7 @@ public class SessionContextResolver {
   /**
    * 从指定请求解析会话上下文，header 缺失或验签失败时返回 empty。
    */
-  public Optional<SessionContext> optional(HttpServletRequest request) {
+  public Optional<SessionClaims> optional(HttpServletRequest request) {
     if (request == null) {
       return Optional.empty();
     }
@@ -118,7 +118,7 @@ public class SessionContextResolver {
 
     try {
       byte[] decoded = Base64.getDecoder().decode(header);
-      return Optional.of(objectMapper.readValue(decoded, SessionContext.class));
+      return Optional.of(objectMapper.readValue(decoded, SessionClaims.class));
     } catch (IOException | IllegalArgumentException e) {
       log.warn("[SessionContextResolver] 解析 X-Session-Context header 失败: {}", e.getMessage());
       return Optional.empty();
@@ -128,7 +128,7 @@ public class SessionContextResolver {
   /**
    * 从指定请求解析，缺失时抛异常。
    */
-  public SessionContext require(HttpServletRequest request) {
+  public SessionClaims require(HttpServletRequest request) {
     return optional(request)
       .orElseThrow(() -> new BusinessException(CommonError.UNAUTHORIZED)
         .withUserDetail("会话上下文缺失，请重新登录")

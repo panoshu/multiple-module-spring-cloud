@@ -7,10 +7,10 @@ import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.infrastructure.entity.FileAccessLogDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.file.types.FileAccessLogId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 
@@ -41,8 +41,8 @@ public interface FileAccessLogConverter {
     aDo.setResult(log.result() != null ? log.result().name() : null);
     aDo.setFailReason(log.failReason());
     aDo.setOccurAt(log.occurAt());
-    aDo.setCreatedBy(log.createdBy() != null ? log.createdBy().value() : null);
-    aDo.setUpdatedBy(log.updatedBy() != null ? log.updatedBy().value() : null);
+    aDo.setCreatedBy(log.createdBy());
+    aDo.setUpdatedBy(log.updatedBy());
     aDo.setCreateTime(log.createdAt());
     aDo.setUpdateTime(log.updatedAt());
     aDo.setDeleted(false);
@@ -68,8 +68,8 @@ public interface FileAccessLogConverter {
       aDo.getResult() != null ? FileAccessResult.valueOf(aDo.getResult()) : null,
       aDo.getFailReason(),
       aDo.getOccurAt(),
-      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreatedBy(),
+      aDo.getUpdatedBy(),
       aDo.getCreateTime(),
       aDo.getUpdateTime(),
       aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : null

@@ -16,7 +16,7 @@ import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

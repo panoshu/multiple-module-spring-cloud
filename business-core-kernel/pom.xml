@@ -56,6 +56,11 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>file-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>approval-api</artifactId>
         <version>${project.version}</version>
       </dependency>

@@ -4,18 +4,17 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.FormStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,7 @@ class BusinessFormAccessorTest {
     assertThat(form.formFile().fileName()).isEqualTo("form.xlsx");
     assertThat(form.batchId().value()).isEqualTo("B-1");
     assertThat(form.businessContext().businessType()).isEqualTo(BusinessType.ACC_PLAN_CREATE);
-    assertThat(form.operatorInfo().operatorId().value()).isEqualTo("U-TEST");
+    assertThat(form.operatorInfo().operatorId()).isEqualTo("U-TEST");
     assertThat(form.domainEvents()).hasSize(1);
   }
 
@@ -51,7 +50,7 @@ class BusinessFormAccessorTest {
     BusinessFile file = new BusinessFile(new FileId("F-FILE"), "form.xlsx", "xlsx", 1024L);
 
     BusinessForm form = BusinessForm.reconstitute(
-      new FormId("F-R"), UserNo.of("U-C"), UserNo.of("U-U"),
+      new FormId("F-R"), "U-C", "U-U",
       now.minusDays(1), now, Version.of(4L),
       BatchId.of("B-1"), buildContext(), buildOperator(),
       file, FormStatus.PARSED, List.of()
@@ -72,13 +71,13 @@ class BusinessFormAccessorTest {
       CustomerNo.of("C-001"), "客户",
       ProductNo.of("P-001"), "产品",
       PlanNo.of("PL-001"), "方案",
-      OperationModel.Single_Trustee, AccountManager.CJP
+      OperatingMode.TRUSTEE_ONLY, AccountManager.CJP
     );
   }
 
   private OperatorInfo buildOperator() {
     return new OperatorInfo(
-      AnnuityChannel.NETAPP, UserNo.of("U-TEST"), "操作人", false
+      Channel.NETAPP, "U-TEST", "操作人", false
     );
   }
 }

@@ -6,10 +6,10 @@ import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.file.types.FileAccessLogId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -80,8 +80,8 @@ class FileAccessLogTest {
   void should_reconstitute_preserves_all_fields() {
     LocalDateTime now = LocalDateTime.now();
     FileAccessLogId logId = FileAccessLogId.of("log-001");
-    UserNo creator = UserNo.of("u1");
-    UserNo updater = UserNo.of("u2");
+    String creator = "u1";
+    String updater = "u2";
     Version version = Version.of(3L);
 
     FileAccessLog log = FileAccessLog.reconstitute(

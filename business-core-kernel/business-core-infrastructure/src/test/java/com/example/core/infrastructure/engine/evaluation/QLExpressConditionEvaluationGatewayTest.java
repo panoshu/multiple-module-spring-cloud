@@ -2,9 +2,9 @@ package com.example.core.infrastructure.engine.evaluation;
 
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ class QLExpressConditionEvaluationGatewayTest {
     BusinessMetaContext context = new BusinessMetaContext(
       CustomerNo.of("C001"),
       ProductNo.of("P001"),
-      OperationModel.Single_Trustee,
+      OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"),
       BusinessType.ACC_PLAN_CREATE,
       AccountManager.BOC,
@@ -74,7 +74,7 @@ class QLExpressConditionEvaluationGatewayTest {
   void testEvaluate_NullOrBlankExpression_ReturnsTrue() {
     Map<String, Object> pureFacts = Map.of("amount", 100);
     BusinessMetaContext emptyContext = new BusinessMetaContext(
-      CustomerNo.of("C001"), ProductNo.of("P001"), OperationModel.Single_Trustee,
+      CustomerNo.of("C001"), ProductNo.of("P001"), OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"), BusinessType.ACC_PLAN_CREATE, AccountManager.BOC, null);
 
     assertThat(gateway.evaluate(null, pureFacts)).isTrue();
@@ -149,7 +149,7 @@ class QLExpressConditionEvaluationGatewayTest {
     // 如果要测试 accountManager，需要使用带 BusinessMetaContext 的重载方法。
 
     BusinessMetaContext context = new BusinessMetaContext(
-      CustomerNo.of("C001"), ProductNo.of("P001"), OperationModel.Single_Trustee,
+      CustomerNo.of("C001"), ProductNo.of("P001"), OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"), BusinessType.ACC_PLAN_CREATE, AccountManager.BOC, pureFacts);
 
     // 因为默认隔离策略拦截了 getValue()，会抛出异常，被 catch 捕获后返回 false

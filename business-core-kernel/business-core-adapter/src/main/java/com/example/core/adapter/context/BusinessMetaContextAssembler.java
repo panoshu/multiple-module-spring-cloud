@@ -1,7 +1,7 @@
 package com.example.core.adapter.context;
 
 import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.CommonError;
 import org.springframework.stereotype.Component;
@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 /**
  * 业务元数据上下文组装器
  *
- * <p>从前端 Command 的 {@code businessType} + {@code planNo} 与 {@link SessionContext}
+ * <p>从前端 Command 的 {@code businessType} + {@code planNo} 与 {@link SessionClaims}
  * 组装完整的 {@link BusinessMetaContext}。
  *
  * <p>校验 {@code commandPlanNo} 与 {@code session.planNo} 一致,防止跨计划办理。
- * 客户/产品/账管人等敏感字段完全来自 SessionContext,杜绝前端伪造。
+ * 客户/产品/账管人等敏感字段完全来自 SessionClaims,杜绝前端伪造。
  *
  * @author panoshu
  */
@@ -29,7 +29,7 @@ public class BusinessMetaContextAssembler {
    * @return 完整的业务元数据上下文
    * @throws BusinessException 当 commandPlanNo 与 session.planNo 不一致时
    */
-  public BusinessMetaContext assemble(String businessType, String commandPlanNo, SessionContext session) {
+  public BusinessMetaContext assemble(String businessType, String commandPlanNo, SessionClaims session) {
     if (!commandPlanNo.equals(session.planNo())) {
       throw new BusinessException(CommonError.BAD_REQUEST)
         .withUserDetail("所选计划与会话中的计划不一致")

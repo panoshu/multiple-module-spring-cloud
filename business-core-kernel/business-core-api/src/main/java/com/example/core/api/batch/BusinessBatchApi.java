@@ -41,7 +41,7 @@ public interface BusinessBatchApi {
   /**
    * 创建新批次。
    *
-   * <p>前端只传 businessType + planNo,后端从 SessionContext 组装完整元数据。
+   * <p>前端只传 businessType + planNo,后端从 SessionClaims 组装完整元数据。
    */
   ApiResult<BatchCreatedResponse> create(@Valid CreateBatchCommand command);
 

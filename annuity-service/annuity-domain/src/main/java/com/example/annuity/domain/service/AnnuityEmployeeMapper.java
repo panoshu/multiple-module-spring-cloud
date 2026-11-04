@@ -6,7 +6,6 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 
 import java.util.UUID;
 
@@ -19,7 +18,7 @@ import java.util.UUID;
 @DomainService
 public class AnnuityEmployeeMapper {
 
-  private static final UserNo SYSTEM_USER = UserNo.of("SYSTEM");
+  private static final String SYSTEM_USER = "SYSTEM";
 
   /**
    * 将 DTO 映射为员工明细实体

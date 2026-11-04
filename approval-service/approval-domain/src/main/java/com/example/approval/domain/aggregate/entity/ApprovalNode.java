@@ -8,7 +8,7 @@ import com.example.approval.types.enums.NodeType;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -70,7 +70,7 @@ public class ApprovalNode extends Entity<NodeId> {
    */
   private ApprovalNode(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
                        TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
-                       List<String> roleIds, SignMode signMode, UserNo operator) {
+                       List<String> roleIds, SignMode signMode, String operator) {
     super(id, operator);
     this.nodeOrder = nodeOrder;
     this.nodeType = nodeType;
@@ -89,7 +89,7 @@ public class ApprovalNode extends Entity<NodeId> {
   private ApprovalNode(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
                        TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
                        List<String> roleIds, SignMode signMode,
-                       UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                       String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.nodeOrder = nodeOrder;
     this.nodeType = nodeType;
@@ -117,7 +117,7 @@ public class ApprovalNode extends Entity<NodeId> {
    */
   public static ApprovalNode createSpecifiedPlanNode(NodeId id, NodeOrder nodeOrder, String specifiedPlanId,
                                                      ApproverType approverType, List<UserNo> approverIds,
-                                                     List<String> roleIds, SignMode signMode, UserNo operator) {
+                                                     List<String> roleIds, SignMode signMode, String operator) {
     if (specifiedPlanId == null || specifiedPlanId.isBlank()) {
       throw new IllegalArgumentException("指定方案节点必须提供 specifiedPlanId");
     }
@@ -139,7 +139,7 @@ public class ApprovalNode extends Entity<NodeId> {
    */
   public static ApprovalNode createSamePlanNode(NodeId id, NodeOrder nodeOrder,
                                                 ApproverType approverType, List<UserNo> approverIds,
-                                                List<String> roleIds, SignMode signMode, UserNo operator) {
+                                                List<String> roleIds, SignMode signMode, String operator) {
     return new ApprovalNode(id, nodeOrder, NodeType.SAME_PLAN, null, null,
       approverType, approverIds, roleIds, signMode, operator);
   }
@@ -159,7 +159,7 @@ public class ApprovalNode extends Entity<NodeId> {
    */
   public static ApprovalNode createLevelUpNode(NodeId id, NodeOrder nodeOrder, TerminalLevel terminalLevel,
                                                ApproverType approverType, List<UserNo> approverIds,
-                                               List<String> roleIds, SignMode signMode, UserNo operator) {
+                                               List<String> roleIds, SignMode signMode, String operator) {
     if (terminalLevel == null) {
       throw new IllegalArgumentException("上一级节点必须提供 terminalLevel");
     }
@@ -173,7 +173,7 @@ public class ApprovalNode extends Entity<NodeId> {
   public static ApprovalNode reconstitute(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
                                           TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
                                           List<String> roleIds, SignMode signMode,
-                                          UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                          String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalNode(id, nodeOrder, nodeType, specifiedPlanId, terminalLevel, approverType,
       approverIds, roleIds, signMode, createdBy, updatedBy, createdAt, updatedAt, version);
   }

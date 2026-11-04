@@ -8,7 +8,6 @@ import com.example.annuity.domain.service.AnnuityEmployeeMaterialRule;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,12 +46,12 @@ class AnnuityEmployeeMaterialActionTest {
     when(materialRule.calculate(detail, null)).thenReturn(List.of(
       new AnnuityEmployeeMaterial("ID_CARD", "身份证", true, false, null)
     ));
-    when(app.updatedBy()).thenReturn(UserNo.of("U-TEST"));
+    when(app.updatedBy()).thenReturn("U-TEST");
 
     ExtensionExecutionResult result = action.execute(app, null, java.util.Map.of());
 
     assertThat(result.isSuccess()).isTrue();
-    verify(detail).assignMaterials(anyList(), eq(UserNo.of("U-TEST")));
+    verify(detail).assignMaterials(anyList(), eq("U-TEST"));
     verify(batchRepository).save(batch);
   }
 }

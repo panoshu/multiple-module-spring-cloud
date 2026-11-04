@@ -3,8 +3,8 @@ package com.example.core.domain.engine.aggregate.valueobject;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.identifier.id.CustomerNo;
+import com.example.core.types.OperatingMode;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public record BusinessMetaContext(
   CustomerNo customerNo,
   ProductNo productNo,
-  OperationModel operationModel,
+  OperatingMode operationModel,
   PlanNo planNo,
   BusinessType businessType,
   AccountManager accountManager,

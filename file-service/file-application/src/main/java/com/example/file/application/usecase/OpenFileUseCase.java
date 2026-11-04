@@ -6,7 +6,7 @@ import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

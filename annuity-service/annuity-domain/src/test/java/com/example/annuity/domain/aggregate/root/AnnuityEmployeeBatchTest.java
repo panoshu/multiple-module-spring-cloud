@@ -6,7 +6,6 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("AnnuityEmployeeBatch 聚合根行为")
 class AnnuityEmployeeBatchTest {
 
-  private static final UserNo OPERATOR = UserNo.of("U-TEST");
+  private static final String OPERATOR = "U-TEST";
   private static final ApplicationId APP_ID = new ApplicationId("APP-001");
 
   @Test

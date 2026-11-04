@@ -15,8 +15,7 @@ import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,12 +55,12 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   private BusinessFile acceptanceFile;
 
-  protected BusinessApplication(ApplicationId applicationId, UserNo userNo) {
+  protected BusinessApplication(ApplicationId applicationId, String userNo) {
     super(applicationId, userNo);
     this.validateInvariants();
   }
 
-  protected BusinessApplication(ApplicationId applicationId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessApplication(ApplicationId applicationId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(applicationId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
   }
@@ -92,8 +91,8 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    */
   public static BusinessApplication reconstitute(
     ApplicationId applicationId,
-    UserNo createdBy,
-    UserNo updatedBy,
+    String createdBy,
+    String updatedBy,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     Version version,

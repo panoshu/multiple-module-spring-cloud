@@ -12,8 +12,8 @@ import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 
@@ -53,7 +53,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
                        FileUsage usage, String bizType, String sourceApp, BatchId businessBatchId,
                        String targetId, StorageType storageType,
                        UserNo uploadedBy, LocalDateTime expiresAt) {
-    super(id, uploadedBy);
+    super(id, uploadedBy.value());
     this.originalName = originalName;
     this.size = size;
     this.contentType = contentType;
@@ -75,7 +75,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
                        BatchId businessBatchId, FileAccessScope accessScope,
                        String targetId, StorageType storageType,
                        UserNo uploader, LocalDateTime expiresAt) {
-    super(id, uploader);
+    super(id, uploader.value());
     this.usage = usage;
     this.bizType = bizType;
     this.sourceApp = sourceApp;
@@ -97,7 +97,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
                       String targetId, StorageType storageType, String storageKey,
                       FileUsage usage, String bizType, String sourceApp, BatchId businessBatchId,
                       FileStatus status, UserNo uploadedBy, LocalDateTime uploadedAt, LocalDateTime expiresAt,
-                      UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                      String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.originalName = originalName;
     this.size = size;
@@ -152,7 +152,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
                                           String targetId, StorageType storageType, String storageKey,
                                           FileUsage usage, String bizType, String sourceApp, BatchId businessBatchId,
                                           FileStatus status, UserNo uploadedBy, LocalDateTime uploadedAt, LocalDateTime expiresAt,
-                                          UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                          String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new FileMetadata(id, originalName, size, contentType, md5, digest, digestAlgorithm,
       accessScope, targetId, storageType, storageKey, usage, bizType, sourceApp, businessBatchId,
       status, uploadedBy, uploadedAt, expiresAt, createdBy, updatedBy, createdAt, updatedAt, version);
@@ -211,7 +211,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
     this.digestAlgorithm = "SM3";
     this.status = FileStatus.UPLOADED;
     this.uploadedAt = LocalDateTime.now();
-    markUpdated(this.uploadedBy != null ? this.uploadedBy : this.createdBy());
+    markUpdated(this.uploadedBy != null ? this.uploadedBy.value() : this.createdBy());
     registerDomainEvent(FileUploadedEvent.of(this));
   }
 
@@ -241,7 +241,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
     this.md5 = md5;
     this.status = FileStatus.UPLOADED;
     this.uploadedAt = LocalDateTime.now();
-    markUpdated(this.uploadedBy != null ? this.uploadedBy : this.createdBy());
+    markUpdated(this.uploadedBy != null ? this.uploadedBy.value() : this.createdBy());
     registerDomainEvent(FileUploadedEvent.of(this));
   }
 
@@ -251,7 +251,7 @@ public class FileMetadata extends AggregateRoot<FileId> {
     }
     this.status = FileStatus.DELETED;
     if (deletedBy != null) {
-      markUpdated(deletedBy);
+      markUpdated(deletedBy.value());
     }
     registerDomainEvent(FileDeletedEvent.of(this, deletedBy));
   }

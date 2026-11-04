@@ -1,6 +1,6 @@
 package com.example.annuity.adapter.controller.kernel;
 
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.core.adapter.application.converter.ApplicationConverter;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.api.application.BusinessApplicationApi;
@@ -12,7 +12,7 @@ import com.example.core.api.application.response.AdvanceStepResponse;
 import com.example.core.api.application.response.ApplicationDetailResponse;
 import com.example.core.api.application.response.ApplicationSummaryResponse;
 import com.example.core.api.application.response.SubmitResponse;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.core.application.business.service.BusinessApplicationAppService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.types.ApplicationId;
@@ -49,7 +49,7 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
   @PostMapping("/list")
   @RequirePermission(business = "APPLICATION", action = "VIEW")
   public ApiResult<List<ApplicationSummaryResponse>> list(@Valid @RequestBody FindApplicationListQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("查询申请单列表: batchId={}, status={}, userNo={}",
       query.batchId(), query.status(), session.userNo());
 
@@ -64,7 +64,7 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
   @PostMapping("/detail")
   @RequirePermission(business = "APPLICATION", action = "VIEW")
   public ApiResult<ApplicationDetailResponse> detail(@Valid @RequestBody GetApplicationDetailQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("查询申请单详情: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
     BusinessApplication app = applicationAppService.loadOrThrow(new ApplicationId(query.applicationId()));
@@ -75,7 +75,7 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
   @PostMapping("/advance")
   @RequirePermission(business = "APPLICATION", action = "ADVANCE")
   public ApiResult<AdvanceStepResponse> advance(@Valid @RequestBody AdvanceStepCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("推进申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
 
     ApplicationId appId = new ApplicationId(command.applicationId());
@@ -88,7 +88,7 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
   @PostMapping("/submit")
   @RequirePermission(business = "APPLICATION", action = "SUBMIT")
   public ApiResult<SubmitResponse> submit(@Valid @RequestBody SubmitApplicationCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("提交申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
 
     ApplicationId appId = new ApplicationId(command.applicationId());

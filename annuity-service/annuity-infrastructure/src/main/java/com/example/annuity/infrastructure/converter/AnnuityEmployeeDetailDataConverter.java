@@ -9,7 +9,6 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;
-import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,8 +51,8 @@ public interface AnnuityEmployeeDetailDataConverter {
     aDo.setVerifiedAt(detail.verifiedAt());
     aDo.setMaterialPreparedAt(detail.materialPreparedAt());
 
-    aDo.setCreatedBy(detail.createdBy() != null ? detail.createdBy().value() : null);
-    aDo.setUpdatedBy(detail.updatedBy() != null ? detail.updatedBy().value() : null);
+    aDo.setCreatedBy(detail.createdBy());
+    aDo.setUpdatedBy(detail.updatedBy());
     aDo.setCreateTime(detail.createdAt());
     aDo.setUpdateTime(detail.updatedAt());
     aDo.setDeleted(false);
@@ -81,8 +80,8 @@ public interface AnnuityEmployeeDetailDataConverter {
       jsonToMaterials(aDo.getMaterials()),
       aDo.getVerifiedAt(),
       aDo.getMaterialPreparedAt(),
-      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreatedBy(),
+      aDo.getUpdatedBy(),
       aDo.getCreateTime(),
       aDo.getUpdateTime(),
       aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial()

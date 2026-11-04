@@ -14,16 +14,34 @@
   </description>
 
   <dependencies>
-    <!-- auth-api：@RequirePermission 注解、PermissionCategory 枚举、SessionSignatureUtils、PermissionCheckApi -->
+    <!-- shared-security-contract：权限注解族 + PermissionCheck/Registration 端口 + DTO 契约（A2 起不再依赖 auth-api） -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>auth-api</artifactId>
+      <artifactId>shared-security-contract</artifactId>
+    </dependency>
+
+    <!-- shared-utils：会话签名契约（SessionSignatureUtils） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-utils</artifactId>
     </dependency>
 
     <!-- shared-exception：BusinessException + ErrorDefinition -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
+    </dependency>
+
+    <!-- PermissionRegistrationRunner 扫描 @RequirePermission 端点（RequestMappingHandlerMapping） -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+    </dependency>
+
+    <!-- Phase C：权限校验本地缓存 -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
     </dependency>
 
     <!-- AOP 切面支持 -->

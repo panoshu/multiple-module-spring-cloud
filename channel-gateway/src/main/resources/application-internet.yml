@@ -1,0 +1,68 @@
+# ============ 互联网渠道入口 ============
+# 部署方式: --spring.profiles.active=internet
+server:
+  port: 18081
+
+spring:
+  application:
+    name: internet-gateway
+
+  cloud:
+    gateway.server.webflux:
+      discovery.locator:
+        enabled: true
+        lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 允许的前端来源 —— 精准白名单
+            allowed-origins:
+              - "https://com.example"
+            allowed-origin-patterns:
+              - "http://localhost:*"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            allowed-headers:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Tenant-Id"
+              - "X-Requested-With"
+              - "satoken-internet"
+            exposed-headers:
+              - "X-Trace-Id"
+              - "X-Request-Id"
+            allow-credentials: true
+            max-age: 3600
+      routes:
+        # ============ internet-bff(互联网 BFF) ============
+        - id: internet-bff-route
+          uri: lb://internet-bff
+          predicates:
+            - Path=/internet/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, internet-gateway
+        # ============ auth-service(网上渠道认证授权) ============
+        - id: auth-service-internet-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/internet/auth/**
+          filters:
+            - StripPrefix=1
+
+# 互联网网关仅启用 INTERNET 渠道
+gateway:
+  channels:
+    enabled:
+      - INTERNET
+
+# 网关层 auth 配置（白名单等）
+auth:
+  gateway:
+    public-paths:
+      - /actuator/**
+      - /actuator
+      - /favicon.ico
+      - /internet/auth/login

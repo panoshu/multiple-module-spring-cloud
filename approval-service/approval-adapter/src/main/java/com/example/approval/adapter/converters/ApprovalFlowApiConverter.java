@@ -10,7 +10,7 @@ import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.valueobject.MatchRules;
 import com.example.approval.domain.valueobject.NodeOrder;
 import com.example.approval.types.NodeId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.util.List;
 
@@ -100,7 +100,7 @@ public final class ApprovalFlowApiConverter {
         : List.of(),
       null, // roleIds
       com.example.approval.types.enums.SignMode.OR_SIGN,
-      UserNo.of("SYSTEM")
+      "SYSTEM"
     );
   }
 
@@ -119,7 +119,7 @@ public final class ApprovalFlowApiConverter {
       flow.flowVersion().value(),
       toMatchRulesDTO(flow.matchRules()),
       flow.getNodes().stream().map(ApprovalFlowApiConverter::toNodeDTO).toList(),
-      flow.createdBy().value(),
+      flow.createdBy(),
       flow.createdAt(),
       flow.updatedAt()
     );

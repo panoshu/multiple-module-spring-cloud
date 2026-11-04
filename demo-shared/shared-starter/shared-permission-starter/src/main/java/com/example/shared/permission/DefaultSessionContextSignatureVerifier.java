@@ -1,6 +1,6 @@
 package com.example.shared.permission;
 
-import com.example.auth.api.util.SessionSignatureUtils;
+import com.example.shared.utils.session.SessionSignatureUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

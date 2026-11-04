@@ -6,7 +6,7 @@ import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
 import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.repository.FileMetadataRepository;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

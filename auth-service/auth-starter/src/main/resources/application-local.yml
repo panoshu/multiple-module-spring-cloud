@@ -40,7 +40,7 @@ shared:
 
 logging:
   level:
-    com.pension.permission: DEBUG
+    com.example.auth: DEBUG
     org.springframework.web: DEBUG
     com.alibaba.nacos: ERROR
     com.alibaba.cloud.nacos: ERROR

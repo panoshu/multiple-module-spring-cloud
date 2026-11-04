@@ -10,7 +10,6 @@ import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
   private TemplateConfig(TemplateConfigId id, BizType bizType, String version, ErrorPolicy errorPolicy,
                          CanonicalModelDef canonicalModel, List<ValidationRule> validationRules,
                          List<DerivationRule> derivationRules, SplitConfig splitConfig,
-                         List<SourceTemplateDef> sourceTemplates, UserNo userNo) {
+                         List<SourceTemplateDef> sourceTemplates, String userNo) {
     super(id, userNo);
     this.bizType = bizType;
     this.templateVersion = version;
@@ -59,7 +58,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
                         List<SourceTemplateDef> sourceTemplates, String targetTemplateRef,
                         TargetMapping targetMapping, ConfigStatus status,
                         LocalDateTime effectiveFrom, LocalDateTime effectiveTo,
-                        UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version1) {
+                        String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version1) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version1);
     this.bizType = bizType;
     this.templateVersion = version;
@@ -81,7 +80,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
                                       ErrorPolicy errorPolicy, CanonicalModelDef canonicalModel,
                                       List<ValidationRule> validationRules, List<DerivationRule> derivationRules,
                                       SplitConfig splitConfig, List<SourceTemplateDef> sourceTemplates,
-                                      UserNo userNo) {
+                                      String userNo) {
     if (bizType == null) {
       throw new IllegalArgumentException("bizType null");
     }

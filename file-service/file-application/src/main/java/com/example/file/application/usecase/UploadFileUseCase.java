@@ -8,7 +8,6 @@ import com.example.file.domain.repository.ParseTaskRepository;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
-import com.example.shared.identifier.id.UserNo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,7 @@ public class UploadFileUseCase {
       cmd.sourceFileId(),
       ErrorPolicy.COLLECT_ALL,
       List.of(),
-      UserNo.of(cmd.uploader())
+      cmd.uploader()
     );
     if (cmd.templateCode() != null && !cmd.templateCode().isBlank()) {
       task.bindTemplate(TemplateCode.of(cmd.templateCode()));

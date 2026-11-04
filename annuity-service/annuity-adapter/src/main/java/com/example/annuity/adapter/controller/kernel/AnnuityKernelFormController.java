@@ -1,9 +1,9 @@
 package com.example.annuity.adapter.controller.kernel;
 
-import com.example.auth.api.annotation.RequirePermission;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.adapter.form.converter.FormConverter;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.core.api.form.BusinessFormApi;
 import com.example.core.api.form.command.ApplyUploadTokenCommand;
 import com.example.core.api.form.command.ConfirmUploadCommand;
@@ -14,7 +14,7 @@ import com.example.core.api.form.response.UploadTokenResponse;
 import com.example.core.application.engine.step.service.BusinessFormAppService;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
@@ -46,7 +46,7 @@ public class AnnuityKernelFormController implements BusinessFormApi {
   @PostMapping("/upload-token")
   @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<UploadTokenResponse> applyUploadToken(@Valid @RequestBody ApplyUploadTokenCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("申请上传 token: batchId={}, fileName={}, userNo={}",
       command.batchId(), command.fileName(), session.userNo());
 
@@ -62,7 +62,7 @@ public class AnnuityKernelFormController implements BusinessFormApi {
   @PostMapping("/confirm-upload")
   @RequirePermission(business = "FORM", action = "UPLOAD")
   public ApiResult<Void> confirmUpload(@Valid @RequestBody ConfirmUploadCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("确认上传: batchId={}, formId={}, fileId={}, userNo={}",
       command.batchId(), command.formId(), command.fileId(), session.userNo());
 
@@ -80,7 +80,7 @@ public class AnnuityKernelFormController implements BusinessFormApi {
   @PostMapping("/delete")
   @RequirePermission(business = "FORM", action = "DELETE")
   public ApiResult<Void> delete(@Valid @RequestBody DeleteFormCommand command) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("删除表单: batchId={}, formId={}, userNo={}",
       command.batchId(), command.formId(), session.userNo());
 
@@ -92,7 +92,7 @@ public class AnnuityKernelFormController implements BusinessFormApi {
   @PostMapping("/status")
   @RequirePermission(business = "FORM", action = "VIEW")
   public ApiResult<FormStatusResponse> status(@Valid @RequestBody GetFormStatusQuery query) {
-    SessionContext session = sessionResolver.require();
+    SessionClaims session = sessionResolver.require();
     log.info("查询表单状态: formId={}, userNo={}", query.formId(), session.userNo());
 
     BusinessForm form = formAppService.getFormStatus(new FormId(query.formId()));

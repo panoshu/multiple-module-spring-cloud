@@ -1,14 +1,14 @@
 package com.example.auth.adapter.converter;
 
 import com.example.auth.api.dto.*;
-import com.pension.permission.domain.authorization.valueobject.ActionCode;
-import com.pension.permission.domain.authorization.valueobject.BusinessCode;
-import com.pension.permission.domain.permission.aggregate.PermissionMenu;
-import com.pension.permission.domain.permission.aggregate.valueobject.MenuTreeNode;
-import com.pension.permission.domain.permission.aggregate.valueobject.PermissionBinding;
-import com.pension.permission.types.MenuCode;
-import com.pension.permission.types.PermissionBindingId;
-import com.pension.permission.types.PermissionMenuId;
+import com.example.auth.domain.authorization.valueobject.ActionCode;
+import com.example.auth.domain.authorization.valueobject.BusinessCode;
+import com.example.auth.domain.permission.aggregate.PermissionMenu;
+import com.example.auth.domain.permission.aggregate.valueobject.MenuTreeNode;
+import com.example.auth.domain.permission.aggregate.valueobject.PermissionBinding;
+import com.example.auth.types.MenuCode;
+import com.example.auth.types.PermissionBindingId;
+import com.example.auth.types.PermissionMenuId;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

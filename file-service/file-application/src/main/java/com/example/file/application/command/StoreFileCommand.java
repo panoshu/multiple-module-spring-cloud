@@ -2,7 +2,7 @@ package com.example.file.application.command;
 
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 

@@ -9,7 +9,6 @@ import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.identifier.id.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,8 +37,8 @@ public interface SubTaskDataConverter {
   @Mapping(target = "validationErrors", expression = "java(validationErrorListToJson(subTask.validationErrors()))")
   @Mapping(target = "expiresAt", expression = "java(subTask.expiresAt())")
   @Mapping(target = "consumedAt", expression = "java(subTask.consumedAt())")
-  @Mapping(target = "createdBy", expression = "java(subTask.createdBy().value())")
-  @Mapping(target = "updatedBy", expression = "java(subTask.updatedBy().value())")
+  @Mapping(target = "createdBy", expression = "java(subTask.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(subTask.updatedBy())")
   @Mapping(target = "createTime", expression = "java(subTask.createdAt())")
   @Mapping(target = "updateTime", expression = "java(subTask.updatedAt())")
   @Mapping(target = "version", expression = "java((int) subTask.version().value())")
@@ -54,8 +53,8 @@ public interface SubTaskDataConverter {
   @Mapping(target = "tables", source = "tables", qualifiedByName = "jsonToTables")
   @Mapping(target = "status", source = "status", qualifiedByName = "stringToSubTaskStatus")
   @Mapping(target = "validationErrors", source = "validationErrors", qualifiedByName = "jsonToValidationErrorList")
-  @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-  @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
+  @Mapping(target = "createdBy", source = "createdBy")
+  @Mapping(target = "updatedBy", source = "updatedBy")
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
@@ -69,11 +68,6 @@ public interface SubTaskDataConverter {
   @Named("toFileTaskId")
   default FileTaskId toFileTaskId(String id) {
     return id != null ? FileTaskId.of(id) : null;
-  }
-
-  @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
   }
 
   @Named("toVersion")

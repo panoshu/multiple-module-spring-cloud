@@ -1,0 +1,94 @@
+# ============ 内网入口（总部 HQ + 专线网点 BRANCH） ============
+# 部署方式: --spring.profiles.active=intranet
+server:
+  port: 18082
+
+spring:
+  application:
+    name: intranet-gateway
+
+  cloud:
+    gateway.server.webflux:
+      discovery.locator:
+        enabled: true
+        lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 允许的前端来源 —— 精准白名单
+            allowed-origins:
+              - "https://com.example"
+            allowed-origin-patterns:
+              - "http://localhost:*"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            allowed-headers:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Tenant-Id"
+              - "X-Requested-With"
+              - "satoken-hq"
+              - "satoken-branch"
+            exposed-headers:
+              - "X-Trace-Id"
+              - "X-Request-Id"
+            allow-credentials: true
+            max-age: 3600
+      routes:
+        # ============ intranet-bff(内网 BFF) ============
+        - id: intranet-bff-hq-route
+          uri: lb://intranet-bff
+          predicates:
+            - Path=/hq/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, intranet-gateway
+        - id: intranet-bff-branch-route
+          uri: lb://intranet-bff
+          predicates:
+            - Path=/branch/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Source, intranet-gateway
+        # ============ auth-service(内网渠道认证授权) ============
+        - id: auth-service-hq-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/hq/auth/**
+          filters:
+            - StripPrefix=1
+        - id: auth-service-branch-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/branch/auth/**
+          filters:
+            - StripPrefix=1
+        # ============ integration-service(外部系统集成) ============
+        - id: integration-service-route
+          uri: lb://cjannuity-channel-integration
+          predicates:
+            - Path=/integration/**
+          filters:
+            - StripPrefix=1
+
+# 内网网关启用 HQ + BRANCH 渠道
+gateway:
+  channels:
+    enabled:
+      - HQ
+      - BRANCH
+
+# 网关层 auth 配置（白名单等，含网点二次授权）
+auth:
+  gateway:
+    public-paths:
+      - /actuator/**
+      - /actuator
+      - /favicon.ico
+      - /hq/auth/login
+      - /branch/auth/login
+      - /branch/auth/secondary-auth/initiate
+      - /branch/auth/secondary-auth/confirm
+      - /branch/auth/secondary-auth/status/**

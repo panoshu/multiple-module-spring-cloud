@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package com.example.core.application.business.guard;
 
 import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.exception.CommonError;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -33,7 +33,7 @@ public class DefaultBusinessAccessGuard implements BusinessAccessGuard {
   private static final String HQ = "HQ";
 
   @Override
-  public void checkCanHandle(SessionContext session, BusinessMetaContext meta) {
+  public void checkCanHandle(SessionClaims session, BusinessMetaContext meta) {
     checkCommon(session, meta);
     switch (session.channelType()) {
       case INTERNET -> checkInternetProxy(session, meta);
@@ -45,7 +45,7 @@ public class DefaultBusinessAccessGuard implements BusinessAccessGuard {
     }
   }
 
-  private void checkCommon(SessionContext session, BusinessMetaContext meta) {
+  private void checkCommon(SessionClaims session, BusinessMetaContext meta) {
     if (!Objects.equals(meta.planNo(), session.planNo())) {
       throw new BusinessException(CommonError.BAD_REQUEST)
         .withUserDetail("所选计划与会话中的计划不一致")
@@ -64,7 +64,7 @@ public class DefaultBusinessAccessGuard implements BusinessAccessGuard {
     }
   }
 
-  private void checkInternetProxy(SessionContext session, BusinessMetaContext meta) {
+  private void checkInternetProxy(SessionClaims session, BusinessMetaContext meta) {
     if (session.isProxy()) {
       if (session.delegatedPlanNos() == null || !session.delegatedPlanNos().contains(meta.planNo())) {
         throw new BusinessException(CommonError.FORBIDDEN)
@@ -74,7 +74,7 @@ public class DefaultBusinessAccessGuard implements BusinessAccessGuard {
     }
   }
 
-  private void checkBranchSecondaryAuth(SessionContext session) {
+  private void checkBranchSecondaryAuth(SessionClaims session) {
     if (!session.hasSecondaryAuth()) {
       throw new BusinessException(CommonError.FORBIDDEN)
         .withUserDetail("网点渠道办理业务需要二次授权")

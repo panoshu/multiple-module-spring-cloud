@@ -16,7 +16,7 @@ import com.example.approval.types.enums.ExecutionStatus;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
@@ -55,8 +55,8 @@ public interface ApprovalInstanceConverter {
   // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
   @Mapping(target = "createTime", expression = "java(instance.createdAt())")
   @Mapping(target = "updateTime", expression = "java(instance.updatedAt())")
-  @Mapping(target = "createdBy", expression = "java(instance.createdBy() != null ? instance.createdBy().value() : null)")
-  @Mapping(target = "updatedBy", expression = "java(instance.updatedBy() != null ? instance.updatedBy().value() : null)")
+  @Mapping(target = "createdBy", expression = "java(instance.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(instance.updatedBy())")
   @Mapping(target = "version", expression = "java(instance.version() != null ? (int) instance.version().value() : null)")
   @Mapping(target = "deleted", constant = "false")
   ApprovalInstanceDO toDO(ApprovalInstance instance);
@@ -82,8 +82,8 @@ public interface ApprovalInstanceConverter {
       instanceDO.getInitiatorPlan(),
       instanceDO.getCurrentPlan(),
       null,
-      toUserNo(instanceDO.getCreatedBy()),
-      toUserNo(instanceDO.getUpdatedBy()),
+      instanceDO.getCreatedBy(),
+      instanceDO.getUpdatedBy(),
       instanceDO.getCreateTime(),
       instanceDO.getUpdateTime(),
       toVersion(instanceDO.getVersion())
@@ -107,8 +107,8 @@ public interface ApprovalInstanceConverter {
   // createTime/updateTime 由数据库自动管理
   @Mapping(target = "createTime", ignore = true)
   @Mapping(target = "updateTime", ignore = true)
-  @Mapping(target = "createdBy", expression = "java(execution.createdBy() != null ? execution.createdBy().value() : null)")
-  @Mapping(target = "updatedBy", expression = "java(execution.updatedBy() != null ? execution.updatedBy().value() : null)")
+  @Mapping(target = "createdBy", expression = "java(execution.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(execution.updatedBy())")
   @Mapping(target = "version", expression = "java(execution.version() != null ? (int) execution.version().value() : null)")
   @Mapping(target = "deleted", constant = "false")
   ApprovalNodeExecutionDO toExecutionDO(NodeExecution execution);
@@ -131,8 +131,8 @@ public interface ApprovalInstanceConverter {
       null,
       executionDO.getStartedAt(),
       executionDO.getCompletedAt(),
-      toUserNo(executionDO.getCreatedBy()),
-      toUserNo(executionDO.getUpdatedBy()),
+      executionDO.getCreatedBy(),
+      executionDO.getUpdatedBy(),
       executionDO.getCreateTime(),
       executionDO.getUpdateTime(),
       toVersion(executionDO.getVersion())
@@ -157,8 +157,8 @@ public interface ApprovalInstanceConverter {
   // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
   @Mapping(target = "createTime", expression = "java(record.createdAt())")
   @Mapping(target = "updateTime", expression = "java(record.updatedAt())")
-  @Mapping(target = "createdBy", expression = "java(record.createdBy() != null ? record.createdBy().value() : null)")
-  @Mapping(target = "updatedBy", expression = "java(record.updatedBy() != null ? record.updatedBy().value() : null)")
+  @Mapping(target = "createdBy", expression = "java(record.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(record.updatedBy())")
   @Mapping(target = "version", expression = "java(record.version() != null ? (int) record.version().value() : null)")
   @Mapping(target = "deleted", constant = "false")
   ApprovalRecordDO toRecordDO(ApprovalRecord record);
@@ -181,8 +181,8 @@ public interface ApprovalInstanceConverter {
       jsonToRejectTarget(recordDO.getRejectTarget()),
       toUserNo(recordDO.getTransferTo()),
       recordDO.getOperatedAt(),
-      toUserNo(recordDO.getCreatedBy()),
-      toUserNo(recordDO.getUpdatedBy()),
+      recordDO.getCreatedBy(),
+      recordDO.getUpdatedBy(),
       recordDO.getCreateTime(),
       recordDO.getUpdateTime(),
       toVersion(recordDO.getVersion())

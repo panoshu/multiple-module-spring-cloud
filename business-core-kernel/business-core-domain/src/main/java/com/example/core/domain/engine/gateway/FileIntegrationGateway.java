@@ -2,7 +2,7 @@ package com.example.core.domain.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.identifier.id.FileId;
+import com.example.file.types.FileId;
 import com.example.core.types.FormId;
 
 import java.io.InputStream;

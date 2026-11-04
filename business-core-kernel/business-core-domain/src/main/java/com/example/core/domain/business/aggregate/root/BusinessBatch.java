@@ -10,7 +10,6 @@ import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,12 +32,12 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   private int successCount = 0;
   private int failedCount = 0;
 
-  protected BusinessBatch(BatchId batchId, UserNo userNo) {
+  protected BusinessBatch(BatchId batchId, String userNo) {
     super(batchId, userNo);
     this.validateInvariants();
   }
 
-  protected BusinessBatch(BatchId batchId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessBatch(BatchId batchId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
   }
@@ -69,8 +68,8 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
    */
   public static BusinessBatch reconstitute(
     BatchId batchId,
-    UserNo createdBy,
-    UserNo updatedBy,
+    String createdBy,
+    String updatedBy,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     Version version,

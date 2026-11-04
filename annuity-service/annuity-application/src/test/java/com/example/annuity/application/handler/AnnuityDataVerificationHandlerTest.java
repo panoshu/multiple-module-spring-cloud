@@ -7,7 +7,6 @@ import com.example.annuity.domain.service.AnnuityExtensionResolver;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("AnnuityDataVerificationHandler 编排逻辑")
 class AnnuityDataVerificationHandlerTest {
 
-  private static final UserNo OPERATOR = UserNo.of("U-TEST");
+  private static final String OPERATOR = "U-TEST";
 
   @Mock
   private AnnuityExtensionResolver extensionResolver;

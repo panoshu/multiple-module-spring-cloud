@@ -11,7 +11,7 @@ import com.example.approval.types.enums.FlowStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -52,7 +52,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    * 场景1: 业务创建
    */
   private ApprovalFlow(ApprovalFlowId id, FlowName flowName, MatchRules matchRules,
-                       List<ApprovalNode> nodes, UserNo operator) {
+                       List<ApprovalNode> nodes, String operator) {
     super(id, operator);
     this.flowName = flowName;
     this.matchRules = matchRules;
@@ -68,7 +68,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    */
   private ApprovalFlow(ApprovalFlowId id, FlowName flowName, MatchRules matchRules,
                        List<ApprovalNode> nodes, FlowVersion flowVersion, FlowStatus status,
-                       UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                       String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.flowName = flowName;
     this.matchRules = matchRules;
@@ -89,7 +89,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    * @return ApprovalFlow 实例
    */
   public static ApprovalFlow create(ApprovalFlowId id, FlowName flowName, MatchRules matchRules,
-                                    List<ApprovalNode> nodes, UserNo operator) {
+                                    List<ApprovalNode> nodes, String operator) {
     if (flowName == null) {
       throw new IllegalArgumentException("审批流名称不能为空");
     }
@@ -110,7 +110,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    */
   public static ApprovalFlow reconstitute(ApprovalFlowId id, FlowName flowName, MatchRules matchRules,
                                           List<ApprovalNode> nodes, FlowVersion flowVersion, FlowStatus status,
-                                          UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                                          String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalFlow(id, flowName, matchRules, nodes, flowVersion, status,
       createdBy, updatedBy, createdAt, updatedAt, version);
   }
@@ -123,7 +123,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    * @param nodes      审批节点列表（null 或空表示不更新）
    * @param operator   操作人
    */
-  public void update(FlowName flowName, MatchRules matchRules, List<ApprovalNode> nodes, UserNo operator) {
+  public void update(FlowName flowName, MatchRules matchRules, List<ApprovalNode> nodes, String operator) {
     if (this.status == FlowStatus.DEPRECATED) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_DEPRECATED)
         .withLogDetail("废弃状态的审批流不能更新, ApprovalFlowId: %s".formatted(this.id()));
@@ -148,7 +148,7 @@ public class ApprovalFlow extends AggregateRoot<ApprovalFlowId> {
    *
    * @param operator 操作人
    */
-  public void deprecate(UserNo operator) {
+  public void deprecate(String operator) {
     if (this.status == FlowStatus.DEPRECATED) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_DEPRECATED)
         .withLogDetail("审批流已废弃, ApprovalFlowId: %s".formatted(this.id()));

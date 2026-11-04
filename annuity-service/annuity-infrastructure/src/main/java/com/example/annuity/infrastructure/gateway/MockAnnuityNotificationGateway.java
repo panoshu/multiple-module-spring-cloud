@@ -2,7 +2,6 @@ package com.example.annuity.infrastructure.gateway;
 
 import com.example.annuity.domain.aggregate.valueobject.NotificationType;
 import com.example.annuity.domain.gateway.AnnuityNotificationGateway;
-import com.example.shared.identifier.id.UserNo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -26,8 +25,8 @@ public class MockAnnuityNotificationGateway implements AnnuityNotificationGatewa
   private final List<NotificationRecord> sentNotifications = new ArrayList<>();
 
   @Override
-  public void notifyOperator(UserNo operatorNo, NotificationType type, String content) {
-    log.info("[Mock] 发送通知, operator={}, type={}, content={}", operatorNo.value(), type, content);
+  public void notifyOperator(String operatorNo, NotificationType type, String content) {
+    log.info("[Mock] 发送通知, operator={}, type={}, content={}", operatorNo, type, content);
     sentNotifications.add(new NotificationRecord(operatorNo, type, content));
   }
 
@@ -39,6 +38,6 @@ public class MockAnnuityNotificationGateway implements AnnuityNotificationGatewa
     sentNotifications.clear();
   }
 
-  public record NotificationRecord(UserNo operatorNo, NotificationType type, String content) {
+  public record NotificationRecord(String operatorNo, NotificationType type, String content) {
   }
 }

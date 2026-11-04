@@ -5,9 +5,10 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
+import com.example.shared.enumeration.EnumCodeCache;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
@@ -20,9 +21,9 @@ import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.identifier.id.CustomerNo;
-import com.example.shared.identifier.id.FileId;
-import com.example.shared.identifier.id.UserNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
@@ -69,14 +70,14 @@ public abstract class BusinessApplicationConverter {
       aDo.setProductName(ctx.productName());
       aDo.setPlanNo(ctx.planNo() != null ? ctx.planNo().value() : null);
       aDo.setPlanName(ctx.planName());
-      aDo.setOperationModel(ctx.operationModel() != null ? ctx.operationModel().name() : null);
+      aDo.setOperationModel(ctx.operationModel() != null ? ctx.operationModel().getCode() : null);
       aDo.setAccountManager(ctx.accountManager() != null ? ctx.accountManager().getValue() : null);
     }
 
     OperatorInfo op = app.operatorInfo();
     if (op != null) {
-      aDo.setChannel(op.channel() != null ? op.channel().name() : null);
-      aDo.setOperatorId(op.operatorId() != null ? op.operatorId().value() : null);
+      aDo.setChannel(op.channel() != null ? op.channel().getCode() : null);
+      aDo.setOperatorId(op.operatorId());
       aDo.setOperatorName(op.operatorName());
       aDo.setIsProxy(op.isProxy());
     }
@@ -91,8 +92,8 @@ public abstract class BusinessApplicationConverter {
     aDo.setApplyTime(app.applyTime());
     aDo.setCompleteTime(app.completeTime());
 
-    aDo.setCreatedBy(app.createdBy() != null ? app.createdBy().value() : null);
-    aDo.setUpdatedBy(app.updatedBy() != null ? app.updatedBy().value() : null);
+    aDo.setCreatedBy(app.createdBy());
+    aDo.setUpdatedBy(app.updatedBy());
     aDo.setCreateTime(app.createdAt());
     aDo.setUpdateTime(app.updatedAt());
     aDo.setDeleted(false);
@@ -117,8 +118,8 @@ public abstract class BusinessApplicationConverter {
 
     return BusinessApplication.reconstitute(
       new ApplicationId(aDo.getId()),
-      aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-      aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
+      aDo.getCreatedBy(),
+      aDo.getUpdatedBy(),
       aDo.getCreateTime(),
       aDo.getUpdateTime(),
       aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial(),
@@ -151,15 +152,15 @@ public abstract class BusinessApplicationConverter {
       aDo.getProductName(),
       aDo.getPlanNo() != null ? PlanNo.of(aDo.getPlanNo()) : null,
       aDo.getPlanName(),
-      aDo.getOperationModel() != null ? OperationModel.valueOf(aDo.getOperationModel()) : null,
+      aDo.getOperationModel() != null ? EnumCodeCache.get(OperatingMode.class, aDo.getOperationModel()) : null,
       parseAccountManager(aDo.getAccountManager())
     );
   }
 
   private OperatorInfo buildOperatorInfo(BusinessApplicationDO aDo) {
     return new OperatorInfo(
-      aDo.getChannel() != null ? AnnuityChannel.valueOf(aDo.getChannel()) : null,
-      aDo.getOperatorId() != null ? UserNo.of(aDo.getOperatorId()) : null,
+      aDo.getChannel() != null ? EnumCodeCache.get(Channel.class, aDo.getChannel()) : null,
+      aDo.getOperatorId(),
       aDo.getOperatorName(),
       aDo.getIsProxy() != null && aDo.getIsProxy()
     );
