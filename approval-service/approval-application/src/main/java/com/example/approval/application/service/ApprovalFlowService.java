@@ -36,6 +36,7 @@ public class ApprovalFlowService {
   private final ApprovalFlowRepository flowRepository;
   private final ApprovalFlowMatcher flowMatcher;
   private final EventBus eventBus;
+  private final com.example.shared.identifier.contract.IdService idService;
 
   /**
    * 创建审批流
@@ -46,7 +47,7 @@ public class ApprovalFlowService {
   @Transactional
   public ApprovalFlowId createApprovalFlow(CreateApprovalFlowRequest request) {
     // 生成审批流ID
-    ApprovalFlowId flowId = ApprovalFlowId.of(System.currentTimeMillis());
+    ApprovalFlowId flowId = idService.nextId(ApprovalFlowId.class);
 
     // 转换匹配规则
     MatchRules matchRules = convertMatchRules(request.matchRules());
@@ -247,7 +248,7 @@ public class ApprovalFlowService {
   private ApprovalNode convertNode(com.example.approval.api.dto.ApprovalNodeDTO dto) {
     // TODO: 根据实际业务逻辑转换
     return ApprovalNode.createSamePlanNode(
-      dto.nodeId() != null ? dto.nodeId() : com.example.approval.types.NodeId.of(System.currentTimeMillis()),
+      dto.nodeId() != null ? dto.nodeId() : idService.nextId(com.example.approval.types.NodeId.class),
       com.example.approval.domain.valueobject.NodeOrder.of(dto.order()),
       com.example.approval.types.enums.ApproverType.valueOf(dto.nodeType()),
       dto.approvalUsers() != null

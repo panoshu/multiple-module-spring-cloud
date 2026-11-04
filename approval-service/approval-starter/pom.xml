@@ -37,6 +37,10 @@
       <groupId>io.github.danielliu1123</groupId>
       <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-id-starter</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

@@ -40,6 +40,8 @@ public class ApprovalInstanceService {
   private final ApprovalInstanceRepository instanceRepository;
   private final ApprovalFlowRepository flowRepository;
   private final EventBus eventBus;
+  private final com.example.shared.identifier.contract.IdService idService;
+  private final com.example.approval.domain.aggregate.root.ApprovalIdGenerator idGenerator;
 
   /**
    * 启动审批
@@ -53,7 +55,7 @@ public class ApprovalInstanceService {
     ApprovalFlow flow = loadFlowOrThrow(request.flowId());
 
     // 创建审批实例
-    ApprovalInstanceId instanceId = ApprovalInstanceId.of(System.currentTimeMillis());
+    ApprovalInstanceId instanceId = idService.nextId(ApprovalInstanceId.class);
     ApprovalInstance instance = ApprovalInstance.create(
       instanceId,
       request.flowId(),
@@ -101,7 +103,8 @@ public class ApprovalInstanceService {
       currentNode,
       UserNo.of(request.approver()),
       ApprovalOpinion.of(request.comment()),
-      request.approver()
+      request.approver(),
+      idGenerator
     );
 
     // 保存审批实例
@@ -137,7 +140,8 @@ public class ApprovalInstanceService {
       UserNo.of(request.approver()),
       ApprovalOpinion.of(request.reason()),
       RejectTarget.terminate(),
-      request.approver()
+      request.approver(),
+      idGenerator
     );
 
     // 保存审批实例
@@ -174,7 +178,8 @@ public class ApprovalInstanceService {
       UserNo.of(request.currentApprover()),
       ApprovalOpinion.of(request.reason()),
       UserNo.of(request.targetApprover()),
-      request.currentApprover()
+      request.currentApprover(),
+      idGenerator
     );
 
     // 保存审批实例

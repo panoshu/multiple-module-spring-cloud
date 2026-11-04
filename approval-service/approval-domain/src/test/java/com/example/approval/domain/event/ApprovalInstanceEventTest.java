@@ -1,5 +1,6 @@
 package com.example.approval.domain.event;
 
+import com.example.approval.domain.aggregate.root.ApprovalIdGenerator;
 import com.example.approval.domain.aggregate.entity.ApprovalNode;
 import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
@@ -33,6 +34,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @DisplayName("ApprovalInstance 领域事件派发测试")
 class ApprovalInstanceEventTest {
+
+  /**
+   * 测试用 ID 生成器：AtomicLong 递增（确定性、无碰撞）.
+   */
+  static final ApprovalIdGenerator TEST_ID_GENERATOR = new ApprovalIdGenerator() {
+    private final java.util.concurrent.atomic.AtomicLong seq = new java.util.concurrent.atomic.AtomicLong(1);
+
+    @Override
+    public com.example.approval.types.RecordId nextRecordId() {
+      return com.example.approval.types.RecordId.of(seq.incrementAndGet());
+    }
+
+    @Override
+    public com.example.approval.types.ExecutionId nextExecutionId() {
+      return com.example.approval.types.ExecutionId.of(seq.incrementAndGet());
+    }
+  };
+
 
   private static final String INITIATOR = "user-initiator";
   private static final UserNo APPROVER = UserNo.of("user-001");
@@ -99,7 +118,7 @@ class ApprovalInstanceEventTest {
     ApprovalNode node = singleOrSignUserNode();
 
     // when
-    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER.value());
+    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER.value(), TEST_ID_GENERATOR);
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.APPROVED);
@@ -126,7 +145,7 @@ class ApprovalInstanceEventTest {
 
     // when
     instance.reject(node, APPROVER, ApprovalOpinion.of("不同意"),
-      RejectTarget.terminate(), APPROVER.value());
+      RejectTarget.terminate(), APPROVER.value(), TEST_ID_GENERATOR);
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.REJECTED);

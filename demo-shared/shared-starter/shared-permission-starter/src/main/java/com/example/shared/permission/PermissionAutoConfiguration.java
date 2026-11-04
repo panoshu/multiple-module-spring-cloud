@@ -97,23 +97,30 @@ public class PermissionAutoConfiguration {
 
   /**
    * P0-H2：跨服务失效通道收端——订阅 Redis topic {@code event.PermissionChangedEvent}
-   * （auth 中继广播）→ 清本地 Caffeine。宿主服务具备 Redis（spring-data-redis 在
-   * classpath 且存在 RedisConnectionFactory bean）且未显式关闭时装配.
+   * （auth 中继广播）→ 清本地 Caffeine.
+   *
+   * <p><b>嵌套配置类 + 字符串形式 {@code @ConditionalOnClass}（Spring Boot 规范）</b>：
+   * spring-data-redis 是 optional 依赖，无 Redis 的宿主服务（如 annuity 测试上下文）
+   * 不因外层类的类字面量引用触发 NoClassDefFoundError——外层类零 Redis 类型引用.
    */
-  @Bean(destroyMethod = "destroy")
-  @ConditionalOnMissingBean
+  @org.springframework.context.annotation.Configuration(proxyBeanMethods = false)
   @org.springframework.boot.autoconfigure.condition.ConditionalOnClass(
-    org.springframework.data.redis.connection.RedisConnectionFactory.class)
-  @ConditionalOnBean(
-    org.springframework.data.redis.connection.RedisConnectionFactory.class)
+    name = "org.springframework.data.redis.connection.RedisConnectionFactory")
   @ConditionalOnProperty(
     prefix = "shared.permission.invalidation.redis", name = "enabled",
     havingValue = "true", matchIfMissing = true)
-  public PermissionInvalidationRedisSubscriber permissionInvalidationRedisSubscriber(
-    org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory,
-    PermissionCacheInvalidationListener invalidationListener,
-    com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
-    return new PermissionInvalidationRedisSubscriber(
-      connectionFactory, invalidationListener, objectMapper);
+  static class RedisInvalidationConfiguration {
+
+    @Bean(destroyMethod = "destroy")
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(
+      org.springframework.data.redis.connection.RedisConnectionFactory.class)
+    public PermissionInvalidationRedisSubscriber permissionInvalidationRedisSubscriber(
+      org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory,
+      PermissionCacheInvalidationListener invalidationListener,
+      com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+      return new PermissionInvalidationRedisSubscriber(
+        connectionFactory, invalidationListener, objectMapper);
+    }
   }
 }

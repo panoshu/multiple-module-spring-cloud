@@ -22,6 +22,24 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("ApprovalInstance 审批实例聚合根测试")
 class ApprovalInstanceTest {
 
+  /**
+   * 测试用 ID 生成器：AtomicLong 递增（确定性、无碰撞）.
+   */
+  static final ApprovalIdGenerator TEST_ID_GENERATOR = new ApprovalIdGenerator() {
+    private final java.util.concurrent.atomic.AtomicLong seq = new java.util.concurrent.atomic.AtomicLong(1);
+
+    @Override
+    public com.example.approval.types.RecordId nextRecordId() {
+      return com.example.approval.types.RecordId.of(seq.incrementAndGet());
+    }
+
+    @Override
+    public com.example.approval.types.ExecutionId nextExecutionId() {
+      return com.example.approval.types.ExecutionId.of(seq.incrementAndGet());
+    }
+  };
+
+
   private static final String INITIATOR = "user-initiator";
   private static final UserNo APPROVER_1 = UserNo.of("user-001");
   private static final UserNo APPROVER_2 = UserNo.of("user-002");
@@ -56,7 +74,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个用户审批
-    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value());
+    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(), TEST_ID_GENERATOR);
 
     // then: 节点不应完成，实例应仍在审批中
     assertEquals(InstanceStatus.APPROVING, instance.status(),
@@ -84,7 +102,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个审批人通过
-    instance.approve(userNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value());
+    instance.approve(userNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(), TEST_ID_GENERATOR);
 
     // then: 节点不应完成
     assertEquals(InstanceStatus.APPROVING, instance.status(),
@@ -93,7 +111,7 @@ class ApprovalInstanceTest {
       "AND_SIGN 用户审批节点单人通过后不应标记为已通过");
 
     // when: 第二个审批人通过
-    instance.approve(userNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2.value());
+    instance.approve(userNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2.value(), TEST_ID_GENERATOR);
 
     // then: 节点应完成，实例应已通过
     assertEquals(InstanceStatus.APPROVED, instance.status(),
@@ -115,7 +133,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个用户审批
-    instance.approve(orSignRoleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value());
+    instance.approve(orSignRoleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(), TEST_ID_GENERATOR);
 
     // then: 或签模式下节点应完成
     assertEquals(InstanceStatus.APPROVED, instance.status(),

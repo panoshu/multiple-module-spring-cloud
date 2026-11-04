@@ -185,15 +185,16 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param opinion    审批意见
    * @param operator   操作人
    */
-  public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, String operator) {
+  public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, String operator,
+                     ApprovalIdGenerator idGenerator) {
     validateCanApprove(approverId);
 
-    // 创建审批记录
-    RecordId recordId = RecordId.of(System.currentTimeMillis()); // 简单生成ID，实际应由Repository生成
+    // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
+    RecordId recordId = idGenerator.nextRecordId();
     ApprovalRecord record = ApprovalRecord.approve(recordId, approverId, opinion, operator);
 
     // 获取或创建当前节点的执行记录
-    NodeExecution execution = getOrCreateCurrentExecution(node, operator);
+    NodeExecution execution = getOrCreateCurrentExecution(node, operator, idGenerator);
     execution.addApprovalRecord(record, operator);
 
     // 根据签批模式决定是否标记节点完成
@@ -219,15 +220,15 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator     操作人
    */
   public void reject(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                     RejectTarget rejectTarget, String operator) {
+                     RejectTarget rejectTarget, String operator, ApprovalIdGenerator idGenerator) {
     validateCanApprove(approverId);
 
-    // 创建审批记录
-    RecordId recordId = RecordId.of(System.currentTimeMillis());
+    // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
+    RecordId recordId = idGenerator.nextRecordId();
     ApprovalRecord record = ApprovalRecord.reject(recordId, approverId, opinion, rejectTarget, operator);
 
     // 获取或创建当前节点的执行记录
-    NodeExecution execution = getOrCreateCurrentExecution(node, operator);
+    NodeExecution execution = getOrCreateCurrentExecution(node, operator, idGenerator);
     execution.addApprovalRecord(record, operator);
     execution.markRejected(operator);
 
@@ -251,15 +252,15 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator   操作人
    */
   public void transfer(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                       UserNo transferTo, String operator) {
+                       UserNo transferTo, String operator, ApprovalIdGenerator idGenerator) {
     validateCanApprove(approverId);
 
-    // 创建审批记录
-    RecordId recordId = RecordId.of(System.currentTimeMillis());
+    // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
+    RecordId recordId = idGenerator.nextRecordId();
     ApprovalRecord record = ApprovalRecord.transfer(recordId, approverId, opinion, transferTo, operator);
 
     // 获取或创建当前节点的执行记录
-    NodeExecution execution = getOrCreateCurrentExecution(node, operator);
+    NodeExecution execution = getOrCreateCurrentExecution(node, operator, idGenerator);
     execution.addApprovalRecord(record, operator);
     // 转交不改变节点状态，等待被转交人审批
   }
@@ -352,12 +353,13 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator 操作人
    * @return 节点执行记录
    */
-  private NodeExecution getOrCreateCurrentExecution(ApprovalNode node, String operator) {
+  private NodeExecution getOrCreateCurrentExecution(ApprovalNode node, String operator,
+                                                      ApprovalIdGenerator idGenerator) {
     return nodeExecutions.stream()
       .filter(e -> e.nodeOrder().equals(currentNodeOrder))
       .findFirst()
       .orElseGet(() -> {
-        ExecutionId executionId = ExecutionId.of(System.currentTimeMillis());
+        ExecutionId executionId = idGenerator.nextExecutionId();
         NodeExecution execution = NodeExecution.create(executionId, node.id(), currentNodeOrder, operator);
         nodeExecutions.add(execution);
         return execution;

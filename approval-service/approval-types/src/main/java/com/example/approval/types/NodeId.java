@@ -1,5 +1,7 @@
 package com.example.approval.types;
 
+import com.example.shared.identifier.contract.IdDefinition;
+import com.example.shared.identifier.contract.IdType;
 import com.example.shared.identifier.contract.Identifier;
 
 /**
@@ -7,6 +9,7 @@ import com.example.shared.identifier.contract.Identifier;
  *
  * @author approval-service
  */
+@IdDefinition(type = IdType.SNOWFLAKE)
 public record NodeId(Long value) implements Identifier<Long> {
 
   public NodeId {
