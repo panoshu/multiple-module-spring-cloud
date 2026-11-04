@@ -45,6 +45,13 @@ public class SharedCacheTemplate implements ICacheTemplate {
   }
 
   @Override
+  public void evictAll(String cacheName) {
+    Cache cache = getCacheOrThrow(cacheName);
+    // Spring Cache 统一 clear 契约：LayeredCache 同清 L1/L2，CaffeineCache 清本地
+    cache.clear();
+  }
+
+  @Override
   public <T> T getOrLoad(String cacheName, String key, Function<String, T> loader, Class<T> type) {
     Cache cache = getCacheOrThrow(cacheName);
 

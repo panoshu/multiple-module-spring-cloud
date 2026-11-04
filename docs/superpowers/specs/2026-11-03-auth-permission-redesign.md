@@ -22,6 +22,24 @@
 
 > 附带完成：全仓约 35 个腐化测试修复（跨 kernel/approval/file/annuity/auth 的 UserNo→String 审计位迁移与旧包名引用：shared.identifier.id→core.types、user.valueobject→core.types.identity/contact、credential ValidityPeriod→core.types.temporal）。这批测试腐化是历史重构（类型迁移）未同步测试的存量债，与 SOFA BOM 解析问题叠加导致 CLI 全量构建自 2026-10-29 起从未跑通。
 
+## P0 事后审计批次（2026-11-04 第五批，commit 8f6b2b67）
+
+spec 主体完成后做了一轮硬伤审计，发现三处"最后一公里"接缝缺口并当批修复：
+
+| 项 | 缺陷 | 修复 |
+|---|---|---|
+| H2 跨服务失效投递 | PermissionChangedEvent 只接了同进程 Spring 事件，auth 与业务服务跨进程——生产环境失效通道形同虚设 | auth 新增 `PermissionInvalidationListener` 中继广播 Redis pub/sub topic `event.PermissionChangedEvent`；permission-starter 新增 `PermissionInvalidationRedisSubscriber`（spring-data-redis/jackson optional + 条件装配 + 自管理容器），订阅即清本地 Caffeine |
+| H3 auth 自身缓存不失效 | Grant/Assignment 变更后只清业务服务缓存，auth 的 Redis 双区缓存（前端权限/菜单数据源）只靠 5min TTL——前后端不一致窗口 | 同一监听器内即时清除：`PermissionCacheStore` SPI 新增 `clearAll()`，`RedisPermissionCacheStore` SCAN 游标批量删除（不用 KEYS 防生产阻塞） |
+| H4 声明并发丢更新 | 五事件并发 read-modify-write 同一 Token-Session 单键，后写者整体覆盖前者的字段 | `SessionClaims` 契约新增 `revision` 修订号（兼容旧 JSON 缺省 0）；`SessionClaimsWriter.merge` 方法级互斥 + 修订号递增（事件低频，全局锁零性能代价） |
+
+验证：全仓 89 模块构建绿；kernel 74、permission-starter 20、auth 198 测试绿。
+设计原则保持：失效操作天然幂等（无需去重/防回声）；fail-soft 全链路（中继/清除/订阅任一失败均回退 TTL 兜底，不放大故障面）。
+
+### 审计遗留（P1/P2 建议批次，未实施）
+
+- P1 安全：签名改非对称（网关私签/下游公验，Ed25519）替代对称共享密钥；spec §6 密钥轮换（X-Session-Sig-Version 双验窗口）落地；时间窗缩至 60s + nonce 去重防重放
+- P2 性能/治理：声明瘦身（permissionCodes 不出 auth、HTTP 头只带身份+渠道+计划+revision）；登录权限计算改惰性；DataScope 短 TTL 缓存（spec C 未竟项）；渠道 Guard 推广 approval/file；ArchUnit 接 CI 门禁
+
 
 ---
 

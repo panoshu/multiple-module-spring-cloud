@@ -26,15 +26,16 @@
       <artifactId>caffeine</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>org.redisson</groupId>
-      <artifactId>redisson-spring-boot-starter</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
+    </dependency>
+    <dependency>
+      <!-- RedisCacheFactory 编译需要（原由 redisson-spring-boot-starter 传递提供，精确化替换） -->
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-redis</artifactId>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
