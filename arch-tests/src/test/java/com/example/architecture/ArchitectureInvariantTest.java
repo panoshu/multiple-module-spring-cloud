@@ -38,8 +38,15 @@ class ArchitectureInvariantTest {
       com.example.auth.infrastructure.channel.SessionPlanSelectedEventListener.class, // auth-infrastructure
       com.example.auth.application.authorization.PermissionQueryService.class,          // auth-application
       com.example.annuity.adapter.controller.AnnuityController.class,        // annuity-adapter
+      com.example.annuity.application.service.AnnuityAppService.class,       // annuity-application（不变量8 ID 门面覆盖）
+      com.example.annuity.infrastructure.gateway.MockFileIntegrationGateway.class, // annuity-infrastructure
       com.example.approval.adapter.controllers.ApprovalFlowAdapter.class,    // approval-adapter
+      com.example.approval.application.service.ApprovalInstanceService.class, // approval-application（IdService 收编点）
+      com.example.approval.domain.aggregate.root.ApprovalInstance.class,     // approval-domain（ApprovalIdGenerator 端口）
+      com.example.approval.infrastructure.id.IdServiceApprovalIdGenerator.class, // approval-infrastructure
       com.example.file.adapter.controllers.FileTaskAdapter.class,            // file-adapter
+      com.example.file.application.usecase.ApplyUploadTokenUseCase.class,    // file-application（IdService 收编点）
+      com.example.file.infrastructure.storage.RedisFileTokenStore.class,  // file-infrastructure（Redisson SETNX 原语，非缓存）
       com.example.integration.adapter.trade.TradeQueryAdapter.class,         // integration-service-adapter
       com.example.core.api.context.BusinessMetaContext.class,                // business-core-api
       com.example.core.application.business.guard.DefaultBusinessAccessGuard.class, // business-core-application
@@ -154,6 +161,52 @@ class ArchitectureInvariantTest {
       .orShould().dependOnClassesThat().resideInAPackage("com.example.core.domain..")
       .orShould().dependOnClassesThat().resideInAPackage("com.example.core.infrastructure..")
       .because("BFF 只做渠道适配与聚合编排（kernel 契约 DTO 除外），业务规则在领域层")
+      .check(all);
+  }
+
+  /**
+   * 不变量 8：共享基础设施门面强制——业务不得绕过 IdService / ICacheTemplate 门面自建.
+   *
+   * <p>背景（2026-11-04/05 共享能力收编治理的机器固化）：审计发现 approval 全线
+   * currentTimeMillis 造 ID、auth 自建 Redis 缓存轮子、file 直调 UlidAlgorithm——
+   * 收编完成后本条防止回潮。三条子规则分别锁定 id / 分布式缓存 / 本地缓存门面.
+   */
+  @Test
+  @DisplayName("8. 共享能力门面强制（id/cache 禁直连）")
+  void sharedInfrastructureFacadeMustBeEnforced() {
+    // 8a ID：业务禁直调 id-core 算法内部（绕过策略注册、启动校验与格式化）
+    noClasses().that().resideInAPackage("com.example..")
+      .and().resideOutsideOfPackage("com.example.shared..")
+      .should().dependOnClassesThat().resideInAPackage("com.example.shared.id.algorithm..")
+      .because("业务 ID 一律经 IdService 门面（@IdDefinition 策略可换、启动校验兜底）；"
+        + "直调算法内部（如 UlidAlgorithm）在换策略时无法平滑迁移")
+      .check(all);
+
+    // 8b 分布式缓存：业务禁直摸 RedisTemplate（白名单为 Redis 原生语义，非缓存职责）
+    noClasses().that().resideInAPackage("com.example..")
+      .and().resideOutsideOfPackage("com.example.shared..")
+      .and().doNotHaveFullyQualifiedName(
+        "com.example.auth.infrastructure.channel.repository.SessionRepositoryImpl")
+      .and().doNotHaveFullyQualifiedName(
+        "com.example.auth.infrastructure.permission.cache.PermissionInvalidationListener")
+      .should().dependOnClassesThat().belongToAnyOf(
+        org.springframework.data.redis.core.RedisTemplate.class,
+        org.springframework.data.redis.core.StringRedisTemplate.class)
+      .because("缓存一律经 ICacheTemplate / 领域缓存 SPI（两级缓存、防击穿、广播失效）；"
+        + "白名单两项为 Redis 原生语义——SessionRepositoryImpl 是会话持久化 Repository、"
+        + "PermissionInvalidationListener 是 pub/sub 失效广播，复审时须逐一确认")
+      .check(all);
+
+    // 8c 本地缓存：业务禁自建 Caffeine（白名单：MenuNodeCache 进程内目录缓存）
+    noClasses().that().resideInAPackage("com.example..")
+      .and().resideOutsideOfPackage("com.example.shared..")
+      .and().doNotHaveFullyQualifiedName(
+        "com.example.auth.application.permission.MenuNodeCache")
+      .should().dependOnClassesThat().belongToAnyOf(
+        com.github.benmanes.caffeine.cache.Caffeine.class,
+        com.github.benmanes.caffeine.cache.Cache.class)
+      .because("本地缓存经统一缓存端口（L1_ONLY 模式）；MenuNodeCache 为进程内目录缓存白名单"
+        + "（枚举键 + 泛型列表值类型），新增本地缓存须走端口或修订白名单理由")
       .check(all);
   }
 }
