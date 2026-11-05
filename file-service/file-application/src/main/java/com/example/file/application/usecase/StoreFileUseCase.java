@@ -9,7 +9,7 @@ import com.example.file.domain.model.aggregate.root.FileMetadata;
 import com.example.file.domain.model.aggregate.valueobject.FileStatus;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.exception.SystemException;
-import com.example.shared.id.algorithm.UlidAlgorithm;
+import com.example.shared.identifier.contract.IdService;
 import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,13 +23,14 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class StoreFileUseCase {
 
+  private final IdService idService;
   private final FileMetadataRepository metadataRepository;
   private final FileStorageGateway storageGateway;
   private final StorageTargetResolver targetResolver;
 
   @Transactional
   public FileId createMetadata(StoreFileCommand command) {
-    FileId fileId = new FileId(UlidAlgorithm.generate());
+    FileId fileId = idService.nextId(FileId.class);
     var target = targetResolver.resolveByUsage(command.usage(), command.bizType());
     FileMetadata file = FileMetadata.create(
       fileId,

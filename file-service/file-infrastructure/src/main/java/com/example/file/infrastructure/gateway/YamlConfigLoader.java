@@ -19,6 +19,12 @@ import java.util.Map;
 @Component
 public class YamlConfigLoader implements ConfigLoader {
 
+  private final com.example.shared.identifier.contract.IdService idService;
+
+  public YamlConfigLoader(com.example.shared.identifier.contract.IdService idService) {
+    this.idService = idService;
+  }
+
   @Override
   public TemplateConfig loadFromYaml(BizType bizType, String baselineYaml,
                                      List<String> sourceTemplateYamls, String version,
@@ -251,6 +257,6 @@ public class YamlConfigLoader implements ConfigLoader {
   }
 
   private String generateId() {
-    return "01HW-" + System.currentTimeMillis();
+    return idService.nextId(TemplateConfigId.class).value();
   }
 }

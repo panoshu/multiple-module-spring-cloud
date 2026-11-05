@@ -27,6 +27,7 @@ import java.util.Optional;
 @Service
 public class ParseFileUseCase {
 
+  private final com.example.shared.identifier.contract.IdService idService;
   private final ParseTaskRepository parseTaskRepository;
   private final SubTaskDataRepository subTaskRepository;
   private final TemplateConfigRepository configRepository;
@@ -40,7 +41,7 @@ public class ParseFileUseCase {
   private final DataValidator validator;
   private final TaskSplitter splitter;
 
-  public ParseFileUseCase(ParseTaskRepository parseTaskRepository,
+  public ParseFileUseCase(com.example.shared.identifier.contract.IdService idService, ParseTaskRepository parseTaskRepository,
                           SubTaskDataRepository subTaskRepository,
                           TemplateConfigRepository configRepository,
                           FileStorageGateway fileStorage,
@@ -52,6 +53,7 @@ public class ParseFileUseCase {
                           DataDeriver deriver,
                           DataValidator validator,
                           TaskSplitter splitter) {
+    this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
     this.subTaskRepository = subTaskRepository;
     this.configRepository = configRepository;
@@ -116,7 +118,7 @@ public class ParseFileUseCase {
 
         for (int i = 0; i < units.size(); i++) {
           SplitUnit unit = units.get(i);
-          SubTaskId subTaskId = SubTaskId.generate();
+          SubTaskId subTaskId = idService.nextId(SubTaskId.class);
 
           CanonicalData unitData = fromFlatMap(unit.data());
 

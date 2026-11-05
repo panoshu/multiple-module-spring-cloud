@@ -70,7 +70,7 @@ class FileAccessLogRepositoryImplTest {
     assertThat(got.result()).isEqualTo(FileAccessResult.SUCCESS);
     assertThat(got.failReason()).isNull();
     assertThat(got.occurAt()).isNotNull();
-    assertThat(got.createdBy()).isEqualTo(UserNo.of("u1"));
+    assertThat(got.createdBy()).isEqualTo("u1");
   }
 
   @Test

@@ -90,7 +90,14 @@ class YamlConfigLoaderTest {
             reviewer: ["复核人："]
           maxBlankRows: 1
     """;
-  private final ConfigLoader loader = new YamlConfigLoader();
+  private final ConfigLoader loader = new YamlConfigLoader(new com.example.shared.identifier.contract.IdService() {
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> c) { try { return c.getDeclaredConstructor(String.class).newInstance("01H8TESTCFGID"); } catch (Exception e) { throw new IllegalStateException(e); } }
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> c, String b) { return nextId(c); }
+      public String nextId(com.example.shared.identifier.contract.IdType t) { return "01H8TESTCFGID"; }
+      public String nextId(com.example.shared.identifier.contract.IdType t, String b) { return "01H8TESTCFGID"; }
+      public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> c, String b) { throw new UnsupportedOperationException(); }
+      public Long nextLongId(String b) { throw new UnsupportedOperationException(); }
+    });
 
   @Test
   void loadFromYaml_基础字段() {

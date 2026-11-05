@@ -41,4 +41,46 @@ public class StorageTestConfiguration {
   public FileMetadataRepository fileMetadataRepository() {
     return mock(FileMetadataRepository.class);
   }
+
+  /**
+   * 测试桩 IdService：FileStorageRouter 收编至 shared-id 门面后需要（固定 FileId）.
+   */
+  @Bean
+  public com.example.shared.identifier.contract.IdService idService() {
+    return new com.example.shared.identifier.contract.IdService() {
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass) {
+        try {
+          return idClass.getDeclaredConstructor(String.class).newInstance("01H8TESTFILE00");
+        } catch (Exception e) {
+          throw new IllegalStateException(e);
+        }
+      }
+
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
+        return nextId(idClass);
+      }
+
+      @Override
+      public String nextId(com.example.shared.identifier.contract.IdType type) {
+        return "01H8TESTFILE00";
+      }
+
+      @Override
+      public String nextId(com.example.shared.identifier.contract.IdType type, String bizType) {
+        return "01H8TESTFILE00";
+      }
+
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> idClass, String bizContext) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Long nextLongId(String bizType) {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
 }

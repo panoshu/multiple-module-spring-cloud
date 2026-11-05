@@ -11,7 +11,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
 import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
-import com.example.shared.id.algorithm.UlidAlgorithm;
+import com.example.shared.identifier.contract.IdService;
 import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ApplyUploadTokenUseCase {
 
+  private final IdService idService;
   private final FileMetadataRepository metadataRepository;
   private final StorageTargetResolver targetResolver;
   private final FileTokenService tokenService;
@@ -47,7 +48,7 @@ public class ApplyUploadTokenUseCase {
         .withLogDetail("ttl 不能为空");
     }
 
-    FileId fileId = new FileId(UlidAlgorithm.generate());
+    FileId fileId = idService.nextId(FileId.class);
     var target = targetResolver.resolveByUsage(FileUsage.SOURCE, cmd.bizType());
     FileMetadata file = FileMetadata.createForUpload(
       fileId, FileUsage.SOURCE, cmd.bizType(), cmd.sourceApp(),

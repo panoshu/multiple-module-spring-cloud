@@ -25,9 +25,10 @@ public class StorageAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(FileStorageGateway.class)
   public FileStorageGateway fileStorageGateway(
+    com.example.shared.identifier.contract.IdService idService,
     FileMetadataRepository metadataRepository,
     StorageTargetResolver targetResolver,
     List<FileStorageBackend> backends) {
-    return new FileStorageRouter(metadataRepository, targetResolver, backends);
+    return new FileStorageRouter(idService, metadataRepository, targetResolver, backends);
   }
 }

@@ -18,7 +18,7 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.types.FileTaskId;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.id.algorithm.UlidAlgorithm;
+import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.BatchId;
 import com.example.file.types.FileId;
 import com.example.core.types.UserNo;
@@ -49,6 +49,7 @@ public class GenerateOutboundFileUseCase {
 
   private static final String SUPPLEMENTAL_DATA_PREFIX = "biz_";
 
+  private final IdService idService;
   private final SubTaskDataRepository subTaskRepository;
   private final FileMetadataRepository fileMetadataRepository;
   private final TargetTemplateStorage targetTemplateStorage;
@@ -56,12 +57,13 @@ public class GenerateOutboundFileUseCase {
   private final FileStorageGateway fileStorageGateway;
   private final StorageTargetResolver targetResolver;
 
-  public GenerateOutboundFileUseCase(SubTaskDataRepository subTaskRepository,
+  public GenerateOutboundFileUseCase(IdService idService, SubTaskDataRepository subTaskRepository,
                                      FileMetadataRepository fileMetadataRepository,
                                      TargetTemplateStorage targetTemplateStorage,
                                      ExcelExporter excelExporter,
                                      FileStorageGateway fileStorageGateway,
                                      StorageTargetResolver targetResolver) {
+    this.idService = idService;
     this.subTaskRepository = subTaskRepository;
     this.fileMetadataRepository = fileMetadataRepository;
     this.targetTemplateStorage = targetTemplateStorage;
@@ -129,7 +131,7 @@ public class GenerateOutboundFileUseCase {
     excelExporter.export(unit, templateStream, baos);
 
     // 3. 创建 FileMetadata → 存储 → markUploaded
-    FileId outboundFileId = new FileId(UlidAlgorithm.generate());
+    FileId outboundFileId = idService.nextId(FileId.class);
     String originalName = buildOutboundFileName(subTask, cmd.targetTemplateId());
 
     var target = targetResolver.resolveByUsage(FileUsage.ARCHIVE, subTask.bizType().value());

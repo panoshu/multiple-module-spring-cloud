@@ -16,15 +16,18 @@ import java.util.List;
 @Service
 public class UploadFileUseCase {
 
+  private final com.example.shared.identifier.contract.IdService idService;
   private final ParseTaskRepository parseTaskRepository;
 
-  public UploadFileUseCase(ParseTaskRepository parseTaskRepository) {
+  public UploadFileUseCase(com.example.shared.identifier.contract.IdService idService,
+                          ParseTaskRepository parseTaskRepository) {
+    this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
   }
 
   @Transactional
   public UploadFileResult execute(UploadFileCommand cmd) {
-    FileTaskId taskId = FileTaskId.generate();
+    FileTaskId taskId = idService.nextId(FileTaskId.class);
     ParseTask task = ParseTask.create(
       taskId,
       BizType.of(cmd.bizType()),

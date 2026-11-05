@@ -36,6 +36,47 @@ import static org.mockito.Mockito.*;
 
 class FileStorageRouterTest {
 
+  /**
+   * 测试桩：生成固定 FileId（收编后构造器需 IdService）.
+   */
+  static final com.example.shared.identifier.contract.IdService TEST_IDS =
+      new com.example.shared.identifier.contract.IdService() {
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass) {
+      try {
+        return idClass.getDeclaredConstructor(String.class).newInstance("01H8TESTID00");
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
+      return nextId(idClass);
+    }
+
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type) {
+      return "01H8TESTID00";
+    }
+
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type, String bizType) {
+      return "01H8TESTID00";
+    }
+
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> idClass, String bizContext) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Long nextLongId(String bizType) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
+
   @TempDir
   Path tempDir;
 
@@ -56,7 +97,7 @@ class FileStorageRouterTest {
     targetResolver = mock(StorageTargetResolver.class);
     LocalFileStorage localBackend = new LocalFileStorage();
     // 构造函数自动初始化 backendMap，无需显式调用 initBackendMap()
-    router = new FileStorageRouter(metadataRepository, targetResolver, List.of(localBackend));
+    router = new FileStorageRouter(TEST_IDS, metadataRepository, targetResolver, List.of(localBackend));
   }
 
   @Test

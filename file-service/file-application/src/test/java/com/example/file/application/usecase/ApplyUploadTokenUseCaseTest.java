@@ -34,6 +34,47 @@ import static org.mockito.Mockito.*;
 @DisplayName("ApplyUploadTokenUseCase")
 class ApplyUploadTokenUseCaseTest {
 
+  /**
+   * 测试桩：生成固定 FileId（收编后构造器需 IdService）.
+   */
+  static final com.example.shared.identifier.contract.IdService TEST_IDS =
+      new com.example.shared.identifier.contract.IdService() {
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass) {
+      try {
+        return idClass.getDeclaredConstructor(String.class).newInstance("01H8TESTID00");
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
+      return nextId(idClass);
+    }
+
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type) {
+      return "01H8TESTID00";
+    }
+
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type, String bizType) {
+      return "01H8TESTID00";
+    }
+
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> idClass, String bizContext) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Long nextLongId(String bizType) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
+
   private FileMetadataRepository metadataRepository;
   private StorageTargetResolver targetResolver;
   private FileTokenService tokenService;
@@ -46,7 +87,7 @@ class ApplyUploadTokenUseCaseTest {
     targetResolver = mock(StorageTargetResolver.class);
     tokenService = mock(FileTokenService.class);
     logRepository = mock(FileAccessLogRepository.class);
-    useCase = new ApplyUploadTokenUseCase(metadataRepository, targetResolver, tokenService, logRepository);
+    useCase = new ApplyUploadTokenUseCase(TEST_IDS, metadataRepository, targetResolver, tokenService, logRepository);
   }
 
   @Test

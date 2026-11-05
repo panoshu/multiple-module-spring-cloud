@@ -68,7 +68,7 @@ class FileMetadataTokenRepositoryTest {
     assertThat(got.targetId()).isEqualTo("target-001");
     assertThat(got.storageType()).isEqualTo(StorageType.LOCAL);
     assertThat(got.businessBatchId()).isEqualTo(new BatchId("b001"));
-    assertThat(got.createdBy()).isEqualTo(UserNo.of("u1"));
+    assertThat(got.createdBy()).isEqualTo("u1");
   }
 
   @Test

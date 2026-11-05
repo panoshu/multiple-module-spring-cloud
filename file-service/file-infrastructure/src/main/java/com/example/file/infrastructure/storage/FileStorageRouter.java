@@ -12,7 +12,7 @@ import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.shared.exception.SystemException;
-import com.example.shared.id.algorithm.UlidAlgorithm;
+import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.BatchId;
 import com.example.file.types.FileId;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +29,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileStorageRouter implements FileStorageGateway {
 
+  private final IdService idService;
   private final FileMetadataRepository metadataRepository;
   private final StorageTargetResolver targetResolver;
   private final List<FileStorageBackend> backends;
   private final Map<StorageType, FileStorageBackend> backendMap;
 
-  public FileStorageRouter(FileMetadataRepository metadataRepository,
+  public FileStorageRouter(IdService idService, FileMetadataRepository metadataRepository,
                            StorageTargetResolver targetResolver,
                            List<FileStorageBackend> backends) {
+    this.idService = idService;
     this.metadataRepository = metadataRepository;
     this.targetResolver = targetResolver;
     this.backends = backends;
@@ -149,7 +151,7 @@ public class FileStorageRouter implements FileStorageGateway {
   }
 
   private FileId generateFileId() {
-    return new FileId(UlidAlgorithm.generate());
+    return idService.nextId(FileId.class);
   }
 
   private void crossBackendCopy(FileStorageBackend srcBackend, StorageTarget srcTarget, String srcKey,

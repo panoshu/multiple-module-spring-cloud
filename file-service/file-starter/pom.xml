@@ -40,6 +40,10 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-id-starter</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <finalName>file-service</finalName>
