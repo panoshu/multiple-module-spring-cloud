@@ -6,7 +6,7 @@ spring:
       host: 127.0.0.1
       port: 6379
       database: 0
-      password: demo-redis
+      password: redis
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
     username: user_demo

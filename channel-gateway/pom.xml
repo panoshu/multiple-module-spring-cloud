@@ -19,6 +19,13 @@
       <artifactId>gateway-framework</artifactId>
     </dependency>
 
+    <!-- 注册中心：网关是 WebFlux（依赖链走 gateway-framework，不经 shared-web-starter），
+         需显式引入 nacos-discovery——否则 @EnableDiscoveryClient 空转：不注册也无发现（lb 503 根因） -->
+    <dependency>
+      <groupId>com.alibaba.cloud</groupId>
+      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>auth-api</artifactId>
