@@ -35,39 +35,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
-    <!-- 注册中心切换：默认经 Nacos 注册（SofaRegistrationDisabledPostProcessor 默认禁用 SOFA 自动装配，依赖与配置保留可随时切回） -->
+    <!-- 注册中心：经 Nacos 注册（SOFA 依赖已移除；根 pom BOM 与 yml 配置保留，切回=加回 sofa-registry 依赖） -->
     <dependency>
       <groupId>com.alibaba.cloud</groupId>
       <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.alipay.cloud</groupId>
-      <artifactId>spring-cloud-starter-sofa-registry</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>HdrHistogram</artifactId>
-          <groupId>org.hdrhistogram</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>error_prone_annotations</artifactId>
-          <groupId>com.google.errorprone</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>failureaccess</artifactId>
-          <groupId>com.google.guava</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>j2objc-annotations</artifactId>
-          <groupId>com.google.j2objc</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-io</artifactId>
-          <groupId>commons-io</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
+<dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
