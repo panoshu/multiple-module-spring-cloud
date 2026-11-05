@@ -29,7 +29,7 @@ public class JdbcEventStore implements EventStore {
     String sql = """
       INSERT INTO sys_event_store
         (event_id, event_type, integration_type, occurred_on, domain_payload, integration_payload)
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, CAST(? AS json), CAST(? AS json))
       """;
     try {
       String domainPayload = objectMapper.writeValueAsString(event);

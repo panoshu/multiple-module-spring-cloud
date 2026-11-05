@@ -5,6 +5,7 @@ spring:
       host: 127.0.0.1
       port: 6379
       database: 0
+      password: demo-redis
   cloud:
     nacos.discovery.server-addr: ${NACOS_ADDR:127.0.0.1:8848}
 
@@ -25,3 +26,8 @@ logging:
     org.springframework.web: INFO
     reactor.netty.http.client: INFO
     reactor.netty.http.server.AccessLog: INFO
+
+# 本地直连 auth-service（绕开 SCA preview 与 Nacos 3.x 的 gRPC 订阅兼容缺口）
+auth:
+  route:
+    uri: http://127.0.0.1:18085

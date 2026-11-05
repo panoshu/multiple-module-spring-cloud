@@ -11,7 +11,8 @@ spring:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      # 密码经环境变量注入：SPRING_DATA_REDIS_PASSWORD（relaxed binding）。
+      # 不用 ${REDIS_PASSWORD:} 空串默认——空串会被 Redisson 当密码发 AUTH，无密码 Redis 直接报错。
       database: ${REDIS_DB:0}
       lettuce:
         pool:

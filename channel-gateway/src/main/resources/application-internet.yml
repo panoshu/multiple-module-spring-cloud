@@ -37,16 +37,11 @@ spring:
             max-age: 3600
       routes:
         # ============ internet-bff(互联网 BFF) ============
-        - id: internet-bff-route
-          uri: lb://internet-bff
-          predicates:
-            - Path=/internet/**
-          filters:
-            - StripPrefix=1
-            - AddRequestHeader=X-Gateway-Source, internet-gateway
-        # ============ auth-service(网上渠道认证授权) ============
+      # ============ auth-service(网上渠道认证授权) ============
         - id: auth-service-internet-route
-          uri: lb://auth-service
+          # 生产经 Nacos 服务发现（lb://）；local 可经 auth.route.uri 直连
+          # （SCA 2025.0.0.0-preview 的 gRPC 订阅与 Nacos 3.x 存在兼容缺口，实测拉不到实例 503）
+          uri: ${auth.route.uri:lb://auth-service}
           predicates:
             - Path=/internet/auth/**
           filters:
