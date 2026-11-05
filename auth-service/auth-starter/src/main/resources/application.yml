@@ -1,3 +1,11 @@
+# 权限缓存（收编至 shared-cache：原 RedisPermissionCacheStore 自建行为对等迁移）
+shared:
+  cache:
+    rules:
+      auth-perm-cache:
+        ttl: 300s
+        mode: L2_ONLY
+
 server:
   tomcat:
     threads:

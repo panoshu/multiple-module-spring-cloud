@@ -1,44 +1,44 @@
 package com.example.auth.infrastructure.permission.cache;
 
 import com.example.core.types.UserNo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.example.auth.domain.channel.valueobject.SessionPermissionCache;
 import com.example.auth.domain.permission.spi.PermissionCacheStore;
+import com.example.shared.cache.core.ICacheTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * 基于 Redis 的权限缓存存储实现。
- * <p>复用 Sa-Token 引入的 StringRedisTemplate 基础设施。
- * <p>Key 设计：{@code auth:perm:cache:{accountId}}，存储 SessionPermissionCache JSON。
+ * 基于 shared-cache 统一缓存端口的权限缓存存储适配器（使用方收编批次二）.
+ *
+ * <p>原实现直摸 StringRedisTemplate 自建 KV/TTL/序列化/SCAN 清空全套轮子——
+ * 属于 shared-cache-starter 建成后零采用的典型存量。收编后：
+ * <ul>
+ *   <li>TTL 与存储模式由 CacheRule 配置（{@code shared.cache.rules.auth-perm-cache}，
+ *       默认 L2_ONLY/300s，与原行为对等）</li>
+ *   <li>序列化、防击穿、广播失效由框架承担（白得能力）</li>
+ *   <li>全局清空（clearAll）映射 {@link ICacheTemplate#evictAll(String)}——
+ *       替代原手写 SCAN 游标遍历</li>
+ * </ul>
+ * 领域 SPI（{@code PermissionCacheStore}）不变，业务零感知.
+ *
+ * @author auth-infrastructure
  */
 @Slf4j
 @Component
 public class RedisPermissionCacheStore implements PermissionCacheStore {
 
-  private static final String KEY_PREFIX = "auth:perm:cache:";
+  /**
+   * 缓存名（对应 shared.cache.rules.auth-perm-cache 规则）.
+   */
+  static final String CACHE_NAME = "auth-perm-cache";
 
-  private final StringRedisTemplate redisTemplate;
-  private final ObjectMapper objectMapper;
-  private final Duration ttl;
+  private final ICacheTemplate cacheTemplate;
 
-  public RedisPermissionCacheStore(
-    StringRedisTemplate redisTemplate,
-    @Value("${auth.permission.cache.ttl-seconds:300}") long ttlSeconds
-  ) {
-    this.redisTemplate = redisTemplate;
-    this.objectMapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule())
-      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    this.ttl = Duration.ofSeconds(ttlSeconds);
+  public RedisPermissionCacheStore(ICacheTemplate cacheTemplate) {
+    this.cacheTemplate = cacheTemplate;
   }
 
   @Override
@@ -46,8 +46,7 @@ public class RedisPermissionCacheStore implements PermissionCacheStore {
     if (accountId == null) {
       return Optional.empty();
     }
-    String json = redisTemplate.opsForValue().get(keyOf(accountId));
-    return Optional.ofNullable(deserialize(json));
+    return cacheTemplate.get(CACHE_NAME, accountId.value(), SessionPermissionCache.class);
   }
 
   @Override
@@ -55,9 +54,8 @@ public class RedisPermissionCacheStore implements PermissionCacheStore {
     if (accountId == null || cache == null) {
       return;
     }
-    String json = serialize(cache);
-    redisTemplate.opsForValue().set(keyOf(accountId), json, ttl);
-    log.debug("保存权限缓存: accountId={}, ttl={}s", accountId.value(), ttl.getSeconds());
+    cacheTemplate.put(CACHE_NAME, accountId.value(), cache);
+    log.debug("保存权限缓存: accountId={}, cacheName={}", accountId.value(), CACHE_NAME);
   }
 
   @Override
@@ -65,7 +63,7 @@ public class RedisPermissionCacheStore implements PermissionCacheStore {
     if (accountId == null) {
       return;
     }
-    redisTemplate.delete(keyOf(accountId));
+    cacheTemplate.evict(CACHE_NAME, accountId.value());
     log.debug("清除权限缓存: accountId={}", accountId.value());
   }
 
@@ -80,54 +78,11 @@ public class RedisPermissionCacheStore implements PermissionCacheStore {
   }
 
   /**
-   * 全局清空（P0-H3）：SCAN 游标遍历前缀键批量删除——权限码表/角色模板全局变更时，
-   * 前端权限缓存（auth:perm:cache:*）与后端校验同步收口，不再等 5min TTL.
-   * <p>采用 SCAN 而非 KEYS，避免生产 Redis 阻塞；每批 500 键.
+   * 全局清空：经框架 evictAll（L1/L2 双清 + 广播失效），替代原手写 SCAN 遍历.
    */
   @Override
   public void clearAll() {
-    var options = org.springframework.data.redis.core.ScanOptions.scanOptions()
-      .match(KEY_PREFIX + "*")
-      .count(500)
-      .build();
-    long deleted = 0;
-    try (var cursor = redisTemplate.scan(options)) {
-      java.util.List<String> batch = new java.util.ArrayList<>(500);
-      while (cursor.hasNext()) {
-        batch.add(new String(cursor.next()));
-        if (batch.size() >= 500) {
-          deleted += redisTemplate.delete(batch);
-          batch.clear();
-        }
-      }
-      if (!batch.isEmpty()) {
-        deleted += redisTemplate.delete(batch);
-      }
-    }
-    log.info("全局清除权限缓存: 删除 {} 个键 (prefix={})", deleted, KEY_PREFIX);
-  }
-
-  private String keyOf(UserNo accountId) {
-    return KEY_PREFIX + accountId.value();
-  }
-
-  private String serialize(SessionPermissionCache cache) {
-    try {
-      return objectMapper.writeValueAsString(cache);
-    } catch (Exception e) {
-      throw new IllegalStateException("SessionPermissionCache 序列化失败", e);
-    }
-  }
-
-  private SessionPermissionCache deserialize(String json) {
-    if (json == null || json.isBlank()) {
-      return null;
-    }
-    try {
-      return objectMapper.readValue(json, SessionPermissionCache.class);
-    } catch (Exception e) {
-      log.error("SessionPermissionCache 反序列化失败: {}", e.getMessage(), e);
-      return null;
-    }
+    cacheTemplate.evictAll(CACHE_NAME);
+    log.info("全局清除权限缓存: cacheName={}", CACHE_NAME);
   }
 }
