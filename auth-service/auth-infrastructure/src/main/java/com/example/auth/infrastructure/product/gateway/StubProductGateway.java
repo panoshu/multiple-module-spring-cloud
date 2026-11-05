@@ -8,7 +8,6 @@ import com.example.auth.domain.product.PlanSnapshot;
 import com.example.auth.domain.product.ProductGateway;
 import com.example.auth.domain.product.ProductSnapshot;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,9 +20,10 @@ import java.util.Optional;
  * 在外部服务尚未接入前，由本桩实现提供占位，返回空结果并打印 warning 日志。</p>
  *
  * <h3>替换策略</h3>
- * <p>本桩使用 {@link ConditionalOnMissingBean} 注册，当未来真实实现
- * （如 {@code HttpProductGateway}）被注册为 Spring Bean 时，本桩自动退让，
- * 无需修改任何代码或配置。</p>
+ * <p>接入真实实现（如 {@code HttpProductGateway}）时：真实实现标注 {@code @Primary}
+ * 直接覆盖本桩（注入点优先取 primary），或删除本桩。注意不要在组件扫描类上使用
+ * {@code @ConditionalOnMissingBean} 实现退让——扫描期条件评估会自匹配导致桩
+ * 被自己跳过、容器装配失败（实测教训）。</p>
  *
  * <h3>当前行为</h3>
  * <ul>
@@ -38,7 +38,6 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
-@ConditionalOnMissingBean(ProductGateway.class)
 public class StubProductGateway implements ProductGateway {
 
   private static final String STUB_WARNING = "StubProductGateway.{} 桩实现被调用，返回空结果。后续需接入真实外部服务";

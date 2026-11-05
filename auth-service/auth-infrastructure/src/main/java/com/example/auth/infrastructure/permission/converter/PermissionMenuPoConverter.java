@@ -23,7 +23,7 @@ import java.util.List;
  * @author auth-service
  */
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public abstract class PermissionMenuConverter {
+public abstract class PermissionMenuPoConverter {
 
   public PermissionMenuDO toDO(PermissionMenu menu) {
     if (menu == null) {

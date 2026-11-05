@@ -64,6 +64,12 @@
       <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
     </dependency>
 
+    <dependency>
+      <!-- 数据源驱动（测试用 H2 无需驱动；真实启动必需，版本由 Spring Boot BOM 管理） -->
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>

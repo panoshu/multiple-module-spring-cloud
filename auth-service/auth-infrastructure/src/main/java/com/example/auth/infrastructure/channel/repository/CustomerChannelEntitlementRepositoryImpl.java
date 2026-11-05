@@ -5,7 +5,7 @@ import com.example.core.types.CustomerNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.channel.aggregate.CustomerChannelEntitlement;
 import com.example.auth.domain.channel.repository.CustomerChannelEntitlementRepository;
-import com.example.auth.infrastructure.channel.converter.CustomerChannelEntitlementConverter;
+import com.example.auth.infrastructure.channel.converter.CustomerChannelEntitlementPoConverter;
 import com.example.auth.infrastructure.channel.entity.CustomerChannelEntitlementDO;
 import com.example.auth.infrastructure.channel.mapper.CustomerChannelEntitlementMapper;
 import com.example.auth.types.CustomerChannelEntitlementId;
@@ -31,7 +31,7 @@ import static com.example.auth.infrastructure.channel.entity.table.CustomerChann
 public class CustomerChannelEntitlementRepositoryImpl implements CustomerChannelEntitlementRepository {
 
   private final CustomerChannelEntitlementMapper mapper;
-  private final CustomerChannelEntitlementConverter converter;
+  private final CustomerChannelEntitlementPoConverter converter;
 
   @Override
   public Optional<CustomerChannelEntitlement> load(CustomerChannelEntitlementId id) {

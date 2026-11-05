@@ -2,7 +2,7 @@ spring:
   cloud:
     nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
   datasource:
-    url: jdbc:postgresql://127.0.0.1:55432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
+    url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
     username: user_demo
     password: passwd_demo
     driver-class-name: org.postgresql.Driver
@@ -15,9 +15,8 @@ spring:
   data:
     redis:
       host: 127.0.0.1
-      port: 56379
+      port: 6379
       database: 0
-      password: redis
 
 # 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
 httpexchange:

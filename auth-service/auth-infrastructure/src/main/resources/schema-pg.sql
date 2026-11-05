@@ -2,7 +2,7 @@
 
 CREATE TABLE t_auth_secondary_auth_session
 (
-  id                        VARCHAR(32) NOT NULL,
+  id                        VARCHAR(64) NOT NULL,
   teller_account_id         VARCHAR(32) NOT NULL,
   approver_account_id       VARCHAR(32),
   credential_owner_type     VARCHAR(32) NOT NULL,

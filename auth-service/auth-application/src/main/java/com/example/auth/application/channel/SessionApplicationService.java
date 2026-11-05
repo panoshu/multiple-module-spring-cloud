@@ -155,7 +155,7 @@ public class SessionApplicationService {
    * 或其 Repository 实现）需在事务内调用 {@code eventBus.publish(...)} 才能触发本监听。</p>
    */
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional
+  @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
   public void onSecondaryAuthCompleted(SecondaryAuthCompleted event) {
     Session session = sessionRepository.findActiveByPrimaryAccountIdAndChannel(
         event.tellerAccountId(), Channel.BANK_BRANCH)
@@ -172,7 +172,7 @@ public class SessionApplicationService {
    * 二次授权绑定，恢复为柜员直接身份。柜员无活跃会话时静默跳过。</p>
    */
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional
+  @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
   public void onSecondaryAuthRevoked(SecondaryAuthRevoked event) {
     sessionRepository.findActiveByPrimaryAccountIdAndChannel(
         event.tellerAccountId(), Channel.BANK_BRANCH)

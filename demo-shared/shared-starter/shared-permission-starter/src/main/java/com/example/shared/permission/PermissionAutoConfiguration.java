@@ -113,8 +113,8 @@ public class PermissionAutoConfiguration {
 
     @Bean(destroyMethod = "destroy")
     @ConditionalOnMissingBean
-    @ConditionalOnBean(
-      org.springframework.data.redis.connection.RedisConnectionFactory.class)
+    @ConditionalOnBean({PermissionCacheInvalidationListener.class,
+      org.springframework.data.redis.connection.RedisConnectionFactory.class})
     public PermissionInvalidationRedisSubscriber permissionInvalidationRedisSubscriber(
       org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory,
       PermissionCacheInvalidationListener invalidationListener,

@@ -18,7 +18,17 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableDiscoveryClient
 @SpringBootApplication
-@MapperScan("com.example.auth.infrastructure")
+// 只扫描真实 MyBatis mapper 包：扫 infrastructure 全包会把 MapStruct 转换器接口等
+// 也注册成 MapperFactoryBean，与生成的 Impl 冲突（sessionConverter 双 bean 实测）
+@MapperScan({
+  "com.example.auth.infrastructure.assignment.mapper",
+  "com.example.auth.infrastructure.authorization.mapper",
+  "com.example.auth.infrastructure.channel.mapper",
+  "com.example.auth.infrastructure.credential.mapper",
+  "com.example.auth.infrastructure.permission.mapper",
+  "com.example.auth.infrastructure.role.mapper",
+  "com.example.auth.infrastructure.user.mapper"
+})
 public class AuthApplication {
 
   public static void main(String[] args) {

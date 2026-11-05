@@ -7,7 +7,7 @@ import com.example.auth.domain.permission.aggregate.PermissionMenu;
 import com.example.auth.domain.permission.aggregate.valueobject.PermissionBinding;
 import com.example.auth.domain.permission.enumeration.MenuCategory;
 import com.example.auth.domain.permission.repository.PermissionMenuRepository;
-import com.example.auth.infrastructure.permission.converter.PermissionMenuConverter;
+import com.example.auth.infrastructure.permission.converter.PermissionMenuPoConverter;
 import com.example.auth.infrastructure.permission.entity.MenuPermissionBindingDO;
 import com.example.auth.infrastructure.permission.entity.PermissionMenuDO;
 import com.example.auth.infrastructure.permission.mapper.MenuPermissionBindingMapper;
@@ -39,7 +39,7 @@ public class PermissionMenuRepositoryImpl implements PermissionMenuRepository {
 
   private final PermissionMenuMapper menuMapper;
   private final MenuPermissionBindingMapper bindingMapper;
-  private final PermissionMenuConverter converter;
+  private final PermissionMenuPoConverter converter;
 
   @Override
   public Optional<PermissionMenu> load(PermissionMenuId id) {

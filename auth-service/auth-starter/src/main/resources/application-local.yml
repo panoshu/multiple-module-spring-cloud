@@ -1,8 +1,13 @@
 spring:
   cloud:
     nacos.discovery.server-addr: 127.0.0.1:8848
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
   datasource:
-    url: jdbc:postgresql://127.0.0.1:55432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
+    url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
     username: user_demo
     password: passwd_demo
     driver-class-name: org.postgresql.Driver

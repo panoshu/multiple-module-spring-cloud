@@ -29,7 +29,7 @@ import java.util.Set;
  * 序列化逻辑在本 Converter 中手工管理。</p>
  */
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public abstract class CustomerChannelEntitlementConverter {
+public abstract class CustomerChannelEntitlementPoConverter {
 
   @Autowired
   protected ObjectMapper objectMapper;

@@ -1,5 +1,10 @@
 # 本机开发覆盖（始终经 spring.profiles.include: local 加载，生产环境用环境变量覆盖）
 spring:
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
   cloud:
     nacos.discovery.server-addr: ${NACOS_ADDR:127.0.0.1:8848}
 
