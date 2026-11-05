@@ -35,6 +35,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
+    <!-- 注册中心切换：默认经 Nacos 注册（SofaRegistrationDisabledPostProcessor 默认禁用 SOFA 自动装配，依赖与配置保留可随时切回） -->
+    <dependency>
+      <groupId>com.alibaba.cloud</groupId>
+      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.alipay.cloud</groupId>
       <artifactId>spring-cloud-starter-sofa-registry</artifactId>

@@ -93,6 +93,14 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <!-- SOFA→Nacos 注册切换：SCA BOM 管理 nacos-discovery（与 Spring Cloud 2025.0.x 配套） -->
+      <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+        <version>2025.0.0.0-preview</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
       <!-- Spring Cloud Sofa BOM -->
       <dependency>

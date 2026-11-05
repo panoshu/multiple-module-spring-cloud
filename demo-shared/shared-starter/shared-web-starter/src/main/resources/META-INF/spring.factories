@@ -1,0 +1,3 @@
+# SOFA→Nacos 注册切换：候选阶段过滤 SOFA 自动装配（依赖与配置保留，切回删除本行即可）
+org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
+  com.example.shared.web.autoconfigure.SofaAutoConfigurationImportFilter

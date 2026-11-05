@@ -2,6 +2,7 @@ package com.example.bff.internet;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import io.github.danielliu1123.httpexchange.EnableExchangeClients;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @author bff
  */
 @EnableDiscoveryClient
+@EnableExchangeClients(basePackages = "com.example.annuity.api")
 @SpringBootApplication(scanBasePackages = {
   "com.example.bff.internet",
   "com.example.bff.shared"
