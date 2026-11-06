@@ -1,4 +1,4 @@
--- 事件存储表（MySQL 版本，用 TEXT/JSON 替代 JSONB）
+-- 事件存储表（MySQL 版本，用 TEXT/TEXT 替代 TEXT）
 CREATE TABLE IF NOT EXISTS sys_event_store
 (
   event_id
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS sys_event_store
   64
 ),
   occurred_on DATETIME NOT NULL,
-  domain_payload JSON NOT NULL,
-  integration_payload JSON,
+  domain_payload TEXT NOT NULL,
+  integration_payload TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 

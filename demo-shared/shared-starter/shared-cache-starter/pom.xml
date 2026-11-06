@@ -13,6 +13,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.alicp.jetcache</groupId>
+      <artifactId>jetcache-starter-redis-lettuce</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-cache-core</artifactId>
     </dependency>
@@ -21,23 +25,6 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.redisson</groupId>
-      <artifactId>redisson-spring-boot-starter</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.fury</groupId>
-      <artifactId>fury-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>error_prone_annotations</artifactId>
-          <groupId>com.google.errorprone</groupId>
-        </exclusion>
-      </exclusions>
-      <optional>true</optional>
     </dependency>
 
     <dependency>

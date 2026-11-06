@@ -50,3 +50,19 @@ logging:
     org.springframework.web: DEBUG
     com.alibaba.nacos: ERROR
     com.alibaba.cloud.nacos: ERROR
+
+# 多级缓存（jetcache 2.8 基础设施配置；业务缓存声明仍在 shared.cache.rules）
+jetcache:
+  statIntervalMinutes: 5
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      limit: 200
+  remote:
+    default:
+      type: redis.lettuce
+      uri: redis://:redis@127.0.0.1:6379/0
+      broadcastChannel: auth-service
+      valueEncoder: java
+      valueDecoder: java

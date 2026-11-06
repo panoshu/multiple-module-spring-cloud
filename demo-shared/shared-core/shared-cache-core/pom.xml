@@ -16,26 +16,10 @@
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-    </dependency>
-    <dependency>
-      <!-- RedisCacheFactory 编译需要（原由 redisson-spring-boot-starter 传递提供，精确化替换） -->
-      <groupId>org.springframework.data</groupId>
-      <artifactId>spring-data-redis</artifactId>
-      <optional>true</optional>
     </dependency>
 
     <dependency>

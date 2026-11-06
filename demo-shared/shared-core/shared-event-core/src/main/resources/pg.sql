@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS sys_event_store
   64
 ),
   occurred_on TIMESTAMP NOT NULL,
-  domain_payload JSONB NOT NULL,
-  integration_payload JSONB,
+  domain_payload TEXT NOT NULL,
+  integration_payload TEXT,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
   );
 

@@ -34,10 +34,13 @@ public class EventRecoveryJob {
 
   @Scheduled(fixedDelay = 30_000)
   public void recover() {
-    if (!distributedLock.tryLock("job:event-recovery", 0, 20, TimeUnit.SECONDS)) {
-      return;
-    }
-    try {
+    // 契约 v2：显式句柄（try-with-resources 保证释放）
+    try (var ignored = distributedLock
+        .tryLock("job:event-recovery", 0, 20, TimeUnit.SECONDS)
+        .orElse(null)) {
+      if (ignored == null) {
+        return; // 其他实例持有锁，本轮跳过
+      }
       List<EventStore.PendingEntry> entries = eventStore.findPendingLogs(100);
       for (EventStore.PendingEntry entry : entries) {
         EventDispatcher dispatcher = dispatcherMap.get(entry.channel());
@@ -47,8 +50,6 @@ public class EventRecoveryJob {
             entry.integrationType(), entry.logId());
         }
       }
-    } finally {
-      distributedLock.unlock("job:event-recovery");
     }
   }
 }

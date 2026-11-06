@@ -18,9 +18,10 @@
     </dependency>
 
     <dependency>
-      <groupId>org.redisson</groupId>
-      <artifactId>redisson-spring-boot-starter</artifactId>
-      <optional>true</optional>
+      <!-- lock4j：编程式 LockTemplate + 声明式 @Lock4j；RedisTemplate executor 走 Lettuce 统一通道。
+           无 Redis 宿主由 lock4j 自动配置条件与本地锁兜底共同处理 -->
+      <groupId>com.baomidou</groupId>
+      <artifactId>lock4j-redis-template-spring-boot-starter</artifactId>
     </dependency>
 
     <dependency>

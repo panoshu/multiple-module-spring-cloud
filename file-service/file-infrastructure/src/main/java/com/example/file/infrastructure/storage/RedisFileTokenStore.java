@@ -3,16 +3,18 @@ package com.example.file.infrastructure.storage;
 import com.example.file.domain.gateway.FileTokenStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
 
 /**
  * 基于 Redis SETNX + TTL 的一次性 token 标记实现。
  * <p>
- * 使用 Redisson {@link RBucket#setIfAbsent(Object, Duration)} 实现 SETNX 语义：
+ * 使用 {@link StringRedisTemplate#opsForValue()#setIfAbsent} 实现 SETNX 语义：
  * 首次 markUsed 返回 true，重复返回 false；TTL 自动过期释放。
+ * <p>
+ * 2026-11-05 客户端统一治理：Redisson RBucket 替换为 StringRedisTemplate
+ * （等价语义，少一个重量级客户端依赖）。
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -20,23 +22,22 @@ public class RedisFileTokenStore implements FileTokenStore {
 
   private static final String MARKER_VALUE = "1";
 
-  private final RedissonClient redissonClient;
+  private final StringRedisTemplate redisTemplate;
   private final FileTokenProperties properties;
 
   @Override
   public boolean markUsed(String tokenId, Duration ttl) {
     String key = properties.getRedis().getKeyPrefix() + tokenId;
-    RBucket<String> bucket = redissonClient.getBucket(key);
-    boolean success = bucket.setIfAbsent(MARKER_VALUE, ttl);
-    if (!success) {
+    Boolean success = redisTemplate.opsForValue().setIfAbsent(key, MARKER_VALUE, ttl);
+    if (!Boolean.TRUE.equals(success)) {
       log.warn("token 重复使用: tokenId={}", tokenId);
     }
-    return success;
+    return Boolean.TRUE.equals(success);
   }
 
   @Override
   public boolean isUsed(String tokenId) {
     String key = properties.getRedis().getKeyPrefix() + tokenId;
-    return redissonClient.getBucket(key).isExists();
+    return Boolean.TRUE.equals(redisTemplate.hasKey(key));
   }
 }

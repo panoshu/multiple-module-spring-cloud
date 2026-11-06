@@ -189,12 +189,18 @@ class ArchitectureInvariantTest {
         "com.example.auth.infrastructure.channel.repository.SessionRepositoryImpl")
       .and().doNotHaveFullyQualifiedName(
         "com.example.auth.infrastructure.permission.cache.PermissionInvalidationListener")
+      .and().doNotHaveFullyQualifiedName(
+        "com.example.file.infrastructure.storage.RedisFileTokenStore")
+      .and().doNotHaveFullyQualifiedName(
+        "com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration")
       .should().dependOnClassesThat().belongToAnyOf(
         org.springframework.data.redis.core.RedisTemplate.class,
         org.springframework.data.redis.core.StringRedisTemplate.class)
       .because("缓存一律经 ICacheTemplate / 领域缓存 SPI（两级缓存、防击穿、广播失效）；"
-        + "白名单两项为 Redis 原生语义——SessionRepositoryImpl 是会话持久化 Repository、"
-        + "PermissionInvalidationListener 是 pub/sub 失效广播，复审时须逐一确认")
+        + "白名单为 Redis 原生语义——SessionRepositoryImpl 是会话持久化 Repository、"
+        + "PermissionInvalidationListener 是 pub/sub 失效广播、"
+        + "RedisFileTokenStore 是 SETNX 一次性令牌原语（2026-11-05 客户端统一治理："
+        + "Redisson RBucket 换 StringRedisTemplate 等价实现），复审时须逐一确认")
       .check(all);
 
     // 8c 本地缓存：业务禁自建 Caffeine（白名单：MenuNodeCache 进程内目录缓存）

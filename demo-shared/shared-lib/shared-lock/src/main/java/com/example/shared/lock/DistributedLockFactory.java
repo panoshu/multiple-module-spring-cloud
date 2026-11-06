@@ -17,7 +17,7 @@ public class DistributedLockFactory {
   public DistributedLock getLock(LockType type) {
     String beanName = type == LockType.LOCAL
         ? DistributedLock.LOCAL_BEAN_NAME
-        : DistributedLock.REDISSON_BEAN_NAME;
+        : DistributedLock.REDIS_BEAN_NAME;
     DistributedLock lock = lockMap.get(beanName);
     if (lock == null) {
       return lockMap.get(DistributedLock.LOCAL_BEAN_NAME);

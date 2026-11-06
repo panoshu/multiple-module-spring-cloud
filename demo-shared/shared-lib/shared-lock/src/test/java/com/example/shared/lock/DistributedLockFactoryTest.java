@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * 验证锁的查找契约：
  * <ul>
- *   <li>{@code LockType.REDIS} 查找 bean 名 {@code redissonDistributedLock}</li>
+ *   <li>{@code LockType.REDIS} 查找 bean 名 {@code redisDistributedLock}</li>
  *   <li>{@code LockType.LOCAL} 查找 bean 名 {@code localDistributedLock}</li>
  *   <li>REDIS 锁不存在时降级到 LOCAL 锁</li>
  * </ul>
@@ -42,13 +42,13 @@ class DistributedLockFactoryTest {
   }
 
   @Test
-  @DisplayName("getLock(REDIS) 应返回 redissonDistributedLock bean")
+  @DisplayName("getLock(REDIS) 应返回 redisDistributedLock bean")
   void getLock_redis_should_return_redisson_lock() {
     DistributedLock local = localLock();
     DistributedLock redis = redisLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
     lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
-    lockMap.put(DistributedLock.REDISSON_BEAN_NAME, redis);
+    lockMap.put(DistributedLock.REDIS_BEAN_NAME, redis);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
@@ -62,7 +62,7 @@ class DistributedLockFactoryTest {
     DistributedLock redis = redisLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
     lockMap.put(DistributedLock.LOCAL_BEAN_NAME, local);
-    lockMap.put(DistributedLock.REDISSON_BEAN_NAME, redis);
+    lockMap.put(DistributedLock.REDIS_BEAN_NAME, redis);
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
@@ -70,7 +70,7 @@ class DistributedLockFactoryTest {
   }
 
   @Test
-  @DisplayName("getLock(REDIS) 在 redissonDistributedLock 不存在时应降级到 localDistributedLock")
+  @DisplayName("getLock(REDIS) 在 redisDistributedLock 不存在时应降级到 localDistributedLock")
   void getLock_redis_should_fallback_to_local_when_redis_missing() {
     DistributedLock local = localLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
@@ -94,7 +94,7 @@ class DistributedLockFactoryTest {
   @Test
   @DisplayName("使用错误 bean 名（如 redissonLockL2）时 getLock(REDIS) 应降级而非返回该锁")
   void getLock_redis_should_not_match_wrong_bean_name() {
-    // 模拟当前 bug：配置注册了错误 bean 名 redissonLockL2 而非 redissonDistributedLock
+    // 模拟当前 bug：配置注册了错误 bean 名 redissonLockL2 而非 redisDistributedLock
     DistributedLock wrongNamed = redisLock();
     DistributedLock local = localLock();
     Map<String, DistributedLock> lockMap = new HashMap<>();
@@ -103,7 +103,7 @@ class DistributedLockFactoryTest {
 
     DistributedLockFactory factory = new DistributedLockFactory(lockMap);
 
-    // getLock(REDIS) 找不到 redissonDistributedLock，降级到 local
+    // getLock(REDIS) 找不到 redisDistributedLock，降级到 local
     assertThat(factory.getLock(DistributedLockFactory.LockType.REDIS))
       .as("错误 bean 名应导致降级到 local，而非返回错误命名的锁")
       .isSameAs(local)

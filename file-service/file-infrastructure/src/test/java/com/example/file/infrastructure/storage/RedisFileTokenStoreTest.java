@@ -3,35 +3,42 @@ package com.example.file.infrastructure.storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
+import org.mockito.ArgumentMatchers;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @DisplayName("RedisFileTokenStore 一次性 token 标记")
 class RedisFileTokenStoreTest {
 
-  private RedissonClient redissonClient;
+  private StringRedisTemplate redisTemplate;
+  private ValueOperations<String, String> valueOps;
   private RedisFileTokenStore store;
 
   @BeforeEach
+  @SuppressWarnings("unchecked")
   void setUp() {
-    redissonClient = mock(RedissonClient.class);
+    redisTemplate = mock(StringRedisTemplate.class);
+    valueOps = mock(ValueOperations.class);
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
     FileTokenProperties properties = new FileTokenProperties();
-    store = new RedisFileTokenStore(redissonClient, properties);
+    store = new RedisFileTokenStore(redisTemplate, properties);
   }
 
   @Test
   @DisplayName("markUsed 首次调用返回 true")
   void should_return_true_when_first_mark() {
-    RBucket<String> bucket = mock();
-    doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
-    when(bucket.setIfAbsent(eq("1"), any(Duration.class))).thenReturn(true);
+    when(valueOps.setIfAbsent(
+      ArgumentMatchers.eq("file:token:used:tok-001"),
+      ArgumentMatchers.eq("1"),
+      ArgumentMatchers.any(Duration.class)))
+      .thenReturn(true);
 
     boolean result = store.markUsed("tok-001", Duration.ofMinutes(15));
     assertThat(result).isTrue();
@@ -40,9 +47,11 @@ class RedisFileTokenStoreTest {
   @Test
   @DisplayName("markUsed 重复调用返回 false")
   void should_return_false_when_repeat_mark() {
-    RBucket<String> bucket = mock();
-    doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
-    when(bucket.setIfAbsent(eq("1"), any(Duration.class))).thenReturn(false);
+    when(valueOps.setIfAbsent(
+      ArgumentMatchers.eq("file:token:used:tok-001"),
+      ArgumentMatchers.eq("1"),
+      ArgumentMatchers.any(Duration.class)))
+      .thenReturn(false);
 
     boolean result = store.markUsed("tok-001", Duration.ofMinutes(15));
     assertThat(result).isFalse();
@@ -51,11 +60,9 @@ class RedisFileTokenStoreTest {
   @Test
   @DisplayName("isUsed 检查 key 是否存在")
   void should_check_is_used() {
-    RBucket<String> bucket = mock();
-    doReturn(bucket).when(redissonClient).getBucket("file:token:used:tok-001");
-    when(bucket.isExists()).thenReturn(true);
+    when(redisTemplate.hasKey("file:token:used:tok-001")).thenReturn(true);
 
     assertThat(store.isUsed("tok-001")).isTrue();
-    verify(bucket).isExists();
+    verify(redisTemplate).hasKey("file:token:used:tok-001");
   }
 }

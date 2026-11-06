@@ -57,7 +57,9 @@
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <lombok.version>1.18.46</lombok.version>
     <mybatis-flex.version>1.11.5</mybatis-flex.version>
-    <redisson-spring-boot-starter.version>4.3.1</redisson-spring-boot-starter.version>
+    <!-- 分布式锁 / 多级缓存：lock4j(RedisTemplate 通道) + jetcache(Lettuce 通道) -->
+    <lock4j.version>2.2.7</lock4j.version>
+    <jetcache.version>2.8.0.RC</jetcache.version>
     <fury.version>0.10.3</fury.version>
     <openhtmltopdf-pdfbox.version>1.1.36</openhtmltopdf-pdfbox.version>
     <bcprov-jdk18on.version>1.84</bcprov-jdk18on.version>
@@ -100,6 +102,18 @@
         <version>2025.0.0.0-preview</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <!-- 分布式锁（编程式 LockTemplate + 声明式 @Lock4j；RedisTemplate executor 走 Lettuce 统一通道） -->
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>lock4j-redis-template-spring-boot-starter</artifactId>
+        <version>${lock4j.version}</version>
+      </dependency>
+      <!-- 多级缓存（Caffeine local + Redis remote，Lettuce 通道，broadcastChannel 广播失效） -->
+      <dependency>
+        <groupId>com.alicp.jetcache</groupId>
+        <artifactId>jetcache-starter-redis-lettuce</artifactId>
+        <version>${jetcache.version}</version>
       </dependency>
 
       <!-- Spring Cloud Sofa BOM -->
@@ -403,12 +417,6 @@
         <groupId>org.mapstruct</groupId>
         <artifactId>mapstruct</artifactId>
         <version>${mapstruct.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.redisson</groupId>
-        <artifactId>redisson-spring-boot-starter</artifactId>
-        <version>${redisson-spring-boot-starter.version}</version>
       </dependency>
 
       <dependency>
