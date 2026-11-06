@@ -1,6 +1,7 @@
 package com.example.shared.web.handler;
 
 import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.CommonError;
 import com.example.shared.exception.SystemException;
 import com.example.shared.web.core.api.ApiResult;
@@ -37,6 +38,12 @@ public class GlobalExceptionHandler {
   /**
    * 1. 处理自定义的业务异常 (BaseException)
    */
+  @ExceptionHandler(DomainException.class)
+  public ApiResult<Void> handleDomainException(DomainException e, HttpServletRequest request) {
+    log.warn("领域规则拒绝! 请求URI: [{}] | {}", request.getRequestURI(), e.logMessage());
+    return ApiResult.failure(e.code(), e.displayMessage());
+  }
+
   @ExceptionHandler(BusinessException.class)
   public ApiResult<Void> handleBaseException(BusinessException e, HttpServletRequest request) {
     log.warn("业务异常! 请求URI: [{}] | {}", request.getRequestURI(), e.logMessage(), e);

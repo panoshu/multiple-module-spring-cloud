@@ -1,5 +1,8 @@
 package com.example.approval.domain.aggregate.entity;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
+import com.example.approval.domain.errorcode.ApprovalDomainErrorCode;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
 import com.example.approval.domain.valueobject.RejectTarget;
 import com.example.approval.types.RecordId;
@@ -119,10 +122,10 @@ public class ApprovalRecord extends Entity<RecordId> {
    */
   public static ApprovalRecord approve(RecordId id, UserNo approverId, ApprovalOpinion opinion, String operator) {
     if (approverId == null) {
-      throw new IllegalArgumentException("审批人ID不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
     if (operator == null) {
-      throw new IllegalArgumentException("操作人不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("操作人不能为空");
     }
     return new ApprovalRecord(id, approverId, opinion != null ? opinion : ApprovalOpinion.empty(), operator);
   }
@@ -139,13 +142,13 @@ public class ApprovalRecord extends Entity<RecordId> {
    */
   public static ApprovalRecord reject(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
     if (approverId == null) {
-      throw new IllegalArgumentException("审批人ID不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
     if (rejectTarget == null) {
-      throw new IllegalArgumentException("驳回目标不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("驳回目标不能为空");
     }
     if (operator == null) {
-      throw new IllegalArgumentException("操作人不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("操作人不能为空");
     }
     return new ApprovalRecord(id, approverId, opinion != null ? opinion : ApprovalOpinion.empty(), rejectTarget, operator);
   }
@@ -162,13 +165,13 @@ public class ApprovalRecord extends Entity<RecordId> {
    */
   public static ApprovalRecord transfer(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, String operator) {
     if (approverId == null) {
-      throw new IllegalArgumentException("审批人ID不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
     if (transferTo == null) {
-      throw new IllegalArgumentException("转交目标用户不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("转交目标用户不能为空");
     }
     if (operator == null) {
-      throw new IllegalArgumentException("操作人不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("操作人不能为空");
     }
     return new ApprovalRecord(id, approverId, opinion != null ? opinion : ApprovalOpinion.empty(), transferTo, operator);
   }
@@ -231,29 +234,29 @@ public class ApprovalRecord extends Entity<RecordId> {
   protected void validateInvariants() {
     // 校验审批人ID
     if (approverId == null) {
-      throw new IllegalStateException("审批人ID不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
 
     // 校验操作时间
     if (operatedAt == null) {
-      throw new IllegalStateException("操作时间不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("操作时间不能为空");
     }
 
     // 校验动作与参数的匹配
     if (action == ApprovalAction.REJECT && rejectTarget == null) {
-      throw new IllegalStateException("拒绝操作必须指定驳回目标");
+      throw new DomainException(ApprovalDomainErrorCode.INVALID_REJECT_TARGET).withUserDetail("拒绝操作必须指定驳回目标");
     }
 
     if (action == ApprovalAction.TRANSFER && transferTo == null) {
-      throw new IllegalStateException("转交操作必须指定转交目标用户");
+      throw new DomainException(ApprovalDomainErrorCode.TRANSFER_TARGET_NOT_FOUND).withUserDetail("转交操作必须指定转交目标用户");
     }
 
     if (action != ApprovalAction.REJECT && rejectTarget != null) {
-      throw new IllegalStateException("只有拒绝操作才能有驳回目标");
+      throw new DomainException(ApprovalDomainErrorCode.INVALID_REJECT_TARGET).withUserDetail("只有拒绝操作才能有驳回目标");
     }
 
     if (action != ApprovalAction.TRANSFER && transferTo != null) {
-      throw new IllegalStateException("只有转交操作才能有转交目标");
+      throw new DomainException(ApprovalDomainErrorCode.TRANSFER_TARGET_NOT_FOUND).withUserDetail("只有转交操作才能有转交目标");
     }
   }
 }

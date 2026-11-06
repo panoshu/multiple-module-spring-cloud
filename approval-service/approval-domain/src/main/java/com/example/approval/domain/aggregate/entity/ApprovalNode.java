@@ -1,5 +1,7 @@
 package com.example.approval.domain.aggregate.entity;
 
+import com.example.shared.exception.DomainException;
+import com.example.approval.domain.errorcode.ApprovalDomainErrorCode;
 import com.example.approval.domain.valueobject.NodeOrder;
 import com.example.approval.domain.valueobject.TerminalLevel;
 import com.example.approval.types.NodeId;
@@ -119,7 +121,7 @@ public class ApprovalNode extends Entity<NodeId> {
                                                      ApproverType approverType, List<UserNo> approverIds,
                                                      List<String> roleIds, SignMode signMode, String operator) {
     if (specifiedPlanId == null || specifiedPlanId.isBlank()) {
-      throw new IllegalArgumentException("指定方案节点必须提供 specifiedPlanId");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("指定方案节点必须提供 specifiedPlanId");
     }
     return new ApprovalNode(id, nodeOrder, NodeType.SPECIFIED_PLAN, specifiedPlanId, null,
       approverType, approverIds, roleIds, signMode, operator);
@@ -161,7 +163,7 @@ public class ApprovalNode extends Entity<NodeId> {
                                                ApproverType approverType, List<UserNo> approverIds,
                                                List<String> roleIds, SignMode signMode, String operator) {
     if (terminalLevel == null) {
-      throw new IllegalArgumentException("上一级节点必须提供 terminalLevel");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("上一级节点必须提供 terminalLevel");
     }
     return new ApprovalNode(id, nodeOrder, NodeType.LEVEL_UP, null, terminalLevel,
       approverType, approverIds, roleIds, signMode, operator);
@@ -242,48 +244,48 @@ public class ApprovalNode extends Entity<NodeId> {
   protected void validateInvariants() {
     // 校验节点顺序
     if (nodeOrder == null) {
-      throw new IllegalStateException("节点顺序不能为空");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("节点顺序不能为空");
     }
 
     // 校验节点类型
     if (nodeType == null) {
-      throw new IllegalStateException("节点类型不能为空");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("节点类型不能为空");
     }
 
     // 校验节点类型与参数的匹配
     if (nodeType == NodeType.SPECIFIED_PLAN && (specifiedPlanId == null || specifiedPlanId.isBlank())) {
-      throw new IllegalStateException("指定方案节点必须提供 specifiedPlanId");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("指定方案节点必须提供 specifiedPlanId");
     }
 
     if (nodeType == NodeType.LEVEL_UP && terminalLevel == null) {
-      throw new IllegalStateException("上一级节点必须提供 terminalLevel");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("上一级节点必须提供 terminalLevel");
     }
 
     if (nodeType == NodeType.SAME_PLAN && specifiedPlanId != null) {
-      throw new IllegalStateException("同方案节点不应有 specifiedPlanId");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("同方案节点不应有 specifiedPlanId");
     }
 
     if (nodeType != NodeType.LEVEL_UP && terminalLevel != null) {
-      throw new IllegalStateException("只有上一级节点才能有 terminalLevel");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("只有上一级节点才能有 terminalLevel");
     }
 
     // 校验审批人类型
     if (approverType == null) {
-      throw new IllegalStateException("审批人类型不能为空");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("审批人类型不能为空");
     }
 
     // 校验签批模式
     if (signMode == null) {
-      throw new IllegalStateException("签批模式不能为空");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("签批模式不能为空");
     }
 
     // 校验审批人配置
     if (approverType == ApproverType.SPECIFIED_USER && approverIds.isEmpty()) {
-      throw new IllegalStateException("指定用户审批必须提供审批人ID列表");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("指定用户审批必须提供审批人ID列表");
     }
 
     if (approverType == ApproverType.SPECIFIED_ROLE && roleIds.isEmpty()) {
-      throw new IllegalStateException("指定角色审批必须提供角色ID列表");
+      throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("指定角色审批必须提供角色ID列表");
     }
   }
 }
