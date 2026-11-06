@@ -9,6 +9,7 @@ import cn.dev33.satoken.reactor.filter.SaReactorFilter;
 import cn.dev33.satoken.stp.StpUtil;
 import com.example.gateway.config.GatewayChannelProperties;
 import com.example.gateway.config.GatewaySessionProperties;
+import com.example.shared.exception.CommonError;
 import com.example.shared.web.core.api.ApiResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,9 +46,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 @EnableConfigurationProperties({GatewayProperties.class, GatewayChannelProperties.class, GatewaySessionProperties.class})
 public class SaTokenGatewayConfiguration {
 
-  private static final String CODE_NOT_LOGIN = "COMMON.0002";
-  private static final String CODE_NO_PERMISSION = "COMMON.0003";
-  private static final String CODE_INTERNAL_ERROR = "COMMON.0050";
 
   private static final int FILTER_ORDER_AUTH = -200;
 
@@ -108,19 +106,41 @@ public class SaTokenGatewayConfiguration {
   private Object handleError(Throwable e) {
     ServerHttpResponse response = (ServerHttpResponse) SaHolder.getResponse().getSource();
     response.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json;charset=UTF-8");
+    // 响应语义（2026-11-06 全 200 方案）：认证/授权失败是"客户端凭证域的业务拒绝"——
+    // 200 + 业务码（0002/0003），调用方统一解析 ApiResult.code；
+    // 内部服务互调（HttpExchange/Feign）对非 2xx 走异常路径会把"权限不足"误判为
+    // "服务不可用"，破坏权限框架的错误分类。
+    // 5xx 保留语义化：系统真故障必须对监控/APM 可见。
     if (e instanceof NotLoginException) {
-      response.setStatusCode(HttpStatusCode.valueOf(401));
+      response.setStatusCode(HttpStatusCode.valueOf(200));
       log.warn("[SaTokenGateway] 未登录访问: {}", e.getMessage());
-      return toJson(ApiResult.failure(CODE_NOT_LOGIN, "未登录或登录已过期"));
+      return toJson(ApiResult.failure(CommonError.UNAUTHORIZED.getCode(),
+        CommonError.UNAUTHORIZED.getMessage()));
     }
     if (e instanceof NotPermissionException || e instanceof NotRoleException) {
-      response.setStatusCode(HttpStatusCode.valueOf(403));
+      response.setStatusCode(HttpStatusCode.valueOf(200));
       log.warn("[SaTokenGateway] 权限不足: {}", e.getMessage());
-      return toJson(ApiResult.failure(CODE_NO_PERMISSION, "无权限访问"));
+      return toJson(ApiResult.failure(CommonError.FORBIDDEN.getCode(),
+        CommonError.FORBIDDEN.getMessage()));
+    }
+    // 下游故障细分（真故障，5xx 语义化）
+    if (e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException) {
+      response.setStatusCode(HttpStatusCode.valueOf(502));
+      log.error("[SaTokenGateway] 下游服务不可达", e);
+      return toJson(ApiResult.failure(CommonError.REMOTE_SERVICE_ERROR.getCode(),
+        "下游服务不可达"));
+    }
+    if (e instanceof java.util.concurrent.TimeoutException
+      || e instanceof java.net.SocketTimeoutException) {
+      response.setStatusCode(HttpStatusCode.valueOf(504));
+      log.error("[SaTokenGateway] 下游服务超时", e);
+      return toJson(ApiResult.failure(CommonError.TIMEOUT_ERROR.getCode(),
+        "下游服务响应超时"));
     }
     response.setStatusCode(HttpStatusCode.valueOf(500));
-    log.error("[SaTokenGateway] 鉴权异常", e);
-    return toJson(ApiResult.failure(CODE_INTERNAL_ERROR, "系统内部错误"));
+    log.error("[SaTokenGateway] 网关内部异常", e);
+    return toJson(ApiResult.failure(CommonError.INTERNAL_SERVER_ERROR.getCode(),
+      CommonError.INTERNAL_SERVER_ERROR.getMessage()));
   }
 
   /**
@@ -134,7 +154,7 @@ public class SaTokenGatewayConfiguration {
       return objectMapper.writeValueAsString(obj);
     } catch (JsonProcessingException ex) {
       log.error("[SaTokenGateway] 响应 JSON 序列化失败", ex);
-      return "{\"code\":\"" + CODE_INTERNAL_ERROR + "\",\"message\":\"系统内部错误\",\"data\":null}";
+      return "{\"code\":\"" + CommonError.INTERNAL_SERVER_ERROR.getCode() + "\",\"message\":\"" + CommonError.INTERNAL_SERVER_ERROR.getMessage() + "\",\"data\":null}";
     }
   }
 }

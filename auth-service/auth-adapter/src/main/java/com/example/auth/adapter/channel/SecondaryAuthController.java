@@ -1,5 +1,7 @@
 package com.example.auth.adapter.channel;
 
+import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.CommonError;
 import com.example.auth.api.SecondaryAuthApi;
 import com.example.auth.api.command.CloseSecondaryAuthRequest;
 import com.example.auth.api.command.ConfirmSecondaryAuthRequest;
@@ -116,7 +118,7 @@ public class SecondaryAuthController implements SecondaryAuthApi {
     HttpServletRequest request = currentRequest();
     String accountId = request.getHeader("X-Account-Id");
     if (accountId == null || accountId.isBlank()) {
-      throw new IllegalStateException("未登录");
+      throw new BusinessException(CommonError.UNAUTHORIZED);
     }
     int idx = accountId.lastIndexOf(':');
     String loginId = idx > 0 ? accountId.substring(0, idx) : accountId;

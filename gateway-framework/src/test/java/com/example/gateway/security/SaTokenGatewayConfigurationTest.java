@@ -1,6 +1,7 @@
 package com.example.gateway.security;
 
 import cn.dev33.satoken.context.SaHolder;
+import com.example.shared.exception.CommonError;
 import cn.dev33.satoken.context.model.SaResponse;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
@@ -103,7 +104,7 @@ class SaTokenGatewayConfigurationTest {
   class HandleError {
 
     @Test
-    @DisplayName("NotLoginException → 401 + JSON {code=COMMON.0002, message=未登录或登录已过期}")
+    @DisplayName("NotLoginException → 200（全 200 方案） + JSON {code=COMMON.0002, message=未登录或登录已过期}")
     void notLoginExceptionReturns401() throws Exception {
       NotLoginException exception = Mockito.mock(NotLoginException.class);
 
@@ -112,13 +113,13 @@ class SaTokenGatewayConfigurationTest {
 
         Object result = invokeHandleError(exception);
 
-        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(401));
-        assertJsonResult(result, CODE_NOT_LOGIN, "未登录或登录已过期");
+        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(200));
+        assertJsonResult(result, CODE_NOT_LOGIN, CommonError.UNAUTHORIZED.getMessage());
       }
     }
 
     @Test
-    @DisplayName("NotPermissionException → 403 + JSON {code=COMMON.0003, message=无权限访问}")
+    @DisplayName("NotPermissionException → 200（全 200 方案） + JSON {code=COMMON.0003, message=无权限访问}")
     void notPermissionExceptionReturns403() throws Exception {
       NotPermissionException exception = Mockito.mock(NotPermissionException.class);
 
@@ -127,13 +128,13 @@ class SaTokenGatewayConfigurationTest {
 
         Object result = invokeHandleError(exception);
 
-        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(403));
-        assertJsonResult(result, CODE_NO_PERMISSION, "无权限访问");
+        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(200));
+        assertJsonResult(result, CODE_NO_PERMISSION, CommonError.FORBIDDEN.getMessage());
       }
     }
 
     @Test
-    @DisplayName("NotRoleException → 403 + JSON {code=COMMON.0003, message=无权限访问}")
+    @DisplayName("NotRoleException → 200（全 200 方案） + JSON {code=COMMON.0003, message=无权限访问}")
     void notRoleExceptionReturns403() throws Exception {
       NotRoleException exception = Mockito.mock(NotRoleException.class);
 
@@ -142,13 +143,13 @@ class SaTokenGatewayConfigurationTest {
 
         Object result = invokeHandleError(exception);
 
-        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(403));
-        assertJsonResult(result, CODE_NO_PERMISSION, "无权限访问");
+        verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(200));
+        assertJsonResult(result, CODE_NO_PERMISSION, CommonError.FORBIDDEN.getMessage());
       }
     }
 
     @Test
-    @DisplayName("其他异常 → 500 + JSON {code=COMMON.0050, message=系统内部错误}")
+    @DisplayName("其他异常 → 500 + JSON {code=COMMON.0050, message=系统开小差了，请稍后再试}")
     void otherExceptionReturns500() throws Exception {
       RuntimeException exception = new RuntimeException("unexpected");
 
@@ -158,7 +159,7 @@ class SaTokenGatewayConfigurationTest {
         Object result = invokeHandleError(exception);
 
         verify(mockResponse).setStatusCode(HttpStatusCode.valueOf(500));
-        assertJsonResult(result, CODE_INTERNAL_ERROR, "系统内部错误");
+        assertJsonResult(result, CODE_INTERNAL_ERROR, CommonError.INTERNAL_SERVER_ERROR.getMessage());
       }
     }
 

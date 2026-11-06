@@ -478,6 +478,13 @@
         <version>${kona-crypto.version}</version>
       </dependency>
 
+      <!-- sa-token-core：shared-web-core 异常适配（无 spring 集成的纯核心） -->
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-core</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+
       <!-- sa-token:iam-service 用户与权限服务 -->
       <dependency>
         <groupId>cn.dev33</groupId>

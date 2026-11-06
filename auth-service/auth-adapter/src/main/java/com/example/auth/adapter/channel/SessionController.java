@@ -1,5 +1,7 @@
 package com.example.auth.adapter.channel;
 
+import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.CommonError;
 import com.example.auth.api.SessionApi;
 import com.example.auth.api.command.LoginRequest;
 import com.example.auth.api.command.SelectPlanRequest;
@@ -118,7 +120,7 @@ public class SessionController implements SessionApi {
       }
     }
     if (token == null || token.isBlank()) {
-      throw new IllegalStateException("未登录");
+      throw new BusinessException(CommonError.UNAUTHORIZED);
     }
     return new SessionId(token);
   }
@@ -128,7 +130,7 @@ public class SessionController implements SessionApi {
     HttpServletRequest request = currentRequest();
     String accountId = request.getHeader("X-Account-Id");
     if (accountId == null || accountId.isBlank()) {
-      throw new IllegalStateException("未登录");
+      throw new BusinessException(CommonError.UNAUTHORIZED);
     }
     // X-Account-Id format: "loginId:expireEpochSecond" (when signed) or just "loginId" (dev mode)
     int idx = accountId.lastIndexOf(':');

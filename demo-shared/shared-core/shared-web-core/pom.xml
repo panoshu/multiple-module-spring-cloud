@@ -13,6 +13,11 @@
 
   <dependencies>
     <dependency>
+      <!-- GlobalExceptionHandler 的 sa-token 框架异常适配（NotLogin/NotPermission → 统一响应） -->
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
     </dependency>
