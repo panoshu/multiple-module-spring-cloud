@@ -25,6 +25,12 @@
     </dependency>
 
     <dependency>
+      <!-- Redis 硬前提的依赖表达（lock4j 将其设为 optional 不传递）：
+           非 optional 显式引入——classpath 必有 Redis，executor 必装配 -->
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>

@@ -27,10 +27,6 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-lock-starter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
       <artifactId>shared-id-core</artifactId>
     </dependency>
 

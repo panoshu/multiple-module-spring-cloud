@@ -8,7 +8,6 @@ import com.example.shared.id.segment.repository.SegmentRepository;
 import com.example.shared.id.segment.service.DefaultSegmentIdService;
 import com.example.shared.id.segment.service.SegmentIdService;
 import com.example.shared.id.strategy.SegmentStrategy;
-import com.example.shared.lock.DistributedLock;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -55,9 +54,9 @@ public class SegmentIdConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnBean({SegmentRepository.class, DistributedLock.class, CacheManager.class})
-  public SegmentAllocator segmentAllocator(SegmentRepository repo, DistributedLock lock, CacheManager cacheManager) {
-    return new SegmentBufferAllocator(repo, lock, cacheManager);
+  @ConditionalOnBean({SegmentRepository.class, CacheManager.class})
+  public SegmentAllocator segmentAllocator(SegmentRepository repo, CacheManager cacheManager) {
+    return new SegmentBufferAllocator(repo, cacheManager);
   }
 
   @Bean

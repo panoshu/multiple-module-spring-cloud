@@ -2,80 +2,171 @@ package com.example.shared.id.segment.allocator;
 
 import com.example.shared.id.segment.model.IdSegment;
 import com.example.shared.id.segment.repository.SegmentRepository;
-import com.example.shared.lock.DistributedLock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 带有双 Buffer 缓冲的分配器
+ * 双 Buffer + 异步预加载的号段分配器（美团 Leaf segment 模式，2026-11-06 去锁重构）.
+ *
+ * <p><b>设计要点</b>（对照被替换的"分布式锁 + 同步取段"版本）：
+ * <ul>
+ *   <li><b>正确性不依赖锁</b>：号段不重叠由 DB 原子 UPDATE
+ *       （{@code max_id = max_id + step}）保证——锁从来不是正确性来源，
+ *       只是防重复取段的优化，如今由预加载+单写者状态机替代</li>
+ *   <li><b>取号路径纯内存</b>：游标 CAS 递增（纳秒级），不碰锁不碰 DB；
+ *       Redis 抖动不再影响发号</li>
+ *   <li><b>异步预加载</b>：当前段剩余 ≤ 10% 时后台线程（CompletableFuture）
+ *       预取下一段——同步路径几乎不会号尽，消除取号毛刺</li>
+ *   <li><b>同步兜底无锁</b>：极端情况下预加载未完成即号尽，
+ *       进程内 synchronized 取段（DB 原子已保证跨实例正确）</li>
+ * </ul></p>
+ *
+ * <p><b>一致性模型</b>：单写者状态机——next 段的加载与 current 切换只发生在
+ * 预加载线程 / 持有 monitor 的兜底路径；取号线程只读 current + CAS 游标。
+ * 跳号可能（段切换瞬间的浪费），发号器允许跳号不允许重复.</p>
+ *
+ * @author shared-id-core
  */
 @Slf4j
 public class SegmentBufferAllocator implements SegmentAllocator {
 
-  private final SegmentRepository repository;
-  private final DistributedLock lock;
-  private final Cache bufferCache; // 使用 CacheManager 管理 Buffer 实例
+  /**
+   * 预加载触发阈值：当前段剩余号量占比.
+   */
+  private static final double PRELOAD_THRESHOLD = 0.10;
 
-  public SegmentBufferAllocator(SegmentRepository repository, DistributedLock lock, CacheManager cacheManager) {
+  private final SegmentRepository repository;
+  private final Cache bufferCache;
+
+  public SegmentBufferAllocator(SegmentRepository repository, CacheManager cacheManager) {
     this.repository = repository;
-    this.lock = lock;
     this.bufferCache = cacheManager.getCache("segment_buffer");
   }
 
   @Override
   public long nextRawId(String sequenceKey) {
-    // 1. 获取 Buffer (Caffeine 本地缓存)
     SegmentBuffer buffer = bufferCache.get(sequenceKey, SegmentBuffer::new);
+    if (buffer == null) {
+      throw new IllegalStateException("SegmentBuffer unavailable for key: " + sequenceKey);
+    }
+    return buffer.nextIdOrLoad(sequenceKey);
+  }
 
-    // 2. 尝试拿号
-    Long id = Objects.requireNonNull(buffer).nextId();
-    if (id != null) {
+  /**
+   * 双缓冲（单写者状态机）.
+   */
+  private final class SegmentBuffer {
+
+    /** 当前消费段（volatile 读：取号线程无锁访问）. */
+    private volatile Segment current;
+    /** 预加载段（仅预加载线程 / synchronized 兜底路径写入）. */
+    private volatile Segment next;
+    /** 预加载任务防重复提交（CAS）. */
+    private final AtomicBoolean preloadScheduled = new AtomicBoolean(false);
+
+    long nextIdOrLoad(String key) {
+      Segment seg = current;
+      if (seg != null) {
+        Long id = seg.nextId();
+        if (id != null) {
+          maybePreload(key, seg);
+          return id;
+        }
+      }
+      return loadSync(key);
+    }
+
+    /**
+     * 低水位异步预加载（取号路径顺手触发，非阻塞）.
+     */
+    private void maybePreload(String key, Segment consuming) {
+      if (!consuming.lowWater(PRELOAD_THRESHOLD) || next != null) {
+        return;
+      }
+      if (!preloadScheduled.compareAndSet(false, true)) {
+        return; // 已有预加载在途
+      }
+      CompletableFuture.runAsync(() -> {
+        try {
+          Segment seg = toSegment(repository.fetchNextSegment(key));
+          synchronized (this) {
+            if (current == null) {
+              current = seg; // 首段（竞争兜底路径先行加载的场景）
+            } else {
+              next = seg;
+            }
+          }
+        } catch (Exception e) {
+          log.warn("号段预加载失败（下次取号走同步兜底）, key={}", key, e);
+        } finally {
+          preloadScheduled.set(false);
+        }
+      });
+    }
+
+    /**
+     * 同步兜底取段（进程内互斥；跨实例正确性由 DB 原子 UPDATE 保证）.
+     */
+    private synchronized long loadSync(String key) {
+      // Double-Check：预加载线程可能已就位 next
+      if (current != null) {
+        Long retry = current.nextId();
+        if (retry != null) {
+          return retry;
+        }
+      }
+      Segment ready = next;
+      if (ready != null) {
+        current = ready;
+        next = null;
+        Long id = ready.nextId();
+        if (id != null) {
+          return id;
+        }
+      }
+      // DB 取新段（原子 UPDATE 保证跨实例不重叠）
+      Segment fresh = toSegment(repository.fetchNextSegment(key));
+      current = fresh;
+      Long id = fresh.nextId();
+      if (id == null) {
+        throw new IllegalStateException("Fresh segment yields no id, key: " + key);
+      }
       return id;
     }
-
-    // 3. 没号了，去 DB 加载 (加分布式锁)
-    return loadFromDb(sequenceKey, buffer);
   }
 
-  private long loadFromDb(String key, SegmentBuffer buffer) {
-    return lock.lockAndRun("lock:segment:" + key, 3, -1, TimeUnit.SECONDS, () -> {
-      // Double Check
-      Long retry = buffer.nextId();
-      if (retry != null) {
-        return retry;
-      }
-
-      // Load & Refresh
-      IdSegment segment = repository.fetchNextSegment(key);
-      buffer.refresh(segment);
-
-      return buffer.nextId();
-    });
+  private static Segment toSegment(IdSegment seg) {
+    return new Segment(seg.minId(), seg.maxId());
   }
 
-  // 内部 Buffer 类
-  private static class SegmentBuffer {
-    private final AtomicLong current = new AtomicLong(0);
-    private volatile long max = 0;
-    private volatile boolean ready = false;
+  /**
+   * 号段（不可变）+ 取号游标.
+   */
+  private record Segment(long minId, long maxId, AtomicLong cursor) {
 
-    public Long nextId() {
-      if (!ready) {
-        return null;
-      }
-      long val = current.incrementAndGet();
-      return val > max ? null : val;
+    Segment(long minId, long maxId) {
+      this(minId, maxId, new AtomicLong(minId));
     }
 
-    public void refresh(IdSegment seg) {
-      this.current.set(seg.minId()); // minId 是上一段 max，所以 incrementAndGet 正好是 min+1
-      this.max = seg.maxId();
-      this.ready = true;
+    /**
+     * CAS 递增取号；null = 本段已尽.
+     */
+    Long nextId() {
+      long val = cursor.incrementAndGet();
+      return val <= maxId ? val : null;
+    }
+
+    /**
+     * 低水位判断（剩余号量 ≤ 段长 × threshold）.
+     */
+    boolean lowWater(double threshold) {
+      long remaining = maxId - cursor.get();
+      return remaining <= Math.max(1, (long) ((maxId - minId + 1) * threshold));
     }
   }
 }

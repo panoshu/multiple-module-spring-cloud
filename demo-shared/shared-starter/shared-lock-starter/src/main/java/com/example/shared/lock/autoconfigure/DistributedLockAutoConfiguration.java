@@ -1,29 +1,39 @@
 package com.example.shared.lock.autoconfigure;
 
 import com.baomidou.lock.LockTemplate;
-import com.baomidou.lock.executor.LockExecutor;
 import com.example.shared.lock.DistributedLock;
-import com.example.shared.lock.LocalDistributedLock;
-import com.example.shared.lock.LocalLockExecutor;
 import com.example.shared.lock.Lock4jDistributedLock;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 /**
- * 分布式锁自动配置（lock4j 实现，2026-11-05 客户端统一治理）.
+ * 分布式锁自动配置（lock4j，2026-11-06 定位收敛）.
  *
- * <p>注册 {@link Lock4jDistributedLock}，bean 名为 {@code redisDistributedLock}，
- * 与 {@link com.example.shared.lock.DistributedLockFactory#getLock} 的查找契约一致.</p>
+ * <p><b>组件定位</b>：纯 Redis 分布式锁（lock4j RedisTemplate executor，
+ * Lettuce 统一通道）。<b>Redis 是硬前提</b>，三层表达：
+ * <ul>
+ *   <li>依赖层：starter 显式依赖 spring-boot-starter-data-redis（非 optional）
+ *       ——classpath 必有 Redis，RedisTemplateLockExecutor 必装配</li>
+ *   <li>装配层：{@link Lock4jDistributedLock} 无条件注册（LockTemplate
+ *       缺失/内部 executor 缺失 = 启动失败，fail-fast）</li>
+ *   <li>连接层：启动期 PING 校验（{@code shared.lock.connection-check}，
+ *       默认 true）——Redis 不可达即启动失败；测试环境可关闭或 mock</li>
+ * </ul></p>
  *
- * <p>装配条件：容器存在 lock4j 的 {@link LockTemplate}（lock4j 自动配置在
- * Redis 可用时装配）。无 Redis 的宿主本配置不生效，由 shared-id-starter 的
- * 兜底配置注册 {@code localDistributedLock} 降级本地锁.</p>
+ * <p><b>历史演进</b>：v1（Redisson + 本地锁降级 + Factory）→ v2（lock4j +
+ * 无 Redis 宿主本地兜底）→ v3（本版，纯 Redis fail-fast）。本地锁与
+ * Factory 已删除：分布式锁静默降级为本地锁会把架构决策藏进组件——
+ * 无 Redis 的错误应显性暴露（2026-11-06 客户端治理定论）.</p>
  *
  * <p>lock4j 的声明式 {@code @Lock4j} 注解能力由其自身自动配置直接提供，
  * 业务可选用；编程式统一走 {@link DistributedLock} 契约.</p>
@@ -39,47 +49,48 @@ import org.springframework.context.annotation.Configuration;
 public class DistributedLockAutoConfiguration {
 
   /**
-   * 无 Redis 宿主兜底：给 lock4j 的 LockTemplate 提供本地 executor.
-   *
-   * <p>lock4j 无条件注册 LockTemplate 但要求至少一个 LockExecutor——
-   * 无 Redis（如 annuity 测试上下文）时 RedisTemplateLockExecutor 不装配，
-   * 没有本兜底会导致整个 Spring 上下文启动失败. 有 Redis 时本兜底让位
-   * （条件互斥，不会静默降级）.</p>
+   * 锁实现：无条件注册（Redis 硬前提；结构缺失即启动失败）.
    */
   @Bean
-  @ConditionalOnClass(name = "com.baomidou.lock.executor.LockExecutor")
-  @ConditionalOnMissingBean(LockExecutor.class)
-  public LockExecutor<?> localLockExecutor() {
-    log.info("Initialized LocalLockExecutor (无 Redis 宿主，lock4j LockTemplate 兜底)");
-    return new LocalLockExecutor();
+  @ConditionalOnClass(name = "com.baomidou.lock.LockTemplate")
+  @ConditionalOnMissingBean(DistributedLock.class)
+  public DistributedLock lock4jDistributedLock(LockTemplate lockTemplate) {
+    log.info("Initialized Lock4jDistributedLock (RedisTemplate executor, Lettuce)");
+    return new Lock4jDistributedLock(lockTemplate);
   }
 
   /**
-   * lock4j 锁配置（隔离在内部类中，避免主类加载时因找不到 lock4j 类报错）.
+   * 启动期连接校验（fail-fast）：Redis 不可达直接启动失败.
+   *
+   * <p>与惰性连接（Spring Data Redis 默认）的取舍：本组件是"互斥正确性"
+   * 的基础组件，连接缺失晚发现 = 运行期锁全部失效——宁可启动失败.
+   * 测试环境关闭：{@code shared.lock.connection-check=false} 或 mock 连接.</p>
    */
-  @Configuration(proxyBeanMethods = false)
-  @ConditionalOnClass(name = "com.baomidou.lock.LockTemplate")
-  static class Lock4jConfiguration {
+  @Bean
+  @ConditionalOnProperty(prefix = "shared.lock", name = "connection-check",
+    havingValue = "true", matchIfMissing = true)
+  public LockConnectionChecker lockConnectionChecker(RedisConnectionFactory factory) {
+    return new LockConnectionChecker(factory);
+  }
 
-    @Bean(DistributedLock.REDIS_BEAN_NAME)
-    @ConditionalOnMissingBean(DistributedLock.class)
-    @ConditionalOnBean(LockTemplate.class)
-    public DistributedLock lock4jDistributedLock(LockTemplate lockTemplate) {
-      log.info("Initialized Lock4jDistributedLock (RedisTemplate executor, Lettuce)");
-      return new Lock4jDistributedLock(lockTemplate);
-    }
+  /**
+   * 连接校验器（ApplicationRunner：上下文就绪后、接流量前执行）.
+   */
+  @RequiredArgsConstructor
+  static class LockConnectionChecker implements ApplicationRunner {
 
-    /**
-     * 本地锁兜底：同类声明在 redis bean 之后——有 Redis 时上面的 bean 先注册
-     * （ConditionalOnMissingBean 短路），本兜底跳过；无 Redis 时兜底接管.
-     * <p>同类内 bean 按声明顺序处理，天然解决跨自动配置排序问题
-     * （原 id-starter 兜底因 @Import 嵌套不参与排序而抢占装配位，2026-11-06 移入本类归口）.</p>
-     */
-    @Bean(DistributedLock.LOCAL_BEAN_NAME)
-    @ConditionalOnMissingBean(DistributedLock.class)
-    public DistributedLock localDistributedLock() {
-      log.info("Initialized LocalDistributedLock (Fallback, 无 Redis 宿主)");
-      return new LocalDistributedLock();
+    private final RedisConnectionFactory factory;
+
+    @Override
+    public void run(ApplicationArguments args) {
+      try (var conn = factory.getConnection()) {
+        conn.ping();
+        log.info("Lock Redis connection check passed");
+      } catch (Exception e) {
+        throw new IllegalStateException(
+          "[shared-lock] Redis 不可达，分布式锁组件启动失败（fail-fast）——"
+            + "请检查 Redis 连接；测试环境可设 shared.lock.connection-check=false", e);
+      }
     }
   }
 }

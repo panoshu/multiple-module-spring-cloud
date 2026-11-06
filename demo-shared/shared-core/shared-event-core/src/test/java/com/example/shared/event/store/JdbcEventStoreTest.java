@@ -73,12 +73,13 @@ class JdbcEventStoreTest {
   }
 
   @Test
-  void findPendingLogs_should_return_integration_payload_not_domain_payload() {
+  void claimPendingLogs_should_return_integration_payload_not_domain_payload() {
     TestDomainEvent event = new TestDomainEvent(EventId.generate(), LocalDateTime.now(), "hello");
     eventStore.save(event, Map.of("data", "hello"), "TestDomainEvent");
     long logId = eventStore.initDispatchLog(event.eventId().toString(), "rocketmq");
 
-    List<EventStore.PendingEntry> entries = eventStore.findPendingLogs(10);
+    // 认领（含置 PROCESSING）
+    List<EventStore.PendingEntry> entries = eventStore.claimPendingLogs(10);
 
     assertThat(entries).hasSize(1);
     EventStore.PendingEntry entry = entries.get(0);
@@ -86,6 +87,16 @@ class JdbcEventStoreTest {
     assertThat(entry.integrationType()).isEqualTo("TestDomainEvent");
     // 集成事件应能被反序列化为 Map（不依赖具体类）
     assertThat(entry.integrationEvent()).isInstanceOf(java.util.Map.class);
+
+    // 认领后不可重复认领（PROCESSING 状态被排除，直到超时回收）
+    List<EventStore.PendingEntry> second = eventStore.claimPendingLogs(10);
+    assertThat(second).isEmpty();
+
+    // 回写结果后终结
+    eventStore.markSuccess(logId);
+    Long status = jdbcClient.sql("SELECT COUNT(*) FROM sys_event_dispatch_log WHERE id = ? AND status = 'SUCCESS'")
+      .param(logId).query(Long.class).single();
+    assertThat(status).isEqualTo(1L);
   }
 
   record TestDomainEvent(EventId eventId, LocalDateTime occurredOn, String data) implements DomainEvent {

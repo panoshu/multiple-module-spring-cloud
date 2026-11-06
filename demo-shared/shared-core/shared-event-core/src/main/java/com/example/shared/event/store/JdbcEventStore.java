@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -87,20 +88,55 @@ public class JdbcEventStore implements EventStore {
       .param(logId).update();
   }
 
+  /**
+   * 认领时限：PROCESSING 状态超过此时长（处理方崩溃未回写）视为可回收.
+   */
+  private static final int CLAIM_TIMEOUT_MINUTES = 5;
+
   @Override
-  public List<PendingEntry> findPendingLogs(int batchSize) {
-    String sql = """
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public List<PendingEntry> claimPendingLogs(int batchSize) {
+    LocalDateTime reclaimBefore = LocalDateTime.now().minusMinutes(CLAIM_TIMEOUT_MINUTES);
+
+    // 1. 行级认领（FOR UPDATE SKIP LOCKED）：多实例并发扫描各自锁互不重叠的行，
+    //    天然并行、无跨实例竞争空转；PROCESSING 超时行回收（崩溃兜底）
+    String idSql = """
+      SELECT l.id FROM sys_event_dispatch_log l
+      WHERE (l.status IN ('PENDING', 'FAILED')
+             OR (l.status = 'PROCESSING' AND l.updated_at < ?))
+        AND (l.next_retry_at IS NULL OR l.next_retry_at <= ?)
+        AND l.retry_count < 10
+      ORDER BY l.id
+      LIMIT ?
+      FOR UPDATE SKIP LOCKED
+      """;
+    List<Long> ids = jdbcClient.sql(idSql)
+      .param(reclaimBefore)
+      .param(LocalDateTime.now())
+      .param(batchSize)
+      .query(Long.class).list();
+    if (ids.isEmpty()) {
+      return List.of();
+    }
+
+    // 2. 置 PROCESSING（认领标记；updated_at 刷新超时回收基准）
+    String placeholders = ids.stream().map(_ -> "?").collect(Collectors.joining(", "));
+    jdbcClient.sql("UPDATE sys_event_dispatch_log SET status = 'PROCESSING', updated_at = ? WHERE id IN ("
+        + placeholders + ")")
+      .param(LocalDateTime.now())
+      .params(ids)
+      .update();
+
+    // 3. 取详情（payload 反序列化）
+    String detailSql = """
       SELECT l.id, l.channel, l.retry_count,
              COALESCE(s.integration_payload, s.domain_payload) AS payload,
              COALESCE(s.integration_type, s.event_type) AS event_type
       FROM sys_event_dispatch_log l
       JOIN sys_event_store s ON l.event_id = s.event_id
-      WHERE l.status IN ('PENDING', 'FAILED')
-        AND (l.next_retry_at IS NULL OR l.next_retry_at <= NOW())
-        AND l.retry_count < 10
-      LIMIT ?
-      """;
-    return jdbcClient.sql(sql).param(batchSize)
+      WHERE l.id IN (""" + placeholders + ")";
+    return jdbcClient.sql(detailSql)
+      .params(ids)
       .query((rs, _) -> {
         try {
           long logId = rs.getLong("id");

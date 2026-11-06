@@ -11,7 +11,6 @@ import com.example.shared.event.dispatcher.SpringEventDispatcher;
 import com.example.shared.event.jackson.DddJacksonModule;
 import com.example.shared.event.job.EventRecoveryJob;
 import com.example.shared.event.store.JdbcEventStore;
-import com.example.shared.lock.DistributedLock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -64,14 +63,10 @@ public class EventAutoConfiguration {
   }
 
   @Bean
-  @ConditionalOnBean(DistributedLock.class)
+  // 恢复任务互斥已改 DB 认领（claimPendingLogs），无锁依赖
   @ConditionalOnMissingBean
-  public EventRecoveryJob eventRecoveryJob(
-    EventStore eventStore,
-    EventDeliverer eventDeliverer,
-    List<EventDispatcher> dispatchers,
-    DistributedLock distributedLock) {
-    return new EventRecoveryJob(eventStore, eventDeliverer, dispatchers, distributedLock);
+  public EventRecoveryJob eventRecoveryJob(EventStore eventStore, EventDeliverer eventDeliverer, List<EventDispatcher> dispatchers) {
+    return new EventRecoveryJob(eventStore, eventDeliverer, dispatchers);
   }
 
   @Bean
