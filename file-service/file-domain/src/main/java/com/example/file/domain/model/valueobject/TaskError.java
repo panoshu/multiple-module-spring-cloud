@@ -1,5 +1,7 @@
 package com.example.file.domain.model.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 public record TaskError(
@@ -7,7 +9,7 @@ public record TaskError(
 ) implements ValueObject {
   public TaskError {
     if (code == null || code.isBlank()) {
-      throw new IllegalArgumentException("TaskError.code empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("TaskError.code empty");
     }
   }
 }

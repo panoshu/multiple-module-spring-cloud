@@ -1,5 +1,7 @@
 package com.example.auth.domain.authorization.aggregate;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.PlanNo;
@@ -225,7 +227,7 @@ public class Grant extends AggregateRoot<GrantId> {
 
   private void requireStatus(GrantStatus expected) {
     if (this.status != expected) {
-      throw new IllegalStateException("状态不满足操作要求，当前=" + status + "，期望=" + expected);
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("状态不满足操作要求").withLogDetail("当前=" + status + "，期望=" + expected);
     }
   }
 
@@ -244,7 +246,7 @@ public class Grant extends AggregateRoot<GrantId> {
    */
   public boolean isActiveAt(LocalDateTime now) {
     if (now == null) {
-      throw new IllegalArgumentException("Time 'now' cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Time 'now' cannot be null.");
     }
 
     // 1. 状态校验：必须是已激活/生效状态
@@ -299,22 +301,22 @@ public class Grant extends AggregateRoot<GrantId> {
   @Override
   protected void validateInvariants() {
     if (this.subject == null) {
-      throw new IllegalArgumentException("Grant subject cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Grant subject cannot be null.");
     }
     if (this.grantType == null) {
-      throw new IllegalArgumentException("Grant type cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Grant type cannot be null.");
     }
     if (this.origin == null) {
-      throw new IllegalArgumentException("Grant origin cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Grant origin cannot be null.");
     }
     if (this.effect == null) {
-      throw new IllegalArgumentException("Grant effect cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Grant effect cannot be null.");
     }
     if (this.status == null) {
-      throw new IllegalArgumentException("Grant status cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Grant status cannot be null.");
     }
     if (this.validityPeriod == null) {
-      throw new IllegalArgumentException("Validity period cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Validity period cannot be null.");
     }
   }
 }

@@ -1,5 +1,6 @@
 package com.example.file.domain.service;
 
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.model.enums.FieldType;
 import com.example.file.domain.model.enums.ValidationScope;
@@ -92,8 +93,8 @@ class ExportDecisionServiceTest {
       service.exportIfValid(unit, null, spyExporter,
         new ByteArrayInputStream(new byte[]{}),
         new ByteArrayOutputStream()))
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("ValidationResult");
+      .isInstanceOf(DomainException.class)
+      .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("ValidationResult"));
   }
 
   @Test

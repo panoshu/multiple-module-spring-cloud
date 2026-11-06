@@ -1,5 +1,7 @@
 package com.example.file.domain.model.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 public record FetchPagination(
@@ -7,7 +9,7 @@ public record FetchPagination(
 ) implements ValueObject {
   public FetchPagination {
     if (tableCode == null || tableCode.isBlank()) {
-      throw new IllegalArgumentException("FetchPagination.tableCode empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("FetchPagination.tableCode empty");
     }
     if (pageSize > 2000) {
       pageSize = 2000;

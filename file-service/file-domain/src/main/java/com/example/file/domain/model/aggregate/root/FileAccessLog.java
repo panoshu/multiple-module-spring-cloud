@@ -1,5 +1,7 @@
 package com.example.file.domain.model.aggregate.root;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessAction;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
 import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
@@ -100,7 +102,7 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
                                      String tokenHash, FileAccessResult result, String failReason) {
     validateCommon(fileId, usage, scope, operator, tokenHash);
     if (result == null) {
-      throw new IllegalArgumentException("result 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("result 不能为空");
     }
     return new FileAccessLog(
       FileAccessLogId.of(UUID.randomUUID().toString()), fileId, FileAccessAction.ACCESS, usage,
@@ -122,19 +124,19 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
   private static void validateCommon(FileId fileId, FileUsage usage, FileAccessScope scope,
                                      UserNo operator, String tokenHash) {
     if (fileId == null) {
-      throw new IllegalArgumentException("fileId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("fileId 不能为空");
     }
     if (usage == null) {
-      throw new IllegalArgumentException("usage 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("usage 不能为空");
     }
     if (scope == null) {
-      throw new IllegalArgumentException("scope 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("scope 不能为空");
     }
     if (operator == null) {
-      throw new IllegalArgumentException("operator 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("operator 不能为空");
     }
     if (tokenHash == null || tokenHash.isBlank()) {
-      throw new IllegalArgumentException("tokenHash 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("tokenHash 不能为空");
     }
   }
 
@@ -147,13 +149,13 @@ public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
   @Override
   protected void validateInvariants() {
     if (action == null) {
-      throw new IllegalStateException("action 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("action 不能为空");
     }
     if (result == null) {
-      throw new IllegalStateException("result 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("result 不能为空");
     }
     if (occurAt == null) {
-      throw new IllegalStateException("occurAt 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("occurAt 不能为空");
     }
   }
 

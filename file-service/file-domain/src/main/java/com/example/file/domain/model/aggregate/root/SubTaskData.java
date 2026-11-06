@@ -1,5 +1,8 @@
 package com.example.file.domain.model.aggregate.root;
 
+import com.example.shared.exception.CommonError;
+import com.example.file.domain.errorcode.FileErrorCodes;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.domain.model.valueobject.BusinessContext;
 import com.example.file.domain.model.valueobject.SubTaskSummary;
@@ -87,7 +90,7 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
 
   public void markConsumed() {
     if (this.status != SubTaskStatus.VALID && this.status != SubTaskStatus.INVALID) {
-      throw new IllegalStateException("Cannot consume subtask in status " + this.status);
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("子任务状态不允许消费").withLogDetail("status=" + this.status);
     }
     this.status = SubTaskStatus.CONSUMED;
     this.consumedAt = LocalDateTime.now();
@@ -100,13 +103,13 @@ public class SubTaskData extends AggregateRoot<SubTaskId> {
   @Override
   protected void validateInvariants() {
     if (fileTaskId == null) {
-      throw new IllegalStateException("fileTaskId null");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("fileTaskId null");
     }
     if (bizType == null) {
-      throw new IllegalStateException("bizType null");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("bizType null");
     }
     if (status == null) {
-      throw new IllegalStateException("status null");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("status null");
     }
   }
 

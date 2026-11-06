@@ -1,5 +1,7 @@
 package com.example.auth.domain.role.aggregate;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.UserNo;
@@ -126,23 +128,23 @@ public class RoleTemplate extends AggregateRoot<RoleTemplateId> {
   @Override
   protected void validateInvariants() {
     if (this.roleCode == null) {
-      throw new IllegalArgumentException("Role code cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Role code cannot be null.");
     }
     if (this.scopeDimension == null) {
-      throw new IllegalArgumentException("Scope dimension cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Scope dimension cannot be null.");
     }
     if (this.status == null) {
-      throw new IllegalArgumentException("Role template status cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Role template status cannot be null.");
     }
 
     // 核心业务规则：GLOBAL 维度下 scopeValue 必须为 null；非 GLOBAL 维度下 scopeValue 不能为 null
     if (this.scopeDimension == RoleTemplateScopeDimension.GLOBAL && this.scopeValue != null) {
-      throw new IllegalArgumentException(
-        "Scope value must be null when dimension is GLOBAL.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Scope value must be null when dimension is GLOBAL.");
     }
     if (this.scopeDimension != RoleTemplateScopeDimension.GLOBAL && this.scopeValue == null) {
-      throw new IllegalArgumentException(
-        "Scope value is required when dimension is " + this.scopeDimension + ".");
+      throw new DomainException(CommonError.BAD_REQUEST)
+        .withUserDetail("非全局范围必须提供 scopeValue")
+        .withLogDetail("dimension=" + this.scopeDimension);
     }
   }
 

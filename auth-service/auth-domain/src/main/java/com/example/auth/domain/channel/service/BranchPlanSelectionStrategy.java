@@ -1,5 +1,7 @@
 package com.example.auth.domain.channel.service;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.auth.domain.channel.valueobject.EffectiveIdentity;
 import com.example.auth.domain.channel.valueobject.SelectablePlanScope;
 
@@ -19,7 +21,7 @@ public final class BranchPlanSelectionStrategy implements PlanSelectionStrategy 
   @Override
   public SelectablePlanScope listSelectablePlans(EffectiveIdentity identity) {
     if (!identity.viaSecondaryAuth()) {
-      throw new IllegalStateException("网点渠道必须先完成经办二次授权才能选择计划");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("网点渠道必须先完成经办二次授权才能选择计划");
     }
     return delegate.listSelectablePlans(identity);
   }

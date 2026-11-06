@@ -10,6 +10,8 @@ import com.example.file.domain.model.aggregate.valueobject.StorageType;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.domain.errorcode.SharedDomainErrorCode;
+import com.example.file.domain.errorcode.FileErrorCodes;
+import com.example.shared.exception.CommonError;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.BatchId;
 import com.example.file.types.FileId;
@@ -126,22 +128,22 @@ public class FileMetadata extends AggregateRoot<FileId> {
                                              String targetId, StorageType storageType,
                                              UserNo uploader, LocalDateTime expiresAt) {
     if (id == null) {
-      throw new IllegalArgumentException("id 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("id 不能为空");
     }
     if (usage == null) {
-      throw new IllegalArgumentException("usage 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("usage 不能为空");
     }
     if (accessScope == null) {
-      throw new IllegalArgumentException("accessScope 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("accessScope 不能为空");
     }
     if (targetId == null || targetId.isBlank()) {
-      throw new IllegalArgumentException("targetId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("targetId 不能为空");
     }
     if (storageType == null) {
-      throw new IllegalArgumentException("storageType 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("storageType 不能为空");
     }
     if (uploader == null) {
-      throw new IllegalArgumentException("uploader 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("uploader 不能为空");
     }
     return new FileMetadata(id, usage, bizType, sourceApp, businessBatchId,
       accessScope, targetId, storageType, uploader, expiresAt);
@@ -164,25 +166,25 @@ public class FileMetadata extends AggregateRoot<FileId> {
                                     String targetId, StorageType storageType,
                                     UserNo uploadedBy, LocalDateTime expiresAt) {
     if (id == null) {
-      throw new IllegalArgumentException("id 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("id 不能为空");
     }
     if (originalName == null || originalName.isBlank()) {
-      throw new IllegalArgumentException("originalName 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("originalName 不能为空");
     }
     if (size < 0) {
-      throw new IllegalArgumentException("size 不能为负");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("size 不能为负");
     }
     if (usage == null) {
-      throw new IllegalArgumentException("usage 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("usage 不能为空");
     }
     if (targetId == null || targetId.isBlank()) {
-      throw new IllegalArgumentException("targetId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("targetId 不能为空");
     }
     if (storageType == null) {
-      throw new IllegalArgumentException("storageType 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("storageType 不能为空");
     }
     if (uploadedBy == null) {
-      throw new IllegalArgumentException("uploadedBy 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("uploadedBy 不能为空");
     }
     return new FileMetadata(id, originalName, size, contentType, usage, bizType, sourceApp,
       businessBatchId, targetId, storageType, uploadedBy, expiresAt);
@@ -263,11 +265,11 @@ public class FileMetadata extends AggregateRoot<FileId> {
   @Override
   protected void validateInvariants() {
     if (size != null && size < 0) {
-      throw new IllegalStateException("size 不能为负, fileId=" + id());
+      throw new DomainException(FileErrorCodes.FILE_STATUS_INVALID).withUserDetail("size 不能为负").withLogDetail("fileId=" + id());
     }
     if (status == FileStatus.UPLOADED) {
       if (uploadedAt == null || storageKey == null) {
-        throw new IllegalStateException("UPLOADED 状态下 uploadedAt 和 storageKey 不能为空, fileId=" + id());
+        throw new DomainException(FileErrorCodes.FILE_STATUS_INVALID).withUserDetail("UPLOADED 状态下 uploadedAt 和 storageKey 不能为空").withLogDetail("fileId=" + id());
       }
     }
   }

@@ -1,5 +1,6 @@
 package com.example.auth.domain.role.aggregate;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.UserNo;
 import com.example.auth.domain.fixture.AuthorizationFixtures;
 import com.example.auth.domain.role.enumeration.RoleTemplateScopeDimension;
@@ -54,7 +55,7 @@ class RoleTemplateTest {
         "PLAN-001",
         Set.of(),
         RoleTemplateStatus.EFFECTIVE))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(DomainException.class);
     }
 
     @Test
@@ -68,7 +69,7 @@ class RoleTemplateTest {
         null,
         Set.of(),
         RoleTemplateStatus.EFFECTIVE))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(DomainException.class);
     }
   }
 

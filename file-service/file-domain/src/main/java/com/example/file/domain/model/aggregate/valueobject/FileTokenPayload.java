@@ -1,5 +1,7 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;
@@ -37,25 +39,25 @@ public record FileTokenPayload(
 ) implements ValueObject {
   public FileTokenPayload {
     if (tokenId == null || tokenId.isBlank()) {
-      throw new IllegalArgumentException("tokenId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("tokenId 不能为空");
     }
     if (fileId == null) {
-      throw new IllegalArgumentException("fileId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("fileId 不能为空");
     }
     if (usage == null) {
-      throw new IllegalArgumentException("usage 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("usage 不能为空");
     }
     if (customerNo == null) {
-      throw new IllegalArgumentException("customerNo 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("customerNo 不能为空");
     }
     if (productNo == null) {
-      throw new IllegalArgumentException("productNo 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("productNo 不能为空");
     }
     if (operator == null) {
-      throw new IllegalArgumentException("operator 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("operator 不能为空");
     }
     if (expireAt == null) {
-      throw new IllegalArgumentException("expireAt 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("expireAt 不能为空");
     }
   }
 }

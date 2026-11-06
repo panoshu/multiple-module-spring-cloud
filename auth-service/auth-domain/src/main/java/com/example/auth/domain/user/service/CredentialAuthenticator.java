@@ -1,6 +1,8 @@
 package com.example.auth.domain.user.service;
 
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.auth.domain.credential.aggregate.Credential;
 import com.example.auth.domain.credential.aggregate.PasswordCredential;
@@ -32,7 +34,8 @@ public final class CredentialAuthenticator {
       case UKeyCredential u -> providers.get(UKeyCredential.class);
     };
     if (provider == null) {
-      throw new IllegalStateException("未注册该凭证类型的认证策略: " + credential.getClass());
+      throw new DomainException(CommonError.BAD_REQUEST)
+        .withUserDetail("未注册该凭证类型的认证策略").withLogDetail("credential=" + credential.getClass());
     }
     return provider.authenticate(credential, proof);
   }

@@ -4,6 +4,7 @@ package com.example.auth.domain.channel.aggregate;
 import com.example.core.types.Channel;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.CommonError;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
@@ -298,9 +299,7 @@ public class Session extends AggregateRoot<SessionId> {
   ) {
 
     if (planId == null) {
-      throw new IllegalArgumentException(
-        "PlanNo cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("PlanNo cannot be null.");
     }
 
     this.selectedPlanId = planId;
@@ -324,9 +323,7 @@ public class Session extends AggregateRoot<SessionId> {
     }
 
     if (!isExpired(LocalDateTime.now())) {
-      throw new IllegalStateException(
-        "Session is not expired."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Session is not expired.");
     }
 
     status = SessionStatus.EXPIRED;
@@ -353,37 +350,27 @@ public class Session extends AggregateRoot<SessionId> {
   protected void validateInvariants() {
 
     if (primaryAccountId == null) {
-      throw new IllegalStateException(
-        "Primary account id cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Primary account id cannot be null.");
     }
 
 
     if (channel == null) {
-      throw new IllegalStateException(
-        "Channel cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Channel cannot be null.");
     }
 
 
     if (expiresAt == null) {
-      throw new IllegalStateException(
-        "Expire time cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Expire time cannot be null.");
     }
 
 
     if (effectiveIdentity == null) {
-      throw new IllegalStateException(
-        "Effective identity cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Effective identity cannot be null.");
     }
 
 
     if (status == null) {
-      throw new IllegalStateException(
-        "Status cannot be null."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Status cannot be null.");
     }
   }
 

@@ -1,5 +1,7 @@
 package com.example.auth.domain.channel.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.auth.domain.authorization.valueobject.Permission;
 
@@ -27,10 +29,10 @@ public record PermissionSnapshot(
     Objects.requireNonNull(frozenAt, "frozenAt");
     Objects.requireNonNull(expiresAt, "expiresAt");
     if (permissions.isEmpty()) {
-      throw new IllegalArgumentException("permissions must not be empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("permissions must not be empty");
     }
     if (expiresAt.isBefore(frozenAt)) {
-      throw new IllegalArgumentException("expiresAt must not be before frozenAt");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("expiresAt must not be before frozenAt");
     }
     permissions = Collections.unmodifiableSet(new HashSet<>(permissions));
   }

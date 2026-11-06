@@ -1,5 +1,8 @@
 package com.example.file.domain.model.aggregate.root;
 
+import com.example.shared.exception.CommonError;
+import com.example.file.domain.errorcode.FileErrorCodes;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
 import com.example.file.domain.model.valueobject.SubTaskSummary;
@@ -78,13 +81,13 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
                                  FileId sourceFileId, ErrorPolicy errorPolicy,
                                  List<String> splitKeys, String userNo) {
     if (bizType == null) {
-      throw new IllegalArgumentException("bizType null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("bizType null");
     }
     if (errorPolicy == null) {
-      throw new IllegalArgumentException("errorPolicy null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("errorPolicy null");
     }
     if (sourceFileName == null || sourceFileName.isBlank()) {
-      throw new IllegalArgumentException("sourceFileName empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("sourceFileName empty");
     }
     return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo);
   }
@@ -107,7 +110,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   public void recordSubTask(SubTaskSummary summary) {
     if (summary == null) {
-      throw new IllegalArgumentException("summary null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("summary null");
     }
     this.subTaskSummaries.add(summary);
     this.subTaskCount++;
@@ -118,7 +121,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   public void markSuccess() {
     if (subTaskSummaries.isEmpty()) {
-      throw new IllegalStateException("no subtasks recorded");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("no subtasks recorded");
     }
     this.status = TaskStatus.SUCCESS;
     this.finishedAt = LocalDateTime.now();
@@ -141,10 +144,10 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   @Override
   protected void validateInvariants() {
     if (bizType == null) {
-      throw new IllegalStateException("bizType null");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("bizType null");
     }
     if (status == null) {
-      throw new IllegalStateException("status null");
+      throw new DomainException(FileErrorCodes.SUB_TASK_INVALID).withUserDetail("status null");
     }
   }
 

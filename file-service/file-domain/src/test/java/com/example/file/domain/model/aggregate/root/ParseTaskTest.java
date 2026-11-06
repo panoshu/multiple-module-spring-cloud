@@ -1,5 +1,6 @@
 package com.example.file.domain.model.aggregate.root;
 
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
 import com.example.file.domain.model.valueobject.SubTaskSummary;
@@ -53,7 +54,7 @@ class ParseTaskTest {
   @Test
   void should_throw_when_mark_success_without_subtasks() {
     ParseTask task = newTask();
-    assertThatThrownBy(task::markSuccess).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(task::markSuccess).isInstanceOf(DomainException.class);
   }
 
   @Test

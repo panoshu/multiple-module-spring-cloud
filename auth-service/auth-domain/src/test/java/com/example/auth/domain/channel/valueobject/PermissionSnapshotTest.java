@@ -1,5 +1,6 @@
 package com.example.auth.domain.channel.valueobject;
 
+import com.example.shared.exception.DomainException;
 import com.example.auth.domain.authorization.valueobject.ActionCode;
 import com.example.auth.domain.authorization.valueobject.BusinessCode;
 import com.example.auth.domain.authorization.valueobject.Permission;
@@ -43,8 +44,8 @@ class PermissionSnapshotTest {
     void should_throw_when_permissions_empty() {
       assertThatThrownBy(() ->
         PermissionSnapshot.of(Set.of(), LocalDateTime.now(), Duration.ofSeconds(30)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("permissions");
+        .isInstanceOf(DomainException.class)
+        .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("permissions"));
     }
 
     @Test

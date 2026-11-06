@@ -1,5 +1,6 @@
 package com.example.auth.domain.authorization.aggregate;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.UserNo;
 import com.example.auth.domain.authorization.enumeration.GrantStatus;
 import com.example.auth.domain.authorization.event.GrantApproved;
@@ -64,7 +65,7 @@ class GrantTest {
     void shouldThrowWhenApproveNonPendingGrant() {
       var grant = AuthorizationFixtures.effectiveAllowGrant();
       assertThatThrownBy(() -> grant.approve(UserNo.of("u-1")))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(DomainException.class);
     }
   }
 

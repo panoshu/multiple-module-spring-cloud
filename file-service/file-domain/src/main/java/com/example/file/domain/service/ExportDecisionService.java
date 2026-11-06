@@ -1,5 +1,7 @@
 package com.example.file.domain.service;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.model.valueobject.SplitUnit;
 import com.example.file.domain.model.valueobject.ValidationResult;
@@ -41,13 +43,13 @@ public class ExportDecisionService {
                             ExcelExporter exporter,
                             InputStream template, OutputStream out) {
     if (unit == null) {
-      throw new IllegalArgumentException("SplitUnit cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("SplitUnit cannot be null");
     }
     if (result == null) {
-      throw new IllegalArgumentException("ValidationResult cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("ValidationResult cannot be null");
     }
     if (exporter == null) {
-      throw new IllegalArgumentException("ExcelExporter cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("ExcelExporter cannot be null");
     }
     if (!result.isValid()) {
       return;

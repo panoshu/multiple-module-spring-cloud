@@ -1,5 +1,6 @@
 package com.example.auth.domain.channel.valueobject;
 
+import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -105,8 +106,8 @@ class VerificationCodeTest {
     @DisplayName("4 参数 of 当 maxAttempts 为负数时应当抛异常")
     void should_throw_when_max_attempts_negative() {
       assertThatThrownBy(() -> VerificationCode.of("123456", LocalDateTime.now(), Duration.ofMinutes(5), -1))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("maxAttempts");
+        .isInstanceOf(DomainException.class)
+        .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("maxAttempts"));
     }
 
     @Test

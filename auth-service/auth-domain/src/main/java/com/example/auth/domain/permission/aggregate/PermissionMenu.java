@@ -1,5 +1,7 @@
 package com.example.auth.domain.permission.aggregate;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.UserNo;
@@ -173,8 +175,9 @@ public class PermissionMenu extends AggregateRoot<PermissionMenuId> {
     Objects.requireNonNull(oldPathPrefix, "oldPathPrefix");
     Objects.requireNonNull(newPathPrefix, "newPathPrefix");
     if (this.menuPath == null || !this.menuPath.startsWith(oldPathPrefix)) {
-      throw new IllegalArgumentException(
-        "menuPath must start with oldPathPrefix: " + this.menuPath + " vs " + oldPathPrefix);
+      throw new DomainException(CommonError.BAD_REQUEST)
+        .withUserDetail("menuPath 必须以 oldPathPrefix 开头")
+        .withLogDetail(this.menuPath + " vs " + oldPathPrefix);
     }
     this.menuPath = newPathPrefix + this.menuPath.substring(oldPathPrefix.length());
     this.depth = this.depth + depthDelta;
@@ -233,19 +236,19 @@ public class PermissionMenu extends AggregateRoot<PermissionMenuId> {
   @Override
   protected void validateInvariants() {
     if (this.menuCode == null) {
-      throw new IllegalArgumentException("menuCode cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("menuCode cannot be null");
     }
     if (this.menuName == null || this.menuName.isBlank()) {
-      throw new IllegalArgumentException("menuName cannot be blank");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("menuName cannot be blank");
     }
     if (this.menuCategory == null) {
-      throw new IllegalArgumentException("menuCategory cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("menuCategory cannot be null");
     }
     if (this.visibility == null) {
-      throw new IllegalArgumentException("visibility cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("visibility cannot be null");
     }
     if (this.depth < 0) {
-      throw new IllegalArgumentException("depth cannot be negative");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("depth cannot be negative");
     }
   }
 }

@@ -1,5 +1,7 @@
 package com.example.auth.domain.permission.aggregate;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.UserNo;
@@ -175,13 +177,13 @@ public class PermissionItem extends AggregateRoot<PermissionItemId> {
   @Override
   protected void validateInvariants() {
     if (this.businessCode == null) {
-      throw new IllegalArgumentException("businessCode cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("businessCode cannot be null");
     }
     if (this.category == null) {
-      throw new IllegalArgumentException("category cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("category cannot be null");
     }
     if (this.source == null) {
-      throw new IllegalArgumentException("source cannot be null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("source cannot be null");
     }
   }
 }

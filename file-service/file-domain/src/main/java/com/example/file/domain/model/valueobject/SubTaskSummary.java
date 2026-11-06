@@ -1,5 +1,7 @@
 package com.example.file.domain.model.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
@@ -14,7 +16,7 @@ public record SubTaskSummary(
 ) implements ValueObject {
   public SubTaskSummary {
     if (subTaskId == null) {
-      throw new IllegalArgumentException("SubTaskSummary.subTaskId null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("SubTaskSummary.subTaskId null");
     }
     if (status == null) {
       status = SubTaskStatus.PENDING;

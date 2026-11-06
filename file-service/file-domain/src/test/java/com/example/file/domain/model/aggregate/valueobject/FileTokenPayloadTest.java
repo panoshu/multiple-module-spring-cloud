@@ -1,5 +1,6 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;
 import com.example.core.types.ProductNo;
@@ -48,7 +49,7 @@ class FileTokenPayloadTest {
       null, new FileId("f001"), FileUsage.SOURCE, "biz",
       CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
       null, null, LocalDateTime.now().plusMinutes(15)
-    )).isInstanceOf(IllegalArgumentException.class);
+    )).isInstanceOf(DomainException.class);
   }
 
   @Test
@@ -58,6 +59,6 @@ class FileTokenPayloadTest {
       "tok-001", new FileId("f001"), FileUsage.SOURCE, "biz",
       CustomerNo.of("C001"), ProductNo.of("P001"), UserNo.of("u1"),
       null, null, null
-    )).isInstanceOf(IllegalArgumentException.class);
+    )).isInstanceOf(DomainException.class);
   }
 }

@@ -1,5 +1,7 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
@@ -10,10 +12,10 @@ import com.example.core.types.ProductNo;
 public record FileAccessScope(CustomerNo customerNo, ProductNo productNo) implements ValueObject {
   public FileAccessScope {
     if (customerNo == null) {
-      throw new IllegalArgumentException("customerNo 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("customerNo 不能为空");
     }
     if (productNo == null) {
-      throw new IllegalArgumentException("productNo 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("productNo 不能为空");
     }
   }
 }

@@ -1,5 +1,6 @@
 package com.example.auth.domain.assignment.aggregate;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.UserNo;
 import com.example.auth.domain.assignment.event.AssignmentCreated;
 import com.example.auth.domain.assignment.event.AssignmentDeactivated;
@@ -43,7 +44,7 @@ class AgentIdentityAssignmentTest {
         AssignmentScopeDimension.PLAN,
         "PLAN-001",
         true))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(DomainException.class);
     }
 
     @Test
@@ -86,7 +87,7 @@ class AgentIdentityAssignmentTest {
       var assignment = AssignmentFixtures.activeAssignment("user-1", "ROLE_AGENT");
 
       assertThatThrownBy(() -> assignment.changeRole(null))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(DomainException.class);
     }
   }
 

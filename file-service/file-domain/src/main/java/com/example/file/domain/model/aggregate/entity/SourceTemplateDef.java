@@ -1,5 +1,7 @@
 package com.example.file.domain.model.aggregate.entity;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.IdentifyMode;
 import com.example.file.domain.model.valueobject.config.RegionDef;
 import com.example.file.types.TemplateCode;
@@ -22,10 +24,10 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
                            List<String> fingerprint, List<RegionDef> regions, String userNo) {
     super(templateCode, userNo);
     if (mode == null) {
-      throw new IllegalArgumentException("identifyMode null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("identifyMode null");
     }
     if (regions == null || regions.isEmpty()) {
-      throw new IllegalArgumentException("regions empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("regions empty");
     }
     this.identifyMode = mode;
     this.fingerprint = fingerprint == null ? List.of() : List.copyOf(fingerprint);
@@ -60,10 +62,10 @@ public class SourceTemplateDef extends Entity<TemplateCode> {
   @Override
   protected void validateInvariants() {
     if (identifyMode == null) {
-      throw new IllegalStateException("identifyMode null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("identifyMode null");
     }
     if (regions == null || regions.isEmpty()) {
-      throw new IllegalStateException("regions empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("regions empty");
     }
   }
 }

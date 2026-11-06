@@ -1,5 +1,6 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.UserNo;
@@ -25,6 +26,6 @@ class SessionUserTest {
   @DisplayName("userNo 为 null 抛异常")
   void should_throw_when_userNo_null() {
     assertThatThrownBy(() -> new SessionUser(null, CustomerNo.of("C001"), ProductNo.of("P001")))
-      .isInstanceOf(IllegalArgumentException.class);
+      .isInstanceOf(DomainException.class);
   }
 }

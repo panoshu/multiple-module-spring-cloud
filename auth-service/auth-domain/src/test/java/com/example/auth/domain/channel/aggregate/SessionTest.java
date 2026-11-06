@@ -54,7 +54,7 @@ class SessionTest {
       var session = ChannelFixtures.onlineSession("user-1");
 
       assertThatThrownBy(() -> session.selectPlan(null, UserNo.of("user-1")))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(DomainException.class);
     }
   }
 
@@ -84,7 +84,7 @@ class SessionTest {
       var session = ChannelFixtures.onlineSession("user-1");
 
       assertThatThrownBy(() -> session.expire(UserNo.of("user-1")))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(DomainException.class);
     }
   }
 

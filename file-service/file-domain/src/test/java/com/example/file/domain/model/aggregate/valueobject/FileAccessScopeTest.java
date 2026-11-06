@@ -1,5 +1,6 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.DomainException;
 import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
 import org.junit.jupiter.api.DisplayName;
@@ -23,13 +24,13 @@ class FileAccessScopeTest {
   @DisplayName("customerNo 为 null 抛异常")
   void should_throw_when_customerNo_null() {
     assertThatThrownBy(() -> new FileAccessScope(null, ProductNo.of("P001")))
-      .isInstanceOf(IllegalArgumentException.class);
+      .isInstanceOf(DomainException.class);
   }
 
   @Test
   @DisplayName("productNo 为 null 抛异常")
   void should_throw_when_productNo_null() {
     assertThatThrownBy(() -> new FileAccessScope(CustomerNo.of("C001"), null))
-      .isInstanceOf(IllegalArgumentException.class);
+      .isInstanceOf(DomainException.class);
   }
 }

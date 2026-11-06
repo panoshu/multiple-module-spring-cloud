@@ -1,5 +1,8 @@
 package com.example.file.domain.model.aggregate.root;
 
+import com.example.shared.exception.CommonError;
+import com.example.file.domain.errorcode.FileErrorCodes;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
 import com.example.file.domain.model.enums.ConfigStatus;
 import com.example.file.domain.model.enums.ErrorPolicy;
@@ -82,19 +85,19 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
                                       SplitConfig splitConfig, List<SourceTemplateDef> sourceTemplates,
                                       String userNo) {
     if (bizType == null) {
-      throw new IllegalArgumentException("bizType null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("bizType null");
     }
     if (errorPolicy == null) {
-      throw new IllegalArgumentException("errorPolicy null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("errorPolicy null");
     }
     if (canonicalModel == null) {
-      throw new IllegalArgumentException("canonicalModel null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("canonicalModel null");
     }
     if (splitConfig == null) {
-      throw new IllegalArgumentException("splitConfig null");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("splitConfig null");
     }
     if (sourceTemplates == null || sourceTemplates.isEmpty()) {
-      throw new IllegalArgumentException("sourceTemplates empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("sourceTemplates empty");
     }
     return new TemplateConfig(id, bizType, version, errorPolicy, canonicalModel,
       validationRules, derivationRules, splitConfig, sourceTemplates, userNo);
@@ -102,7 +105,7 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
 
   public void activate() {
     if (this.status == ConfigStatus.DEPRECATED) {
-      throw new IllegalStateException("Cannot activate deprecated config");
+      throw new DomainException(FileErrorCodes.CONFIG_INVALID).withUserDetail("Cannot activate deprecated config");
     }
     this.status = ConfigStatus.ACTIVE;
     this.effectiveFrom = LocalDateTime.now();
@@ -132,10 +135,10 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
   @Override
   protected void validateInvariants() {
     if (bizType == null) {
-      throw new IllegalStateException("bizType null");
+      throw new DomainException(FileErrorCodes.CONFIG_INVALID).withUserDetail("bizType null");
     }
     if (status == null) {
-      throw new IllegalStateException("status null");
+      throw new DomainException(FileErrorCodes.CONFIG_INVALID).withUserDetail("status null");
     }
   }
 

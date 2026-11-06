@@ -1,5 +1,7 @@
 package com.example.auth.domain.channel.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 import java.time.Duration;
@@ -24,10 +26,10 @@ public record VerificationCode(
     Objects.requireNonNull(sentAt, "sentAt");
     Objects.requireNonNull(expiresAt, "expiresAt");
     if (expiresAt.isBefore(sentAt)) {
-      throw new IllegalArgumentException("expiresAt must not be before sentAt");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("expiresAt must not be before sentAt");
     }
     if (remainingAttempts < 0) {
-      throw new IllegalArgumentException("remainingAttempts must not be negative");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("remainingAttempts must not be negative");
     }
   }
 
@@ -63,7 +65,7 @@ public record VerificationCode(
     Objects.requireNonNull(sentAt, "sentAt");
     Objects.requireNonNull(timeout, "timeout");
     if (maxAttempts < 0) {
-      throw new IllegalArgumentException("maxAttempts must not be negative");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("maxAttempts must not be negative");
     }
     return new VerificationCode(hashedCode, sentAt, sentAt.plus(timeout), maxAttempts);
   }

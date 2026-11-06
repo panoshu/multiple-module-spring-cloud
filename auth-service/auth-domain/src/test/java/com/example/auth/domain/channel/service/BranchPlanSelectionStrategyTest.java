@@ -1,5 +1,6 @@
 package com.example.auth.domain.channel.service;
 
+import com.example.shared.exception.DomainException;
 import com.example.auth.domain.assignment.service.PlanReachabilityService;
 import com.example.auth.domain.fixture.ChannelFixtures;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,6 @@ class BranchPlanSelectionStrategyTest {
     var identity = ChannelFixtures.directIdentity("user-1");
 
     assertThatThrownBy(() -> strategy.listSelectablePlans(identity))
-      .isInstanceOf(IllegalStateException.class);
+      .isInstanceOf(DomainException.class);
   }
 }

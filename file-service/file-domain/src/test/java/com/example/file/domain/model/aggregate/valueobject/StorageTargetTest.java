@@ -1,5 +1,6 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,8 +16,8 @@ class StorageTargetTest {
   void constructor_should_validate_LOCAL_required_fields() {
     assertThatThrownBy(() -> new StorageTarget(
       "local-1", StorageType.LOCAL, null, null, null, null, null, null, Map.of()
-    )).isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("basePath");
+    )).isInstanceOf(DomainException.class)
+      .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("basePath"));
   }
 
   @Test
@@ -24,8 +25,8 @@ class StorageTargetTest {
   void constructor_should_validate_OSS_required_fields() {
     assertThatThrownBy(() -> new StorageTarget(
       "oss-1", StorageType.OSS, null, "bucket", "base", null, null, null, Map.of()
-    )).isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("endpoint");
+    )).isInstanceOf(DomainException.class)
+      .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("endpoint"));
   }
 
   @Test
@@ -33,8 +34,8 @@ class StorageTargetTest {
   void constructor_should_validate_NAS_required_fields() {
     assertThatThrownBy(() -> new StorageTarget(
       "nas-1", StorageType.NAS, null, null, null, null, null, null, Map.of()
-    )).isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("bucket");
+    )).isInstanceOf(DomainException.class)
+      .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("bucket"));
   }
 
   @Test

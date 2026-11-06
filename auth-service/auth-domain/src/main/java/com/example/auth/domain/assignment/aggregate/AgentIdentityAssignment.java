@@ -1,6 +1,8 @@
 package com.example.auth.domain.assignment.aggregate;
 
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.UserNo;
@@ -175,7 +177,7 @@ public class AgentIdentityAssignment extends AggregateRoot<AssignmentId> {
   public void changeRole(RoleCode newRoleCode) {
 
     if (newRoleCode == null) {
-      throw new IllegalArgumentException("RoleCode cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("RoleCode cannot be null.");
     }
 
     if (this.roleCode.equals(newRoleCode)) {
@@ -218,23 +220,23 @@ public class AgentIdentityAssignment extends AggregateRoot<AssignmentId> {
   protected void validateInvariants() {
 
     if (userNo == null) {
-      throw new IllegalStateException("Assignment user cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Assignment user cannot be null.");
     }
 
     if (roleCode == null) {
-      throw new IllegalStateException("Assignment role cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Assignment role cannot be null.");
     }
 
     if (scopeDimension == null) {
-      throw new IllegalStateException("Assignment scope dimension cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Assignment scope dimension cannot be null.");
     }
 
     if (scopeValue == null || scopeValue.isBlank()) {
-      throw new IllegalStateException("Assignment scope value cannot be blank.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Assignment scope value cannot be blank.");
     }
 
     if (status == null) {
-      throw new IllegalStateException("Assignment status cannot be null.");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Assignment status cannot be null.");
     }
 
 
@@ -246,9 +248,7 @@ public class AgentIdentityAssignment extends AggregateRoot<AssignmentId> {
     if (inheritable
       && scopeDimension != AssignmentScopeDimension.CUSTOMER) {
 
-      throw new IllegalStateException(
-        "Only CUSTOMER scope supports inheritance."
-      );
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("Only CUSTOMER scope supports inheritance.");
     }
   }
 

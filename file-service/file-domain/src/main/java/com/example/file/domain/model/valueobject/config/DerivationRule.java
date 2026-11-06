@@ -1,5 +1,7 @@
 package com.example.file.domain.model.valueobject.config;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.FieldType;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
@@ -11,10 +13,10 @@ public record DerivationRule(
 ) implements ValueObject {
   public DerivationRule {
     if (field == null || field.isBlank()) {
-      throw new IllegalArgumentException("DerivationRule.field empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("DerivationRule.field empty");
     }
     if (expr == null || expr.isBlank()) {
-      throw new IllegalArgumentException("DerivationRule.expr empty");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("DerivationRule.expr empty");
     }
     type = type == null ? FieldType.STRING : type;
   }

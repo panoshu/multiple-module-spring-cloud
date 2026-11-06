@@ -1,5 +1,7 @@
 package com.example.file.domain.model.aggregate.valueobject;
 
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 
 import java.util.Map;
@@ -23,39 +25,39 @@ public record StorageTarget(
 
   public StorageTarget {
     if (targetId == null || targetId.isBlank()) {
-      throw new IllegalArgumentException("targetId 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("targetId 不能为空");
     }
     if (type == null) {
-      throw new IllegalArgumentException("type 不能为空");
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("type 不能为空");
     }
     options = options != null ? Map.copyOf(options) : Map.of();
 
     switch (type) {
       case LOCAL -> {
         if (basePath == null || basePath.isBlank()) {
-          throw new IllegalArgumentException("LOCAL 类型必须配置 basePath, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("LOCAL 类型必须配置 basePath").withLogDetail("targetId=" + targetId);
         }
       }
       case OSS -> {
         if (endpoint == null || endpoint.isBlank()) {
-          throw new IllegalArgumentException("OSS 类型必须配置 endpoint, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("OSS 类型必须配置 endpoint").withLogDetail("targetId=" + targetId);
         }
         if (bucket == null || bucket.isBlank()) {
-          throw new IllegalArgumentException("OSS 类型必须配置 bucket, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("OSS 类型必须配置 bucket").withLogDetail("targetId=" + targetId);
         }
         if (accessKeyId == null || accessKeyId.isBlank()) {
-          throw new IllegalArgumentException("OSS 类型必须配置 accessKeyId, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("OSS 类型必须配置 accessKeyId").withLogDetail("targetId=" + targetId);
         }
         if (accessKeySecret == null || accessKeySecret.isBlank()) {
-          throw new IllegalArgumentException("OSS 类型必须配置 accessKeySecret, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("OSS 类型必须配置 accessKeySecret").withLogDetail("targetId=" + targetId);
         }
       }
       case NAS -> {
         if (bucket == null || bucket.isBlank()) {
-          throw new IllegalArgumentException("NAS 类型必须配置 bucket(共享名), targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("NAS 类型必须配置 bucket(共享名)").withLogDetail("targetId=" + targetId);
         }
         if (basePath == null || basePath.isBlank()) {
-          throw new IllegalArgumentException("NAS 类型必须配置 basePath, targetId=" + targetId);
+          throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("NAS 类型必须配置 basePath").withLogDetail("targetId=" + targetId);
         }
       }
     }
