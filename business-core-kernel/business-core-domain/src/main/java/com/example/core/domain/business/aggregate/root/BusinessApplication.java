@@ -73,8 +73,16 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     this.validateInvariants();
   }
 
-  public static BusinessApplication createFromForm(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {
+  public static BusinessApplication createFromForm(ApplicationId applicationId, ApplicationSource source,
+                                                    BusinessContext businessContext, OperatorInfo operatorInfo,
+                                                    FileId jsonFileId) {
+    if (source == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("申请来源不能为空");
+    }
     BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo, jsonFileId);
+    app.formId = source.formId();
+    app.batchId = source.batchId();
     app.status = ApplicationStatus.PROCESSING;
     app.currentStep = ApplicationFlowStep.FORM_DETAIL_INGESTION;
     app.registerDomainEvent(ApplicationSpawnedEvent.of(app.id()));

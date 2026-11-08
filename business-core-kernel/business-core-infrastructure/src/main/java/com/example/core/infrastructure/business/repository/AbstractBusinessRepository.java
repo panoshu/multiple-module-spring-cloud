@@ -1,8 +1,10 @@
 package com.example.core.infrastructure.business.repository;
 
+import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.repository.Repository;
+import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.Identifier;
 import com.mybatisflex.core.BaseMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,16 @@ public abstract class AbstractBusinessRepository<
    */
   protected abstract Object doId(D aDo);
 
+  /**
+   * 读取 DO 的乐观锁版本。
+   */
+  protected abstract Integer doVersion(D aDo);
+
+  /**
+   * 设置 DO 的乐观锁版本，更新时必须使用数据库当前版本。
+   */
+  protected abstract void doVersion(D aDo, Integer version);
+
   @Override
   public Optional<T> load(ID id) {
     if (id == null) {
@@ -75,14 +87,42 @@ public abstract class AbstractBusinessRepository<
       throw new IllegalArgumentException("聚合根不能为空");
     }
     D aDo = toDO(aggregate);
-    if (mapper().selectOneById((Serializable) doId(aDo)) == null) {
+    D existing = mapper().selectOneById((Serializable) doId(aDo));
+    if (existing == null) {
       mapper().insert(aDo);
       log.debug("新增聚合根: id={}", aggregate.id());
     } else {
-      mapper().update(aDo);
+      updateExisting(aggregate, aDo, existing);
       log.debug("更新聚合根: id={}, version={}", aggregate.id(), aggregate.version());
     }
     publishDomainEvents(aggregate);
+  }
+
+  private void updateExisting(T aggregate, D aDo, D existing) {
+    Integer persistedVersion = doVersion(existing);
+    if (persistedVersion == null) {
+      throw optimisticLockFailure(aggregate);
+    }
+
+    long domainVersion = aggregate.version().value();
+    if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+      throw optimisticLockFailure(aggregate);
+    }
+
+    // MyBatis-Flex 使用 DO 版本作为 WHERE 条件并执行 version + 1。
+    // markUpdated 已提前递增领域版本时，DO 必须回退为数据库当前版本。
+    doVersion(aDo, persistedVersion);
+    if (mapper().update(aDo) != 1) {
+      throw optimisticLockFailure(aggregate);
+    }
+    if (domainVersion == persistedVersion) {
+      aggregate.syncVersionAfterUpdate();
+    }
+  }
+
+  private SystemException optimisticLockFailure(T aggregate) {
+    return new SystemException(CoreInfraErrorCode.OPTIMISTIC_LOCK_FAILURE)
+      .withLogDetail("聚合保存发生版本冲突: id=" + aggregate.id());
   }
 
   @Override

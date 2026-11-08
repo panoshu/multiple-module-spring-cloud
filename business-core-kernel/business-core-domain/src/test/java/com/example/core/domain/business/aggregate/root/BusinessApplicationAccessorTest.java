@@ -8,6 +8,7 @@ import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("BusinessApplication 公开 accessor 验证")
 class BusinessApplicationAccessorTest {
@@ -96,9 +98,32 @@ class BusinessApplicationAccessorTest {
     assertThat(app.domainEvents()).isEmpty();
   }
 
+  @Test
+  @DisplayName("createFromForm() 保存表单和批次归属")
+  void createFromForm_savesSourceReferences() {
+    BusinessApplication app = buildTestApp();
+
+    assertThat(app.formId().value()).isEqualTo("F-001");
+    assertThat(app.batchId().value()).isEqualTo("B-001");
+    assertThat(app.status()).isEqualTo(ApplicationStatus.PROCESSING);
+    assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
+    assertThat(app.domainEvents()).hasSize(1);
+  }
+
+  @Test
+  @DisplayName("申请来源必须同时包含表单和批次")
+  void applicationSource_requiresFormAndBatch() {
+    assertThatThrownBy(() -> new ApplicationSource(null, BatchId.of("B-001")))
+      .isInstanceOf(DomainException.class);
+    assertThatThrownBy(() -> new ApplicationSource(new FormId("F-001"), null))
+      .isInstanceOf(DomainException.class);
+  }
+
   private BusinessApplication buildTestApp() {
     return BusinessApplication.createFromForm(
-      new ApplicationId("APP-001"), buildContext(), buildOperator(), new FileId("FILE-001")
+      new ApplicationId("APP-001"),
+      new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
+      buildContext(), buildOperator(), new FileId("FILE-001")
     );
   }
 

@@ -2,6 +2,7 @@ package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
@@ -10,6 +11,8 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.types.OperatingMode;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
@@ -61,7 +64,9 @@ class AnnuityExtensionResolverTest {
       Channel.NETAPP, "U-TEST", "操作人", false
     );
     return BusinessApplication.createFromForm(
-      new ApplicationId("APP-001"), context, operator, new FileId("FILE-001")
+      new ApplicationId("APP-001"),
+      new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
+      context, operator, new FileId("FILE-001")
     );
   }
 }

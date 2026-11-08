@@ -61,6 +61,16 @@ public class BusinessApplicationRepositoryImpl
     return aDo.getId();
   }
 
+  @Override
+  protected Integer doVersion(BusinessApplicationDO aDo) {
+    return aDo.getVersion();
+  }
+
+  @Override
+  protected void doVersion(BusinessApplicationDO aDo, Integer version) {
+    aDo.setVersion(version);
+  }
+
   /**
    * 通过批次 ID 查询该批次下所有业务申请单。
    * <p>

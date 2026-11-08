@@ -60,6 +60,16 @@ public class BusinessFormRepositoryImpl
     return aDo.getId();
   }
 
+  @Override
+  protected Integer doVersion(BusinessFormDO aDo) {
+    return aDo.getVersion();
+  }
+
+  @Override
+  protected void doVersion(BusinessFormDO aDo, Integer version) {
+    aDo.setVersion(version);
+  }
+
   /**
    * 通过申请单 ID 反查表单：t_business_application.form_id → t_business_form.id
    */

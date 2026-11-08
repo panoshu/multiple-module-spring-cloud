@@ -64,6 +64,16 @@ public class BusinessBatchRepositoryImpl
     return aDo.getId();
   }
 
+  @Override
+  protected Integer doVersion(BusinessBatchDO aDo) {
+    return aDo.getVersion();
+  }
+
+  @Override
+  protected void doVersion(BusinessBatchDO aDo, Integer version) {
+    aDo.setVersion(version);
+  }
+
   /**
    * 通过表单 ID 反查批次：t_business_form.batch_id → t_business_batch.id
    */

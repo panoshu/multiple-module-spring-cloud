@@ -1,10 +1,13 @@
 package com.example.core.application.engine.step.service;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
+import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
 import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
 import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
@@ -33,6 +36,7 @@ public class BusinessFormAppService {
 
   private final FormRepository formRepository;
   private final ApplicationRepository applicationRepository;
+  private final BatchRepository batchRepository;
   private final BusinessConfigGateway configGateway;
   private final FileIntegrationGateway fileIntegrationGateway;
   private final EventBus eventBus;
@@ -82,24 +86,29 @@ public class BusinessFormAppService {
   @Transactional
   public void handleParsingResult(FormId formId, List<ParsedPlanResult> parsedResults) {
     BusinessForm form = formRepository.loadOrThrow(formId);
+    BusinessBatch batch = batchRepository.loadOrThrow(form.batchId());
 
-    // 聚合根行为：修改状态为 PARSED
     form.markAsParsed();
     formRepository.save(form);
 
+    if (parsedResults.isEmpty()) {
+      log.info("表单解析回调处理完成，未产生申请单, formId={}", formId.value());
+      return;
+    }
+
+    batch.receiveApplications(parsedResults.size(), form.operatorInfo());
+    ApplicationSource source = new ApplicationSource(form.id(), batch.id());
     for (ParsedPlanResult result : parsedResults) {
-      // 根据解析出来的计划，创建业务申请聚合根
       BusinessApplication newApp = BusinessApplication.createFromForm(
-        idService.nextId(ApplicationId.class, ""),
-        form.businessContext(), form.operatorInfo(),
-        result.jsonFileId() // 底层拆分好的明细 JSON 文件 ID
+        idService.nextId(ApplicationId.class, ""), source,
+        form.businessContext(), form.operatorInfo(), result.jsonFileId()
       );
 
       applicationRepository.save(newApp);
-
       newApp.domainEvents().forEach(eventBus::publish);
       newApp.clearDomainEvents();
     }
+    batchRepository.save(batch);
 
     log.info("表单解析回调处理完成，共创建 {} 个申请单", parsedResults.size());
   }

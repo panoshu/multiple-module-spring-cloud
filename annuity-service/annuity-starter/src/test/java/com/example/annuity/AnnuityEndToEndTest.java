@@ -9,6 +9,7 @@ import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
@@ -22,6 +23,8 @@ import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.event.FileParsedEventDTO;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
@@ -279,7 +282,10 @@ class AnnuityEndToEndTest {
     ApplicationId appId = new ApplicationId("APP-TEST-" + UUID.randomUUID());
     FileId jsonFileId = new FileId("FILE-TEST-" + UUID.randomUUID());
 
-    BusinessApplication app = BusinessApplication.createFromForm(appId, context, operator, jsonFileId);
+    BusinessApplication app = BusinessApplication.createFromForm(
+      appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
+      context, operator, jsonFileId
+    );
     // 设置年金业务扩展字段（通过 kernel 公开的 attachExtension 方法）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
       BusinessType.ACC_PLAN_CREATE,

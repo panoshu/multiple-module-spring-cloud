@@ -6,65 +6,51 @@ import com.example.core.domain.business.aggregate.valueobject.enums.status.Batch
 import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.event.BatchStatusChangedEvent;
+import com.example.core.types.BatchId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.core.types.BatchId;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 业务批次聚合根
+ * 业务批次聚合根。
  *
- * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
- * @version 1.0
- * @since 2026/5/9 12:30
+ * <p>批次先于申请创建，一个批次可以接收一个或多个申请。批次只通过 ID 与表单关联，
+ * 申请与批次的关联由 BusinessApplication.batchId 保存。</p>
  */
-
 public class BusinessBatch extends AggregateRoot<BatchId> {
 
   List<BusinessFormRef> businessFormRefs;
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
   private BatchStatus status;
-  private int totalApplicationCount = 0;
-  private int successCount = 0;
-  private int failedCount = 0;
+  private int totalApplicationCount;
+  private int successCount;
+  private int failedCount;
 
   protected BusinessBatch(BatchId batchId, String userNo) {
     super(batchId, userNo);
-    this.validateInvariants();
   }
 
-  protected BusinessBatch(BatchId batchId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessBatch(BatchId batchId, String createdBy, String updatedBy,
+                          LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
-    this.validateInvariants();
   }
 
-  /**
-   * 工厂方法:创建新业务批次
-   *
-   * @param batchId  批次ID
-   * @param context  业务上下文
-   * @param operator 操作人信息
-   * @return 新创建的批次聚合根
-   */
   public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
     BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
     batch.businessContext = context;
     batch.operatorInfo = operator;
     batch.status = BatchStatus.CREATED;
+    batch.businessFormRefs = List.of();
+    batch.validateInvariants();
     return batch;
   }
 
   /**
-   * 从数据库重建聚合根（全参工厂方法）。
-   * <p>
-   * 供 Repository 实现的 Converter 在 DO → 领域对象转换时调用，绕过业务校验直接装配所有字段。
-   * 业务代码禁止使用本方法创建新对象，新建请用 {@link #create}。
-   *
-   * @return 装配完成的聚合根实例
+   * 从数据库重建聚合根，字段装配完成后再校验不变量。
    */
   public static BusinessBatch reconstitute(
     BatchId batchId,
@@ -88,106 +74,134 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     batch.successCount = successCount;
     batch.failedCount = failedCount;
     batch.businessFormRefs = businessFormRefs;
+    batch.validateInvariants();
     return batch;
   }
 
   /**
-   * 行为：标记为处理中
+   * 接收一个或多个新申请。零申请的新批次保持 CREATED，首次接收后进入 PROCESSING。
    */
-  public void markAsProcessing() {
-    if (this.status != BatchStatus.CREATED) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
-        .withLogDetail("只有刚创建的批次才能开始处理, BatchId: %s, status: %s".formatted(this.id().toString(), this.status.name()));
+  public void receiveApplications(int count, OperatorInfo operator) {
+    String operatorId = requireOperator(operator);
+    if (count <= 0) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("接收申请数量必须大于零");
     }
-    this.status = BatchStatus.PROCESSING;
+    if (this.status != BatchStatus.CREATED && this.status != BatchStatus.PROCESSING) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("只有新建或处理中的批次才能接收申请, BatchId: %s, status: %s"
+          .formatted(this.id().value(), this.status));
+    }
+    if (count > Integer.MAX_VALUE - this.totalApplicationCount) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("批次申请总数超出支持范围");
+    }
+
+    this.totalApplicationCount += count;
+    transitTo(BatchStatus.PROCESSING);
+    this.markUpdated(operatorId);
   }
 
-  /**
-   * 行为：重新计算并更新批次状态 (由申请单完成/失败事件触发)
-   */
-  public void recalculateStatus() {
-    if (successCount + failedCount < totalApplicationCount) {
+  public void registerSuccess(OperatorInfo operator) {
+    String operatorId = requireOperator(operator);
+    requirePendingApplication();
+    this.successCount++;
+    recalculateStatus();
+    this.markUpdated(operatorId);
+  }
+
+  public void registerFailure(OperatorInfo operator) {
+    String operatorId = requireOperator(operator);
+    requirePendingApplication();
+    this.failedCount++;
+    recalculateStatus();
+    this.markUpdated(operatorId);
+  }
+
+  private void requirePendingApplication() {
+    if (this.status != BatchStatus.PROCESSING || processedCount() >= this.totalApplicationCount) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("批次没有可登记终态结果的申请, BatchId: %s, status: %s"
+          .formatted(this.id().value(), this.status));
+    }
+  }
+
+  private void recalculateStatus() {
+    if (this.totalApplicationCount == 0 || processedCount() < this.totalApplicationCount) {
       return;
     }
+    transitTo(BatchStatus.determine(this.failedCount, this.totalApplicationCount));
+  }
 
-    BatchStatus targetStatus = BatchStatus.determine(failedCount, totalApplicationCount);
-
-    if (this.status != targetStatus) {
-      BatchStatus oldStatus = this.status;
-      this.status = targetStatus;
-
-      this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, targetStatus));
+  private void transitTo(BatchStatus targetStatus) {
+    if (this.status == targetStatus) {
+      return;
     }
+    BatchStatus oldStatus = this.status;
+    this.status = targetStatus;
+    this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, targetStatus));
   }
 
-  // 统计行为由事件监听器调用
-  public void incrementTotalApplicationCount(int count) {
-    this.totalApplicationCount += count;
-    recalculateStatus();
-  }
-
-  public void incrementSuccessCount(int count) {
-    this.successCount += count;
-    recalculateStatus();
-  }
-
-  public void incrementFailedCount(int count) {
-    this.failedCount += count;
-    recalculateStatus();
-  }
-
-  @Override
-  protected void validateInvariants() {
-
-    if (totalApplicationCount < 0) {
+  private String requireOperator(OperatorInfo operator) {
+    if (operator == null || operator.operatorId() == null) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("总申请数不能为负, BatchId: %s, total count: %d".formatted(this.id().toString(), this.totalApplicationCount));
+        .withLogDetail("批次操作人不能为空");
     }
-    if (successCount < 0 || failedCount < 0) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("成功/失败计数不能为负");
-    }
-
-    int processed = successCount + failedCount;
-    if (processed > totalApplicationCount) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("业务不变量违反: 已处理数(%d) > 总申请数(%d)".formatted(processed, totalApplicationCount));
-    }
-
-
-    validateStatusConsistency();
-  }
-
-  private void validateStatusConsistency() {
-    if (isTerminalStatus(this.status)) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("Batch %s is terminal but counts updated".formatted(this.id().toString()));
-    }
-  }
-
-  private boolean isTerminalStatus(BatchStatus status) {
-    return status != null && status.isTerminal();
+    return operator.operatorId();
   }
 
   /**
-   * 行为:取消批次
-   *
-   * <p>只有 CREATED 或 PROCESSING 状态的批次才能取消。
-   *
-   * @param reason 取消原因
-   * @throws DomainException 当批次状态不允许取消时
+   * 只有新建或处理中的批次才能取消。
    */
   public void cancel(String reason) {
     if (this.status == null || !this.status.isActive()) {
       throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
-        .withLogDetail("只有未完成/处理中的批次才能取消, BatchId: %s, status: %s".formatted(this.id().value(), this.status));
+        .withLogDetail("只有未完成/处理中的批次才能取消, BatchId: %s, status: %s"
+          .formatted(this.id().value(), this.status));
     }
-    BatchStatus oldStatus = this.status;
-    this.status = BatchStatus.CANCELLED;
-    this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, BatchStatus.CANCELLED));
+    transitTo(BatchStatus.CANCELLED);
   }
 
-  // ============ Accessors ============
+  @Override
+  protected void validateInvariants() {
+    if (this.status == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("批次状态不能为空");
+    }
+    if (this.totalApplicationCount < 0 || this.successCount < 0 || this.failedCount < 0) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("批次申请计数不能为负");
+    }
+    if (processedCount() > this.totalApplicationCount) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("已处理申请数不能大于总申请数");
+    }
+    validateStatusConsistency();
+  }
+
+  private void validateStatusConsistency() {
+    int processed = processedCount();
+    boolean valid = switch (this.status) {
+      case CREATED -> this.totalApplicationCount == 0 && processed == 0;
+      case PROCESSING -> this.totalApplicationCount > 0 && processed < this.totalApplicationCount;
+      case COMPLETED -> this.totalApplicationCount > 0 && this.successCount == this.totalApplicationCount
+        && this.failedCount == 0;
+      case FAILED -> this.totalApplicationCount > 0 && this.failedCount == this.totalApplicationCount
+        && this.successCount == 0;
+      case PARTIAL_FAILED -> this.totalApplicationCount > 0 && processed == this.totalApplicationCount
+        && this.successCount > 0 && this.failedCount > 0;
+      case CANCELLED -> true;
+    };
+    if (!valid) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("批次状态与申请计数不一致, BatchId: %s, status: %s"
+          .formatted(this.id().value(), this.status));
+    }
+  }
+
+  private int processedCount() {
+    return this.successCount + this.failedCount;
+  }
 
   public BusinessContext businessContext() {
     return this.businessContext;
@@ -216,5 +230,4 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   public List<BusinessFormRef> businessFormRefs() {
     return this.businessFormRefs;
   }
-
 }

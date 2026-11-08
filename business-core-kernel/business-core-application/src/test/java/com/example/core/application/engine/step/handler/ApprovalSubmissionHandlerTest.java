@@ -1,6 +1,7 @@
 package com.example.core.application.engine.step.handler;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
@@ -11,6 +12,8 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
@@ -74,7 +77,8 @@ class ApprovalSubmissionHandlerTest {
       Channel.NETAPP, OPERATOR_ID, "测试操作员", false
     );
     application = BusinessApplication.createFromForm(
-      APPLICATION_ID, businessContext, operatorInfo, PARSED_JSON_FILE_ID
+      APPLICATION_ID, new ApplicationSource(new FormId("form-001"), BatchId.of("batch-001")),
+      businessContext, operatorInfo, PARSED_JSON_FILE_ID
     );
     context = BusinessMetaContext.of(businessContext);
   }
