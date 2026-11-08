@@ -17,66 +17,66 @@ import java.time.LocalDateTime;
 @Table("t_approval_flow")
 public class ApprovalFlowDO {
 
-    /**
-     * 审批流ID
-     */
-    @Id(keyType = KeyType.None)
-    private String id;
+  /**
+   * 审批流ID
+   */
+  @Id(keyType = KeyType.None)
+  private String id;
 
-    /**
-     * 审批流名称
-     */
-    private String flowName;
+  /**
+   * 审批流名称
+   */
+  private String flowName;
 
-    /**
-     * 业务类型
-     */
-    private String businessType;
+  /**
+   * 业务类型
+   */
+  private String businessType;
 
-    /**
-     * 匹配规则（JSON）
-     */
-    private String matchRules;
+  /**
+   * 匹配规则（JSON）
+   */
+  private String matchRules;
 
-    /**
-     * 版本号
-     */
-    private Integer flowVersion;
+  /**
+   * 版本号
+   */
+  private Integer flowVersion;
 
-    /**
-     * 状态：ACTIVE-有效，DEPRECATED-已废弃
-     */
-    private String status;
+  /**
+   * 状态：ACTIVE-有效，DEPRECATED-已废弃
+   */
+  private String status;
 
-    /**
-     * 创建人
-     */
-    private String createdBy;
+  /**
+   * 创建人
+   */
+  private String createdBy;
 
-    /**
-     * 更新人
-     */
-    private String updatedBy;
+  /**
+   * 更新人
+   */
+  private String updatedBy;
 
-    /**
-     * 创建时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
-     */
-    private LocalDateTime createTime;
+  /**
+   * 创建时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
+   */
+  private LocalDateTime createTime;
 
-    /**
-     * 更新时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
-     */
-    private LocalDateTime updateTime;
+  /**
+   * 更新时间（由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理）
+   */
+  private LocalDateTime updateTime;
 
-    /**
-     * 删除标记
-     */
-    @Column(isLogicDelete = true)
-    private Boolean deleted;
+  /**
+   * 删除标记
+   */
+  @Column(isLogicDelete = true)
+  private Boolean deleted;
 
-    /**
-     * 乐观锁版本号
-     */
-    @Column(version = true)
-    private Integer version;
+  /**
+   * 乐观锁版本号
+   */
+  @Column(version = true)
+  private Integer version;
 }

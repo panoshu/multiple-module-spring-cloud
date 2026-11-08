@@ -2,10 +2,10 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
+import com.example.core.types.OperatingMode;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 
 /**
  * BusinessContext
@@ -21,7 +21,7 @@ public record BusinessContext(
   String productName,
   PlanNo planNo,
   String planName,
-  OperationModel operationModel,
+  OperatingMode operationModel,
   AccountManager accountManager
 ) {
 }

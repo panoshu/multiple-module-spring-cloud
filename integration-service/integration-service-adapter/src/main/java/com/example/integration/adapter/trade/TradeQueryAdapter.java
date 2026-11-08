@@ -1,5 +1,7 @@
 package com.example.integration.adapter.trade;
 
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.integration.adapter.trade.mapper.PortfolioBalanceConverter;
 import com.example.integration.adapter.trade.mapper.PortfolioConverter;
 import com.example.integration.api.core.trade.api.TradeQueryApi;
@@ -30,6 +32,7 @@ public class TradeQueryAdapter implements TradeQueryApi {
   private final PortfolioBalanceConverter portfolioBalanceConverter;
 
   @Override
+  @RequirePermission(business = "TRADE_QUERY", action = "QUERY_BALANCE", category = PermissionCategory.PLATFORM)
   public ApiResult<PortfolioBalanceDTO> queryBalance5564(PortfolioQueryDTO queryDTO) {
     // 1. DTO -> Domain Model
     TradePortfolioQuery domainQuery = portfolioConverter.toDomain(queryDTO);

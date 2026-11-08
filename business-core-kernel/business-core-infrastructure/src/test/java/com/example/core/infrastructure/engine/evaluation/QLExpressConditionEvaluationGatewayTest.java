@@ -2,11 +2,11 @@ package com.example.core.infrastructure.engine.evaluation;
 
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class QLExpressConditionEvaluationGatewayTest {
     BusinessMetaContext context = new BusinessMetaContext(
       CustomerNo.of("C001"),
       ProductNo.of("P001"),
-      OperationModel.Single_Trustee,
+      OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"),
       BusinessType.ACC_PLAN_CREATE,
       AccountManager.BOC,
@@ -74,7 +74,7 @@ class QLExpressConditionEvaluationGatewayTest {
   void testEvaluate_NullOrBlankExpression_ReturnsTrue() {
     Map<String, Object> pureFacts = Map.of("amount", 100);
     BusinessMetaContext emptyContext = new BusinessMetaContext(
-      CustomerNo.of("C001"), ProductNo.of("P001"), OperationModel.Single_Trustee,
+      CustomerNo.of("C001"), ProductNo.of("P001"), OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"), BusinessType.ACC_PLAN_CREATE, AccountManager.BOC, null);
 
     assertThat(gateway.evaluate(null, pureFacts)).isTrue();
@@ -137,10 +137,10 @@ class QLExpressConditionEvaluationGatewayTest {
 
     // ✅ 解决方案 B：修改 QLExpressConditionEvaluationGateway 的构造函数，添加白名单：
 
-        // InitOptions options = InitOptions.builder()
-        //     .securityStrategy(QLSecurityStrategy.whiteList(AccountManager.class, CustomerNo.class))
-        //     .build();
-        // this.runner = new Express4Runner(options);
+    // InitOptions options = InitOptions.builder()
+    //     .securityStrategy(QLSecurityStrategy.whiteList(AccountManager.class, CustomerNo.class))
+    //     .build();
+    // this.runner = new Express4Runner(options);
 
     // 此处我们验证：在默认配置下，直接调用方法会触发我们代码中的 catch 块，返回 false (Fail-Safe)
     String expressionWithMethodCall = "accountManager.getValue() == '1100'";
@@ -149,7 +149,7 @@ class QLExpressConditionEvaluationGatewayTest {
     // 如果要测试 accountManager，需要使用带 BusinessMetaContext 的重载方法。
 
     BusinessMetaContext context = new BusinessMetaContext(
-      CustomerNo.of("C001"), ProductNo.of("P001"), OperationModel.Single_Trustee,
+      CustomerNo.of("C001"), ProductNo.of("P001"), OperatingMode.TRUSTEE_ONLY,
       PlanNo.of("PL001"), BusinessType.ACC_PLAN_CREATE, AccountManager.BOC, pureFacts);
 
     // 因为默认隔离策略拦截了 getValue()，会抛出异常，被 catch 捕获后返回 false

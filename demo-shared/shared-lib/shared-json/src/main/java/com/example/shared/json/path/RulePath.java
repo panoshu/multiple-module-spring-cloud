@@ -22,8 +22,8 @@ import java.util.List;
  * @since 1.0
  */
 public record RulePath(
-    String leafName,
-    List<String> parentSegments,
-    boolean isDeepScan
+  String leafName,
+  List<String> parentSegments,
+  boolean isDeepScan
 ) {
 }

@@ -9,57 +9,48 @@ import com.example.core.api.material.response.CheckCompletenessResponse;
 import com.example.core.api.material.response.MaterialItemResponse;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.annotation.PostExchange;
 
 import java.util.List;
 
 /**
- * 业务材料管理 API
+ * 业务材料管理 API（纯契约接口）
  *
- * <p>提供材料的逐个绑定、打包绑定、解绑、列表查询、完整性校验等公共接口。
- * 路径前缀 {@code /core/material}。
+ * <p>定义材料的逐个绑定、打包绑定、解绑、列表查询、完整性校验等公共方法签名，不含传输层注解。
  *
  * <p>后续新增接口流程:
  * <ol>
- *   <li>在 API 层新增方法到本接口</li>
+ *   <li>在本接口新增方法签名</li>
+ *   <li>在各 xxx-api 的子接口中重新声明并标注 {@code @PostExchange}</li>
  *   <li>在 application 层扩展 AppService 方法</li>
- *   <li>在 adapter 层实现 Controller,通过 MaterialConverter 完成 DTO 转换</li>
+ *   <li>在 adapter 层实现 Controller，通过 MaterialConverter 完成 DTO 转换</li>
  * </ol>
  *
  * @author panoshu
  */
-@HttpExchange("/core/material")
 public interface MaterialAppApi {
 
-    /**
-     * 逐个绑定材料文件。
-     */
-    @PostExchange("/bind-individual")
-    ApiResult<Void> bindIndividual(@Valid @RequestBody BindIndividualMaterialCommand command);
+  /**
+   * 逐个绑定材料文件。
+   */
+  ApiResult<Void> bindIndividual(@Valid BindIndividualMaterialCommand command);
 
-    /**
-     * 打包绑定材料文件。
-     */
-    @PostExchange("/bind-package")
-    ApiResult<Void> bindPackage(@Valid @RequestBody BindPackageMaterialCommand command);
+  /**
+   * 打包绑定材料文件。
+   */
+  ApiResult<Void> bindPackage(@Valid BindPackageMaterialCommand command);
 
-    /**
-     * 解绑材料文件。
-     */
-    @PostExchange("/unbind")
-    ApiResult<Void> unbind(@Valid @RequestBody UnbindMaterialCommand command);
+  /**
+   * 解绑材料文件。
+   */
+  ApiResult<Void> unbind(@Valid UnbindMaterialCommand command);
 
-    /**
-     * 查询材料列表。
-     */
-    @PostExchange("/list")
-    ApiResult<List<MaterialItemResponse>> list(@Valid @RequestBody ListMaterialsQuery query);
+  /**
+   * 查询材料列表。
+   */
+  ApiResult<List<MaterialItemResponse>> list(@Valid ListMaterialsQuery query);
 
-    /**
-     * 校验材料完整性。
-     */
-    @PostExchange("/check-completeness")
-    ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid @RequestBody CheckCompletenessQuery query);
+  /**
+   * 校验材料完整性。
+   */
+  ApiResult<CheckCompletenessResponse> checkCompleteness(@Valid CheckCompletenessQuery query);
 }

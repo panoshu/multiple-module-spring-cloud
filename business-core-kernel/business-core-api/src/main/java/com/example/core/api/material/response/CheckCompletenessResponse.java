@@ -8,7 +8,7 @@ import java.util.List;
  * @author panoshu
  */
 public record CheckCompletenessResponse(
-    boolean satisfied,
-    List<String> unsatisfiedMaterialCodes
+  boolean satisfied,
+  List<String> unsatisfiedMaterialCodes
 ) {
 }

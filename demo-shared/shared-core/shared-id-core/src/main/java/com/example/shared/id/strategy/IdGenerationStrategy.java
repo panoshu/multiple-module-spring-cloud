@@ -1,6 +1,6 @@
 package com.example.shared.id.strategy;
 
-import com.example.shared.primitives.identity.IdType;
+import com.example.shared.identifier.contract.IdType;
 
 public interface IdGenerationStrategy {
   /**

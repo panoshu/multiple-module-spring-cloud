@@ -2,7 +2,7 @@ package com.example.shared.id.validator;
 
 import com.example.shared.id.metadata.IdMetadataResolver;
 import com.example.shared.id.properties.IdProperties;
-import com.example.shared.primitives.identity.IdDefinition;
+import com.example.shared.identifier.contract.IdDefinition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.BeanDefinition;

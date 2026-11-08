@@ -22,63 +22,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("IdProperties 配置绑定测试")
 class IdPropertiesTest {
 
-    private final ApplicationContextRunner runner = new ApplicationContextRunner()
-        .withUserConfiguration(TestConfig.class)
-        .withPropertyValues(
-            "shared.id.rules.VIP_ORDER=GLOBAL_ORDER_SEQ",
-            "shared.id.rules.NORMAL_ORDER=GLOBAL_ORDER_SEQ",
-            "shared.id.rules.MY_LOAN=LOAN_SEQ_V2"
-        );
+  private final ApplicationContextRunner runner = new ApplicationContextRunner()
+    .withUserConfiguration(TestConfig.class)
+    .withPropertyValues(
+      "shared.id.rules.VIP_ORDER=GLOBAL_ORDER_SEQ",
+      "shared.id.rules.NORMAL_ORDER=GLOBAL_ORDER_SEQ",
+      "shared.id.rules.MY_LOAN=LOAN_SEQ_V2"
+    );
 
-    @Configuration
-    @EnableConfigurationProperties(IdProperties.class)
-    static class TestConfig {
-        // 仅用于启用 @ConfigurationProperties 绑定
-    }
+  @Test
+  @DisplayName("shared.id.rules 路由规则应能正确绑定")
+  void should_bind_rules_from_shared_id_prefix() {
+    runner.run(context -> {
+      IdProperties props = context.getBean(IdProperties.class);
 
-    @Test
-    @DisplayName("shared.id.rules 路由规则应能正确绑定")
-    void should_bind_rules_from_shared_id_prefix() {
-        runner.run(context -> {
-            IdProperties props = context.getBean(IdProperties.class);
+      assertThat(props.getRules())
+        .as("shared.id.rules 应被正确绑定，prefix 必须为 shared.id")
+        .isNotNull()
+        .isNotEmpty();
+    });
+  }
 
-            assertThat(props.getRules())
-                .as("shared.id.rules 应被正确绑定，prefix 必须为 shared.id")
-                .isNotNull()
-                .isNotEmpty();
-        });
-    }
+  @Test
+  @DisplayName("应包含 VIP_ORDER 到 GLOBAL_ORDER_SEQ 的映射")
+  void should_contain_vip_order_rule() {
+    runner.run(context -> {
+      IdProperties props = context.getBean(IdProperties.class);
 
-    @Test
-    @DisplayName("应包含 VIP_ORDER 到 GLOBAL_ORDER_SEQ 的映射")
-    void should_contain_vip_order_rule() {
-        runner.run(context -> {
-            IdProperties props = context.getBean(IdProperties.class);
+      assertThat(props.getRules())
+        .containsEntry("VIP_ORDER", "GLOBAL_ORDER_SEQ");
+    });
+  }
 
-            assertThat(props.getRules())
-                .containsEntry("VIP_ORDER", "GLOBAL_ORDER_SEQ");
-        });
-    }
+  @Test
+  @DisplayName("应包含 MY_LOAN 到 LOAN_SEQ_V2 的映射")
+  void should_contain_my_loan_mapping() {
+    runner.run(context -> {
+      IdProperties props = context.getBean(IdProperties.class);
 
-    @Test
-    @DisplayName("应包含 MY_LOAN 到 LOAN_SEQ_V2 的映射")
-    void should_contain_my_loan_mapping() {
-        runner.run(context -> {
-            IdProperties props = context.getBean(IdProperties.class);
+      assertThat(props.getRules())
+        .containsEntry("MY_LOAN", "LOAN_SEQ_V2");
+    });
+  }
 
-            assertThat(props.getRules())
-                .containsEntry("MY_LOAN", "LOAN_SEQ_V2");
-        });
-    }
+  @Test
+  @DisplayName("validation 默认应启用")
+  void should_enable_validation_by_default() {
+    runner.run(context -> {
+      IdProperties props = context.getBean(IdProperties.class);
 
-    @Test
-    @DisplayName("validation 默认应启用")
-    void should_enable_validation_by_default() {
-        runner.run(context -> {
-            IdProperties props = context.getBean(IdProperties.class);
+      assertThat(props.getValidation()).isNotNull();
+      assertThat(props.getValidation().isEnabled()).isTrue();
+    });
+  }
 
-            assertThat(props.getValidation()).isNotNull();
-            assertThat(props.getValidation().isEnabled()).isTrue();
-        });
-    }
+  @Configuration
+  @EnableConfigurationProperties(IdProperties.class)
+  static class TestConfig {
+    // 仅用于启用 @ConfigurationProperties 绑定
+  }
 }

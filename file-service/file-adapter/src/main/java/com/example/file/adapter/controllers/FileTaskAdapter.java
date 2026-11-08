@@ -1,5 +1,7 @@
 package com.example.file.adapter.controllers;
 
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.file.adapter.converter.FileTaskConverter;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.request.CancelFileTaskRequest;
@@ -34,6 +36,7 @@ public class FileTaskAdapter implements FileTaskApi {
   private final FileTaskConverter converter;
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "UPLOAD", category = PermissionCategory.PLATFORM)
   public ApiResult<FileTaskIdResponse> upload(UploadFileRequest request) {
     log.info("上传文件: bizType={}, fileName={}", request.bizType(), request.fileName());
     var result = uploadUseCase.execute(converter.toCommand(request));
@@ -41,12 +44,14 @@ public class FileTaskAdapter implements FileTaskApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<FileTaskDTO> get(GetFileTaskRequest request) {
     var result = getUseCase.execute(request.fileTaskId());
     return ApiResult.success(converter.toDTO(result));
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<PageData<SubTaskDTO>> listSubTasks(ListSubTasksRequest request) {
     var result = getUseCase.execute(request.fileTaskId());
     List<FileTaskDetailResult.SubTaskSummaryItem> allItems = result.subTasks();
@@ -56,8 +61,8 @@ public class FileTaskAdapter implements FileTaskApi {
     int start = (request.page() - 1) * request.size();
     int end = Math.min(start + request.size(), total);
     List<SubTaskDTO> pageItems = allItems.subList(Math.max(0, start), end).stream()
-        .map(converter::toSubTaskDTO)
-        .toList();
+      .map(converter::toSubTaskDTO)
+      .toList();
 
     boolean hasMore = end < total;
     PageData<SubTaskDTO> pageData = new PageData<>(total, start, pageItems.size(), hasMore, pageItems);
@@ -65,6 +70,7 @@ public class FileTaskAdapter implements FileTaskApi {
   }
 
   @Override
+  @RequirePermission(business = "FILE_TASK", action = "CANCEL", category = PermissionCategory.PLATFORM)
   public ApiResult<Void> cancel(CancelFileTaskRequest request) {
     cancelUseCase.execute(request.fileTaskId(), request.operator());
     return ApiResult.success();

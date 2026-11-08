@@ -7,12 +7,12 @@ import com.example.file.infrastructure.storage.KonaFileTokenGateway;
 import com.example.file.infrastructure.storage.RedisFileTokenStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 import java.util.Map;
@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,15 +47,16 @@ import static org.mockito.Mockito.when;
  *       在测试上下文中自然满足</li>
  *   <li>手动注册 {@link RedisFileTokenStore} Bean —— 因
  *       {@link com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration}
- *       的 {@code @ConditionalOnBean(RedissonClient.class)} 在测试上下文中无法识别
- *       同级 @Bean 定义的 RedissonClient（条件求值时机问题），
- *       故直接手动 new RedisFileTokenStore(mockRedissonClient, properties)，
+ *       的 {@code @ConditionalOnBean(StringRedisTemplate.class)} 在测试上下文中无法识别
+ *       同级 @Bean 定义的 StringRedisTemplate（条件求值时机问题），
+ *       故直接手动 new RedisFileTokenStore(mockStringRedisTemplate, properties)，
  *       仍然测试 RedisFileTokenStore 的真实 SETNX 一次性语义</li>
- *   <li>Mock {@link RedissonClient} 模拟 Redis SETNX 语义：
+ *   <li>Mock {@link StringRedisTemplate} 模拟 Redis SETNX 语义
+ *       （2026-11-05 客户端统一治理：原 Redisson RBucket mock 改为 Lettuce 通道）：
  *       <ul>
- *         <li>每个 bucket key 对应独立的 {@link AtomicBoolean}</li>
+ *         <li>每个 key 对应独立的 {@link AtomicBoolean}</li>
  *         <li>setIfAbsent 首次返回 true，后续返回 false（真实 SETNX 语义）</li>
- *         <li>isExists 返回 bucket 是否已被设置</li>
+ *         <li>hasKey 返回 key 是否已被设置</li>
  *       </ul>
  *       不依赖真实 Redis 实例</li>
  *   <li>提供 {@link ObjectMapper}（注册 JavaTimeModule 支持 LocalDateTime），
@@ -67,67 +69,77 @@ import static org.mockito.Mockito.when;
 @EnableConfigurationProperties(FileTokenProperties.class)
 public class FileAccessIntegrationTestConfiguration {
 
-    /**
-     * Jackson ObjectMapper，注册 JavaTimeModule 支持 {@link java.time.LocalDateTime} 序列化。
-     *
-     * <p>{@link KonaFileTokenGateway} 加密时将 {@code FileTokenPayload} 序列化为 JSON，
-     * 解密时反序列化回对象，因此需要 ObjectMapper 支持 Java 时间类型。
-     */
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
-    }
+  /**
+   * Jackson ObjectMapper，注册 JavaTimeModule 支持 {@link java.time.LocalDateTime} 序列化。
+   *
+   * <p>{@link KonaFileTokenGateway} 加密时将 {@code FileTokenPayload} 序列化为 JSON，
+   * 解密时反序列化回对象，因此需要 ObjectMapper 支持 Java 时间类型。
+   */
+  @Bean
+  public ObjectMapper objectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    return mapper;
+  }
 
-    /**
-     * Mock RedissonClient，模拟 Redis SETNX + TTL 语义。
-     *
-     * <p>每个 bucket key 维护独立的 {@link AtomicBoolean}：
-     * <ul>
-     *   <li>首次 {@code setIfAbsent(value, ttl)} 通过 CAS (false→true) 返回 true</li>
-     *   <li>后续调用 CAS 失败返回 false</li>
-     *   <li>{@code isExists()} 返回 {@code AtomicBoolean.get()}</li>
-     * </ul>
-     *
-     * <p>这样 {@link RedisFileTokenStore} 的真实 SETNX 一次性语义被完整验证，
-     * 无需真实 Redis 实例。
-     */
-    @Bean
-    public RedissonClient redissonClient() {
-        RedissonClient client = mock(RedissonClient.class);
-        Map<String, RBucket<String>> buckets = new ConcurrentHashMap<>();
+  /**
+   * Mock StringRedisTemplate，模拟 Redis SETNX + TTL 语义.
+   *
+   * <p>每个 key 维护独立的 {@link AtomicBoolean}：
+   * <ul>
+   *   <li>首次 {@code setIfAbsent(key, value, ttl)} 通过 CAS (false→true) 返回 true</li>
+   *   <li>后续调用 CAS 失败返回 false</li>
+   *   <li>{@code hasKey(key)} 返回 {@code AtomicBoolean.get()}</li>
+   * </ul>
+   *
+   * <p>这样 {@link RedisFileTokenStore} 的真实 SETNX 一次性语义被完整验证，
+   * 无需真实 Redis 实例。
+   */
+  @Bean
+  @SuppressWarnings("unchecked")
+  public StringRedisTemplate stringRedisTemplate() {
+    StringRedisTemplate template = mock(StringRedisTemplate.class);
+    ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+    when(template.opsForValue()).thenReturn(valueOps);
 
-        when(client.getBucket(anyString())).thenAnswer(inv -> {
-            String key = inv.getArgument(0);
-            return buckets.computeIfAbsent(key, k -> createSimulatedBucket());
-        });
+    Map<String, AtomicBoolean> used = new ConcurrentHashMap<>();
 
-        return client;
-    }
+    when(valueOps.setIfAbsent(anyString(), anyString(), any(Duration.class)))
+      .thenAnswer(inv -> used
+        .computeIfAbsent(inv.getArgument(0), k -> new AtomicBoolean(false))
+        .compareAndSet(false, true));
 
-    /**
-     * 手动注册 {@link RedisFileTokenStore} Bean。
-     *
-     * <p>不通过 {@link com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration}
-     * 注册的原因：该自动配置类的 {@code @ConditionalOnBean(RedissonClient.class)} 在
-     * 测试上下文中无法识别本类同级 @Bean 定义的 RedissonClient
-     * （auto-config 条件求值时机早于 regular @Bean 注册），导致 bean 被跳过。
-     * 直接手动 new 可绕过此限制，仍测试 RedisFileTokenStore 的真实实现逻辑。
-     */
-    @Bean
-    public FileTokenStore fileTokenStore(RedissonClient redissonClient, FileTokenProperties properties) {
-        return new RedisFileTokenStore(redissonClient, properties);
-    }
+    when(template.hasKey(anyString()))
+      .thenAnswer(inv -> used
+        .getOrDefault(inv.getArgument(0), new AtomicBoolean(false))
+        .get());
 
-    private static RBucket<String> createSimulatedBucket() {
-        RBucket<String> bucket = mock(RBucket.class);
-        AtomicBoolean exists = new AtomicBoolean(false);
+    return template;
+  }
 
-        when(bucket.setIfAbsent(any(String.class), any(Duration.class)))
-            .thenAnswer(inv -> exists.compareAndSet(false, true));
-        when(bucket.isExists()).thenAnswer(inv -> exists.get());
+  /**
+   * 手动注册 {@link RedisFileTokenStore} Bean.
+   *
+   * <p>不通过 {@link com.example.file.infrastructure.storage.RedisFileTokenStoreAutoConfiguration}
+   * 注册的原因：该自动配置类的 {@code @ConditionalOnBean(StringRedisTemplate.class)} 在
+   * 测试上下文中无法识别本类同级 @Bean 定义的 StringRedisTemplate
+   * （auto-config 条件求值时机早于 regular @Bean 注册），导致 bean 被跳过。
+   * 直接手动 new 可绕过此限制，仍测试 RedisFileTokenStore 的真实实现逻辑。
+   */
+  @Bean
+  public FileTokenStore fileTokenStore(StringRedisTemplate redisTemplate, FileTokenProperties properties) {
+    return new RedisFileTokenStore(redisTemplate, properties);
+  }
 
-        return bucket;
-    }
+  @org.springframework.context.annotation.Bean
+  com.example.shared.cache.core.ICacheTemplate testCacheTemplate() {
+    com.example.shared.cache.core.ICacheTemplate mock =
+      org.mockito.Mockito.mock(com.example.shared.cache.core.ICacheTemplate.class);
+    // getOrLoad 直通 loader
+    org.mockito.Mockito.when(mock.getOrLoad(
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Class<Object>>any()))
+      .thenAnswer(inv -> ((java.util.function.Function<String, Object>) inv.getArgument(2)).apply(inv.getArgument(1)));
+    return mock;
+  }
 }

@@ -4,7 +4,7 @@ import com.example.integration.domain.trade.model.TradePortfolioBalance;
 import com.example.integration.domain.trade.model.TradePortfolioQuery;
 import com.example.integration.infrastructure.core.trade.dto.Query5564Req;
 import com.example.integration.infrastructure.core.trade.dto.Query5564Res;
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

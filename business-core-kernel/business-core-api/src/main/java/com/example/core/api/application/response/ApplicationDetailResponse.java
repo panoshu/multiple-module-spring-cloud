@@ -11,15 +11,15 @@ import java.time.LocalDateTime;
  * @author panoshu
  */
 public record ApplicationDetailResponse(
-    String applicationId,
-    String batchId,
-    String status,
-    String currentStep,
-    String jsonFileId,
-    String packageFileId,
-    LocalDateTime applyTime,
-    LocalDateTime completeTime,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt
+  String applicationId,
+  String batchId,
+  String status,
+  String currentStep,
+  String jsonFileId,
+  String packageFileId,
+  LocalDateTime applyTime,
+  LocalDateTime completeTime,
+  LocalDateTime createdAt,
+  LocalDateTime updatedAt
 ) {
 }

@@ -1,8 +1,8 @@
 package com.example.shared.event.deliverer;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.domain.event.EventDispatcher;
-import com.example.shared.domain.event.EventStore;
+import com.example.shared.event.contract.EventDispatcher;
+import com.example.shared.event.contract.EventStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +37,7 @@ public class EventDeliverer {
    * 补偿流重载：使用预先反序列化的 integrationEvent
    */
   public void deliverRecovered(EventDispatcher dispatcher, Object integrationEvent,
-                                String integrationType, long logId) {
+                               String integrationType, long logId) {
     String channel = dispatcher.getChannelName();
     try {
       log.debug("Recovering event logId={} type={} to channel {}", logId, integrationType, channel);

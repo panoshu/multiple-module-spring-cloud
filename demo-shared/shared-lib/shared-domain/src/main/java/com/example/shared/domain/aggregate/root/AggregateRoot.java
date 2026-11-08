@@ -1,10 +1,9 @@
 package com.example.shared.domain.aggregate.root;
 
 import com.example.shared.domain.aggregate.entity.Entity;
-import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.Identifier;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,12 +23,12 @@ public abstract class AggregateRoot<ID extends Identifier<?>> extends Entity<ID>
   private final transient List<DomainEvent> domainEvents = new ArrayList<>();
 
   // 场景1: 业务创建
-  protected AggregateRoot(ID id, UserNo userNo) {
+  protected AggregateRoot(ID id, String userNo) {
     super(id, userNo);
   }
 
   // 场景2: 重建 - [新增]
-  protected AggregateRoot(ID id, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected AggregateRoot(ID id, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
   }
 
@@ -48,7 +47,7 @@ public abstract class AggregateRoot<ID extends Identifier<?>> extends Entity<ID>
    * 获取所有已注册的领域事件。
    * 通常在聚合根保存后被清理。
    */
-  public List<DomainEvent> getDomainEvents() {
+  public List<DomainEvent> domainEvents() {
     return Collections.unmodifiableList(domainEvents);
   }
 

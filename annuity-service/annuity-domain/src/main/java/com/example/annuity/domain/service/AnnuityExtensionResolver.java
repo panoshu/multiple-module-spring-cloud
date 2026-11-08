@@ -32,7 +32,7 @@ public class AnnuityExtensionResolver {
       return annuityExt;
     }
     throw new DomainException(AnnuityDomainErrorCode.INVALID_EXTENSION_TYPE)
-        .withLogDetail("期望 AnnuityApplicationExtension,实际: "
-            + (ext == null ? "null" : ext.getClass().getName()));
+      .withLogDetail("期望 AnnuityApplicationExtension,实际: "
+        + (ext == null ? "null" : ext.getClass().getName()));
   }
 }

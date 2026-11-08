@@ -34,7 +34,7 @@ public class AnnuityContributionValidationAction implements StepExtensionAction 
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
     return contributionRule.validate(extensionResolver.resolve(app))
-        .map(msg -> ExtensionExecutionResult.failure("INVALID_CONTRIBUTION", msg))
-        .orElseGet(ExtensionExecutionResult::success);
+      .map(msg -> ExtensionExecutionResult.failure("INVALID_CONTRIBUTION", msg))
+      .orElseGet(ExtensionExecutionResult::success);
   }
 }

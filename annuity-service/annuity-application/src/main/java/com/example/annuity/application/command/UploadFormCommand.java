@@ -20,12 +20,12 @@ import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
  * @since 2026/7/21
  */
 public record UploadFormCommand(
-    BusinessContext businessContext,
-    OperatorInfo operatorInfo,
-    String fileName,
-    Long fileSize,
-    String planType,
-    Long initialContribution,
-    Boolean hasForeignInvestment
+  BusinessContext businessContext,
+  OperatorInfo operatorInfo,
+  String fileName,
+  Long fileSize,
+  String planType,
+  Long initialContribution,
+  Boolean hasForeignInvestment
 ) {
 }

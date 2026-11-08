@@ -1,17 +1,16 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
-import com.example.file.domain.model.valueobject.TaskError;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
+import com.example.file.domain.model.parse.valueobject.TaskError;
 import com.example.file.infrastructure.entity.ParseTaskDO;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.file.types.FileId;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +42,12 @@ public interface ParseTaskConverter {
   @Mapping(target = "errors", expression = "java(taskErrorListToJson(task.errors()))")
   @Mapping(target = "startedAt", expression = "java(task.startedAt())")
   @Mapping(target = "finishedAt", expression = "java(task.finishedAt())")
-  @Mapping(target = "createdBy", expression = "java(task.createdBy().value())")
-  @Mapping(target = "updatedBy", expression = "java(task.updatedBy().value())")
+  @Mapping(target = "createdBy", expression = "java(task.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(task.updatedBy())")
   @Mapping(target = "createTime", expression = "java(task.createdAt())")
   @Mapping(target = "updateTime", expression = "java(task.updatedAt())")
   @Mapping(target = "version", expression = "java((int) task.version().value())")
-  @Mapping(target = "deleted", constant = "false")
+  @Mapping(target = "deleted", constant = "0")
   ParseTaskDO toDO(ParseTask task);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toFileTaskId")
@@ -60,12 +59,11 @@ public interface ParseTaskConverter {
   @Mapping(target = "splitKeys", source = "splitKeys", qualifiedByName = "jsonToStringList")
   @Mapping(target = "subTaskSummaries", source = "subTaskSummaries", qualifiedByName = "jsonToSubTaskSummaryList")
   @Mapping(target = "errors", source = "errors", qualifiedByName = "jsonToTaskErrorList")
-  @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-  @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
+  @Mapping(target = "createdBy", source = "createdBy")
+  @Mapping(target = "updatedBy", source = "updatedBy")
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "domainEvents", ignore = true)
   ParseTask toDomain(ParseTaskDO aDo);
 
   @Named("toFileTaskId")
@@ -80,11 +78,6 @@ public interface ParseTaskConverter {
   @Named("toFileId")
   default FileId toFileId(String fileId) {
     return fileId != null ? new FileId(fileId) : null;
-  }
-
-  @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
   }
 
   @Named("toVersion")
@@ -145,7 +138,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<String>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<String>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化字符串列表失败", e);
     }
@@ -168,7 +162,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SubTaskSummary>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SubTaskSummary>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化子任务摘要列表失败", e);
     }
@@ -191,7 +186,8 @@ public interface ParseTaskConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<TaskError>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<TaskError>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化任务错误列表失败", e);
     }

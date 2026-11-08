@@ -1,0 +1,71 @@
+package com.example.shared.security;
+
+import java.util.Set;
+
+/**
+ * 会话上下文 DTO
+ *
+ * <p>由 iam-service 写入 sa-token Token-Session,gateway 透传到 X-Session-Context header,
+ * kernel 通过 {@code SessionContextResolver（kernel 适配层）} 解析。
+ *
+ * <p>字段超集,各渠道按需填充:
+ * <ul>
+ *   <li>身份/渠道/客户/计划字段:全部渠道</li>
+ *   <li>代办字段(isProxy/onBehalfOf*):仅 INTERNET 渠道</li>
+ *   <li>二次授权字段(hasSecondaryAuth/borrowedApproverId):仅 BRANCH 渠道</li>
+ *   <li>代办范围(delegatedPlanNos):仅 INTERNET 渠道</li>
+ * </ul>
+ *
+ * @author panoshu
+ */
+  public record SessionClaims(
+  String userNo,
+  String userType,
+  String loginName,
+  String displayName,
+  String channelType,
+  String clientId,
+  String clientIp,
+  String customerNo,
+  String customerName,
+  String planNo,
+  String planName,
+  String productNo,
+  String productName,
+  String operationModel,
+  String accountManager,
+  boolean isProxy,
+  String onBehalfOfUserNo,
+  String onBehalfOfLoginName,
+  boolean hasSecondaryAuth,
+  Long secondaryAuthSessionId,
+  String borrowedApproverId,
+  Set<String> permissionCodes,
+  Set<String> delegatedPlanNos,
+  long revision
+) {
+
+  /**
+   * Token-Session 中存储完整会话声明的键（auth 写入完整 JSON，网关整体读取透传）.
+   */
+  public static final String SESSION_CLAIMS_KEY = "sessionClaims";
+
+  /**
+   * 兼容旧 JSON（无 revision 字段时 Jackson 注入 0）并保证非负.
+   */
+  public SessionClaims {
+    if (revision < 0) {
+      revision = 0;
+    }
+  }
+
+  /**
+   * 声明修订号：auth 每次事件合并写入时递增（SessionClaimsWriter）.
+   *
+   * <p>用途：① 并发写检测——两次合并若读到相同 revision 说明有更新被覆盖；
+   * ② 下游可观测——网关日志/Guard 排查时定位声明版本。旧声明（无此字段）反序列化为 0.
+   */
+  public long revision() {
+    return revision;
+  }
+}

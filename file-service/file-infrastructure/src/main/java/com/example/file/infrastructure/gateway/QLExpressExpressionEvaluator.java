@@ -4,21 +4,12 @@ import com.alibaba.qlexpress4.Express4Runner;
 import com.alibaba.qlexpress4.InitOptions;
 import com.alibaba.qlexpress4.QLOptions;
 import com.alibaba.qlexpress4.QLResult;
-import com.alibaba.qlexpress4.api.parsecache.LoadedParseCache;
-import com.alibaba.qlexpress4.api.parsecache.SerializableParseCache;
-import com.alibaba.qlexpress4.runtime.context.ExpressContext;
-import com.alibaba.qlexpress4.runtime.context.MapExpressContext;
 import com.example.file.domain.gateway.ExpressionEvaluator;
-import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 基于 QLExpress4 的表达式求值器实现

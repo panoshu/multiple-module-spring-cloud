@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -10,16 +10,45 @@
   </parent>
   <artifactId>file-starter</artifactId>
   <dependencies>
-    <dependency><groupId>com.example</groupId><artifactId>file-adapter</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>file-infrastructure</artifactId></dependency>
     <dependency>
-      <groupId>com.alibaba.cloud</groupId>
-      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+      <groupId>com.example</groupId>
+      <artifactId>file-adapter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-infrastructure</artifactId>
+    </dependency>
+
+    <!-- Web 服务基础设施：内嵌容器、自动配置、注册中心等 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-web-starter</artifactId>
+    </dependency>
+
+    <!-- 负载均衡：支持 lb:// 服务名解析调用 auth-service -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+    <!-- HttpExchange 远程客户端：调用 auth-service 的 PermissionCheckApi -->
+    <dependency>
+      <groupId>io.github.danielliu1123</groupId>
+      <artifactId>httpexchange-spring-boot-autoconfigure</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-id-starter</artifactId>
+    </dependency>
+    <dependency>
+      <!-- 数据源驱动（测试用 H2 无需驱动；真实启动必需，版本由 Spring Boot BOM 管理） -->
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
   <build>

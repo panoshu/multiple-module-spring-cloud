@@ -3,7 +3,7 @@ package com.example.shared.id.strategy;
 import com.example.shared.exception.SystemException;
 import com.example.shared.id.algorithm.UlidAlgorithm;
 import com.example.shared.id.errorcode.IdErrorCode;
-import com.example.shared.primitives.identity.IdType;
+import com.example.shared.identifier.contract.IdType;
 
 public class UlidStrategy implements IdGenerationStrategy {
   @Override

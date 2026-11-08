@@ -1,7 +1,7 @@
 package com.example.core.domain.engine.service.registry;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.core.domain.engine.spi.StepExtensionAction;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.List;
 

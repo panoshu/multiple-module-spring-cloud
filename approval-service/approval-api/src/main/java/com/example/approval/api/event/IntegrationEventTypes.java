@@ -11,10 +11,11 @@ package com.example.approval.api.event;
  */
 public final class IntegrationEventTypes {
 
-    public static final String APPROVAL_INSTANCE_CREATED = "ApprovalInstanceCreatedEvent";
-    public static final String APPROVAL_INSTANCE_APPROVED = "ApprovalInstanceApprovedEvent";
-    public static final String APPROVAL_INSTANCE_REJECTED = "ApprovalInstanceRejectedEvent";
-    public static final String APPROVAL_INSTANCE_WITHDRAWN = "ApprovalInstanceWithdrawnEvent";
+  public static final String APPROVAL_INSTANCE_CREATED = "ApprovalInstanceCreatedEvent";
+  public static final String APPROVAL_INSTANCE_APPROVED = "ApprovalInstanceApprovedEvent";
+  public static final String APPROVAL_INSTANCE_REJECTED = "ApprovalInstanceRejectedEvent";
+  public static final String APPROVAL_INSTANCE_WITHDRAWN = "ApprovalInstanceWithdrawnEvent";
 
-    private IntegrationEventTypes() {}
+  private IntegrationEventTypes() {
+  }
 }

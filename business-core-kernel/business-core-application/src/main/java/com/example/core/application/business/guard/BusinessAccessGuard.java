@@ -1,7 +1,7 @@
 package com.example.core.application.business.guard;
 
 import com.example.core.api.context.BusinessMetaContext;
-import com.example.core.api.context.SessionContext;
+import com.example.shared.security.SessionClaims;
 
 /**
  * 业务访问守门人 SPI
@@ -21,12 +21,12 @@ import com.example.core.api.context.SessionContext;
  */
 public interface BusinessAccessGuard {
 
-    /**
-     * 校验当前会话用户对指定业务类型的办理权限(含渠道差异化校验:代办 / 二次授权)。
-     *
-     * @param session 会话上下文
-     * @param meta 业务元数据上下文
-     * @throws com.example.shared.exception.BusinessException 校验不通过时
-     */
-    void checkCanHandle(SessionContext session, BusinessMetaContext meta);
+  /**
+   * 校验当前会话用户对指定业务类型的办理权限(含渠道差异化校验:代办 / 二次授权)。
+   *
+   * @param session 会话上下文
+   * @param meta    业务元数据上下文
+   * @throws com.example.shared.exception.BusinessException 校验不通过时
+   */
+  void checkCanHandle(SessionClaims session, BusinessMetaContext meta);
 }

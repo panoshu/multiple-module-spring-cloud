@@ -32,10 +32,10 @@ public class AnnuityEmployeeCountValidationAction implements StepExtensionAction
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
     return batchRepository.findByApplicationId(app.id())
-        .map(batch -> batch.details().isEmpty()
-            ? ExtensionExecutionResult.failure("EMPLOYEE_LIST_EMPTY", "员工明细不能为空")
-            : ExtensionExecutionResult.success())
-        .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
-            .withLogDetail("申请单未关联员工批次: " + app.id().value()));
+      .map(batch -> batch.details().isEmpty()
+        ? ExtensionExecutionResult.failure("EMPLOYEE_LIST_EMPTY", "员工明细不能为空")
+        : ExtensionExecutionResult.success())
+      .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
+        .withLogDetail("申请单未关联员工批次: " + app.id().value()));
   }
 }

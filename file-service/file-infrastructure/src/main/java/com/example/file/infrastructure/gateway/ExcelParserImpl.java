@@ -1,22 +1,18 @@
 package com.example.file.infrastructure.gateway;
 
-import org.apache.fesod.sheet.FesodSheet;
-import org.apache.fesod.sheet.context.AnalysisContext;
-import org.apache.fesod.sheet.read.listener.ReadListener;
 import com.example.file.domain.gateway.ExcelParser;
 import com.example.file.domain.model.enums.HeaderMatching;
 import com.example.file.domain.model.enums.KvValuePosition;
 import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.DataEndRule;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.config.TableStrategy;
-import com.example.file.domain.model.valueobject.parse.KvRegionResult;
-import com.example.file.domain.model.valueobject.parse.RawRow;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
-import com.example.file.domain.model.valueobject.parse.TableRegionResult;
-import com.example.file.domain.model.valueobject.parse.RegionSkip;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.config.DataEndRule;
+import com.example.file.domain.model.parse.valueobject.config.KvStrategy;
+import com.example.file.domain.model.parse.valueobject.config.RegionDef;
+import com.example.file.domain.model.parse.valueobject.config.TableStrategy;
+import com.example.file.domain.model.parse.valueobject.*;
+import org.apache.fesod.sheet.FesodSheet;
+import org.apache.fesod.sheet.context.AnalysisContext;
+import org.apache.fesod.sheet.read.listener.ReadListener;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -74,7 +70,9 @@ public class ExcelParserImpl implements ExcelParser {
             int colIndex = entry.getKey();
             String val = entry.getValue();
             // RawRow 通过 Map.copyOf 拒绝 null value，此处跳过 null 单元格
-            if (val == null) continue;
+            if (val == null) {
+              continue;
+            }
             cells.put(colIndex, val);
             if (!val.trim().isEmpty()) {
               isBlank = false;
@@ -105,11 +103,15 @@ public class ExcelParserImpl implements ExcelParser {
   }
 
   private boolean matchesTrigger(RawRow row, RegionDef region) {
-    if (region.trigger() == null) return true;
-    if (row.isBlank()) return false;
+    if (region.trigger() == null) {
+      return true;
+    }
+    if (row.isBlank()) {
+      return false;
+    }
     long matchCount = row.cells().values().stream()
-        .filter(v -> v != null && !v.trim().isEmpty())
-        .count();
+      .filter(v -> v != null && !v.trim().isEmpty())
+      .count();
     return matchCount >= region.trigger().minMatchCount();
   }
 
@@ -124,7 +126,9 @@ public class ExcelParserImpl implements ExcelParser {
       RawRow row = rows.get(i);
       if (row.isBlank()) {
         blankCount++;
-        if (blankCount >= maxBlankRows) break;
+        if (blankCount >= maxBlankRows) {
+          break;
+        }
         i++;
         continue;
       }
@@ -161,7 +165,9 @@ public class ExcelParserImpl implements ExcelParser {
       RawRow row = rows.get(i);
       if (row.isBlank()) {
         blankCount++;
-        if (blankCount >= maxBlankRows) break;
+        if (blankCount >= maxBlankRows) {
+          break;
+        }
       } else {
         blankCount = 0;
       }
@@ -174,8 +180,8 @@ public class ExcelParserImpl implements ExcelParser {
     TableStrategy strategy = (TableStrategy) region.strategy();
     int headerRows = strategy.headerRows();
     int nameRowIdx = strategy.headerNameRow() == 0
-        ? headerRows - 1
-        : strategy.headerNameRow() - 1;
+      ? headerRows - 1
+      : strategy.headerNameRow() - 1;
 
     // HEADER_SNIFF 触发的行本身即为第一行表头，因此 headerStart = triggerRow
     // （原 brief 为 triggerRow + 1，会跳过含 XH/XM 等代码表头行，导致 headerAliases 无法匹配）
@@ -186,7 +192,9 @@ public class ExcelParserImpl implements ExcelParser {
     // 读取表头行
     for (int h = 0; h < headerRows; h++) {
       int rowIdx = headerStart + h;
-      if (rowIdx >= rows.size()) break;
+      if (rowIdx >= rows.size()) {
+        break;
+      }
       if (h == nameRowIdx) {
         RawRow headerRow = rows.get(rowIdx);
         Map<Integer, String> cells = headerRow.cells();
@@ -199,10 +207,10 @@ public class ExcelParserImpl implements ExcelParser {
             continue;
           }
           String canonical = strategy.headerAliases().entrySet().stream()
-              .filter(e -> e.getValue().contains(cellValue))
-              .map(Map.Entry::getKey)
-              .findFirst()
-              .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? "" : cellValue);
+            .filter(e -> e.getValue().contains(cellValue))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(HeaderMatching.STRICT.equals(strategy.headerMatching()) ? "" : cellValue);
           headers.add(canonical);
         }
       }
@@ -215,9 +223,15 @@ public class ExcelParserImpl implements ExcelParser {
     int i = headerStart + headerRows;
     while (i < rows.size()) {
       RawRow row = rows.get(i);
-      if (row.isBlank()) break;
-      if (maxRows > 0 && rowCount >= maxRows) break;
-      if (isDataEnd(row, strategy.dataEnd())) break;
+      if (row.isBlank()) {
+        break;
+      }
+      if (maxRows > 0 && rowCount >= maxRows) {
+        break;
+      }
+      if (isDataEnd(row, strategy.dataEnd())) {
+        break;
+      }
 
       Map<String, Object> rowData = new LinkedHashMap<>();
       Map<Integer, String> cells = row.cells();
@@ -239,9 +253,13 @@ public class ExcelParserImpl implements ExcelParser {
   }
 
   private boolean isDataEnd(RawRow row, DataEndRule dataEnd) {
-    if (dataEnd == null || dataEnd.markers().isEmpty()) return false;
+    if (dataEnd == null || dataEnd.markers().isEmpty()) {
+      return false;
+    }
     String firstCell = row.cells().get(0);
-    if (firstCell == null) return false;
+    if (firstCell == null) {
+      return false;
+    }
     return dataEnd.markers().contains(firstCell.trim());
   }
 
@@ -254,9 +272,15 @@ public class ExcelParserImpl implements ExcelParser {
     int rowCount = 0;
     while (i < rows.size()) {
       RawRow row = rows.get(i);
-      if (row.isBlank()) break;
-      if (maxRows > 0 && rowCount >= maxRows) break;
-      if (isDataEnd(row, strategy.dataEnd())) break;
+      if (row.isBlank()) {
+        break;
+      }
+      if (maxRows > 0 && rowCount >= maxRows) {
+        break;
+      }
+      if (isDataEnd(row, strategy.dataEnd())) {
+        break;
+      }
       rowCount++;
       i++;
     }

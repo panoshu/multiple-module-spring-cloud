@@ -1,30 +1,40 @@
 package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.gateway.ConfigLoader;
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.*;
-import com.example.file.domain.model.valueobject.config.*;
+import com.example.file.domain.model.parse.valueobject.config.*;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
-import com.example.shared.primitives.identity.UserNo;
-import org.yaml.snakeyaml.Yaml;
 import org.springframework.stereotype.Component;
+import org.yaml.snakeyaml.Yaml;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class YamlConfigLoader implements ConfigLoader {
 
+  private final com.example.shared.identifier.contract.IdService idService;
+
+  public YamlConfigLoader(com.example.shared.identifier.contract.IdService idService) {
+    this.idService = idService;
+  }
+
   @Override
   public TemplateConfig loadFromYaml(BizType bizType, String baselineYaml,
                                      List<String> sourceTemplateYamls, String version,
-                                     UserNo operator) {
+                                     String operator) {
     Yaml yaml = new Yaml();
 
     Map<String, Object> baseline = yaml.load(baselineYaml);
-    if (baseline == null) baseline = new LinkedHashMap<>();
+    if (baseline == null) {
+      baseline = new LinkedHashMap<>();
+    }
 
     List<Map<String, Object>> sourceTemplates = new ArrayList<>();
     for (String sourceYaml : sourceTemplateYamls) {
@@ -38,7 +48,7 @@ public class YamlConfigLoader implements ConfigLoader {
   @SuppressWarnings("unchecked")
   private TemplateConfig buildTemplateConfig(BizType bizType, Map<String, Object> baseline,
                                              List<Map<String, Object>> sourceTemplates,
-                                             String version, UserNo operator) {
+                                             String version, String operator) {
     TemplateConfigId id = TemplateConfigId.of(generateId());
 
     ErrorPolicy errorPolicy = parseEnum(baseline, "errorPolicy", ErrorPolicy.class, ErrorPolicy.FAIL_FAST);
@@ -57,25 +67,27 @@ public class YamlConfigLoader implements ConfigLoader {
     }
 
     return TemplateConfig.create(
-        id, bizType, version, errorPolicy, canonicalModel,
-        validationRules, derivationRules, splitConfig,
-        sourceTemplateDefs, operator
+      id, bizType, version, errorPolicy, canonicalModel,
+      validationRules, derivationRules, splitConfig,
+      sourceTemplateDefs, operator
     );
   }
 
   @SuppressWarnings("unchecked")
   private CanonicalModelDef parseCanonicalModel(Map<String, Object> baseline) {
     Map<String, Object> cm = (Map<String, Object>) baseline.get("canonicalModel");
-    if (cm == null) return new CanonicalModelDef(List.of(), List.of());
+    if (cm == null) {
+      return new CanonicalModelDef(List.of(), List.of());
+    }
 
     List<PropertyFieldDef> properties = new ArrayList<>();
     List<Map<String, Object>> props = (List<Map<String, Object>>) cm.getOrDefault("properties", List.of());
     for (Map<String, Object> p : props) {
       properties.add(new PropertyFieldDef(
-          (String) p.get("code"),
-          parseEnum(p, "type", FieldType.class, FieldType.STRING),
-          Boolean.TRUE.equals(p.get("required")),
-          (String) p.get("pattern")));
+        (String) p.get("code"),
+        parseEnum(p, "type", FieldType.class, FieldType.STRING),
+        Boolean.TRUE.equals(p.get("required")),
+        (String) p.get("pattern")));
     }
 
     List<TableDef> tables = new ArrayList<>();
@@ -87,10 +99,10 @@ public class YamlConfigLoader implements ConfigLoader {
         Object scaleObj = f.get("scale");
         Integer scale = scaleObj instanceof Number ? ((Number) scaleObj).intValue() : null;
         fields.add(new FieldDef(
-            (String) f.get("code"),
-            parseEnum(f, "type", FieldType.class, FieldType.STRING),
-            Boolean.TRUE.equals(f.get("required")),
-            scale));
+          (String) f.get("code"),
+          parseEnum(f, "type", FieldType.class, FieldType.STRING),
+          Boolean.TRUE.equals(f.get("required")),
+          scale));
       }
       tables.add(new TableDef((String) t.get("code"), fields));
     }
@@ -104,11 +116,11 @@ public class YamlConfigLoader implements ConfigLoader {
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseline.getOrDefault("validationRules", List.of());
     for (Map<String, Object> r : list) {
       rules.add(new ValidationRule(
-          (String) r.get("field"),
-          parseEnum(r, "scope", ValidationScope.class, ValidationScope.ROW),
-          (String) r.get("expr"),
-          (String) r.get("message"),
-          parseEnum(r, "type", FieldType.class, FieldType.STRING)));
+        (String) r.get("field"),
+        parseEnum(r, "scope", ValidationScope.class, ValidationScope.ROW),
+        (String) r.get("expr"),
+        (String) r.get("message"),
+        parseEnum(r, "type", FieldType.class, FieldType.STRING)));
     }
     return rules;
   }
@@ -119,10 +131,10 @@ public class YamlConfigLoader implements ConfigLoader {
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseline.getOrDefault("derivationRules", List.of());
     for (Map<String, Object> r : list) {
       rules.add(new DerivationRule(
-          (String) r.get("field"),
-          (String) r.get("expr"),
-          parseEnum(r, "type", FieldType.class, FieldType.STRING),
-          (String) r.get("description")));
+        (String) r.get("field"),
+        (String) r.get("expr"),
+        parseEnum(r, "type", FieldType.class, FieldType.STRING),
+        (String) r.get("description")));
     }
     return rules;
   }
@@ -130,7 +142,9 @@ public class YamlConfigLoader implements ConfigLoader {
   @SuppressWarnings("unchecked")
   private SplitConfig parseSplitConfig(Map<String, Object> baseline) {
     Map<String, Object> sc = (Map<String, Object>) baseline.get("splitConfig");
-    if (sc == null) return new SplitConfig(List.of(), null, SplitMissPolicy.ERROR, null, null, false, 0);
+    if (sc == null) {
+      return new SplitConfig(List.of(), null, SplitMissPolicy.ERROR, null, null, false, 0);
+    }
 
     List<String> keys = (List<String>) sc.getOrDefault("keys", List.of());
 
@@ -138,9 +152,9 @@ public class YamlConfigLoader implements ConfigLoader {
     SplitKeyDef splitKey = null;
     if (sk != null) {
       splitKey = new SplitKeyDef(
-          (String) sk.get("targetField"),
-          (String) sk.get("sourcePath"),
-          parseEnum(sk, "type", SplitKeyType.class, SplitKeyType.FIELD_VALUE));
+        (String) sk.get("targetField"),
+        (String) sk.get("sourcePath"),
+        parseEnum(sk, "type", SplitKeyType.class, SplitKeyType.FIELD_VALUE));
     }
 
     SplitMissPolicy onMiss = parseEnum(sc, "onMiss", SplitMissPolicy.class, SplitMissPolicy.ERROR);
@@ -148,14 +162,14 @@ public class YamlConfigLoader implements ConfigLoader {
     int maxRowsPerSubTask = maxRows instanceof Number ? ((Number) maxRows).intValue() : 0;
 
     return new SplitConfig(keys, splitKey, onMiss,
-        (String) sc.get("defaultOnMissValue"),
-        (String) sc.get("fileNamingTemplate"),
-        Boolean.TRUE.equals(sc.get("promoteToContext")),
-        maxRowsPerSubTask);
+      (String) sc.get("defaultOnMissValue"),
+      (String) sc.get("fileNamingTemplate"),
+      Boolean.TRUE.equals(sc.get("promoteToContext")),
+      maxRowsPerSubTask);
   }
 
   @SuppressWarnings("unchecked")
-  private SourceTemplateDef parseSourceTemplate(Map<String, Object> st, UserNo operator) {
+  private SourceTemplateDef parseSourceTemplate(Map<String, Object> st, String operator) {
     TemplateCode code = TemplateCode.of((String) st.get("id"));
     IdentifyMode mode = parseEnum(st, "identifyMode", IdentifyMode.class, IdentifyMode.AUTO);
     List<String> fingerprint = (List<String>) st.getOrDefault("fingerprint", List.of());
@@ -179,8 +193,8 @@ public class YamlConfigLoader implements ConfigLoader {
     Map<String, Object> tr = (Map<String, Object>) r.get("trigger");
     if (tr != null) {
       trigger = new RegionTrigger(
-          parseEnum(tr, "matchType", TriggerMatchType.class, TriggerMatchType.HEADER_SNIFF),
-          tr.get("minMatchCount") instanceof Number ? ((Number) tr.get("minMatchCount")).intValue() : 1);
+        parseEnum(tr, "matchType", TriggerMatchType.class, TriggerMatchType.HEADER_SNIFF),
+        tr.get("minMatchCount") instanceof Number ? ((Number) tr.get("minMatchCount")).intValue() : 1);
     }
 
     Map<String, Object> stratMap = (Map<String, Object>) r.get("strategy");
@@ -191,7 +205,9 @@ public class YamlConfigLoader implements ConfigLoader {
 
   @SuppressWarnings("unchecked")
   private RegionStrategy parseStrategy(Map<String, Object> stratMap, RegionType type) {
-    if (stratMap == null) return null;
+    if (stratMap == null) {
+      return null;
+    }
 
     if (type == RegionType.KEY_VALUE) {
       Map<String, List<String>> labelAliases = new LinkedHashMap<>();
@@ -200,9 +216,9 @@ public class YamlConfigLoader implements ConfigLoader {
         la.forEach((k, v) -> labelAliases.put(k, (List<String>) v));
       }
       return new KvStrategy(
-          parseEnum(stratMap, "valuePosition", KvValuePosition.class, KvValuePosition.RIGHT),
-          labelAliases,
-          stratMap.get("maxBlankRows") instanceof Number ? ((Number) stratMap.get("maxBlankRows")).intValue() : 3);
+        parseEnum(stratMap, "valuePosition", KvValuePosition.class, KvValuePosition.RIGHT),
+        labelAliases,
+        stratMap.get("maxBlankRows") instanceof Number ? ((Number) stratMap.get("maxBlankRows")).intValue() : 3);
     } else if (type == RegionType.TABLE) {
       Map<String, List<String>> headerAliases = new LinkedHashMap<>();
       Map<String, Object> ha = (Map<String, Object>) stratMap.get("headerAliases");
@@ -213,24 +229,26 @@ public class YamlConfigLoader implements ConfigLoader {
       Map<String, Object> de = (Map<String, Object>) stratMap.get("dataEnd");
       if (de != null) {
         dataEnd = new DataEndRule(
-            (List<String>) de.getOrDefault("markers", List.of()),
-            de.get("blankRowCount") instanceof Number ? ((Number) de.get("blankRowCount")).intValue() : 0);
+          (List<String>) de.getOrDefault("markers", List.of()),
+          de.get("blankRowCount") instanceof Number ? ((Number) de.get("blankRowCount")).intValue() : 0);
       }
       return new TableStrategy(
-          stratMap.get("headerRows") instanceof Number ? ((Number) stratMap.get("headerRows")).intValue() : 1,
-          stratMap.get("headerNameRow") instanceof Number ? ((Number) stratMap.get("headerNameRow")).intValue() : 0,
-          parseEnum(stratMap, "matchBy", TableMatchBy.class, TableMatchBy.HEADER_NAME),
-          headerAliases,
-          parseEnum(stratMap, "headerMatching", HeaderMatching.class, HeaderMatching.STRICT),
-          stratMap.get("maxRows") instanceof Number ? ((Number) stratMap.get("maxRows")).intValue() : 0,
-          dataEnd);
+        stratMap.get("headerRows") instanceof Number ? ((Number) stratMap.get("headerRows")).intValue() : 1,
+        stratMap.get("headerNameRow") instanceof Number ? ((Number) stratMap.get("headerNameRow")).intValue() : 0,
+        parseEnum(stratMap, "matchBy", TableMatchBy.class, TableMatchBy.HEADER_NAME),
+        headerAliases,
+        parseEnum(stratMap, "headerMatching", HeaderMatching.class, HeaderMatching.STRICT),
+        stratMap.get("maxRows") instanceof Number ? ((Number) stratMap.get("maxRows")).intValue() : 0,
+        dataEnd);
     }
     return null;
   }
 
   private <E extends Enum<E>> E parseEnum(Map<String, Object> map, String key, Class<E> enumClass, E defaultVal) {
     Object val = map.get(key);
-    if (val == null) return defaultVal;
+    if (val == null) {
+      return defaultVal;
+    }
     try {
       return Enum.valueOf(enumClass, val.toString());
     } catch (Exception e) {
@@ -239,6 +257,6 @@ public class YamlConfigLoader implements ConfigLoader {
   }
 
   private String generateId() {
-    return "01HW-" + System.currentTimeMillis();
+    return idService.nextId(TemplateConfigId.class).value();
   }
 }

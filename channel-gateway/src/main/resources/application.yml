@@ -1,0 +1,56 @@
+spring:
+  threads:
+    virtual:
+      enabled: true # JDK 21 虚拟线程开启
+  profiles:
+    # 本机覆盖（注册中心地址/开发签名密钥/日志级别）始终加载，生产环境用环境变量覆盖
+    include: local
+
+  # Redis 连接配置(sa-token 分布式会话使用)
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      # 密码经环境变量注入：SPRING_DATA_REDIS_PASSWORD（relaxed binding）。
+      # 不用 ${REDIS_PASSWORD:} 空串默认——空串会被 Redisson 当密码发 AUTH，无密码 Redis 直接报错。
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
+
+  cloud:
+    gateway.server.webflux:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 600000
+
+logging:
+  file:
+    path: /applog/${spring.application.name}
+    name: ${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      total-size-cap: 1GB
+      max-history: 30
+
+# 报文加密配置（各 profile 可按渠道安全要求开启）
+gateway:
+  crypto:
+    enabled: false
+    secret-key: ${SM4_SECRET_KEY:}
+
+## sa-token 配置(网关层 Reactive WebFlux)
+## 各渠道专属配置(token-name 等)由 ChannelAwareSaRouter 按 StpLogic 覆盖
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  active-timeout: 1800
+  is-concurrent: true
+  is-share: false
+  token-style: tik
+  is-read-header: true
+  is-read-cookie: false
+  is-log: false

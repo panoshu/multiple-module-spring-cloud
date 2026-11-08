@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record FindApplicationListQuery(
-    @NotBlank(message = "批次ID不能为空") String batchId,
-    String status
+  @NotBlank(message = "批次ID不能为空") String batchId,
+  String status
 ) {
 }

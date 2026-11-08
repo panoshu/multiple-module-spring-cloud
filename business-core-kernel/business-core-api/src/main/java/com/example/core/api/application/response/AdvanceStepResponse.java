@@ -6,8 +6,8 @@ package com.example.core.api.application.response;
  * @author panoshu
  */
 public record AdvanceStepResponse(
-    String applicationId,
-    String nextStep,
-    String status
+  String applicationId,
+  String nextStep,
+  String status
 ) {
 }

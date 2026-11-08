@@ -12,7 +12,7 @@ import com.example.annuity.infrastructure.mapper.AnnuityEmployeeDetailMapper;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.core.types.ApplicationId;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +65,8 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       return Optional.empty();
     }
     AnnuityEmployeeBatchDO batchDO = batchMapper.selectOneByQuery(
-        QueryWrapper.create()
-            .where(ANNUITY_EMPLOYEE_BATCH_DO.APPLICATION_ID.eq(applicationId.value()))
+      QueryWrapper.create()
+        .where(ANNUITY_EMPLOYEE_BATCH_DO.APPLICATION_ID.eq(applicationId.value()))
     );
     if (batchDO == null) {
       return Optional.empty();
@@ -90,6 +90,7 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       // 若直接用领域版本，WHERE version=N 不匹配 DB 的旧版本，导致 Updates:0 静默失败。
       batchDO.setVersion(existingBatch.getVersion());
       batchMapper.update(batchDO);
+      batch.syncVersionAfterUpdate();
       log.debug("更新年金员工批次: batchId={}, version={}", batch.id(), batch.version());
     }
 
@@ -102,6 +103,7 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
         // 同 batch：重置为 DB 当前版本，确保乐观锁 WHERE 子句匹配。
         detailDO.setVersion(existingDetail.getVersion());
         detailMapper.update(detailDO);
+        batch.syncVersionAfterUpdate();
       }
     }
 
@@ -114,8 +116,8 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       return;
     }
     detailMapper.deleteByQuery(
-        QueryWrapper.create()
-            .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(batch.id().value()))
+      QueryWrapper.create()
+        .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(batch.id().value()))
     );
     batchMapper.deleteById(batch.id().value());
     log.debug("删除年金员工批次及其明细: batchId={}", batch.id());
@@ -127,8 +129,8 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       return;
     }
     detailMapper.deleteByQuery(
-        QueryWrapper.create()
-            .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(id.value()))
+      QueryWrapper.create()
+        .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(id.value()))
     );
     batchMapper.deleteById(id.value());
     log.debug("根据 ID 删除年金员工批次及其明细: batchId={}", id);
@@ -137,8 +139,8 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
   @Override
   public List<AnnuityEmployeeBatch> loadAll() {
     return batchMapper.selectAll().stream()
-        .map(this::loadWithDetails)
-        .toList();
+      .map(this::loadWithDetails)
+      .toList();
   }
 
   @Override
@@ -155,9 +157,9 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
   private AnnuityEmployeeBatch loadWithDetails(AnnuityEmployeeBatchDO batchDO) {
     AnnuityEmployeeBatch batch = batchConverter.toDomain(batchDO);
     List<AnnuityEmployeeDetailDO> detailDOs = detailMapper.selectListByQuery(
-        QueryWrapper.create()
-            .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(batch.id().value()))
-            .orderBy(ANNUITY_EMPLOYEE_DETAIL_DO.ID.asc())
+      QueryWrapper.create()
+        .where(ANNUITY_EMPLOYEE_DETAIL_DO.BATCH_ID.eq(batch.id().value()))
+        .orderBy(ANNUITY_EMPLOYEE_DETAIL_DO.ID.asc())
     );
     for (AnnuityEmployeeDetailDO detailDO : detailDOs) {
       batch.attachDetail(detailConverter.toDomain(detailDO));
@@ -169,7 +171,7 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
    * 发布聚合根内部注册的领域事件
    */
   private void publishDomainEvents(AnnuityEmployeeBatch batch) {
-    List<DomainEvent> events = batch.getDomainEvents();
+    List<DomainEvent> events = batch.domainEvents();
     if (events.isEmpty()) {
       return;
     }
@@ -177,10 +179,10 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       try {
         eventPublisher.publishEvent(event);
         log.debug("发布领域事件: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName());
+          event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {
         log.error("发布领域事件失败: eventId={}, type={}",
-            event.eventId(), event.getClass().getSimpleName(), e);
+          event.eventId(), event.getClass().getSimpleName(), e);
       }
     }
     batch.clearDomainEvents();

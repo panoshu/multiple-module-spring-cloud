@@ -6,7 +6,6 @@ import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
    */
   public AnnuityEmployeeDetail(AnnuityEmployeeDetailId id, AnnuityEmployeeBatchId batchId,
                                String employeeName, String idCardNo, Integer age,
-                               Long monthlySalary, Long monthlyContribution, UserNo createdBy) {
+                               Long monthlySalary, Long monthlyContribution, String createdBy) {
     super(id, createdBy);
     this.batchId = Objects.requireNonNull(batchId, "batchId cannot be null");
     this.employeeName = Objects.requireNonNull(employeeName, "employeeName cannot be null");
@@ -63,7 +62,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
                                AnnuityEmployeeDetailStatus status, String anomalyReason,
                                List<AnnuityEmployeeMaterial> materials,
                                LocalDateTime verifiedAt, LocalDateTime materialPreparedAt,
-                               UserNo createdBy, UserNo updatedBy,
+                               String createdBy, String updatedBy,
                                LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.batchId = batchId;
@@ -83,7 +82,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
   /**
    * 标记明细已核查
    */
-  public void verify(UserNo operator) {
+  public void verify(String operator) {
     if (this.status != AnnuityEmployeeDetailStatus.PENDING) {
       throw new IllegalStateException("仅 PENDING 状态可核查,当前: " + this.status);
     }
@@ -95,7 +94,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
   /**
    * 标记明细异常
    */
-  public void markAnomaly(String reason, UserNo operator) {
+  public void markAnomaly(String reason, String operator) {
     if (this.status == AnnuityEmployeeDetailStatus.ANOMALY) {
       throw new IllegalStateException("明细已标记为异常,不可重复标记: " + this.id());
     }
@@ -107,7 +106,7 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
   /**
    * 挂载材料清单
    */
-  public void assignMaterials(List<AnnuityEmployeeMaterial> materials, UserNo operator) {
+  public void assignMaterials(List<AnnuityEmployeeMaterial> materials, String operator) {
     if (this.status != AnnuityEmployeeDetailStatus.VERIFIED) {
       throw new IllegalStateException("未核查状态不可分配材料,当前: " + this.status);
     }
@@ -122,21 +121,53 @@ public class AnnuityEmployeeDetail extends Entity<AnnuityEmployeeDetailId> {
    */
   public boolean isMaterialSatisfied() {
     return materials.stream()
-        .filter(AnnuityEmployeeMaterial::required)
-        .allMatch(AnnuityEmployeeMaterial::uploaded);
+      .filter(AnnuityEmployeeMaterial::required)
+      .allMatch(AnnuityEmployeeMaterial::uploaded);
   }
 
-  public AnnuityEmployeeBatchId batchId() { return batchId; }
-  public String employeeName() { return employeeName; }
-  public String idCardNo() { return idCardNo; }
-  public Integer age() { return age; }
-  public Long monthlySalary() { return monthlySalary; }
-  public Long monthlyContribution() { return monthlyContribution; }
-  public AnnuityEmployeeDetailStatus status() { return status; }
-  public String anomalyReason() { return anomalyReason; }
-  public List<AnnuityEmployeeMaterial> materials() { return List.copyOf(materials); }
-  public LocalDateTime verifiedAt() { return verifiedAt; }
-  public LocalDateTime materialPreparedAt() { return materialPreparedAt; }
+  public AnnuityEmployeeBatchId batchId() {
+    return batchId;
+  }
+
+  public String employeeName() {
+    return employeeName;
+  }
+
+  public String idCardNo() {
+    return idCardNo;
+  }
+
+  public Integer age() {
+    return age;
+  }
+
+  public Long monthlySalary() {
+    return monthlySalary;
+  }
+
+  public Long monthlyContribution() {
+    return monthlyContribution;
+  }
+
+  public AnnuityEmployeeDetailStatus status() {
+    return status;
+  }
+
+  public String anomalyReason() {
+    return anomalyReason;
+  }
+
+  public List<AnnuityEmployeeMaterial> materials() {
+    return List.copyOf(materials);
+  }
+
+  public LocalDateTime verifiedAt() {
+    return verifiedAt;
+  }
+
+  public LocalDateTime materialPreparedAt() {
+    return materialPreparedAt;
+  }
 
   @Override
   protected void validateInvariants() {

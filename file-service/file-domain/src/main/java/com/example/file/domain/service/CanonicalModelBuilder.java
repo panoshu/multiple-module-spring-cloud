@@ -1,11 +1,11 @@
 package com.example.file.domain.service;
 
+import com.example.file.domain.model.parse.valueobject.CanonicalData;
+import com.example.file.domain.model.parse.valueobject.config.RegionDef;
+import com.example.file.domain.model.parse.valueobject.KvRegionResult;
+import com.example.file.domain.model.parse.valueobject.RegionParseResult;
+import com.example.file.domain.model.parse.valueobject.TableRegionResult;
 import com.example.shared.domain.annotation.DomainService;
-import com.example.file.domain.model.valueobject.CanonicalData;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.parse.KvRegionResult;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
-import com.example.file.domain.model.valueobject.parse.TableRegionResult;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -22,9 +22,13 @@ public class CanonicalModelBuilder {
 
     for (RegionParseResult result : regions) {
       RegionDef def = defByName.get(result.regionName());
-      if (def == null) continue;
+      if (def == null) {
+        continue;
+      }
       String bindTo = def.bindTo();
-      if (bindTo == null || bindTo.isBlank()) continue;
+      if (bindTo == null || bindTo.isBlank()) {
+        continue;
+      }
 
       if (result instanceof KvRegionResult kv) {
         if ("properties".equals(bindTo)) {

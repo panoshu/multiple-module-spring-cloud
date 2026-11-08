@@ -28,7 +28,7 @@ public class RetrofitIOExceptionHandler {
   public ApiResult<Void> handleRetrofitException(RetrofitIOException e) {
     log.error("Integration External Call Failed: ", e);
 
-    return ApiResult.failure(CommonError.NETWORK_ERROR.code(), CommonError.NETWORK_ERROR.message());
+    return ApiResult.failure(CommonError.NETWORK_ERROR.getCode(), CommonError.NETWORK_ERROR.getMessage());
   }
 
 }

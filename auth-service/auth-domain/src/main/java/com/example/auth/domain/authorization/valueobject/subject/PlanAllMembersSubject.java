@@ -1,0 +1,16 @@
+package com.example.auth.domain.authorization.valueobject.subject;
+
+
+import com.example.core.types.PlanNo;
+import com.example.core.types.UserNo;
+import com.example.auth.domain.authorization.spi.PlanMembershipLookup;
+
+/**
+ * 计划整体代办场景使用：源计划下的全部经办都自动拥有这条Grant的权限
+ */
+public record PlanAllMembersSubject(PlanNo planNo) implements GrantSubject {
+  @Override
+  public boolean covers(UserNo identity, PlanMembershipLookup membershipLookup) {
+    return membershipLookup.isMemberOf(identity, planNo);
+  }
+}

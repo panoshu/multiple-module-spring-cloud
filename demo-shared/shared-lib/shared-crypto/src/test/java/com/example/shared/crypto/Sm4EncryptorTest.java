@@ -22,9 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("SM4 加解密器测试")
 class Sm4EncryptorTest {
 
-  /** SM4 密钥必须为 16 字节，这里用 Base64 编码一个 16 字节全 1 密钥 */
+  /**
+   * SM4 密钥必须为 16 字节，这里用 Base64 编码一个 16 字节全 1 密钥
+   */
   private static final String SECRET_KEY = Base64.getEncoder().encodeToString(
-      new byte[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+    new byte[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
   private static Sm4Encryptor encryptor;
 
@@ -82,17 +84,17 @@ class Sm4EncryptorTest {
   @DisplayName("密钥为 null 应抛出 NPE")
   void constructor_nullKey_shouldThrowNpe() {
     assertThatThrownBy(() -> new Sm4Encryptor(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("密钥不能为空");
+      .isInstanceOf(NullPointerException.class)
+      .hasMessageContaining("密钥不能为空");
   }
 
   @Test
   @DisplayName("非法 Base64 密钥应抛出 SystemException")
   void constructor_invalidBase64Key_shouldThrowSystemException() {
     assertThatThrownBy(() -> new Sm4Encryptor("not-a-valid-base64!!!"))
-        .isInstanceOf(SystemException.class)
-        .satisfies(ex -> assertThat(((SystemException) ex).code())
-            .isEqualTo(CryptoErrorCode.SECRET_KEY_INVALID.code()));
+      .isInstanceOf(SystemException.class)
+      .satisfies(ex -> assertThat(((SystemException) ex).code())
+        .isEqualTo(CryptoErrorCode.SECRET_KEY_INVALID.getCode()));
   }
 
   @Test
@@ -102,31 +104,31 @@ class Sm4EncryptorTest {
     String shortKey = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5, 6, 7, 8});
 
     assertThatThrownBy(() -> new Sm4Encryptor(shortKey))
-        .isInstanceOf(SystemException.class)
-        .satisfies(ex -> assertThat(((SystemException) ex).code())
-            .isEqualTo(CryptoErrorCode.SECRET_KEY_INVALID.code()));
+      .isInstanceOf(SystemException.class)
+      .satisfies(ex -> assertThat(((SystemException) ex).code())
+        .isEqualTo(CryptoErrorCode.SECRET_KEY_INVALID.getCode()));
   }
 
   @Test
   @DisplayName("加密 null 明文应抛出 NPE")
   void encrypt_nullPlaintext_shouldThrowNpe() {
     assertThatThrownBy(() -> encryptor.encrypt(null))
-        .isInstanceOf(NullPointerException.class);
+      .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   @DisplayName("解密 null 密文应抛出 NPE")
   void decrypt_nullCiphertext_shouldThrowNpe() {
     assertThatThrownBy(() -> encryptor.decrypt(null))
-        .isInstanceOf(NullPointerException.class);
+      .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   @DisplayName("解密非法密文应抛出 SystemException")
   void decrypt_invalidCiphertext_shouldThrowSystemException() {
     assertThatThrownBy(() -> encryptor.decrypt("invalid-ciphertext"))
-        .isInstanceOf(SystemException.class)
-        .satisfies(ex -> assertThat(((SystemException) ex).code())
-            .isEqualTo(CryptoErrorCode.DECRYPT_FAILED.code()));
+      .isInstanceOf(SystemException.class)
+      .satisfies(ex -> assertThat(((SystemException) ex).code())
+        .isEqualTo(CryptoErrorCode.DECRYPT_FAILED.getCode()));
   }
 }

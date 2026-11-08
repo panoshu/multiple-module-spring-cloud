@@ -2,7 +2,7 @@ package com.example.file.domain.service;
 
 import com.example.file.domain.gateway.ExpressionEvaluator;
 import com.example.file.domain.model.enums.FieldType;
-import com.example.file.domain.model.valueobject.config.DerivationRule;
+import com.example.file.domain.model.parse.valueobject.config.DerivationRule;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

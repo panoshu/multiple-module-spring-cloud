@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.storage;
 
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 
 import java.io.InputStream;
 
@@ -13,16 +13,16 @@ import java.io.InputStream;
  */
 public interface FileStorageBackend {
 
-    StorageType supportedType();
+  StorageType supportedType();
 
-    void store(StorageTarget target, String storageKey,
-               InputStream content, long contentLength);
+  void store(StorageTarget target, String storageKey,
+             InputStream content, long contentLength);
 
-    InputStream open(StorageTarget target, String storageKey);
+  InputStream open(StorageTarget target, String storageKey);
 
-    boolean exists(StorageTarget target, String storageKey);
+  boolean exists(StorageTarget target, String storageKey);
 
-    void copy(StorageTarget target, String srcKey, String dstKey);
+  void copy(StorageTarget target, String srcKey, String dstKey);
 
-    String computeDigest(StorageTarget target, String storageKey);
+  String computeDigest(StorageTarget target, String storageKey);
 }

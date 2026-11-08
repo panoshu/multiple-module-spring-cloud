@@ -74,7 +74,7 @@ public final class PathMatcher {
         parentSegments.add(segments[segments.length - 2 - i]);
       }
       index.computeIfAbsent(leafName, k -> new ArrayList<>())
-          .add(new RulePathEntry<>(new RulePath(leafName, List.copyOf(parentSegments), isDeepScan), rule));
+        .add(new RulePathEntry<>(new RulePath(leafName, List.copyOf(parentSegments), isDeepScan), rule));
     });
     return Map.copyOf(index);
   }

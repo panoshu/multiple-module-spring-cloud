@@ -4,14 +4,13 @@ import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeMaterial;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.OperatingMode;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -47,17 +46,17 @@ class AnnuityEmployeeMaterialRuleTest {
 
   private AnnuityEmployeeDetail createDetail() {
     return new AnnuityEmployeeDetail(
-        AnnuityEmployeeDetailId.of("D-001"),
-        AnnuityEmployeeBatchId.of("B-001"),
-        "张三", "110101199001011234", 35, 10000L, 500L, UserNo.of("U-TEST")
+      AnnuityEmployeeDetailId.of("D-001"),
+      AnnuityEmployeeBatchId.of("B-001"),
+      "张三", "110101199001011234", 35, 10000L, 500L, "U-TEST"
     );
   }
 
   private BusinessMetaContext createContext(Map<String, Object> extensionFacts) {
     return new BusinessMetaContext(
-        CustomerNo.of("C-001"), ProductNo.of("P-001"),
-        OperationModel.Single_Trustee, PlanNo.of("PL-001"),
-        BusinessType.ACC_PLAN_CREATE, AccountManager.CJP, extensionFacts
+      CustomerNo.of("C-001"), ProductNo.of("P-001"),
+      OperatingMode.TRUSTEE_ONLY, PlanNo.of("PL-001"),
+      BusinessType.ACC_PLAN_CREATE, AccountManager.CJP, extensionFacts
     );
   }
 }

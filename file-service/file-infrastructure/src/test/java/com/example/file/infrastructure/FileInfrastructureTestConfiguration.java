@@ -35,39 +35,51 @@ import javax.sql.DataSource;
  */
 @SpringBootConfiguration
 @ComponentScan(basePackages = {
-    "com.example.file.infrastructure.repository",
-    "com.example.file.infrastructure.converter"
+  "com.example.file.infrastructure.repository",
+  "com.example.file.infrastructure.converter"
 })
 @MapperScan("com.example.file.infrastructure.mapper")
 @EnableTransactionManagement
 public class FileInfrastructureTestConfiguration {
 
-    /**
-     * H2 内存数据源（PostgreSQL 兼容模式），不使用连接池。
-     *
-     * <p>项目主 pom 未引入 HikariCP 等 JDBC 连接池依赖（生产环境靠 spring-boot-starter-jdbc
-     * 之外的途径），file-infrastructure 隔离测试时直接用 spring-jdbc 自带的
-     * DriverManagerDataSource 即可满足 Repository 集成测试需要。
-     */
-    @Bean
-    public DataSource dataSource() {
-        return new DriverManagerDataSource(
-            "jdbc:h2:mem:file-infrastructure-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
-            "sa",
-            ""
-        );
-    }
+  /**
+   * H2 内存数据源（PostgreSQL 兼容模式），不使用连接池。
+   *
+   * <p>项目主 pom 未引入 HikariCP 等 JDBC 连接池依赖（生产环境靠 spring-boot-starter-jdbc
+   * 之外的途径），file-infrastructure 隔离测试时直接用 spring-jdbc 自带的
+   * DriverManagerDataSource 即可满足 Repository 集成测试需要。
+   */
+  @Bean
+  public DataSource dataSource() {
+    return new DriverManagerDataSource(
+      "jdbc:h2:mem:file-infrastructure-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
+      "sa",
+      ""
+    );
+  }
 
-    /**
-     * MyBatis-Flex SqlSessionFactory，绑定上面的 H2 DataSource。
-     *
-     * <p>使用 FlexSqlSessionFactoryBean（而非 mybatis-spring 的 SqlSessionFactoryBean）
-     * 以启用 MyBatis-Flex 的全部特性（TableDef、QueryWrapper、逻辑删除等）。
-     */
-    @Bean
-    public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
-        FlexSqlSessionFactoryBean factoryBean = new FlexSqlSessionFactoryBean();
-        factoryBean.setDataSource(dataSource);
-        return factoryBean.getObject();
-    }
+  /**
+   * MyBatis-Flex SqlSessionFactory，绑定上面的 H2 DataSource。
+   *
+   * <p>使用 FlexSqlSessionFactoryBean（而非 mybatis-spring 的 SqlSessionFactoryBean）
+   * 以启用 MyBatis-Flex 的全部特性（TableDef、QueryWrapper、逻辑删除等）。
+   */
+  @Bean
+  public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
+    FlexSqlSessionFactoryBean factoryBean = new FlexSqlSessionFactoryBean();
+    factoryBean.setDataSource(dataSource);
+    return factoryBean.getObject();
+  }
+
+  @org.springframework.context.annotation.Bean
+  com.example.shared.cache.core.ICacheTemplate testCacheTemplate() {
+    com.example.shared.cache.core.ICacheTemplate mock =
+      org.mockito.Mockito.mock(com.example.shared.cache.core.ICacheTemplate.class);
+    // getOrLoad 直通 loader
+    org.mockito.Mockito.when(mock.getOrLoad(
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Class<Object>>any()))
+      .thenAnswer(inv -> ((java.util.function.Function<String, Object>) inv.getArgument(2)).apply(inv.getArgument(1)));
+    return mock;
+  }
 }

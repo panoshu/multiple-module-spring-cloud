@@ -1,15 +1,14 @@
 package com.example.shared.exception;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link BaseException} 契约测试。
@@ -37,12 +36,12 @@ class BaseExceptionTest {
     }
 
     @Override
-    public String code() {
+    public String getCode() {
       return code;
     }
 
     @Override
-    public String message() {
+    public String getMessage() {
       return message;
     }
   }
@@ -55,8 +54,8 @@ class BaseExceptionTest {
     @DisplayName("BaseException 必须声明为 abstract，禁止直接实例化")
     void shouldBeAbstractClass() {
       assertThat(Modifier.isAbstract(BaseException.class.getModifiers()))
-          .as("BaseException 应为抽象类，业务方只能实例化其子类（Domain/Business/SystemException）")
-          .isTrue();
+        .as("BaseException 应为抽象类，业务方只能实例化其子类（Domain/Business/SystemException）")
+        .isTrue();
     }
 
     @Test
@@ -66,8 +65,8 @@ class BaseExceptionTest {
       assertThat(constructors).isNotEmpty();
       for (Constructor<?> constructor : constructors) {
         assertThat(Modifier.isProtected(constructor.getModifiers()))
-            .as("构造函数 %s 必须为 protected", constructor)
-            .isTrue();
+          .as("构造函数 %s 必须为 protected", constructor)
+          .isTrue();
       }
     }
   }
@@ -109,7 +108,7 @@ class BaseExceptionTest {
     @DisplayName("withUserDetail 应链式返回并影响 displayMessage")
     void withUserDetailShouldAppendToDisplayMessage() {
       BusinessException exception = new BusinessException(TestError.SAMPLE)
-          .withUserDetail("当前库存为 5");
+        .withUserDetail("当前库存为 5");
       assertThat(exception.displayMessage()).isEqualTo("测试错误，当前库存为 5");
     }
 
@@ -124,7 +123,7 @@ class BaseExceptionTest {
     @DisplayName("withLogDetail 应链式返回并出现在 logMessage")
     void withLogDetailShouldAppendToLogMessage() {
       SystemException exception = new SystemException(TestError.SAMPLE)
-          .withLogDetail("Redis 连接超时");
+        .withLogDetail("Redis 连接超时");
       assertThat(exception.logMessage()).contains("LogDetail: [Redis 连接超时]");
     }
 
@@ -132,21 +131,21 @@ class BaseExceptionTest {
     @DisplayName("withContext 应链式返回并出现在 logContext 只读视图")
     void withContextShouldPopulateLogContext() {
       SystemException exception = new SystemException(TestError.SAMPLE)
-          .withContext("userId", "U001")
-          .withContext("orderId", "O001");
+        .withContext("userId", "U001")
+        .withContext("orderId", "O001");
       assertThat(exception.getLogContext())
-          .containsEntry("userId", "U001")
-          .containsEntry("orderId", "O001")
-          .hasSize(2);
+        .containsEntry("userId", "U001")
+        .containsEntry("orderId", "O001")
+        .hasSize(2);
     }
 
     @Test
     @DisplayName("getLogContext 返回不可变视图，外部修改应抛 UnsupportedOperationException")
     void logContextShouldBeUnmodifiable() {
       SystemException exception = new SystemException(TestError.SAMPLE)
-          .withContext("userId", "U001");
+        .withContext("userId", "U001");
       assertThatThrownBy(() -> exception.getLogContext().put("hack", "value"))
-          .isInstanceOf(UnsupportedOperationException.class);
+        .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -154,8 +153,8 @@ class BaseExceptionTest {
     void chainShouldReturnSelf() {
       BusinessException original = new BusinessException(TestError.SAMPLE);
       BusinessException chained = original.withUserDetail("detail")
-          .withLogDetail("log")
-          .withContext("k", "v");
+        .withLogDetail("log")
+        .withContext("k", "v");
       assertThat(chained).isSameAs(original);
     }
   }

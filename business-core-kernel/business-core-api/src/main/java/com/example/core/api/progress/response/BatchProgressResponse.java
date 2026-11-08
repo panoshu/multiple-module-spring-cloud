@@ -6,11 +6,11 @@ package com.example.core.api.progress.response;
  * @author panoshu
  */
 public record BatchProgressResponse(
-    String batchId,
-    String status,
-    int totalApplicationCount,
-    int successCount,
-    int failedCount,
-    int pendingCount
+  String batchId,
+  String status,
+  int totalApplicationCount,
+  int successCount,
+  int failedCount,
+  int pendingCount
 ) {
 }

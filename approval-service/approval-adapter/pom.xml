@@ -21,14 +21,23 @@
       <artifactId>approval-application</artifactId>
     </dependency>
 
+    <!-- Web 层注解支持：@RestController, @RequestMapping 等 -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
     </dependency>
 
+    <!-- Servlet API：HttpServletRequest, HttpServletResponse 等 -->
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- 功能权限校验: @RequirePermission 注解 + AOP 切面自动装配 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-permission-starter</artifactId>
     </dependency>
 
     <dependency>

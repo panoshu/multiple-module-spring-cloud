@@ -32,12 +32,12 @@ public enum LockErrorDefinition implements ErrorDefinition {
   }
 
   @Override
-  public String code() {
+  public String getCode() {
     return this.code;
   }
 
   @Override
-  public String message() {
+  public String getMessage() {
     return this.message;
   }
 }

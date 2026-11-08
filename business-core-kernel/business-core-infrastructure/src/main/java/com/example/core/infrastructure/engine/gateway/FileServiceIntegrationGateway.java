@@ -6,21 +6,29 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.file.api.FileAccessApi;
+import com.example.file.api.ParsedDataApi;
+import com.example.file.api.request.FetchRowsRequest;
+import com.example.file.api.response.ParsedRowDTO;
 import com.example.file.api.FileTaskApi;
+import com.example.file.api.OutboundApi;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
 import com.example.file.api.request.ApplyUploadTokenRequest;
+import com.example.file.api.request.GenerateOutboundFileRequest;
 import com.example.file.api.request.UploadFileRequest;
 import com.example.file.api.response.ApplyDownloadTokenResponse;
 import com.example.file.api.response.ApplyUploadTokenResponse;
 import com.example.file.api.response.FileTaskIdResponse;
+import com.example.file.api.response.OutboundFileIdResponse;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.file.types.FileId;
+import com.example.core.types.FormId;
+import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -48,6 +56,8 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty("core.integration.file.base-url")
+@EnableConfigurationProperties(FileServiceClientProperties.class)
 @RequiredArgsConstructor
 public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
@@ -62,17 +72,19 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
     List.of("application/pdf", "image/*");
 
   private final FileAccessApi fileAccessApi;
+  private final ParsedDataApi parsedDataApi;
   private final FileTaskApi fileTaskApi;
+  private final OutboundApi outboundApi;
 
   @Override
   public void triggerAsyncParsing(BusinessForm businessForm, BusinessMetaContext businessMetaContext) {
-    BusinessFile formFile = businessForm.getFormFile();
+    BusinessFile formFile = businessForm.formFile();
     if (formFile == null) {
       log.warn("表单尚未上传文件，跳过异步解析, formId={}", businessForm.id());
       return;
     }
     UploadFileRequest request = new UploadFileRequest(
-      BIZ_TYPE_FORM_DETAIL,
+      BIZ_TYPE_FORM_DETAIL, "FORM", null,
       resolveTemplateCode(businessMetaContext),
       formFile.fileName(),
       formFile.fileSizeBytes() != null ? formFile.fileSizeBytes() : 0L,
@@ -84,9 +96,9 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   @Override
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
-                                   Map<String, Object> splitRules) {
+                                  Map<String, Object> splitRules) {
     UploadFileRequest request = new UploadFileRequest(
-      BIZ_TYPE_FORM_DETAIL,
+      BIZ_TYPE_FORM_DETAIL, "FORM", null,
       parseTemplateId,
       resolveFileName(sourceFileId),
       0L,
@@ -175,7 +187,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public String applyUploadToken(String clientIp, String userId, long maxSize) {
     ApplyUploadTokenRequest request = new ApplyUploadTokenRequest(
-      BIZ_TYPE_MATERIAL,
+      BIZ_TYPE_MATERIAL, "MATERIAL", null,
       SOURCE_APP,
       null,
       null,
@@ -188,6 +200,21 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
     );
     ApplyUploadTokenResponse response = fileAccessApi.applyUploadToken(request);
     return response != null ? response.token() : null;
+  }
+
+  @Override
+  public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                          Map<String, Object> supplementalData, String operator) {
+    GenerateOutboundFileRequest request = new GenerateOutboundFileRequest(
+      fileTaskId, targetTemplateId, supplementalData, operator
+    );
+    ApiResult<OutboundFileIdResponse> result = outboundApi.generate(request);
+    if (result == null || !result.isSuccess()) {
+      log.error("file-service 出站文件生成任务派发失败, fileTaskId={}, targetTemplateId={}, result={}",
+        fileTaskId, targetTemplateId, result);
+      return;
+    }
+    log.info("已派发出站文件生成任务, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
   }
 
   /**
@@ -207,12 +234,29 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   }
 
   private String resolveUploader(BusinessForm businessForm) {
-    return businessForm.getOperatorInfo() != null
-      ? businessForm.getOperatorInfo().operatorId().value()
+    return businessForm.operatorInfo() != null
+      ? businessForm.operatorInfo().operatorId()
       : "system";
   }
 
   private String resolveFileName(FileId fileId) {
     return fileId != null ? fileId.value() + ".json" : "form-detail.json";
+  }
+
+  /**
+   * 分页拉取解析数据（批次2：数据消费闭环）——委托 ParsedDataApi.
+   */
+  @Override
+  public ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size) {
+    var response = parsedDataApi.fetchRows(new FetchRowsRequest(subTaskId, tableCode, page, size));
+    if (response == null || !response.isSuccess() || response.data() == null) {
+      throw new SystemException(CoreInfraErrorCode.FILE_DOWNLOAD_FAILED)
+        .withLogDetail("fetchParsedRows 失败: subTaskId=" + subTaskId
+          + ", code=" + (response != null ? response.code() : "null"));
+    }
+    var pageData = response.data();
+    var rows = pageData.items() == null ? List.<Map<String, Object>>of()
+      : pageData.items().stream().map(ParsedRowDTO::data).toList();
+    return new ParsedRowsPage(pageData.totalCount(), pageData.currentStart(), pageData.hasMore(), rows);
   }
 }

@@ -2,7 +2,7 @@
 # 文件: source_cust_a_v2.yaml
 templateCode: CUST_A_V2
 refBizType: IMPORT_DECLARE
-identify: { mode: AUTO, fingerprint: ["单位名称", "货号"] }
+identify: { mode: AUTO, fingerprint: [ "单位名称", "货号" ] }
 
 # ── 区域流式解析 ──
 regions:
@@ -13,8 +13,8 @@ regions:
     strategy:
       valuePosition: RIGHT
       labelAliases:
-        enterpriseName: ["单位名称", "公司名称"]
-        declareDate:    ["申报日期"]
+        enterpriseName: [ "单位名称", "公司名称" ]
+        declareDate: [ "申报日期" ]
 
   # 区域2：明细表格
   - name: MainDetail
@@ -25,9 +25,9 @@ regions:
       headerRows: 1
       matchBy: HEADER_NAME
       columnAliases:
-        itemNo:   ["货号", "料号"]
-        deptCode: ["所属部门", "部门代码"]
-        amount:   ["金额"]
+        itemNo: [ "货号", "料号" ]
+        deptCode: [ "所属部门", "部门代码" ]
+        amount: [ "金额" ]
       dataEnd:
-        markers: ["以下空白", "合计"]
+        markers: [ "以下空白", "合计" ]
         blankRowCount: 3

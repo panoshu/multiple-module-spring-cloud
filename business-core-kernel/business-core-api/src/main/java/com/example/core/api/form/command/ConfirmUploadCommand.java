@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record ConfirmUploadCommand(
-    @NotBlank(message = "批次ID不能为空") String batchId,
-    @NotBlank(message = "表单ID不能为空") String formId,
-    @NotBlank(message = "文件ID不能为空") String fileId,
-    @NotBlank(message = "文件名不能为空") String fileName,
-    String fileMd5
+  @NotBlank(message = "批次ID不能为空") String batchId,
+  @NotBlank(message = "表单ID不能为空") String formId,
+  @NotBlank(message = "文件ID不能为空") String fileId,
+  @NotBlank(message = "文件名不能为空") String fileName,
+  String fileMd5
 ) {
 }

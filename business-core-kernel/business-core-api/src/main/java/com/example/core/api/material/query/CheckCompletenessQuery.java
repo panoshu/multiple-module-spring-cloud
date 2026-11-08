@@ -12,7 +12,7 @@ import java.util.Map;
  * @author panoshu
  */
 public record CheckCompletenessQuery(
-    @NotBlank(message = "申请单ID不能为空") String applicationId,
-    Map<String, Object> conditionContext
+  @NotBlank(message = "申请单ID不能为空") String applicationId,
+  Map<String, Object> conditionContext
 ) {
 }

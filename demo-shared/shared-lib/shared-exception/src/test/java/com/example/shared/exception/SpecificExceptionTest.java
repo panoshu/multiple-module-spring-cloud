@@ -1,9 +1,9 @@
 package com.example.shared.exception;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * {@link DomainException}、{@link BusinessException}、{@link SystemException} 三种具体异常的契约测试。
@@ -15,30 +15,6 @@ import org.junit.jupiter.api.Test;
  */
 @DisplayName("具体异常类型契约测试")
 class SpecificExceptionTest {
-
-  private enum TestError implements ErrorDefinition {
-    DOMAIN_FAIL("TEST.0001", "领域规则失败"),
-    BUSINESS_FAIL("TEST.0002", "业务规则失败"),
-    SYSTEM_FAIL("TEST.0003", "系统错误");
-
-    private final String code;
-    private final String message;
-
-    TestError(String code, String message) {
-      this.code = code;
-      this.message = message;
-    }
-
-    @Override
-    public String code() {
-      return code;
-    }
-
-    @Override
-    public String message() {
-      return message;
-    }
-  }
 
   @Test
   @DisplayName("DomainException 必须继承 BaseException")
@@ -95,5 +71,29 @@ class SpecificExceptionTest {
   void codeShouldReturnFromErrorDefinition() {
     DomainException exception = new DomainException(TestError.DOMAIN_FAIL);
     assertThat(exception.code()).isEqualTo("TEST.0001");
+  }
+
+  private enum TestError implements ErrorDefinition {
+    DOMAIN_FAIL("TEST.0001", "领域规则失败"),
+    BUSINESS_FAIL("TEST.0002", "业务规则失败"),
+    SYSTEM_FAIL("TEST.0003", "系统错误");
+
+    private final String code;
+    private final String message;
+
+    TestError(String code, String message) {
+      this.code = code;
+      this.message = message;
+    }
+
+    @Override
+    public String getCode() {
+      return code;
+    }
+
+    @Override
+    public String getMessage() {
+      return message;
+    }
   }
 }

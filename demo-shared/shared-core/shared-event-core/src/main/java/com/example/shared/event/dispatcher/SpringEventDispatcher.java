@@ -1,7 +1,7 @@
 package com.example.shared.event.dispatcher;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.domain.event.EventDispatcher;
+import com.example.shared.event.contract.EventDispatcher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -16,8 +16,12 @@ public class SpringEventDispatcher implements EventDispatcher {
   }
 
   @Override
-  public String getChannelName() { return "spring-local"; }
+  public String getChannelName() {
+    return "spring-local";
+  }
 
   @Override
-  public boolean isRemote() { return false; }
+  public boolean isRemote() {
+    return false;
+  }
 }

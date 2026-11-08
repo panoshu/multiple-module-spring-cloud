@@ -1,7 +1,6 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.Channel;
 
 /**
  * OperatorInfo
@@ -10,8 +9,8 @@ import com.example.shared.primitives.identity.UserNo;
  * @since 2026/5/17 16:52
  */
 public record OperatorInfo(
-  AnnuityChannel channel,
-  UserNo operatorId,
+  Channel channel,
+  String operatorId,
   String operatorName,
   boolean isProxy // 是否代办
 ) {

@@ -1,11 +1,11 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.SubTaskData;
+import com.example.file.domain.model.parse.aggregate.SubTaskData;
 import com.example.file.domain.model.enums.SubTaskStatus;
-import com.example.file.domain.model.valueobject.FetchPagination;
-import com.example.file.domain.model.valueobject.PageInfo;
-import com.example.file.domain.model.valueobject.PagedRows;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
+import com.example.file.domain.model.parse.valueobject.FetchPagination;
+import com.example.file.domain.model.parse.valueobject.PageInfo;
+import com.example.file.domain.model.parse.valueobject.PagedRows;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.infrastructure.converter.SubTaskDataConverter;
 import com.example.file.infrastructure.entity.SubTaskDataDO;
@@ -48,6 +48,7 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
       mapper.insert(aDo);
     } else {
       mapper.update(aDo);
+      subTask.syncVersionAfterUpdate();
     }
     publishDomainEvents(subTask);
   }
@@ -69,21 +70,21 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
     int returnedCount = pagedRows.size();
 
     return new PagedRows(
-        pagedRows,
-        PageInfo.of(pagination.tableCode(), totalCount, pagination, returnedCount)
+      pagedRows,
+      PageInfo.of(pagination.tableCode(), totalCount, pagination, returnedCount)
     );
   }
 
   @Override
   public List<SubTaskSummary> findSummariesByTask(FileTaskId taskId) {
     List<SubTaskDataDO> dos = mapper.selectListByQuery(
-        QueryWrapper.create()
-            .where(SUB_TASK_DATA_DO.FILE_TASK_ID.eq(taskId.value()))
+      QueryWrapper.create()
+        .where(SUB_TASK_DATA_DO.FILE_TASK_ID.eq(taskId.value()))
     );
     return dos.stream()
-        .map(converter::toDomain)
-        .map(SubTaskData::toSummary)
-        .toList();
+      .map(converter::toDomain)
+      .map(SubTaskData::toSummary)
+      .toList();
   }
 
   @Override
@@ -91,8 +92,8 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
     SubTaskDataDO updateEntity = new SubTaskDataDO();
     updateEntity.setStatus(SubTaskStatus.EXPIRED.name());
     QueryWrapper queryWrapper = QueryWrapper.create()
-        .where(SUB_TASK_DATA_DO.EXPIRES_AT.lt(now))
-        .where(SUB_TASK_DATA_DO.STATUS.ne(SubTaskStatus.EXPIRED.name()));
+      .where(SUB_TASK_DATA_DO.EXPIRES_AT.lt(now))
+      .where(SUB_TASK_DATA_DO.STATUS.ne(SubTaskStatus.EXPIRED.name()));
     mapper.updateByQuery(updateEntity, queryWrapper);
   }
 
@@ -115,8 +116,8 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
   @Override
   public List<SubTaskData> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -125,7 +126,7 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
   }
 
   private void publishDomainEvents(SubTaskData subTask) {
-    List<DomainEvent> events = subTask.getDomainEvents();
+    List<DomainEvent> events = subTask.domainEvents();
     if (events.isEmpty()) {
       return;
     }

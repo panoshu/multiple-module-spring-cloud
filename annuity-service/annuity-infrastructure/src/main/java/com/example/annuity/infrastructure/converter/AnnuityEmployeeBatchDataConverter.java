@@ -3,10 +3,9 @@ package com.example.annuity.infrastructure.converter;
 import com.example.annuity.domain.aggregate.root.AnnuityEmployeeBatch;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeBatchStatus;
 import com.example.annuity.infrastructure.entity.AnnuityEmployeeBatchDO;
-import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
+import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.core.types.ApplicationId;
 import org.mapstruct.Mapper;
 
 /**
@@ -38,8 +37,8 @@ public interface AnnuityEmployeeBatchDataConverter {
     aDo.setProcessedCount(batch.processedCount());
     aDo.setAnomalyCount(batch.anomalyCount());
 
-    aDo.setCreatedBy(batch.createdBy() != null ? batch.createdBy().value() : null);
-    aDo.setUpdatedBy(batch.updatedBy() != null ? batch.updatedBy().value() : null);
+    aDo.setCreatedBy(batch.createdBy());
+    aDo.setUpdatedBy(batch.updatedBy());
     aDo.setCreateTime(batch.createdAt());
     aDo.setUpdateTime(batch.updatedAt());
     aDo.setDeleted(false);
@@ -55,18 +54,18 @@ public interface AnnuityEmployeeBatchDataConverter {
       return null;
     }
     return new AnnuityEmployeeBatch(
-        aDo.getId() != null ? AnnuityEmployeeBatchId.of(aDo.getId()) : null,
-        aDo.getApplicationId() != null ? new ApplicationId(aDo.getApplicationId()) : null,
-        null,
-        aDo.getBatchStatus() != null ? AnnuityEmployeeBatchStatus.valueOf(aDo.getBatchStatus()) : null,
-        aDo.getTotalEmployeeCount() != null ? aDo.getTotalEmployeeCount() : 0,
-        aDo.getProcessedCount() != null ? aDo.getProcessedCount() : 0,
-        aDo.getAnomalyCount() != null ? aDo.getAnomalyCount() : 0,
-        aDo.getCreatedBy() != null ? UserNo.of(aDo.getCreatedBy()) : null,
-        aDo.getUpdatedBy() != null ? UserNo.of(aDo.getUpdatedBy()) : null,
-        aDo.getCreateTime(),
-        aDo.getUpdateTime(),
-        aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial()
+      aDo.getId() != null ? AnnuityEmployeeBatchId.of(aDo.getId()) : null,
+      aDo.getApplicationId() != null ? new ApplicationId(aDo.getApplicationId()) : null,
+      null,
+      aDo.getBatchStatus() != null ? AnnuityEmployeeBatchStatus.valueOf(aDo.getBatchStatus()) : null,
+      aDo.getTotalEmployeeCount() != null ? aDo.getTotalEmployeeCount() : 0,
+      aDo.getProcessedCount() != null ? aDo.getProcessedCount() : 0,
+      aDo.getAnomalyCount() != null ? aDo.getAnomalyCount() : 0,
+      aDo.getCreatedBy(),
+      aDo.getUpdatedBy(),
+      aDo.getCreateTime(),
+      aDo.getUpdateTime(),
+      aDo.getVersion() != null ? Version.of(aDo.getVersion().longValue()) : Version.initial()
     );
   }
 }

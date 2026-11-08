@@ -1,6 +1,6 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.repository.ParseTaskRepository;
 import com.example.file.infrastructure.converter.ParseTaskConverter;
 import com.example.file.infrastructure.entity.ParseTaskDO;
@@ -37,6 +37,7 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
       mapper.insert(aDo);
     } else {
       mapper.update(aDo);
+      task.syncVersionAfterUpdate();
     }
     publishDomainEvents(task);
   }
@@ -60,8 +61,8 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
   @Override
   public List<ParseTask> loadAll() {
     return mapper.selectAll().stream()
-        .map(converter::toDomain)
-        .toList();
+      .map(converter::toDomain)
+      .toList();
   }
 
   @Override
@@ -70,7 +71,7 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
   }
 
   private void publishDomainEvents(ParseTask task) {
-    List<DomainEvent> events = task.getDomainEvents();
+    List<DomainEvent> events = task.domainEvents();
     if (events.isEmpty()) {
       return;
     }

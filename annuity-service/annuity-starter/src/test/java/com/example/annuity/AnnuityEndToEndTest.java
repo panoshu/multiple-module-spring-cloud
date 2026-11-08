@@ -10,30 +10,28 @@ import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
-import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
+import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.event.FileParsedEventDTO;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
@@ -55,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * </ol>
  * <p>
  * <b>测试环境：</b>H2 内存数据库（PostgreSQL 兼容模式）+ Spring ApplicationEvent 模拟跨服务事件传递。
- * 外部 @HttpExchange API 客户端通过 {@link MockBean} 注入空实现，避免真实 HTTP 调用。
+ * 外部 @HttpExchange API 客户端通过 {@link MockitoBean} 注入空实现，避免真实 HTTP 调用。
  *
  * @author annuity-service
  * @since 2026/7/21
@@ -80,16 +78,16 @@ class AnnuityEndToEndTest {
   @Autowired
   private AnnuityEmployeeBatchRepository batchRepository;
 
-  @MockBean
+  @MockitoBean
   private FileTaskApi fileTaskApi;
 
-  @MockBean
+  @MockitoBean
   private FileAccessApi fileAccessApi;
 
-  @MockBean
+  @MockitoBean
   private ApprovalFlowApi approvalFlowApi;
 
-  @MockBean
+  @MockitoBean
   private ApprovalInstanceApi approvalInstanceApi;
 
   /**
@@ -110,9 +108,9 @@ class AnnuityEndToEndTest {
    *       {@code FileParsedEventListener}/{@code ApprovalResultEventListener}，
    *       不依赖 {@code StepAutoAdvanceListener}。</li>
    * </ul>
-   * <b>【生产环境】</b>该监听器仍正常工作，仅测试环境通过 {@code @MockBean} 替换为 noop。
+   * <b>【生产环境】</b>该监听器仍正常工作，仅测试环境通过 {@code @MockitoBean} 替换为 noop。
    */
-  @MockBean
+  @MockitoBean
   private StepAutoAdvanceListener stepAutoAdvanceListener;
 
   // ====================================================
@@ -162,21 +160,21 @@ class AnnuityEndToEndTest {
   void fileParsedEvent_advancesApplication() {
     ApplicationId appId = createAndSaveApplication();
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
-    FileId parsedJsonFileId = app.getParsedJsonFileId();
+    FileId parsedJsonFileId = app.parsedJsonFileId();
 
     // 初始：FORM_DETAIL_INGESTION
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
 
     // 模拟 file-service 解析完成事件（fileTaskId = parsedJsonFileId.value()）
     FileParsedEventDTO event = new FileParsedEventDTO(
-        UUID.randomUUID().toString(),
-        parsedJsonFileId.value(),
-        BIZ_TYPE_FORM_DETAIL,
-        STATUS_SUCCESS,
-        0,
-        List.of(),
-        null,
-        LocalDateTime.now()
+      UUID.randomUUID().toString(),
+      parsedJsonFileId.value(),
+      BIZ_TYPE_FORM_DETAIL,
+      STATUS_SUCCESS,
+      0,
+      List.of(),
+      null,
+      LocalDateTime.now()
     );
     eventSimulator.publish(event);
 
@@ -200,11 +198,11 @@ class AnnuityEndToEndTest {
 
     // 模拟 approval-service 审批通过事件（businessNo = ApplicationId.value()）
     ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
-        UUID.randomUUID().toString(),
-        "1",
-        appId.value(),
-        BusinessType.ACC_PLAN_CREATE.name(),
-        LocalDateTime.now()
+      UUID.randomUUID().toString(),
+      "1",
+      appId.value(),
+      BusinessType.ACC_PLAN_CREATE.name(),
+      LocalDateTime.now()
     );
     eventSimulator.publish(event);
 
@@ -227,8 +225,8 @@ class AnnuityEndToEndTest {
     assertThat(batch).isPresent();
     assertThat(batch.get().details()).hasSize(2);
     assertThat(batch.get().details())
-        .extracting("employeeName")
-        .containsExactlyInAnyOrder("张三", "李四");
+      .extracting("employeeName")
+      .containsExactlyInAnyOrder("张三", "李四");
   }
 
   @Test
@@ -244,7 +242,7 @@ class AnnuityEndToEndTest {
     AnnuityEmployeeBatch batch = batchRepository.findByApplicationId(appId).orElseThrow();
     assertThat(batch.processedCount()).isEqualTo(2);
     assertThat(batch.details())
-        .allMatch(detail -> "VERIFIED".equals(detail.status().name()));
+      .allMatch(detail -> "VERIFIED".equals(detail.status().name()));
   }
 
   // ====================================================
@@ -262,34 +260,34 @@ class AnnuityEndToEndTest {
    */
   private ApplicationId createAndSaveApplication() {
     BusinessContext context = new BusinessContext(
-        BusinessType.ACC_PLAN_CREATE,
-        CustomerNo.of("C-TEST-001"),
-        "测试客户",
-        ProductNo.of("P-TEST-001"),
-        "测试产品",
-        PlanNo.of("PL-TEST-001"),
-        "测试方案",
-        OperationModel.Single_Trustee,
-        AccountManager.CJP
+      BusinessType.ACC_PLAN_CREATE,
+      CustomerNo.of("C-TEST-001"),
+      "测试客户",
+      ProductNo.of("P-TEST-001"),
+      "测试产品",
+      PlanNo.of("PL-TEST-001"),
+      "测试方案",
+      OperatingMode.TRUSTEE_ONLY,
+      AccountManager.CJP
     );
     OperatorInfo operator = new OperatorInfo(
-        AnnuityChannel.NETAPP,
-        UserNo.of("U-TEST-001"),
-        "测试操作人",
-        false
+      Channel.NETAPP,
+      "U-TEST-001",
+      "测试操作人",
+      false
     );
     ApplicationId appId = new ApplicationId("APP-TEST-" + UUID.randomUUID());
     FileId jsonFileId = new FileId("FILE-TEST-" + UUID.randomUUID());
 
     BusinessApplication app = BusinessApplication.createFromForm(appId, context, operator, jsonFileId);
-    // 设置年金业务扩展字段（通过反射，因 BusinessApplication 无公开 setter）
+    // 设置年金业务扩展字段（通过 kernel 公开的 attachExtension 方法）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
-        BusinessType.ACC_PLAN_CREATE,
-        AnnuityApplicationExtension.PLAN_TYPE_NEW,
-        20000L,  // 200 元（单位:分），大于 MIN_INITIAL_CONTRIBUTION_FOR_NEW=10000
-        false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
+      BusinessType.ACC_PLAN_CREATE,
+      AnnuityApplicationExtension.PLAN_TYPE_NEW,
+      20000L,  // 200 元（单位:分），大于 MIN_INITIAL_CONTRIBUTION_FOR_NEW=10000
+      false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
     );
-    setBusinessExtension(app, annuityExt);
+    app.attachExtension(annuityExt);
     // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
     // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
     // markUpdated(null) 会抛 IllegalArgumentException
@@ -299,35 +297,16 @@ class AnnuityEndToEndTest {
   }
 
   /**
-   * 通过反射设置 BusinessApplication 的 businessExtension 私有字段。
-   * <p>
-   * BusinessApplication 只暴露了 getter（businessExtension()），无公开 setter。
-   * 测试场景需设置扩展字段以通过 DATA_VERIFICATION 步骤的校验 Action。
-   *
-   * @param app       业务申请单
-   * @param extension 年金扩展字段
-   */
-  private void setBusinessExtension(BusinessApplication app, BusinessExtension extension) {
-    try {
-      Field field = BusinessApplication.class.getDeclaredField("businessExtension");
-      field.setAccessible(true);
-      field.set(app, extension);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new IllegalStateException("设置 businessExtension 失败", e);
-    }
-  }
-
-  /**
    * 通过反射设置 BusinessApplication 的 updatedBy 私有字段。
    * <p>
-   * Entity.markUpdated(UserNo) 是 protected 方法，测试无法直接调用。
+   * Entity.markUpdated(String) 是 protected 方法，测试无法直接调用。
    * AnnuityDataVerificationHandler 使用 app.updatedBy() 作为操作人调用
    * batch.markDetailProcessed()，若为 null 会抛 IllegalArgumentException。
    *
    * @param app      业务申请单
    * @param operator 操作人
    */
-  private void setUpdatedBy(BusinessApplication app, UserNo operator) {
+  private void setUpdatedBy(BusinessApplication app, String operator) {
     try {
       Field field = com.example.shared.domain.aggregate.entity.Entity.class.getDeclaredField("updatedBy");
       field.setAccessible(true);

@@ -6,7 +6,6 @@ import com.example.integration.infrastructure.core.common.model.TradeReqHead;
 import com.example.integration.infrastructure.core.common.model.TradeRootRequest;
 import com.example.shared.client.gateway.BaseGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 import java.util.function.Function;

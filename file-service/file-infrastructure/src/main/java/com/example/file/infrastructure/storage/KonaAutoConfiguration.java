@@ -33,25 +33,25 @@ import java.security.Security;
 @EnableConfigurationProperties(FileTokenProperties.class)
 public class KonaAutoConfiguration {
 
-    private final FileTokenProperties properties;
+  private final FileTokenProperties properties;
 
-    /**
-     * 兜底注册 KonaCrypto Provider。
-     *
-     * <p>若 shared-crypto-starter 已注册 Provider，则此处跳过。
-     */
-    @PostConstruct
-    public void registerProvider() {
-        if (Security.getProvider("KonaCrypto") == null) {
-            Security.addProvider(new KonaCryptoProvider());
-            log.info("KonaCrypto Provider 已注册（file-infrastructure 兜底）");
-        }
+  /**
+   * 兜底注册 KonaCrypto Provider。
+   *
+   * <p>若 shared-crypto-starter 已注册 Provider，则此处跳过。
+   */
+  @PostConstruct
+  public void registerProvider() {
+    if (Security.getProvider("KonaCrypto") == null) {
+      Security.addProvider(new KonaCryptoProvider());
+      log.info("KonaCrypto Provider 已注册（file-infrastructure 兜底）");
     }
+  }
 
-    @Bean
-    @ConditionalOnMissingBean(FileTokenGateway.class)
-    public FileTokenGateway fileTokenGateway(ObjectMapper objectMapper) {
-        Sm4Encryptor encryptor = new Sm4Encryptor(properties.getSecretKey());
-        return new KonaFileTokenGateway(objectMapper, encryptor);
-    }
+  @Bean
+  @ConditionalOnMissingBean(FileTokenGateway.class)
+  public FileTokenGateway fileTokenGateway(ObjectMapper objectMapper) {
+    Sm4Encryptor encryptor = new Sm4Encryptor(properties.getSecretKey());
+    return new KonaFileTokenGateway(objectMapper, encryptor);
+  }
 }

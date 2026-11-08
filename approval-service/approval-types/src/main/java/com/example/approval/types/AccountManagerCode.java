@@ -5,7 +5,7 @@ package com.example.approval.types;
  *
  * @author approval-service
  */
-public record AccountManagerCode(String value)  {
+public record AccountManagerCode(String value) {
 
   public AccountManagerCode {
     if (value == null || value.isBlank()) {

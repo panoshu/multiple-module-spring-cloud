@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -11,12 +11,24 @@
   <artifactId>annuity-application</artifactId>
   <description>年金服务 - 应用层（应用服务、流程编排）</description>
   <dependencies>
-    <dependency><groupId>com.example</groupId><artifactId>annuity-api</artifactId></dependency>
-    <dependency><groupId>com.example</groupId><artifactId>annuity-domain</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>annuity-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>annuity-domain</artifactId>
+    </dependency>
     <!-- 依赖 kernel 应用层以复用 BusinessFormAppService、FlowOrchestrationService -->
-    <dependency><groupId>com.example</groupId><artifactId>business-core-application</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-application</artifactId>
+    </dependency>
     <!-- integration-service-api：LinkTestService 跨服务调用外接服务接口 -->
-    <dependency><groupId>com.example</groupId><artifactId>integration-service-api</artifactId></dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>integration-service-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>
@@ -26,7 +38,11 @@
       <artifactId>spring-context</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

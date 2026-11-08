@@ -1,6 +1,6 @@
 package com.example.annuity.types;
 
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.util.Objects;
 

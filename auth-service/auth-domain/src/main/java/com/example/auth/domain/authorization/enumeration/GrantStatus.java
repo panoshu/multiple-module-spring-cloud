@@ -1,0 +1,5 @@
+package com.example.auth.domain.authorization.enumeration;
+
+public enum GrantStatus {
+  DRAFT, PENDING_APPROVAL, EFFECTIVE, REJECTED, REVOKED
+}

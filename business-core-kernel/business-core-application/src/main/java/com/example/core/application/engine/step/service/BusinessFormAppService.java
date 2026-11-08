@@ -1,18 +1,18 @@
 package com.example.core.application.engine.step.service;
 
-import com.example.core.domain.engine.gateway.BusinessConfigGateway;
-import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
-import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.FormRepository;
+import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.shared.domain.event.EventBus;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.FormId;
-import com.example.shared.primitives.identity.IdService;
+import com.example.shared.identifier.contract.IdService;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class BusinessFormAppService {
     form.markAsUploaded(uploadedFile);
 
     formRepository.save(form);
-    form.getDomainEvents().forEach(eventBus::publish);
+    form.domainEvents().forEach(eventBus::publish);
     form.clearDomainEvents();
   }
 
@@ -66,7 +66,7 @@ public class BusinessFormAppService {
     // 防腐调用：让底层基础设施去解析 Excel 拆分出 Json
     fileIntegrationGateway.triggerAsyncParsing(
       form.id(),
-      form.getFormFile().fileId(),
+      form.formFile().fileId(),
       parsingConfig.parseTemplateId(),
       parsingConfig.splitRules()
     );
@@ -91,13 +91,13 @@ public class BusinessFormAppService {
       // 根据解析出来的计划，创建业务申请聚合根
       BusinessApplication newApp = BusinessApplication.createFromForm(
         idService.nextId(ApplicationId.class, ""),
-        form.getBusinessContext(), form.getOperatorInfo(),
+        form.businessContext(), form.operatorInfo(),
         result.jsonFileId() // 底层拆分好的明细 JSON 文件 ID
       );
 
       applicationRepository.save(newApp);
 
-      newApp.getDomainEvents().forEach(eventBus::publish);
+      newApp.domainEvents().forEach(eventBus::publish);
       newApp.clearDomainEvents();
     }
 
@@ -110,7 +110,7 @@ public class BusinessFormAppService {
    * <p>调用底层文件集成网关,获取直传 token,前端使用该 token 直接上传文件到文件服务。
    *
    * @param clientIp 客户端 IP
-   * @param userId 用户 ID
+   * @param userId   用户 ID
    * @param fileSize 文件大小(字节)
    * @return 上传 token 字符串
    */
@@ -130,7 +130,7 @@ public class BusinessFormAppService {
     BusinessForm form = formRepository.loadOrThrow(formId);
     form.markAsDeleted();
     formRepository.save(form);
-    form.getDomainEvents().forEach(eventBus::publish);
+    form.domainEvents().forEach(eventBus::publish);
     form.clearDomainEvents();
     log.info("删除表单: formId={}", formId.value());
   }

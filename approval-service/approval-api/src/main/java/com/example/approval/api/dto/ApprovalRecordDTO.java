@@ -11,33 +11,33 @@ import java.time.LocalDateTime;
  * @author approval-service
  */
 public record ApprovalRecordDTO(
-    /**
-     * 记录ID
-     */
-    RecordId recordId,
-    /**
-     * 审批实例ID
-     */
-    ApprovalInstanceId instanceId,
-    /**
-     * 节点名称
-     */
-    String nodeName,
-    /**
-     * 操作类型：APPROVE-通过，REJECT-驳回，TRANSFER-转交，WITHDRAW-撤回
-     */
-    String actionType,
-    /**
-     * 操作人
-     */
-    String operator,
-    /**
-     * 审批意见
-     */
-    String comment,
-    /**
-     * 操作时间
-     */
-    LocalDateTime operatedAt
+  /**
+   * 记录ID
+   */
+  RecordId recordId,
+  /**
+   * 审批实例ID
+   */
+  ApprovalInstanceId instanceId,
+  /**
+   * 节点名称
+   */
+  String nodeName,
+  /**
+   * 操作类型：APPROVE-通过，REJECT-驳回，TRANSFER-转交，WITHDRAW-撤回
+   */
+  String actionType,
+  /**
+   * 操作人
+   */
+  String operator,
+  /**
+   * 审批意见
+   */
+  String comment,
+  /**
+   * 操作时间
+   */
+  LocalDateTime operatedAt
 ) {
 }

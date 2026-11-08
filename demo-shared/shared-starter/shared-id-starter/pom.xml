@@ -13,16 +13,17 @@
 
   <dependencies>
     <dependency>
+      <!-- CaffeineCacheManager（号段本地缓存兜底） -->
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context-support</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-types</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>

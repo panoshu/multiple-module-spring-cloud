@@ -1,6 +1,6 @@
 package com.example.file.domain.gateway;
 
-import com.example.file.domain.model.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
 
 import java.io.InputStream;
 import java.io.OutputStream;

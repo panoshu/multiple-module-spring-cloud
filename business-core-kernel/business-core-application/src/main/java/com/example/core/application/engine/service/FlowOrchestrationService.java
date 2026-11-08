@@ -1,20 +1,20 @@
 package com.example.core.application.engine.service;
 
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
-import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
-import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.config.ExtractorConfig;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
-import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.shared.domain.event.EventBus;
-import com.example.shared.primitives.identity.ApplicationId;
+import com.example.core.types.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -91,7 +91,7 @@ public class FlowOrchestrationService {
 
     transactionTemplate.executeWithoutResult(status -> {
       applicationRepository.save(app);
-      app.getDomainEvents().forEach(eventBus::publish);
+      app.domainEvents().forEach(eventBus::publish);
       app.clearDomainEvents();
     });
   }
@@ -139,6 +139,20 @@ public class FlowOrchestrationService {
     }
   }
 
+  /**
+   * 根据出站文件生成结果推进业务申请单。
+   * <p>
+   * 由 {@code OutboundFileEventListener} 在收到出站文件生成完成事件后调用。
+   * 出站请求中的 {@code fileTaskId} 等于 {@code applicationId}，因此可直接加载申请单并推进。
+   *
+   * @param fileTaskId 文件任务 ID（等于 applicationId）
+   */
+  @Transactional
+  public void advanceByOutboundFile(String fileTaskId) {
+    ApplicationId appId = new ApplicationId(fileTaskId);
+    advanceStep(appId);
+  }
+
   private void rejectApplication(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     app.reject();
@@ -153,7 +167,7 @@ public class FlowOrchestrationService {
 
   private void saveAndPublishEvents(BusinessApplication app) {
     applicationRepository.save(app);
-    app.getDomainEvents().forEach(eventBus::publish);
+    app.domainEvents().forEach(eventBus::publish);
     app.clearDomainEvents();
   }
 

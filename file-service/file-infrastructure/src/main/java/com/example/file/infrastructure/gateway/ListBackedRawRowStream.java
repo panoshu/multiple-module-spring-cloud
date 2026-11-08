@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.gateway;
 
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.parse.RawRow;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.RawRow;
 
 import java.util.List;
 

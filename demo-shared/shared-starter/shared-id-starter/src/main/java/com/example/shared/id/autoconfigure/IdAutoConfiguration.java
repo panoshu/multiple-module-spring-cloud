@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Import;
  */
 @AutoConfiguration
 @Import({
-  DistributedLockConfiguration.class,
   StatelessIdConfiguration.class,
   SegmentIdConfiguration.class,
   IdServiceConfiguration.class

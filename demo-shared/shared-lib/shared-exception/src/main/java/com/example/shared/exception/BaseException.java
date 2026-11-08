@@ -103,10 +103,10 @@ public abstract class BaseException extends RuntimeException {
    */
   public String displayMessage() {
     if (userDetail == null || userDetail.isBlank()) {
-      return errorDefinition.message();
+      return errorDefinition.getMessage();
     }
 
-    return errorDefinition.message() + "，" + userDetail;
+    return errorDefinition.getMessage() + "，" + userDetail;
   }
 
   /**
@@ -141,7 +141,7 @@ public abstract class BaseException extends RuntimeException {
   }
 
   public String code() {
-    return errorDefinition.code();
+    return errorDefinition.getCode();
   }
 
 }

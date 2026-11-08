@@ -59,7 +59,7 @@ public class CryptoAutoConfiguration {
     String secretKey = properties.getSecretKey();
     if (secretKey == null || secretKey.isBlank()) {
       throw new SystemException(CryptoErrorCode.SECRET_KEY_NOT_CONFIGURED)
-          .withLogDetail("shared.crypto.secret-key 未配置");
+        .withLogDetail("shared.crypto.secret-key 未配置");
     }
     log.info("初始化 Sm4Encryptor（国密 SM4 加解密器）");
     return new Sm4Encryptor(secretKey);

@@ -13,16 +13,24 @@ import com.example.shared.exception.ErrorDefinition;
  */
 public enum CryptoErrorCode implements ErrorDefinition {
 
-  /** 加密失败 */
+  /**
+   * 加密失败
+   */
   ENCRYPT_FAILED("SHARED.CRYPTO.0001", "加密失败"),
 
-  /** 解密失败 */
+  /**
+   * 解密失败
+   */
   DECRYPT_FAILED("SHARED.CRYPTO.0002", "解密失败"),
 
-  /** 密钥未配置 */
+  /**
+   * 密钥未配置
+   */
   SECRET_KEY_NOT_CONFIGURED("SHARED.CRYPTO.0003", "密钥未配置"),
 
-  /** 密钥格式非法 */
+  /**
+   * 密钥格式非法
+   */
   SECRET_KEY_INVALID("SHARED.CRYPTO.0004", "密钥格式非法");
 
   private final String code;
@@ -34,12 +42,12 @@ public enum CryptoErrorCode implements ErrorDefinition {
   }
 
   @Override
-  public String code() {
+  public String getCode() {
     return code;
   }
 
   @Override
-  public String message() {
+  public String getMessage() {
     return message;
   }
 }

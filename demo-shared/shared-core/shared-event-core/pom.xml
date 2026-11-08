@@ -18,11 +18,17 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-utils</artifactId>
+      <artifactId>business-core-types</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
+      <artifactId>file-types</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-utils</artifactId>
     </dependency>
 
     <dependency>

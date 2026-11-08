@@ -15,11 +15,13 @@
   <modules>
     <module>shared-crypto-starter</module>
     <module>shared-cache-starter</module>
+    <module>shared-lock-starter</module>
     <module>shared-id-starter</module>
     <module>shared-event-starter</module>
     <module>shared-logging-starter</module>
     <module>shared-web-starter</module>
     <module>shared-client-starter</module>
     <module>shared-pdf-starter</module>
+    <module>shared-permission-starter</module>
   </modules>
 </project>

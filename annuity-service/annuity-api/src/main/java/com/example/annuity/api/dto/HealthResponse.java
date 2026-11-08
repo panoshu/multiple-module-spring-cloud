@@ -9,8 +9,8 @@ package com.example.annuity.api.dto;
  * @author annuity-service
  */
 public record HealthResponse(
-    String service,
-    String status,
-    String timestamp
+  String service,
+  String status,
+  String timestamp
 ) {
 }

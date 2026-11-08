@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
  * @author panoshu
  */
 public record BatchCreatedResponse(
-    String batchId,
-    String status,
-    LocalDateTime createTime
+  String batchId,
+  String status,
+  LocalDateTime createTime
 ) {
 }

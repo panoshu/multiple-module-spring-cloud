@@ -3,8 +3,8 @@ package com.example.file.domain.service;
 import com.example.file.domain.gateway.ExpressionEvaluator;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.FieldType;
-import com.example.file.domain.model.valueobject.ValidationResult;
-import com.example.file.domain.model.valueobject.config.ValidationRule;
+import com.example.file.domain.model.parse.valueobject.ValidationResult;
+import com.example.file.domain.model.parse.valueobject.config.ValidationRule;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

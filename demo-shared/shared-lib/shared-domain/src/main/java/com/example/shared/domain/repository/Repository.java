@@ -1,10 +1,10 @@
 package com.example.shared.domain.repository;
 
 
-import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
+import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.Identifier;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,10 +32,10 @@ public interface Repository<T extends AggregateRoot<ID>, ID extends Identifier<?
     return load(id).orElseThrow(() ->
       new DomainException(SharedDomainErrorCode.ENTITY_NOT_FOUND)
         .withLogDetail("Entity %s not found with id: %s".formatted(
-          getClass().getSimpleName().replace("Repository", ""),
-          id.value()
+            getClass().getSimpleName().replace("Repository", ""),
+            id.value()
+          )
         )
-      )
     );
   }
 

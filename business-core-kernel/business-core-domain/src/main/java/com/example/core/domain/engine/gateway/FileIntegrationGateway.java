@@ -2,10 +2,11 @@ package com.example.core.domain.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.FormId;
+import com.example.file.types.FileId;
+import com.example.core.types.FormId;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,4 +55,40 @@ public interface FileIntegrationGateway {
    * 供 BFF 层或应用层申请，直接返回给前端用于直传给文件服务，避免文件流经过业务服务。
    */
   String applyUploadToken(String clientIp, String userId, long maxSize);
+
+  /**
+   * 4. 触发出站文件生成
+   * <p>
+   * 将业务申请单关联的标准数据按目标模板填充为 Excel，由 file-service 异步生成并存储。
+   * 完成后 file-service 发布 {@code OutboundFileGeneratedEventDTO}，由监听器推进流程。
+   *
+   * @param fileTaskId        入站解析时 file-service 返回的文件任务 ID（标准数据凭证）
+   * @param targetTemplateId  目标模板 ID（对应 {@code TemplateConfig.targetTemplateRef}）
+   * @param supplementalData  业务侧补充数据，字段必须以 {@code biz_} 为前缀
+   * @param operator          操作人编号
+   */
+  void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                  Map<String, Object> supplementalData, String operator);
+
+  /**
+   * 5. 分页拉取解析数据（数据消费闭环，2026-11-08 批次2）.
+   *
+   * <p>FileParsedEvent 消费方凭 subTaskId 凭证分页拉取 canonical 行数据——
+   * 数据留在 file 域（数据不动原则），消费方低内存消费、游标续传.
+   *
+   * @param subTaskId 子任务凭证（事件载荷）
+   * @param tableCode 数据表编码（单表场景可空——file 侧取默认表）
+   */
+  ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size);
+
+  /**
+   * 分页结果（行数据为字段名→值的 Map，零 file 契约依赖）.
+   */
+  record ParsedRowsPage(
+    int totalCount,
+    int startPos,
+    boolean hasMore,
+    List<Map<String, Object>> rows
+  ) {
+  }
 }

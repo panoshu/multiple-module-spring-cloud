@@ -10,6 +10,11 @@ import java.util.Random;
  * - Timestamp (48 bits) -> 10 chars
  * - Randomness (80 bits) -> 16 chars
  * 编码: Crockford Base32
+ *
+ * <p><b>可见性纪律（治理）</b>：本类是 IdType.ULID 策略的内部实现，
+ * 业务代码一律通过 {@code IdService.nextId(XxxId.class)}（shared-id-starter 门面）
+ * 获取 ID——直接调用将绕过策略注册、启动校验与格式化，且换策略时无法平滑迁移
+ * （当前 file-service 4 处直调即为待收编存量，见 spec 审计记录）.
  */
 public class UlidAlgorithm {
 

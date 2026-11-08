@@ -12,14 +12,19 @@
   <description>Parent project for Spring Cloud microservices</description>
 
   <modules>
-    <module>demo-gateway</module>
+    <module>channel-gateway</module>
+    <module>arch-tests</module>
+    <module>gateway-framework</module>
+    <module>bff-framework</module>
     <module>demo-shared</module>
     <module>integration-service</module>
     <module>business-core-kernel</module>
     <module>approval-service</module>
     <module>file-service</module>
     <module>annuity-service</module>
-    <module>iam-service</module>
+    <module>auth-service</module>
+    <module>internet-bff</module>
+    <module>intranet-bff</module>
   </modules>
 
   <properties>
@@ -27,12 +32,16 @@
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <spring-boot.run.skip>true</spring-boot.run.skip>
 
     <demo.version>${project.version}</demo.version>
 
     <!-- Spring Dependency Versions -->
     <spring-boot.version>3.5.14</spring-boot.version>
     <spring-cloud.version>2025.0.2</spring-cloud.version>
+
+    <!-- Sofa Cloud Dependency Versions -->
+    <springcloud.sofa.version>2025.0.2</springcloud.sofa.version>
 
     <!-- Plugin Dependency Versions -->
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
@@ -48,8 +57,9 @@
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <lombok.version>1.18.46</lombok.version>
     <mybatis-flex.version>1.11.5</mybatis-flex.version>
-    <spring-cloud-starter-alibaba-nacos.version>2025.0.0.0</spring-cloud-starter-alibaba-nacos.version>
-    <redisson-spring-boot-starter.version>4.3.1</redisson-spring-boot-starter.version>
+    <!-- 分布式锁 / 多级缓存：lock4j(RedisTemplate 通道) + jetcache(Lettuce 通道) -->
+    <lock4j.version>2.2.7</lock4j.version>
+    <jetcache.version>2.8.0.RC</jetcache.version>
     <fury.version>0.10.3</fury.version>
     <openhtmltopdf-pdfbox.version>1.1.36</openhtmltopdf-pdfbox.version>
     <bcprov-jdk18on.version>1.84</bcprov-jdk18on.version>
@@ -60,6 +70,10 @@
     <rocketmq.version>2.3.6</rocketmq.version>
     <kona-crypto.version>1.0.15</kona-crypto.version>
     <sa-token.version>1.45.0</sa-token.version>
+    <commons-pool2.version>2.12.1</commons-pool2.version>
+    <jaxb-runtime.version>2.3.8</jaxb-runtime.version>
+    <commons.io.version>2.22.0</commons.io.version>
+    <oceanbase-client.version>2.4.18</oceanbase-client.version>
   </properties>
 
   <dependencyManagement>
@@ -81,6 +95,35 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <!-- SOFA→Nacos 注册切换：SCA BOM 管理 nacos-discovery（与 Spring Cloud 2025.0.x 配套） -->
+      <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+        <version>2025.0.0.0-preview</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- 分布式锁（编程式 LockTemplate + 声明式 @Lock4j；RedisTemplate executor 走 Lettuce 统一通道） -->
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>lock4j-redis-template-spring-boot-starter</artifactId>
+        <version>${lock4j.version}</version>
+      </dependency>
+      <!-- 多级缓存（Caffeine local + Redis remote，Lettuce 通道，broadcastChannel 广播失效） -->
+      <dependency>
+        <groupId>com.alicp.jetcache</groupId>
+        <artifactId>jetcache-starter-redis-lettuce</artifactId>
+        <version>${jetcache.version}</version>
+      </dependency>
+
+      <!-- Spring Cloud Sofa BOM -->
+      <dependency>
+        <groupId>com.alipay.cloud</groupId>
+        <artifactId>spring-cloud-sofa-dependencies</artifactId>
+        <version>${springcloud.sofa.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
       <!-- 2nd Dependencies-->
       <dependency>
@@ -90,7 +133,17 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>business-core-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-exception</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-security-contract</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -110,97 +163,6 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>integration-service-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>integration-service-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>file-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>approval-service-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-domain</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-application</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-adapter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-infrastructure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>annuity-starter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <!-- iam-service 模块 -->
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-domain</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-application</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-adapter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-infrastructure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>iam-starter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
         <artifactId>business-core-domain</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -216,6 +178,86 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>business-core-adapter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>auth-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>integration-service-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>integration-service-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>approval-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>annuity-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>bff-framework</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>intranet-bff-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>gateway-framework</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-types</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-application</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-infrastructure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-adapter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>file-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-utils</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -227,6 +269,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>shared-lock</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-lock-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -316,21 +363,8 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
-        <artifactId>shared-lib</artifactId>
+        <artifactId>shared-permission-starter</artifactId>
         <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>shared-core</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>shared-starter</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
       </dependency>
 
       <!-- Spring Dependency -->
@@ -383,18 +417,6 @@
         <groupId>org.mapstruct</groupId>
         <artifactId>mapstruct</artifactId>
         <version>${mapstruct.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.alibaba.cloud</groupId>
-        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-        <version>${spring-cloud-starter-alibaba-nacos.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.redisson</groupId>
-        <artifactId>redisson-spring-boot-starter</artifactId>
-        <version>${redisson-spring-boot-starter.version}</version>
       </dependency>
 
       <dependency>
@@ -456,6 +478,13 @@
         <version>${kona-crypto.version}</version>
       </dependency>
 
+      <!-- sa-token-core：shared-web-core 异常适配（无 spring 集成的纯核心） -->
+      <dependency>
+        <groupId>cn.dev33</groupId>
+        <artifactId>sa-token-core</artifactId>
+        <version>${sa-token.version}</version>
+      </dependency>
+
       <!-- sa-token:iam-service 用户与权限服务 -->
       <dependency>
         <groupId>cn.dev33</groupId>
@@ -467,10 +496,34 @@
         <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
         <version>${sa-token.version}</version>
       </dependency>
+      <!-- sa-token 整合 RedisTemplate (官方推荐) -->
       <dependency>
         <groupId>cn.dev33</groupId>
-        <artifactId>sa-token-redis-jackson</artifactId>
+        <artifactId>sa-token-redis-template</artifactId>
         <version>${sa-token.version}</version>
+      </dependency>
+      <!-- Redis 连接池 -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-pool2</artifactId>
+        <version>${commons-pool2.version}</version>
+      </dependency>
+      <!-- sofa registry 需要的依赖 -->
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb-runtime.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons.io.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.oceanbase</groupId>
+        <artifactId>oceanbase-client</artifactId>
+        <version>${oceanbase-client.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -491,6 +544,9 @@
               </goals>
             </execution>
           </executions>
+          <configuration>
+            <skip>${spring-boot.run.skip}</skip>
+          </configuration>
         </plugin>
 
         <!-- Compiler Plugin -->

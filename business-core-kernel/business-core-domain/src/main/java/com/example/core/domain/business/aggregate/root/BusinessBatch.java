@@ -1,16 +1,15 @@
 package com.example.core.domain.business.aggregate.root;
 
-import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
-import com.example.core.domain.business.event.BatchStatusChangedEvent;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
+import com.example.core.domain.business.aggregate.valueobject.reference.BusinessFormRef;
+import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
+import com.example.core.domain.business.event.BatchStatusChangedEvent;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
-import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.UserNo;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
+import com.example.core.types.BatchId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,14 +32,63 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
   private int successCount = 0;
   private int failedCount = 0;
 
-  protected BusinessBatch(BatchId batchId, UserNo userNo) {
+  protected BusinessBatch(BatchId batchId, String userNo) {
     super(batchId, userNo);
     this.validateInvariants();
   }
 
-  protected BusinessBatch(BatchId batchId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessBatch(BatchId batchId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
+  }
+
+  /**
+   * 工厂方法:创建新业务批次
+   *
+   * @param batchId  批次ID
+   * @param context  业务上下文
+   * @param operator 操作人信息
+   * @return 新创建的批次聚合根
+   */
+  public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
+    BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
+    batch.businessContext = context;
+    batch.operatorInfo = operator;
+    batch.status = BatchStatus.CREATED;
+    return batch;
+  }
+
+  /**
+   * 从数据库重建聚合根（全参工厂方法）。
+   * <p>
+   * 供 Repository 实现的 Converter 在 DO → 领域对象转换时调用，绕过业务校验直接装配所有字段。
+   * 业务代码禁止使用本方法创建新对象，新建请用 {@link #create}。
+   *
+   * @return 装配完成的聚合根实例
+   */
+  public static BusinessBatch reconstitute(
+    BatchId batchId,
+    String createdBy,
+    String updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BatchStatus status,
+    int totalApplicationCount,
+    int successCount,
+    int failedCount,
+    List<BusinessFormRef> businessFormRefs) {
+    BusinessBatch batch = new BusinessBatch(batchId, createdBy, updatedBy, createdAt, updatedAt, version);
+    batch.businessContext = businessContext;
+    batch.operatorInfo = operatorInfo;
+    batch.status = status;
+    batch.totalApplicationCount = totalApplicationCount;
+    batch.successCount = successCount;
+    batch.failedCount = failedCount;
+    batch.businessFormRefs = businessFormRefs;
+    return batch;
   }
 
   /**
@@ -110,7 +158,6 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     validateStatusConsistency();
   }
 
-
   private void validateStatusConsistency() {
     if (isTerminalStatus(this.status)) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
@@ -120,22 +167,6 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
 
   private boolean isTerminalStatus(BatchStatus status) {
     return status != null && status.isTerminal();
-  }
-
-  /**
-   * 工厂方法:创建新业务批次
-   *
-   * @param batchId 批次ID
-   * @param context 业务上下文
-   * @param operator 操作人信息
-   * @return 新创建的批次聚合根
-   */
-  public static BusinessBatch create(BatchId batchId, BusinessContext context, OperatorInfo operator) {
-    BusinessBatch batch = new BusinessBatch(batchId, operator.operatorId());
-    batch.businessContext = context;
-    batch.operatorInfo = operator;
-    batch.status = BatchStatus.CREATED;
-    return batch;
   }
 
   /**
@@ -156,33 +187,33 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     this.registerDomainEvent(BatchStatusChangedEvent.of(this.id(), oldStatus, BatchStatus.CANCELLED));
   }
 
-  // ============ Getters ============
+  // ============ Accessors ============
 
-  public BusinessContext getBusinessContext() {
+  public BusinessContext businessContext() {
     return this.businessContext;
   }
 
-  public OperatorInfo getOperatorInfo() {
+  public OperatorInfo operatorInfo() {
     return this.operatorInfo;
   }
 
-  public BatchStatus getStatus() {
+  public BatchStatus status() {
     return this.status;
   }
 
-  public int getTotalApplicationCount() {
+  public int totalApplicationCount() {
     return this.totalApplicationCount;
   }
 
-  public int getSuccessCount() {
+  public int successCount() {
     return this.successCount;
   }
 
-  public int getFailedCount() {
+  public int failedCount() {
     return this.failedCount;
   }
 
-  public List<BusinessFormRef> getBusinessFormRefs() {
+  public List<BusinessFormRef> businessFormRefs() {
     return this.businessFormRefs;
   }
 

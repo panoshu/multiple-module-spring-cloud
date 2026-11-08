@@ -12,34 +12,36 @@ import java.time.LocalDateTime;
 @Table("t_file_template_config")
 public class TemplateConfigDO {
 
-    @Id(keyType = KeyType.None)
-    private String id;
+  @Id(keyType = KeyType.None)
+  private String id;
 
-    private String bizType;
-    private String templateVersion;
-    private String errorPolicy;
-    private String canonicalModel;
-    private String validationRules;
-    private String derivationRules;
-    private String splitConfig;
-    private String sourceTemplates;
-    private String targetTemplateRef;
-    private String targetMapping;
-    private String status;
-    private LocalDateTime effectiveFrom;
-    private LocalDateTime effectiveTo;
+  private String bizType;
+  private String templateVersion;
+  private String errorPolicy;
+  private String canonicalModel;
+  private String validationRules;
+  private String derivationRules;
+  private String splitConfig;
+  private String sourceTemplates;
+  private String targetTemplateRef;
+  private String targetMapping;
+  /** 上下文路由规则（批次3 A3）JSONB */
+  private String routingRules;
+  private String status;
+  private LocalDateTime effectiveFrom;
+  private LocalDateTime effectiveTo;
 
-    private String createdBy;
-    private String updatedBy;
+  private String createdBy;
+  private String updatedBy;
 
-    // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
-    private LocalDateTime createTime;
+  // createTime/updateTime 由应用层通过 Converter 从领域对象映射，不使用 ORM 自动管理
+  private LocalDateTime createTime;
 
-    private LocalDateTime updateTime;
+  private LocalDateTime updateTime;
 
-    @Column(isLogicDelete = true)
-    private Boolean deleted;
+  @Column(isLogicDelete = true)
+  private Integer deleted;
 
-    @Column(version = true)
-    private Integer version;
+  @Column(version = true)
+  private Integer version;
 }

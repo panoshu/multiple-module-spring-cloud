@@ -9,10 +9,10 @@ import jakarta.validation.constraints.NotNull;
  * @author approval-service
  */
 public record GetApprovalFlowRequest(
-    /**
-     * 审批流ID
-     */
-    @NotNull(message = "审批流ID不能为空")
-    ApprovalFlowId flowId
+  /**
+   * 审批流ID
+   */
+  @NotNull(message = "审批流ID不能为空")
+  ApprovalFlowId flowId
 ) {
 }

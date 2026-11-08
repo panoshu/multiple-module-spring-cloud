@@ -30,15 +30,69 @@ import static org.mockito.Mockito.mock;
 @ComponentScan(basePackages = "com.example.file.infrastructure.storage")
 public class StorageTestConfiguration {
 
-    /**
-     * Mock FileMetadataRepository 骨架。
-     *
-     * <p>具体 stubbing (loadOrThrow / load / save) 在测试类的 @BeforeEach 中
-     * 通过 {@code reset(repository)} 后用 {@code when(...)} 设置，保证每个测试
-     * 用例对 mock 的行为有完全控制。
-     */
-    @Bean
-    public FileMetadataRepository fileMetadataRepository() {
-        return mock(FileMetadataRepository.class);
-    }
+  /**
+   * Mock FileMetadataRepository 骨架。
+   *
+   * <p>具体 stubbing (loadOrThrow / load / save) 在测试类的 @BeforeEach 中
+   * 通过 {@code reset(repository)} 后用 {@code when(...)} 设置，保证每个测试
+   * 用例对 mock 的行为有完全控制。
+   */
+  @Bean
+  public FileMetadataRepository fileMetadataRepository() {
+    return mock(FileMetadataRepository.class);
+  }
+
+  /**
+   * 测试桩 IdService：FileStorageRouter 收编至 shared-id 门面后需要（固定 FileId）.
+   */
+  @Bean
+  public com.example.shared.identifier.contract.IdService idService() {
+    return new com.example.shared.identifier.contract.IdService() {
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass) {
+        try {
+          return idClass.getDeclaredConstructor(String.class).newInstance("01H8TESTFILE00");
+        } catch (Exception e) {
+          throw new IllegalStateException(e);
+        }
+      }
+
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
+        return nextId(idClass);
+      }
+
+      @Override
+      public String nextId(com.example.shared.identifier.contract.IdType type) {
+        return "01H8TESTFILE00";
+      }
+
+      @Override
+      public String nextId(com.example.shared.identifier.contract.IdType type, String bizType) {
+        return "01H8TESTFILE00";
+      }
+
+      @Override
+      public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> idClass, String bizContext) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Long nextLongId(String bizType) {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  @org.springframework.context.annotation.Bean
+  com.example.shared.cache.core.ICacheTemplate testCacheTemplate() {
+    com.example.shared.cache.core.ICacheTemplate mock =
+      org.mockito.Mockito.mock(com.example.shared.cache.core.ICacheTemplate.class);
+    // getOrLoad 直通 loader
+    org.mockito.Mockito.when(mock.getOrLoad(
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Class<Object>>any()))
+      .thenAnswer(inv -> ((java.util.function.Function<String, Object>) inv.getArgument(2)).apply(inv.getArgument(1)));
+    return mock;
+  }
 }

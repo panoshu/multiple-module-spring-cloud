@@ -1,0 +1,13 @@
+package com.example.auth.api.query;
+
+import com.example.core.types.CustomerNo;
+
+/**
+ * 查询客户渠道开通记录查询对象.
+ *
+ * @param customerNo 客户编号
+ */
+public record GetEntitlementQuery(
+  CustomerNo customerNo
+) {
+}

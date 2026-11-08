@@ -14,11 +14,11 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
  * @since 2026/7/22
  */
 public record AnnuityEmployeeMaterial(
-    String materialCode,
-    String materialName,
-    boolean required,
-    boolean uploaded,
-    String description
+  String materialCode,
+  String materialName,
+  boolean required,
+  boolean uploaded,
+  String description
 ) implements ValueObject {
 
   public AnnuityEmployeeMaterial {

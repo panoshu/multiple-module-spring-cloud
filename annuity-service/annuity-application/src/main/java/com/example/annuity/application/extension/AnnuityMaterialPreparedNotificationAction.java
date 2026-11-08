@@ -31,9 +31,9 @@ public class AnnuityMaterialPreparedNotificationAction implements StepExtensionA
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
     notificationGateway.notifyOperator(
-        app.operatorInfo().operatorId(),
-        NotificationType.MATERIAL_READY,
-        "申请单 " + app.id().value() + " 的材料已准备完毕"
+      app.operatorInfo().operatorId(),
+      NotificationType.MATERIAL_READY,
+      "申请单 " + app.id().value() + " 的材料已准备完毕"
     );
     return ExtensionExecutionResult.success();
   }

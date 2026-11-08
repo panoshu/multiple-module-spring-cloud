@@ -1,0 +1,28 @@
+# 本机开发覆盖（始终经 spring.profiles.include: local 加载，生产环境用环境变量覆盖）
+spring:
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      password: redis
+  cloud:
+    nacos.discovery.server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+
+# 会话签名配置：网关对 X-Account-Id / X-Session-Context 签名，业务服务验签防伪造
+# 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入，禁止使用此开发密钥
+permission:
+  session:
+    signature-key: ${PERMISSION_SESSION_SIGNATURE_KEY:dev-session-signature-key-2026}
+    ttl-seconds: 300
+
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    org.springframework: ERROR
+    org.springframework.cloud: ERROR
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web: INFO
+    reactor.netty.http.client: INFO
+    reactor.netty.http.server.AccessLog: INFO

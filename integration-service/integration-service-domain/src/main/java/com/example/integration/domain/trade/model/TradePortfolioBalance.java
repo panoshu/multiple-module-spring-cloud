@@ -1,6 +1,6 @@
 package com.example.integration.domain.trade.model;
 
-import com.example.shared.primitives.page.PageInfo;
+import com.example.shared.page.PageInfo;
 
 import java.io.Serializable;
 import java.math.BigDecimal;

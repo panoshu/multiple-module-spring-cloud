@@ -2,21 +2,20 @@ package com.example.file.application.usecase;
 
 import com.example.file.application.command.ApplyUploadTokenCommand;
 import com.example.file.domain.gateway.StorageTargetResolver;
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.aggregate.FileAccessLog;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;
 import com.example.shared.domain.errorcode.SharedDomainErrorCode;
 import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.BatchId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.BatchId;
+import com.example.core.types.CustomerNo;
+import com.example.core.types.ProductNo;
+import com.example.core.types.UserNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,64 +34,106 @@ import static org.mockito.Mockito.*;
 @DisplayName("ApplyUploadTokenUseCase")
 class ApplyUploadTokenUseCaseTest {
 
-    private FileMetadataRepository metadataRepository;
-    private StorageTargetResolver targetResolver;
-    private FileTokenService tokenService;
-    private FileAccessLogRepository logRepository;
-    private ApplyUploadTokenUseCase useCase;
-
-    @BeforeEach
-    void setUp() {
-        metadataRepository = mock(FileMetadataRepository.class);
-        targetResolver = mock(StorageTargetResolver.class);
-        tokenService = mock(FileTokenService.class);
-        logRepository = mock(FileAccessLogRepository.class);
-        useCase = new ApplyUploadTokenUseCase(metadataRepository, targetResolver, tokenService, logRepository);
+  /**
+   * 测试桩：生成固定 FileId（收编后构造器需 IdService）.
+   */
+  static final com.example.shared.identifier.contract.IdService TEST_IDS =
+      new com.example.shared.identifier.contract.IdService() {
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass) {
+      try {
+        return idClass.getDeclaredConstructor(String.class).newInstance("01H8TESTID00");
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
     }
 
-    @Test
-    @DisplayName("apply 正常流程: 创建元数据 + 生成 token + 写 APPLY 流水")
-    void apply_should_save_metadata_generate_token_and_write_log() {
-        StorageTarget target = new StorageTarget(
-            "target-001", StorageType.LOCAL, null, null,
-            "/data/files", null, null, null, java.util.Map.of()
-        );
-        when(targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity")).thenReturn(target);
-        when(tokenService.generateUploadToken(any(), any(), any(), eq(Duration.ofMinutes(15))))
-            .thenReturn("encrypted-token");
-
-        ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
-            "annuity", "approval-service", new BatchId("b001"),
-            new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
-            UserNo.of("u1"), LocalDateTime.now().plusDays(7),
-            List.of("application/xlsx"), 10L * 1024 * 1024, Duration.ofMinutes(15)
-        );
-
-        ApplyUploadTokenUseCase.ApplyUploadTokenResult result = useCase.apply(cmd);
-
-        assertThat(result.token()).isEqualTo("encrypted-token");
-        assertThat(result.fileId()).isNotNull();
-        verify(metadataRepository).save(any());
-        ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
-        verify(logRepository).save(logCaptor.capture());
-        FileAccessLog savedLog = logCaptor.getValue();
-        // tokenHash 应为 SHA-256("encrypted-token") 的 64 位十六进制
-        assertThat(savedLog.tokenHash()).hasSize(64);
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<?>> T nextId(Class<T> idClass, String bizContext) {
+      return nextId(idClass);
     }
 
-    @Test
-    @DisplayName("apply 在 ttl 为空时应抛 DomainException(INVALID_OPERATION)")
-    void apply_should_throw_when_ttl_is_null() {
-        ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
-            "annuity", "approval-service", new BatchId("b001"),
-            new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
-            UserNo.of("u1"), LocalDateTime.now().plusDays(7),
-            List.of("application/xlsx"), 10L * 1024 * 1024, null
-        );
-
-        assertThatThrownBy(() -> useCase.apply(cmd))
-            .isInstanceOf(DomainException.class)
-            .matches(ex -> ((DomainException) ex).code().equals(SharedDomainErrorCode.INVALID_OPERATION.code()));
-        verifyNoInteractions(metadataRepository, logRepository, tokenService);
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type) {
+      return "01H8TESTID00";
     }
+
+    @Override
+    public String nextId(com.example.shared.identifier.contract.IdType type, String bizType) {
+      return "01H8TESTID00";
+    }
+
+    @Override
+    public <T extends com.example.shared.identifier.contract.Identifier<Long>> T nextLongId(Class<T> idClass, String bizContext) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Long nextLongId(String bizType) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
+
+  private FileMetadataRepository metadataRepository;
+  private StorageTargetResolver targetResolver;
+  private FileTokenService tokenService;
+  private FileAccessLogRepository logRepository;
+  private ApplyUploadTokenUseCase useCase;
+
+  @BeforeEach
+  void setUp() {
+    metadataRepository = mock(FileMetadataRepository.class);
+    targetResolver = mock(StorageTargetResolver.class);
+    tokenService = mock(FileTokenService.class);
+    logRepository = mock(FileAccessLogRepository.class);
+    useCase = new ApplyUploadTokenUseCase(TEST_IDS, metadataRepository, targetResolver, tokenService,
+      logRepository, null, null);
+  }
+
+  @Test
+  @DisplayName("apply 正常流程: 创建元数据 + 生成 token + 写 APPLY 流水")
+  void apply_should_save_metadata_generate_token_and_write_log() {
+    StorageTarget target = new StorageTarget(
+      "target-001", StorageType.LOCAL, null, null,
+      "/data/files", null, null, null, java.util.Map.of()
+    );
+    when(targetResolver.resolveByUsage(FileUsage.SOURCE, "annuity")).thenReturn(target);
+    when(tokenService.generateUploadToken(any(), any(), any(), eq(Duration.ofMinutes(15))))
+      .thenReturn("encrypted-token");
+
+    ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
+    "annuity", null, null, "approval-service", new BatchId("b001"),
+      new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
+      UserNo.of("u1"), LocalDateTime.now().plusDays(7),
+      List.of("application/xlsx"), 10L * 1024 * 1024, Duration.ofMinutes(15)
+    );
+
+    ApplyUploadTokenUseCase.ApplyUploadTokenResult result = useCase.apply(cmd);
+
+    assertThat(result.token()).isEqualTo("encrypted-token");
+    assertThat(result.fileId()).isNotNull();
+    verify(metadataRepository).save(any());
+    ArgumentCaptor<FileAccessLog> logCaptor = ArgumentCaptor.forClass(FileAccessLog.class);
+    verify(logRepository).save(logCaptor.capture());
+    FileAccessLog savedLog = logCaptor.getValue();
+    // tokenHash 应为 SHA-256("encrypted-token") 的 64 位十六进制
+    assertThat(savedLog.tokenHash()).hasSize(64);
+  }
+
+  @Test
+  @DisplayName("apply 在 ttl 为空时应抛 DomainException(INVALID_OPERATION)")
+  void apply_should_throw_when_ttl_is_null() {
+    ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
+    "annuity", null, null, "approval-service", new BatchId("b001"),
+      new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
+      UserNo.of("u1"), LocalDateTime.now().plusDays(7),
+      List.of("application/xlsx"), 10L * 1024 * 1024, null
+    );
+
+    assertThatThrownBy(() -> useCase.apply(cmd))
+      .isInstanceOf(DomainException.class)
+      .matches(ex -> ((DomainException) ex).code().equals(SharedDomainErrorCode.INVALID_OPERATION.getCode()));
+    verifyNoInteractions(metadataRepository, logRepository, tokenService);
+  }
 }

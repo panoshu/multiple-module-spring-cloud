@@ -1,0 +1,24 @@
+package com.example.auth.application.channel.command;
+
+import com.example.core.types.contact.Mobile;
+import com.example.core.types.PlanNo;
+import com.example.core.types.UserNo;
+import com.example.auth.domain.credential.valueobject.owner.CredentialOwner;
+
+/**
+ * 发起二次授权命令.
+ *
+ * @param tellerAccountId   柜员账号
+ * @param credentialOwner   凭证持有者
+ * @param approverAccountId 经办人账号
+ * @param approverMobile    经办人手机号（应用层从经办人账号查询后传入）
+ * @param planId            目标计划ID
+ */
+public record InitiateSecondaryAuthCommand(
+  UserNo tellerAccountId,
+  CredentialOwner credentialOwner,
+  UserNo approverAccountId,
+  Mobile approverMobile,
+  PlanNo planId
+) {
+}

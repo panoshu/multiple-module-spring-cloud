@@ -7,12 +7,12 @@ server:
 
 spring:
   application:
-    name: integration
+    name: cjannuity-channel-integration
   threads:
     virtual:
       enabled: true
   profiles:
-    include: local
+    include: local,sofa
 
 trace:
   context:

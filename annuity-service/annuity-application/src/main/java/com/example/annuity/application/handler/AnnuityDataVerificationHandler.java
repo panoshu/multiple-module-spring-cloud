@@ -45,8 +45,8 @@ public class AnnuityDataVerificationHandler implements StepActionHandler {
     log.info("开始执行年金数据核查, applicationId={}", app.id());
 
     AnnuityEmployeeBatch batch = batchRepository.findByApplicationId(app.id())
-        .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
-            .withLogDetail("申请单未关联员工批次: " + app.id().value()));
+      .orElseThrow(() -> new BusinessException(AnnuityDomainErrorCode.EMPLOYEE_BATCH_NOT_FOUND)
+        .withLogDetail("申请单未关联员工批次: " + app.id().value()));
 
     for (AnnuityEmployeeDetail detail : batch.pendingDetails()) {
       Optional<String> error = verificationRule.verify(detail);
@@ -62,14 +62,14 @@ public class AnnuityDataVerificationHandler implements StepActionHandler {
       batch.fail("存在异常明细", app.updatedBy());
       batchRepository.save(batch);
       log.info("年金数据核查失败(存在异常明细), applicationId={}, anomalyCount={}",
-          app.id(), batch.anomalyCount());
+        app.id(), batch.anomalyCount());
       return StepExecutionStatus.FAILED;
     }
 
     batch.complete(app.updatedBy());
     batchRepository.save(batch);
     log.info("年金数据核查完成, applicationId={}, processedCount={}, anomalyCount={}",
-        app.id(), batch.processedCount(), batch.anomalyCount());
+      app.id(), batch.processedCount(), batch.anomalyCount());
     return StepExecutionStatus.SUCCESS;
   }
 }

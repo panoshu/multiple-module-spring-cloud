@@ -20,10 +20,6 @@
       <groupId>com.example</groupId>
       <artifactId>shared-domain</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>

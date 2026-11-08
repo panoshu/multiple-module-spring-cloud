@@ -1,11 +1,11 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.IdentifyMode;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.parse.RawRow;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.RawRow;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,15 +22,21 @@ public class SourceTemplateIdentifier {
 
   public Optional<SourceTemplateDef> identify(TemplateConfig config, RawRowStream stream, int scanRows) {
     List<String> headers = extractHeaders(stream, scanRows);
-    if (headers.isEmpty()) return Optional.empty();
+    if (headers.isEmpty()) {
+      return Optional.empty();
+    }
 
     SourceTemplateDef best = null;
     double bestRatio = 0.0;
 
     for (SourceTemplateDef def : config.sourceTemplates()) {
-      if (def.identifyMode() != IdentifyMode.AUTO) continue;
+      if (def.identifyMode() != IdentifyMode.AUTO) {
+        continue;
+      }
       List<String> fp = def.fingerprint();
-      if (fp.isEmpty()) continue;
+      if (fp.isEmpty()) {
+        continue;
+      }
 
       long matchCount = fp.stream().filter(headers::contains).count();
       double ratio = (double) matchCount / fp.size();
@@ -49,7 +55,9 @@ public class SourceTemplateIdentifier {
     int count = 0;
     while (stream.hasNext() && count < scanRows) {
       RawRow row = stream.next();
-      if (row.isBlank()) continue;
+      if (row.isBlank()) {
+        continue;
+      }
       for (String cell : row.cells().values()) {
         if (cell != null && !cell.isBlank()) {
           result.add(cell.trim());

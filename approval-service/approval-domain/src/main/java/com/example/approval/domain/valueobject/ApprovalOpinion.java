@@ -11,37 +11,37 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
  */
 public record ApprovalOpinion(String value) implements ValueObject {
 
-    public ApprovalOpinion {
-        if (value != null && value.length() > 500) {
-            throw new IllegalArgumentException("审批意见长度不能超过500字符");
-        }
+  public ApprovalOpinion {
+    if (value != null && value.length() > 500) {
+      throw new IllegalArgumentException("审批意见长度不能超过500字符");
     }
+  }
 
-    /**
-     * 静态工厂方法
-     *
-     * @param value 意见内容
-     * @return ApprovalOpinion 实例
-     */
-    public static ApprovalOpinion of(String value) {
-        return new ApprovalOpinion(value);
-    }
+  /**
+   * 静态工厂方法
+   *
+   * @param value 意见内容
+   * @return ApprovalOpinion 实例
+   */
+  public static ApprovalOpinion of(String value) {
+    return new ApprovalOpinion(value);
+  }
 
-    /**
-     * 创建空意见
-     *
-     * @return 空意见实例
-     */
-    public static ApprovalOpinion empty() {
-        return new ApprovalOpinion(null);
-    }
+  /**
+   * 创建空意见
+   *
+   * @return 空意见实例
+   */
+  public static ApprovalOpinion empty() {
+    return new ApprovalOpinion(null);
+  }
 
-    /**
-     * 是否为空
-     *
-     * @return true 如果意见为空
-     */
-    public boolean isEmpty() {
-        return value == null || value.isBlank();
-    }
+  /**
+   * 是否为空
+   *
+   * @return true 如果意见为空
+   */
+  public boolean isEmpty() {
+    return value == null || value.isBlank();
+  }
 }

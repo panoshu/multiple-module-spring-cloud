@@ -34,11 +34,11 @@ validationRules:
   - { field: idNo, scope: ROW, expr: "idNo != nil", message: "证件编号不能为空", type: STRING }
   - { field: name, scope: ROW, expr: "name != nil", message: "姓名不能为空",     type: STRING }
 
-derivationRules: []
+derivationRules: [ ]
 
 # ── 3. 拆分配置（按 employees.idType 拆分）──
 splitConfig:
-  keys: [idType]
+  keys: [ idType ]
   splitKey:
     targetField: idType
     sourcePath: employees.idType

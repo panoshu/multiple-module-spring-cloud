@@ -8,7 +8,11 @@ public record BusinessContext(Map<String, Object> variables) implements ValueObj
   public BusinessContext {
     variables = variables == null ? Map.of() : Map.copyOf(variables);
   }
-  public static BusinessContext empty() { return new BusinessContext(Map.of()); }
+
+  public static BusinessContext empty() {
+    return new BusinessContext(Map.of());
+  }
+
   public BusinessContext with(String key, Object value) {
     var m = new java.util.LinkedHashMap<>(variables);
     m.put(key, value);

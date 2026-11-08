@@ -16,21 +16,6 @@
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-lock</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.redisson</groupId>
-      <artifactId>redisson-spring-boot-starter</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>

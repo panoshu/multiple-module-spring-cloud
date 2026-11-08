@@ -10,21 +10,21 @@ package com.example.annuity.api.dto;
  * @since 2026/7/21
  */
 public record ApplicationResponse(
-    String applicationId,
-    String batchId,
-    String formId,
-    String businessType,
-    String customerNo,
-    String productNo,
-    String planNo,
-    String applicationStatus,
-    String currentStep,
-    String planType,
-    Long initialContribution,
-    Boolean hasForeignInvestment,
-    String createdBy,
-    String createdTime,
-    String updatedBy,
-    String updatedTime
+  String applicationId,
+  String batchId,
+  String formId,
+  String businessType,
+  String customerNo,
+  String productNo,
+  String planNo,
+  String applicationStatus,
+  String currentStep,
+  String planType,
+  Long initialContribution,
+  Boolean hasForeignInvestment,
+  String createdBy,
+  String createdTime,
+  String updatedBy,
+  String updatedTime
 ) {
 }

@@ -1,19 +1,14 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.ConfigStatus;
 import com.example.file.domain.model.enums.ErrorPolicy;
-import com.example.file.domain.model.valueobject.config.CanonicalModelDef;
-import com.example.file.domain.model.valueobject.config.DerivationRule;
-import com.example.file.domain.model.valueobject.config.SplitConfig;
-import com.example.file.domain.model.valueobject.config.TargetMapping;
-import com.example.file.domain.model.valueobject.config.ValidationRule;
+import com.example.file.domain.model.parse.valueobject.config.*;
 import com.example.file.infrastructure.entity.TemplateConfigDO;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +38,12 @@ public interface TemplateConfigConverter {
   @Mapping(target = "status", expression = "java(configStatusToString(config.status()))")
   @Mapping(target = "effectiveFrom", expression = "java(config.effectiveFrom())")
   @Mapping(target = "effectiveTo", expression = "java(config.effectiveTo())")
-  @Mapping(target = "createdBy", expression = "java(config.createdBy().value())")
-  @Mapping(target = "updatedBy", expression = "java(config.updatedBy().value())")
+  @Mapping(target = "createdBy", expression = "java(config.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(config.updatedBy())")
   @Mapping(target = "createTime", expression = "java(config.createdAt())")
   @Mapping(target = "updateTime", expression = "java(config.updatedAt())")
   @Mapping(target = "version", expression = "java((int) config.version().value())")
-  @Mapping(target = "deleted", constant = "false")
+  @Mapping(target = "deleted", constant = "0")
   TemplateConfigDO toDO(TemplateConfig config);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toTemplateConfigId")
@@ -61,22 +56,16 @@ public interface TemplateConfigConverter {
   @Mapping(target = "sourceTemplates", source = "sourceTemplates", qualifiedByName = "jsonToSourceTemplateList")
   @Mapping(target = "targetMapping", source = "targetMapping", qualifiedByName = "jsonToTargetMapping")
   @Mapping(target = "status", source = "status", qualifiedByName = "stringToConfigStatus")
-  @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-  @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
+  @Mapping(target = "createdBy", source = "createdBy")
+  @Mapping(target = "updatedBy", source = "updatedBy")
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version1", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "domainEvents", ignore = true)
   TemplateConfig toDomain(TemplateConfigDO aDo);
 
   @Named("toTemplateConfigId")
   default TemplateConfigId toTemplateConfigId(String id) {
     return id != null ? TemplateConfigId.of(id) : null;
-  }
-
-  @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
   }
 
   @Named("toVersion")
@@ -151,7 +140,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationRule>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationRule>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化校验规则列表失败", e);
     }
@@ -174,7 +164,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<DerivationRule>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<DerivationRule>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化派生规则列表失败", e);
     }
@@ -220,7 +211,8 @@ public interface TemplateConfigConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SourceTemplateDef>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SourceTemplateDef>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化源模板列表失败", e);
     }
@@ -246,6 +238,33 @@ public interface TemplateConfigConverter {
       return OBJECT_MAPPER.readValue(json, TargetMapping.class);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化目标映射失败", e);
+    }
+  }
+
+  @org.mapstruct.AfterMapping
+  default void attachRoutingRules(@org.mapstruct.MappingTarget TemplateConfig domain, TemplateConfigDO aDo) {
+    if (aDo.getRoutingRules() == null || aDo.getRoutingRules().isBlank()) {
+      return;
+    }
+    try {
+      List<com.example.file.domain.model.parse.valueobject.config.RoutingRule> rules =
+        OBJECT_MAPPER.readValue(aDo.getRoutingRules(),
+          new com.fasterxml.jackson.core.type.TypeReference<List<com.example.file.domain.model.parse.valueobject.config.RoutingRule>>() {
+          });
+      domain.attachRoutingRules(rules);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("反序列化路由规则失败", e);
+    }
+  }
+
+  static String routingRulesToJson(List<com.example.file.domain.model.parse.valueobject.config.RoutingRule> rules) {
+    if (rules == null || rules.isEmpty()) {
+      return null;
+    }
+    try {
+      return OBJECT_MAPPER.writeValueAsString(rules);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("序列化路由规则失败", e);
     }
   }
 }

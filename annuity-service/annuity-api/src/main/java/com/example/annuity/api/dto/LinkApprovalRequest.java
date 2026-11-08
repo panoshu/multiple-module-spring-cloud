@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * @author annuity-service
  */
 public record LinkApprovalRequest(
-    @NotBlank(message = "审批人不能为空")
-    String approver
+  @NotBlank(message = "审批人不能为空")
+  String approver
 ) {
 }

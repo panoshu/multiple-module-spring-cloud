@@ -6,10 +6,10 @@ package com.example.core.api.form.response;
  * @author panoshu
  */
 public record FormStatusResponse(
-    String formId,
-    String status,
-    int parseProgress,
-    int applicationCount,
-    String errorMsg
+  String formId,
+  String status,
+  int parseProgress,
+  int applicationCount,
+  String errorMsg
 ) {
 }

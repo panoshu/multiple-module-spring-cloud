@@ -1,15 +1,15 @@
 package com.example.core.application.engine.step.handler;
 
 import com.example.core.application.engine.errorcode.CoreAppErrorCode;
-import com.example.core.domain.engine.gateway.BusinessConfigGateway;
-import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.shared.exception.SystemException;
-import com.example.shared.primitives.identity.FileId;
+import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,14 +60,14 @@ public class DefaultFormParsingHandler implements StepActionHandler {
 
     // 3. 跨上下文防腐调用：触发底层异步解析
     fileIntegrationGateway.triggerAsyncParsing(
-      app.bindedFormId(),
+      app.formId(),
       targetFile,
       parsingConfig.parseTemplateId(),
       parsingConfig.splitRules()
     );
 
     log.info("已成功向底层文件服务派发表单解析任务, formId={}, templateId={}",
-      app.bindedFormId(), parsingConfig.parseTemplateId());
+      app.formId(), parsingConfig.parseTemplateId());
 
     // 4. 【核心机制】：向引擎返回异步挂起状态。
     // 引擎收到此状态后，会退出当前线程、提交事务。

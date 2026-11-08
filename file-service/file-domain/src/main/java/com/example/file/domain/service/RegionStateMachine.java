@@ -1,11 +1,11 @@
 package com.example.file.domain.service;
 
-import com.example.shared.domain.annotation.DomainService;
 import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.parse.RawRow;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.config.RegionDef;
+import com.example.file.domain.model.parse.valueobject.RawRow;
+import com.example.file.domain.model.parse.valueobject.RegionParseResult;
+import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,9 @@ public class RegionStateMachine {
 
   private boolean shouldEnterRegion(RawRow row, RegionDef target, ParseContext ctx) {
     // 第一个区域或无 trigger 时立即进入
-    if (target.trigger() == null) return true;
+    if (target.trigger() == null) {
+      return true;
+    }
     // 否则检查当前行是否匹配 trigger
     return ctx.isNextRegionTrigger(row);
   }

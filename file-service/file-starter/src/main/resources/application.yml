@@ -25,16 +25,36 @@ spring:
   profiles:
     include: local
 
+jetcache:
+  statIntervalMinutes: 5
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      limit: 200
+
 mybatis-flex:
+  global-config:
+    print-banner: false
+  configuration:
+    sql-print: true
   mapper-locations: classpath*:/mapper/**/*.xml
 
 shared:
+  event:
+    # 跨服务事件通道（2026-11-08 批次1）：Redis pub/sub 发布+订阅闭环
+    redis:
+      enabled: true
   cache:
     mode: L1_ONLY
     rules:
       segment_buffer:
         mode: L1_ONLY
         ttl: 24h
+      file-template-cache:
+        # 模板配置缓存（批次3：读多写少；L1 本地 + evictAll 广播失效，多实例最终一致）
+        mode: L1_ONLY
+        ttl: 10m
 
 trace:
   context:
@@ -45,6 +65,8 @@ trace:
       BatchId: X-Batch-Id
 
 logging:
+  level:
+    com.mybatisflex.core: debug
   file:
     path: /applog/${spring.application.name}
     name: ${spring.application.name}.log

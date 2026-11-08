@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
  * @author panoshu
  */
 public record CancelBatchCommand(
-    @NotBlank(message = "批次ID不能为空") String batchId,
-    String reason
+  @NotBlank(message = "批次ID不能为空") String batchId,
+  String reason
 ) {
 }

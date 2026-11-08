@@ -24,18 +24,20 @@ public enum CoreInfraErrorCode implements ErrorDefinition {
 
   FILE_DOWNLOAD_FAILED("CORE.INFRA.0001", "文件下载失败"),
   FILE_TOKEN_APPLY_FAILED("CORE.INFRA.0002", "文件下载令牌申请失败"),
+  EXTENSION_SERIALIZATION_FAILED("CORE.INFRA.0003", "业务扩展字段序列化失败"),
+  EXTENSION_DESERIALIZATION_FAILED("CORE.INFRA.0004", "业务扩展字段反序列化失败"),
   ;
 
   final String code;
   final String message;
 
   @Override
-  public String code() {
+  public String getCode() {
     return this.code;
   }
 
   @Override
-  public String message() {
+  public String getMessage() {
     return this.message;
   }
 }

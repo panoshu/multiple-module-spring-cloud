@@ -10,8 +10,8 @@ import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -60,16 +60,16 @@ public class JsonBusinessConfigGateway implements BusinessConfigGateway {
     this.materialRules = loadList(MATERIAL_RULES_PATH, MaterialRuleConfig.class);
     this.extractorConfig = loadObject(EXTRACTOR_CONFIG_PATH, ExtractorConfig.class);
     log.info("已加载业务配置: stepRoutes.size={}, materialRules.size={}, extractorName={}",
-        stepRoutes.size(), materialRules.size(),
-        extractorConfig != null ? extractorConfig.extractorName() : null);
+      stepRoutes.size(), materialRules.size(),
+      extractorConfig != null ? extractorConfig.extractorName() : null);
   }
 
   @Override
   public StepRouteConfig getNextStep(BusinessMetaContext context, ApplicationFlowStep currentStep) {
     return stepRoutes.stream()
-        .filter(route -> route.currentStep() == currentStep)
-        .findFirst()
-        .orElse(null);
+      .filter(route -> route.currentStep() == currentStep)
+      .findFirst()
+      .orElse(null);
   }
 
   @Override
@@ -109,7 +109,7 @@ public class JsonBusinessConfigGateway implements BusinessConfigGateway {
     }
     try (InputStream is = resource.getInputStream()) {
       return objectMapper.readValue(is,
-          objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+        objectMapper.getTypeFactory().constructCollectionType(List.class, type));
     } catch (IOException e) {
       log.error("加载配置文件失败: {}", classpathLocation, e);
       return List.of();

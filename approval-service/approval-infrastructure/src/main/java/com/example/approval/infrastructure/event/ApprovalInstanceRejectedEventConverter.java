@@ -3,7 +3,7 @@ package com.example.approval.infrastructure.event;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.IntegrationEventTypes;
 import com.example.approval.domain.event.ApprovalInstanceRejected;
-import com.example.shared.domain.event.IntegrationEventConverter;
+import com.example.shared.event.contract.IntegrationEventConverter;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,26 +15,26 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ApprovalInstanceRejectedEventConverter
-        implements IntegrationEventConverter<ApprovalInstanceRejected> {
+  implements IntegrationEventConverter<ApprovalInstanceRejected> {
 
-    @Override
-    public Class<ApprovalInstanceRejected> supportedEventType() {
-        return ApprovalInstanceRejected.class;
-    }
+  @Override
+  public Class<ApprovalInstanceRejected> supportedEventType() {
+    return ApprovalInstanceRejected.class;
+  }
 
-    @Override
-    public Object toIntegrationEvent(ApprovalInstanceRejected event) {
-        return new ApprovalInstanceRejectedEventDTO(
-                event.eventId().value(),
-                String.valueOf(event.instanceId().value()),
-                event.businessNo(),
-                event.businessType(),
-                event.occurredOn()
-        );
-    }
+  @Override
+  public Object toIntegrationEvent(ApprovalInstanceRejected event) {
+    return new ApprovalInstanceRejectedEventDTO(
+      event.eventId().value(),
+      String.valueOf(event.instanceId().value()),
+      event.businessNo(),
+      event.businessType(),
+      event.occurredOn()
+    );
+  }
 
-    @Override
-    public String integrationEventType() {
-        return IntegrationEventTypes.APPROVAL_INSTANCE_REJECTED;
-    }
+  @Override
+  public String integrationEventType() {
+    return IntegrationEventTypes.APPROVAL_INSTANCE_REJECTED;
+  }
 }

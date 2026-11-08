@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ComponentScan(
-    basePackages = {"com.example.annuity"},
-    includeFilters = {@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ANNOTATION, value = DomainService.class)})
+  basePackages = {"com.example.annuity"},
+  includeFilters = {@ComponentScan.Filter(type = org.springframework.context.annotation.FilterType.ANNOTATION, value = DomainService.class)})
 public class AnnuityDomainServiceConfiguration {
 }

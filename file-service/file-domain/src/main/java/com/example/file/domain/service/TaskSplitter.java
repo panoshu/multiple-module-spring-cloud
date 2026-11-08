@@ -1,9 +1,9 @@
 package com.example.file.domain.service;
 
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.config.SplitConfig;
+import com.example.file.domain.model.parse.valueobject.config.SplitKeyDef;
 import com.example.shared.domain.annotation.DomainService;
-import com.example.file.domain.model.valueobject.SplitUnit;
-import com.example.file.domain.model.valueobject.config.SplitConfig;
-import com.example.file.domain.model.valueobject.config.SplitKeyDef;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,11 +35,13 @@ public class TaskSplitter {
 
     Map<String, List<Map<String, Object>>> grouped = new LinkedHashMap<>();
     for (Object r : rows) {
-      if (!(r instanceof Map<?, ?> row)) continue;
+      if (!(r instanceof Map<?, ?> row)) {
+        continue;
+      }
       Object k = row.get(field);
       String key = k != null ? k.toString() : "default";
       grouped.computeIfAbsent(key, x -> new ArrayList<>())
-          .add((Map<String, Object>) row);
+        .add((Map<String, Object>) row);
     }
     int limit = config.maxRowsPerSubTask() > 0 ? config.maxRowsPerSubTask() : Integer.MAX_VALUE;
 

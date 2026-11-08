@@ -10,15 +10,15 @@ import jakarta.validation.constraints.NotNull;
  * @author approval-service
  */
 public record DeprecateApprovalFlowRequest(
-    /**
-     * 审批流ID
-     */
-    @NotNull(message = "审批流ID不能为空")
-    ApprovalFlowId flowId,
-    /**
-     * 操作人
-     */
-    @NotBlank(message = "操作人不能为空")
-    String operatedBy
+  /**
+   * 审批流ID
+   */
+  @NotNull(message = "审批流ID不能为空")
+  ApprovalFlowId flowId,
+  /**
+   * 操作人
+   */
+  @NotBlank(message = "操作人不能为空")
+  String operatedBy
 ) {
 }

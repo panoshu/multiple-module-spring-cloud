@@ -23,16 +23,18 @@ public enum TradeErrorCode implements ErrorDefinition {
   TRADE_API_ERROR("SERVICE.INTEGRATION.0001", "交易接口调用异常"),
   TRADE_BALANCE_NOT_ENOUGH("SERVICE.INTEGRATION.0002", "账户余额不足"),
   TRADE_ACCOUNT_FROZEN("SERVICE.INTEGRATION.0003", "账户已被冻结"),
-  TRADE_CHANNEL_CLOSED("SERVICE.INTEGRATION.0004", "交易渠道已关闭");
+  TRADE_CHANNEL_CLOSED("SERVICE.INTEGRATION.0004", "交易渠道已关闭"),
+  FILE_SUBMISSION_FAILED("SERVICE.INTEGRATION.0005", "出站文件提交失败"),
+  FILE_SUBMISSION_TIMEOUT("SERVICE.INTEGRATION.0006", "出站文件提交超时");
 
   private final String code;
   private final String message;
 
-  public String code() {
+  public String getCode() {
     return this.code;
   }
 
-  public String message() {
+  public String getMessage() {
     return this.message;
   }
 }

@@ -1,8 +1,7 @@
 package com.example.shared.domain.aggregate.entity;
 
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.Identifier;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.shared.identifier.contract.Identifier;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -17,20 +16,20 @@ import java.time.LocalDateTime;
 
 public abstract class Entity<ID extends Identifier<?>> implements Serializable {
   private final ID id;
-  private final UserNo createdBy;
+  private final String createdBy;
   private final LocalDateTime createdAt; // 创建时间
-  private UserNo updatedBy;
+  private String updatedBy;
   private LocalDateTime updatedAt; // 更新时间
   private Version version;      // 乐观锁版本号
 
   // 场景1: 业务创建新对象 (New)
-  protected Entity(ID id, UserNo createdBy) {
+  protected Entity(ID id, String createdBy) {
     LocalDateTime now = LocalDateTime.now();
     this(id, createdBy, createdBy, now, now, Version.initial());
   }
 
   // 场景2: 从数据库重建对象 (Reconstitute) - [新增]
-  protected Entity(ID id, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected Entity(ID id, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     if (id == null) {
       throw new IllegalArgumentException("Entity ID cannot be null.");
     }
@@ -46,10 +45,26 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     // 子类必须在自己的构造函数末尾显式调用 this.validateInvariants()。
   }
 
+  /**
+   * 持久化后乐观锁版本回写（2026-11-08 批次4 框架级修复）.
+   *
+   * <p><b>背景</b>：MyBatis-Flex @Column(version=true) 的 UPDATE 自动
+   * {@code SET version = version + 1}（数据库侧推进），但内存对象不回写——
+   * 聚合在同一次业务操作中连续两次 save（状态机推进的典型模式）时，
+   * 第二次 UPDATE 的 WHERE version = 旧值 匹配 0 行静默失败.</p>
+   *
+   * <p><b>使用约定</b>：Repository 实现在 update 分支执行成功后调用本方法
+   * （与数据库侧的 version+1 对齐）。历史代码靠方法级大事务掩盖（未提交时
+   * 数据库 version 未变），去事务化后缺陷暴露——本方法为框架级修复.</p>
+   */
+  public void syncVersionAfterUpdate() {
+    this.version = this.version.next();
+  }
+
   // 通常在更新操作时调用，更新updatedAt并增加版本
-  protected void markUpdated(UserNo operator) {
+  protected void markUpdated(String operator) {
     if (operator == null) {
-      throw new IllegalArgumentException("Operator (UserNo) cannot be null for update operation.");
+      throw new IllegalArgumentException("Operator cannot be null for update operation.");
     }
     this.updatedBy = operator;
     this.updatedAt = LocalDateTime.now();
@@ -64,11 +79,11 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     return this.id;
   }
 
-  public UserNo createdBy() {
+  public String createdBy() {
     return this.createdBy;
   }
 
-  public UserNo updatedBy() {
+  public String updatedBy() {
     return this.updatedBy;
   }
 

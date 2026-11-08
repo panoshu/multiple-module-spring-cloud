@@ -2,12 +2,10 @@ package com.example.annuity.domain.aggregate.root;
 
 import com.example.annuity.domain.aggregate.entity.AnnuityEmployeeDetail;
 import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeBatchStatus;
-import com.example.annuity.domain.aggregate.valueobject.AnnuityEmployeeDetailStatus;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.annuity.types.AnnuityEmployeeDetailId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.ApplicationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,14 +15,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("AnnuityEmployeeBatch 聚合根行为")
 class AnnuityEmployeeBatchTest {
 
-  private static final UserNo OPERATOR = UserNo.of("U-TEST");
+  private static final String OPERATOR = "U-TEST";
   private static final ApplicationId APP_ID = new ApplicationId("APP-001");
 
   @Test
   @DisplayName("create 工厂方法初始化 PENDING 状态和空明细集合")
   void create_initializesPendingStatusAndEmptyDetails() {
     AnnuityEmployeeBatch batch = AnnuityEmployeeBatch.create(
-        AnnuityEmployeeBatchId.of("B-001"), APP_ID, 10, OPERATOR
+      AnnuityEmployeeBatchId.of("B-001"), APP_ID, 10, OPERATOR
     );
     assertThat(batch.status()).isEqualTo(AnnuityEmployeeBatchStatus.PENDING);
     assertThat(batch.totalEmployeeCount()).isEqualTo(10);
@@ -94,8 +92,8 @@ class AnnuityEmployeeBatchTest {
     AnnuityEmployeeBatch batch = createBatch(1);
     batch.addDetail(createDetail("D-001", "张三"));
     assertThatThrownBy(() -> batch.complete(OPERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("未全部处理");
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("未全部处理");
   }
 
   @Test
@@ -120,8 +118,8 @@ class AnnuityEmployeeBatchTest {
     batch.addDetail(createDetail("D-001", "张三"));
     batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR);
     assertThatThrownBy(() -> batch.markDetailProcessed(AnnuityEmployeeDetailId.of("D-001"), OPERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("不可重复处理");
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("不可重复处理");
   }
 
   @Test
@@ -131,21 +129,21 @@ class AnnuityEmployeeBatchTest {
     batch.addDetail(createDetail("D-001", "张三"));
     batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "异常", OPERATOR);
     assertThatThrownBy(() -> batch.markDetailAnomaly(AnnuityEmployeeDetailId.of("D-001"), "再次异常", OPERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("不可重复标记");
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("不可重复标记");
   }
 
   private AnnuityEmployeeBatch createBatch(int total) {
     return AnnuityEmployeeBatch.create(
-        AnnuityEmployeeBatchId.of("B-001"), APP_ID, total, OPERATOR
+      AnnuityEmployeeBatchId.of("B-001"), APP_ID, total, OPERATOR
     );
   }
 
   private AnnuityEmployeeDetail createDetail(String id, String name) {
     return new AnnuityEmployeeDetail(
-        AnnuityEmployeeDetailId.of(id),
-        AnnuityEmployeeBatchId.of("B-001"),
-        name, "110101199001011234", 35, 10000L, 500L, OPERATOR
+      AnnuityEmployeeDetailId.of(id),
+      AnnuityEmployeeBatchId.of("B-001"),
+      name, "110101199001011234", 35, 10000L, 500L, OPERATOR
     );
   }
 }

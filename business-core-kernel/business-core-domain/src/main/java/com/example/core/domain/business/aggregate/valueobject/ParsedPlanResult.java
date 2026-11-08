@@ -1,7 +1,7 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.PlanNo;
+import com.example.file.types.FileId;
+import com.example.core.types.PlanNo;
 
 /**
  * 表单解析拆分结果 (按业务计划维度)

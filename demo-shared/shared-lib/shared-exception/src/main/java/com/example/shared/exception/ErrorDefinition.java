@@ -8,11 +8,11 @@ package com.example.shared.exception;
  * @since 2026/5/19 14:53
  */
 public interface ErrorDefinition {
-  String code();
+  String getCode();
 
-  String message();
+  String getMessage();
 
   default String errorInfo() {
-    return "[" + this.code() + "] " + this.message();
+    return "[" + this.getCode() + "] " + this.getMessage();
   }
 }

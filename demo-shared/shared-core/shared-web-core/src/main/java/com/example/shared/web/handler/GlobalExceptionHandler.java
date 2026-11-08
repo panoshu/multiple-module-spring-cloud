@@ -1,9 +1,13 @@
 package com.example.shared.web.handler;
 
 import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.CommonError;
 import com.example.shared.exception.SystemException;
 import com.example.shared.web.core.api.ApiResult;
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
+import cn.dev33.satoken.exception.NotRoleException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -34,6 +38,12 @@ public class GlobalExceptionHandler {
   /**
    * 1. 处理自定义的业务异常 (BaseException)
    */
+  @ExceptionHandler(DomainException.class)
+  public ApiResult<Void> handleDomainException(DomainException e, HttpServletRequest request) {
+    log.warn("领域规则拒绝! 请求URI: [{}] | {}", request.getRequestURI(), e.logMessage());
+    return ApiResult.failure(e.code(), e.displayMessage());
+  }
+
   @ExceptionHandler(BusinessException.class)
   public ApiResult<Void> handleBaseException(BusinessException e, HttpServletRequest request) {
     log.warn("业务异常! 请求URI: [{}] | {}", request.getRequestURI(), e.logMessage(), e);
@@ -52,7 +62,6 @@ public class GlobalExceptionHandler {
 
 
   @ExceptionHandler({BindException.class, ConstraintViolationException.class})
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ApiResult<Void> handleValidationException(Exception e, HttpServletRequest request) {
 
     // 核心主干没有任何多余逻辑，清晰明了
@@ -60,7 +69,7 @@ public class GlobalExceptionHandler {
 
     log.warn("参数校验失败 | URI: [{}] | Errors: [{}]", request.getRequestURI(), errorMessage);
 
-    return ApiResult.failure(CommonError.BAD_REQUEST.code(), errorMessage);
+    return ApiResult.failure(CommonError.BAD_REQUEST.getCode(), errorMessage);
   }
 
   // 4 资源未找到异常 (HTTP 404)
@@ -70,7 +79,22 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ApiResult<Void> handle404(NoResourceFoundException e, HttpServletRequest request) {
     log.error("资源未找到! 请求URI: [{}] | 错误信息: {}", request.getRequestURI(), e.getMessage());
-    return ApiResult.failure(CommonError.NOT_FOUND.code(), "资源未找到");
+    return ApiResult.failure(CommonError.NOT_FOUND.getCode(), "资源未找到");
+  }
+
+  // 4.5 sa-token 框架异常适配（框架层抛出的认证/授权失败 → 统一 200 + 业务码；
+  //     业务代码自身的登录态校验应抛 BusinessException(CommonError.UNAUTHORIZED)，
+  //     走上面的 handleBaseException —— 两条路径殊途同归同一响应格式）
+  @ExceptionHandler(NotLoginException.class)
+  public ApiResult<Void> handleNotLogin(NotLoginException e, HttpServletRequest request) {
+    log.warn("未登录访问! 请求URI: [{}]", request.getRequestURI());
+    return ApiResult.failure(CommonError.UNAUTHORIZED.getCode(), CommonError.UNAUTHORIZED.getMessage());
+  }
+
+  @ExceptionHandler({NotPermissionException.class, NotRoleException.class})
+  public ApiResult<Void> handleNotPermission(Exception e, HttpServletRequest request) {
+    log.warn("权限不足! 请求URI: [{}]", request.getRequestURI());
+    return ApiResult.failure(CommonError.FORBIDDEN.getCode(), CommonError.FORBIDDEN.getMessage());
   }
 
   // 5. 兜底异常处理（包含三道防线）
@@ -92,7 +116,7 @@ public class GlobalExceptionHandler {
     // [防线3] 真正的未知系统异常
     log.error("Unexpected Error [URI: {}]: ", request.getRequestURI(), e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(ApiResult.failure(CommonError.UNKNOWN_ERROR.code(), CommonError.UNKNOWN_ERROR.message()));
+      .body(ApiResult.failure(CommonError.UNKNOWN_ERROR.getCode(), CommonError.UNKNOWN_ERROR.getMessage()));
   }
 
   private boolean isClientDisconnected(Throwable t) {

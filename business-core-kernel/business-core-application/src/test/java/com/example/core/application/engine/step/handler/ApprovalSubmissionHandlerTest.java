@@ -2,20 +2,19 @@ package com.example.core.application.engine.step.handler;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.business.aggregate.valueobject.business.AnnuityChannel;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
+import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.business.OperationModel;
+import com.example.core.types.OperatingMode;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
-import com.example.shared.primitives.identity.ApplicationId;
-import com.example.shared.primitives.identity.CustomerNo;
-import com.example.shared.primitives.identity.FileId;
-import com.example.shared.primitives.identity.PlanNo;
-import com.example.shared.primitives.identity.ProductNo;
-import com.example.shared.primitives.identity.UserNo;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.PlanNo;
+import com.example.core.types.ProductNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ class ApprovalSubmissionHandlerTest {
 
   private static final ApplicationId APPLICATION_ID = new ApplicationId("app-001");
   private static final FileId PARSED_JSON_FILE_ID = new FileId("file-parsed-001");
-  private static final UserNo OPERATOR_ID = UserNo.of("user-001");
+  private static final String OPERATOR_ID = "user-001";
   private static final String INSTANCE_ID = "100";
 
   @Mock
@@ -68,11 +67,11 @@ class ApprovalSubmissionHandlerTest {
       "测试产品",
       PlanNo.of("PLAN-001"),
       "测试计划",
-      OperationModel.Single_Trustee,
+      OperatingMode.TRUSTEE_ONLY,
       AccountManager.CJP
     );
     OperatorInfo operatorInfo = new OperatorInfo(
-      AnnuityChannel.NETAPP, OPERATOR_ID, "测试操作员", false
+      Channel.NETAPP, OPERATOR_ID, "测试操作员", false
     );
     application = BusinessApplication.createFromForm(
       APPLICATION_ID, businessContext, operatorInfo, PARSED_JSON_FILE_ID

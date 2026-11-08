@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * @author annuity-service
  */
 public record LinkFileRequest(
-    @NotBlank(message = "文件任务ID不能为空")
-    String fileTaskId
+  @NotBlank(message = "文件任务ID不能为空")
+  String fileTaskId
 ) {
 }

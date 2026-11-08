@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: channel-gateway
+
+  # 测试环境禁用 Redis、sa-token Redis DAO 与 SOFA 注册中心(使用默认内存存储)
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.redisson.spring.starter.RedissonAutoConfigurationV1
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - cn.dev33.satoken.dao.SaTokenDaoForRedisTemplate
+      # SOFA 注册中心自动装配（测试无注册中心环境，避免 sofaRegistryService 初始化）
+      - com.alipay.cloud.dsr.client.SofaRegistryAutoConfiguration
+      - com.alipay.cloud.dsr.registry.SofaServiceRegistryAutoConfiguration
+      - com.alipay.cloud.dsr.endpoint.SofaDiscoveryEndpointAutoConfiguration
+      - com.alipay.cloud.dsr.discovery.SofaDiscoveryAutoConfiguration
+      - com.alipay.cloud.dsr.discovery.SofaDiscoveryClientConfiguration
+      - com.alipay.cloud.dsr.discovery.reactive.SofaReactiveDiscoveryClientConfiguration
+      - com.alipay.cloud.dsr.discovery.configclient.SofaConfigServerAutoConfiguration
+      - com.alipay.cloud.dsr.discovery.configclient.SofaDiscoveryClientConfigServiceBootstrapConfiguration
+      - com.alipay.cloud.dsr.loadbalancer.LoadBalancerSofaAutoConfiguration
+      - com.alipay.cloud.dsr.router.SofaRegistryRouterAutoConfiguration
+      - com.alipay.cloud.dsr.util.InetUtilAutoConfiguration
+
+  cloud:
+    nacos.discovery.enabled: false # 禁止向 Nacos 注册服务
+    gateway.server.webflux.discovery.locator.enabled: false
+
+# 测试用最小渠道配置（互联网单渠道）
+gateway:
+  channels:
+    enabled:
+      - INTERNET
+
+## 白名单配置
+auth:
+  gateway:
+    public-paths:
+      - /actuator/**
+      - /actuator
+      - /favicon.ico
+      - /internet/auth/login

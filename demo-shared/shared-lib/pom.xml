@@ -14,6 +14,7 @@
 
   <modules>
     <module>shared-types</module>
+    <module>shared-security-contract</module>
     <module>shared-exception</module>
     <module>shared-domain</module>
     <module>shared-api</module>

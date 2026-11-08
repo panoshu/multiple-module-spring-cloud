@@ -1,0 +1,210 @@
+package com.example.file.domain.model.storage.aggregate;
+
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.DomainException;
+import com.example.file.domain.model.storage.valueobject.FileAccessAction;
+import com.example.file.domain.model.storage.valueobject.FileAccessResult;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.shared.domain.aggregate.root.AggregateRoot;
+import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.core.types.ProductNo;
+import com.example.core.types.CustomerNo;
+import com.example.file.types.FileAccessLogId;
+import com.example.file.types.FileId;
+import com.example.core.types.UserNo;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * 文件访问流水聚合根
+ * <p>
+ * 记录 token 申请 (APPLY) 和实际访问 (ACCESS) 的双记录，用于审计。
+ * 流水记录不可修改、不可删除，仅在写入失败时可调用 {@link #markFail(String)} 标记失败。
+ */
+public class FileAccessLog extends AggregateRoot<FileAccessLogId> {
+
+  private final FileId fileId;
+  private final FileAccessAction action;
+  private final FileUsage usage;
+  private final CustomerNo customerNo;
+  private final ProductNo productNo;
+  private final UserNo operator;
+  private final String sourceApp;
+  private final String sourceIp;
+  private final String tokenHash;
+  private final LocalDateTime occurAt;
+  private FileAccessResult result;
+  private String failReason;
+
+  // 业务创建
+  private FileAccessLog(FileAccessLogId id, FileId fileId, FileAccessAction action, FileUsage usage,
+                        CustomerNo customerNo, ProductNo productNo, UserNo operator,
+                        String sourceApp, String sourceIp, String tokenHash,
+                        FileAccessResult result, String failReason, LocalDateTime occurAt) {
+    super(id, operator.value());
+    this.fileId = fileId;
+    this.action = action;
+    this.usage = usage;
+    this.customerNo = customerNo;
+    this.productNo = productNo;
+    this.operator = operator;
+    this.sourceApp = sourceApp;
+    this.sourceIp = sourceIp;
+    this.tokenHash = tokenHash;
+    this.result = result;
+    this.failReason = failReason;
+    this.occurAt = occurAt;
+    this.validateInvariants();
+  }
+
+  // 数据库重建
+  public FileAccessLog(FileAccessLogId id, FileId fileId, FileAccessAction action, FileUsage usage,
+                       CustomerNo customerNo, ProductNo productNo, UserNo operator,
+                       String sourceApp, String sourceIp, String tokenHash,
+                       FileAccessResult result, String failReason, LocalDateTime occurAt,
+                       String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+    super(id, createdBy, updatedBy, createdAt, updatedAt, version);
+    this.fileId = fileId;
+    this.action = action;
+    this.usage = usage;
+    this.customerNo = customerNo;
+    this.productNo = productNo;
+    this.operator = operator;
+    this.sourceApp = sourceApp;
+    this.sourceIp = sourceIp;
+    this.tokenHash = tokenHash;
+    this.result = result;
+    this.failReason = failReason;
+    this.occurAt = occurAt;
+    this.validateInvariants();
+  }
+
+  /**
+   * 申请 token 时记录
+   */
+  public static FileAccessLog apply(FileId fileId, FileUsage usage, FileAccessScope scope,
+                                    UserNo operator, String sourceApp, String tokenHash) {
+    validateCommon(fileId, usage, scope, operator, tokenHash);
+    return new FileAccessLog(
+      FileAccessLogId.of(UUID.randomUUID().toString()), fileId, FileAccessAction.APPLY, usage,
+      scope.customerNo(), scope.productNo(), operator, sourceApp, null, tokenHash,
+      FileAccessResult.SUCCESS, null, LocalDateTime.now()
+    );
+  }
+
+  /**
+   * 实际访问时记录（成功或失败）
+   */
+  public static FileAccessLog access(FileId fileId, FileUsage usage, FileAccessScope scope,
+                                     UserNo operator, String sourceApp, String sourceIp,
+                                     String tokenHash, FileAccessResult result, String failReason) {
+    validateCommon(fileId, usage, scope, operator, tokenHash);
+    if (result == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("result 不能为空");
+    }
+    return new FileAccessLog(
+      FileAccessLogId.of(UUID.randomUUID().toString()), fileId, FileAccessAction.ACCESS, usage,
+      scope.customerNo(), scope.productNo(), operator, sourceApp, sourceIp, tokenHash,
+      result, failReason, LocalDateTime.now()
+    );
+  }
+
+  public static FileAccessLog reconstitute(FileAccessLogId id, FileId fileId, FileAccessAction action, FileUsage usage,
+                                           CustomerNo customerNo, ProductNo productNo, UserNo operator,
+                                           String sourceApp, String sourceIp, String tokenHash,
+                                           FileAccessResult result, String failReason, LocalDateTime occurAt,
+                                           String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+    return new FileAccessLog(id, fileId, action, usage, customerNo, productNo, operator,
+      sourceApp, sourceIp, tokenHash, result, failReason, occurAt,
+      createdBy, updatedBy, createdAt, updatedAt, version);
+  }
+
+  private static void validateCommon(FileId fileId, FileUsage usage, FileAccessScope scope,
+                                     UserNo operator, String tokenHash) {
+    if (fileId == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("fileId 不能为空");
+    }
+    if (usage == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("usage 不能为空");
+    }
+    if (scope == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("scope 不能为空");
+    }
+    if (operator == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("operator 不能为空");
+    }
+    if (tokenHash == null || tokenHash.isBlank()) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("tokenHash 不能为空");
+    }
+  }
+
+  public void markFail(String failReason) {
+    this.result = FileAccessResult.FAIL;
+    this.failReason = failReason;
+    markUpdated(operator.value());
+  }
+
+  @Override
+  protected void validateInvariants() {
+    if (action == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("action 不能为空");
+    }
+    if (result == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("result 不能为空");
+    }
+    if (occurAt == null) {
+      throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("occurAt 不能为空");
+    }
+  }
+
+  // Getters
+  public FileId fileId() {
+    return fileId;
+  }
+
+  public FileAccessAction action() {
+    return action;
+  }
+
+  public FileUsage usage() {
+    return usage;
+  }
+
+  public CustomerNo customerNo() {
+    return customerNo;
+  }
+
+  public ProductNo productNo() {
+    return productNo;
+  }
+
+  public UserNo operator() {
+    return operator;
+  }
+
+  public String sourceApp() {
+    return sourceApp;
+  }
+
+  public String sourceIp() {
+    return sourceIp;
+  }
+
+  public String tokenHash() {
+    return tokenHash;
+  }
+
+  public FileAccessResult result() {
+    return result;
+  }
+
+  public String failReason() {
+    return failReason;
+  }
+
+  public LocalDateTime occurAt() {
+    return occurAt;
+  }
+}

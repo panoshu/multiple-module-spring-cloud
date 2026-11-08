@@ -1,15 +1,14 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.root.SubTaskData;
+import com.example.file.domain.model.parse.aggregate.SubTaskData;
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.domain.model.valueobject.BusinessContext;
-import com.example.file.domain.model.valueobject.ValidationError;
+import com.example.file.domain.model.parse.valueobject.ValidationError;
 import com.example.file.infrastructure.entity.SubTaskDataDO;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.primitives.identity.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,12 +37,12 @@ public interface SubTaskDataConverter {
   @Mapping(target = "validationErrors", expression = "java(validationErrorListToJson(subTask.validationErrors()))")
   @Mapping(target = "expiresAt", expression = "java(subTask.expiresAt())")
   @Mapping(target = "consumedAt", expression = "java(subTask.consumedAt())")
-  @Mapping(target = "createdBy", expression = "java(subTask.createdBy().value())")
-  @Mapping(target = "updatedBy", expression = "java(subTask.updatedBy().value())")
+  @Mapping(target = "createdBy", expression = "java(subTask.createdBy())")
+  @Mapping(target = "updatedBy", expression = "java(subTask.updatedBy())")
   @Mapping(target = "createTime", expression = "java(subTask.createdAt())")
   @Mapping(target = "updateTime", expression = "java(subTask.updatedAt())")
   @Mapping(target = "version", expression = "java((int) subTask.version().value())")
-  @Mapping(target = "deleted", constant = "false")
+  @Mapping(target = "deleted", constant = "0")
   SubTaskDataDO toDO(SubTaskData subTask);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toSubTaskId")
@@ -54,12 +53,11 @@ public interface SubTaskDataConverter {
   @Mapping(target = "tables", source = "tables", qualifiedByName = "jsonToTables")
   @Mapping(target = "status", source = "status", qualifiedByName = "stringToSubTaskStatus")
   @Mapping(target = "validationErrors", source = "validationErrors", qualifiedByName = "jsonToValidationErrorList")
-  @Mapping(target = "createdBy", source = "createdBy", qualifiedByName = "toUserNo")
-  @Mapping(target = "updatedBy", source = "updatedBy", qualifiedByName = "toUserNo")
+  @Mapping(target = "createdBy", source = "createdBy")
+  @Mapping(target = "updatedBy", source = "updatedBy")
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "domainEvents", ignore = true)
   SubTaskData toDomain(SubTaskDataDO aDo);
 
   @Named("toSubTaskId")
@@ -70,11 +68,6 @@ public interface SubTaskDataConverter {
   @Named("toFileTaskId")
   default FileTaskId toFileTaskId(String id) {
     return id != null ? FileTaskId.of(id) : null;
-  }
-
-  @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
   }
 
   @Named("toVersion")
@@ -117,7 +110,8 @@ public interface SubTaskDataConverter {
       return BusinessContext.empty();
     }
     try {
-      Map<String, Object> variables = OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+      Map<String, Object> variables = OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {
+      });
       return new BusinessContext(variables);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化业务上下文失败", e);
@@ -141,7 +135,8 @@ public interface SubTaskDataConverter {
       return Map.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化Map失败", e);
     }
@@ -164,7 +159,8 @@ public interface SubTaskDataConverter {
       return Map.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, List<Map<String, Object>>>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, List<Map<String, Object>>>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化表格数据失败", e);
     }
@@ -187,7 +183,8 @@ public interface SubTaskDataConverter {
       return List.of();
     }
     try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationError>>() {});
+      return OBJECT_MAPPER.readValue(json, new TypeReference<List<ValidationError>>() {
+      });
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化校验错误列表失败", e);
     }

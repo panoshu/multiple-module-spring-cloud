@@ -1,7 +1,7 @@
 package com.example.core.infrastructure.engine.evaluation;
 
-import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.expression.Expression;

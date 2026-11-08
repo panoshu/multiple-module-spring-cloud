@@ -1,23 +1,21 @@
 package com.example.core.domain.business.aggregate.root;
 
-import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
-import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.core.domain.business.aggregate.valueobject.MaterialConditionContext;
-import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
-import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
-import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.business.aggregate.valueobject.*;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.domain.engine.event.PipelineExecutedEvent;
 import com.example.core.domain.engine.event.StepEnteredEvent;
-import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
-import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
-import com.example.shared.exception.DomainException;
-import com.example.shared.primitives.identity.*;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.exception.DomainException;
+import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.FormId;
+import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,12 +55,12 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   private BusinessFile acceptanceFile;
 
-  protected BusinessApplication(ApplicationId applicationId, UserNo userNo) {
+  protected BusinessApplication(ApplicationId applicationId, String userNo) {
     super(applicationId, userNo);
     this.validateInvariants();
   }
 
-  protected BusinessApplication(ApplicationId applicationId, UserNo createdBy, UserNo updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+  protected BusinessApplication(ApplicationId applicationId, String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(applicationId, createdBy, updatedBy, createdAt, updatedAt, version);
     this.validateInvariants();
   }
@@ -83,12 +81,78 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     return app;
   }
 
-  public FormId queryFormInfo() {
+  /**
+   * 从数据库重建聚合根（全参工厂方法）。
+   * <p>
+   * 供 Repository 实现的 Converter 在 DO → 领域对象转换时调用，绕过业务校验直接装配所有字段。
+   * 业务代码禁止使用本方法创建新对象，新建请用 {@link #createFromForm}。
+   *
+   * @return 装配完成的聚合根实例
+   */
+  public static BusinessApplication reconstitute(
+    ApplicationId applicationId,
+    String createdBy,
+    String updatedBy,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    Version version,
+    BatchId batchId,
+    FormId formId,
+    BusinessContext businessContext,
+    OperatorInfo operatorInfo,
+    BusinessExtension businessExtension,
+    FileId parsedJsonFileId,
+    int expectedDetailCount,
+    ApplicationStatus status,
+    ApplicationFlowStep currentStep,
+    LocalDateTime applyTime,
+    LocalDateTime completeTime,
+    List<MaterialItem> planMaterials,
+    BusinessFile packageFile) {
+    BusinessApplication app = new BusinessApplication(applicationId, createdBy, updatedBy, createdAt, updatedAt, version);
+    app.batchId = batchId;
+    app.formId = formId;
+    app.businessContext = businessContext;
+    app.operatorInfo = operatorInfo;
+    app.businessExtension = businessExtension;
+    app.parsedJsonFileId = parsedJsonFileId;
+    app.expectedDetailCount = expectedDetailCount;
+    app.status = status;
+    app.currentStep = currentStep;
+    app.applyTime = applyTime;
+    app.completeTime = completeTime;
+    app.planMaterials = planMaterials;
+    app.packageFile = packageFile;
+    return app;
+  }
+
+  /**
+   * 业务行为：挂载业务扩展字段。
+   * <p>
+   * 由业务服务在创建申请单后，注入业务专属的 {@link BusinessExtension} 实现（如年金扩展字段）。
+   * 重复挂载将覆盖既有值。
+   *
+   * @param extension 业务扩展字段实例
+   */
+  public void attachExtension(BusinessExtension extension) {
+    this.businessExtension = extension;
+  }
+
+  public FormId formId() {
     return this.formId;
   }
 
-  public FileId getParsedJsonFileId() {
+  public FileId parsedJsonFileId() {
     return this.parsedJsonFileId;
+  }
+
+  /**
+   * 期望明细数量（只读）。
+   *
+   * @return 期望明细数量
+   */
+  public int expectedDetailCount() {
+    return this.expectedDetailCount;
   }
 
   /**
@@ -267,13 +331,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     return this.parsedJsonFileId;
   }
 
-  /**
-   * 领域行为：获取绑定的表单 ID (ID 是标识，提供只读获取是合理的)
-   */
-  public FormId bindedFormId() {
-    return this.formId;
-  }
-
   public BusinessMetaContext buildConfigQueryContext() {
     return BusinessMetaContext.of(this.businessContext);
   }
@@ -317,7 +374,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     return this.businessContext;
   }
 
-  public BatchId getBatchId() {
+  public BatchId batchId() {
     return batchId;
   }
 
@@ -328,7 +385,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    *
    * @return 申请单状态
    */
-  public ApplicationStatus getStatus() {
+  public ApplicationStatus status() {
     return this.status;
   }
 
@@ -339,7 +396,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    *
    * @return 打包文件,未打包上传时为 null
    */
-  public BusinessFile getPackageFile() {
+  public BusinessFile packageFile() {
     return this.packageFile;
   }
 
@@ -350,7 +407,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    *
    * @return 计划层材料列表
    */
-  public List<MaterialItem> getPlanMaterials() {
+  public List<MaterialItem> planMaterials() {
     return this.planMaterials;
   }
 
@@ -359,7 +416,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    *
    * @return 申请时间
    */
-  public LocalDateTime getApplyTime() {
+  public LocalDateTime applyTime() {
     return this.applyTime;
   }
 
@@ -368,7 +425,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    *
    * @return 完成时间
    */
-  public LocalDateTime getCompleteTime() {
+  public LocalDateTime completeTime() {
     return this.completeTime;
   }
 }

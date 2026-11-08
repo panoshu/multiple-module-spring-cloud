@@ -21,6 +21,10 @@
       <artifactId>business-core-types</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-types</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>

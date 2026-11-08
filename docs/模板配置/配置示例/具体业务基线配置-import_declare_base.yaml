@@ -25,7 +25,7 @@ derivation:
 
 # ── 3. 拆分逻辑 ──
 split:
-  keys: [detailList.deptCode]           # 按明细中的部门代码拆分
+  keys: [ detailList.deptCode ]           # 按明细中的部门代码拆分
   onMiss: DEFAULT:GENERAL_DEPT          # 未匹配到的归入通用部门
   fileNaming: "DECLARE_{splitKey.deptCode}_{seq:03}.xlsx"
   promoteToContext: true                # 将拆分出的 deptCode 注入上下文，用于映射

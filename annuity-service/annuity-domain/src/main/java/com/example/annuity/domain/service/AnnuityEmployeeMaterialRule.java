@@ -25,8 +25,8 @@ public class AnnuityEmployeeMaterialRule {
   /**
    * 计算员工材料清单
    *
-   * @param detail   员工明细
-   * @param context  业务上下文(用于判断外资场景)
+   * @param detail  员工明细
+   * @param context 业务上下文(用于判断外资场景)
    * @return 材料清单
    */
   public List<AnnuityEmployeeMaterial> calculate(AnnuityEmployeeDetail detail, BusinessMetaContext context) {

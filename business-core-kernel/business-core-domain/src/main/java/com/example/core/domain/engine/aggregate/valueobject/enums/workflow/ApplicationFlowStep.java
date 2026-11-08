@@ -45,6 +45,7 @@ public enum ApplicationFlowStep {
   // ==========================================
   ACCEPTANCE_INITIATION,       // 生成受理单
   ACCEPTANCE_DOCUMENTATION,    // 受理材料归档
+  ARCHIVE,                     // 出站文件归档（生成目标模板Excel并存储）
   COMPLETED,                   // 已完成
   FINAL_RELEASE                // 后处理/回调解锁 (原 CALLBACK_UNLOCK)
 }
