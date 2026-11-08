@@ -38,7 +38,7 @@ public class LocalTargetTemplateStorage implements TargetTemplateStorage {
     TargetTemplateDO templateDO = targetTemplateMapper.selectOneByQuery(
       QueryWrapper.create()
         .where(TARGET_TEMPLATE_DO.TEMPLATE_ID.eq(targetTemplateId))
-        .and(TARGET_TEMPLATE_DO.DELETED.eq(false))
+        .and(TARGET_TEMPLATE_DO.DELETED.eq(0))
     );
 
     if (templateDO != null && templateDO.getFileId() != null) {
