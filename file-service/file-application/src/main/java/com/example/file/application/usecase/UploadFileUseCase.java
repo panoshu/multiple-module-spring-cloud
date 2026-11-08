@@ -1,28 +1,48 @@
 package com.example.file.application.usecase;
 
+import com.example.file.application.command.ParseFileCommand;
 import com.example.file.application.command.UploadFileCommand;
 import com.example.file.application.result.UploadFileResult;
 import com.example.file.domain.model.aggregate.root.ParseTask;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.repository.ParseTaskRepository;
+import com.example.file.domain.repository.TemplateConfigRepository;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.TemplateCode;
+import com.example.shared.utils.concurrent.VirtualThreadExecutor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
+/**
+ * 上传创建解析任务（2026-11-08 批次1 接线：自动触发异步解析）.
+ *
+ * <p>表单类上传（bizType 有活跃模板配置）在事务提交后由虚拟线程异步执行
+ * {@link ParseFileUseCase}；材料类（无配置）仅建任务等待后续品类模型细化.
+ * 解析结果经 FileParsedEvent 领域事件 → event-starter 通知消费方.</p>
+ */
+@Slf4j
 @Service
 public class UploadFileUseCase {
 
   private final com.example.shared.identifier.contract.IdService idService;
   private final ParseTaskRepository parseTaskRepository;
+  private final TemplateConfigRepository configRepository;
+  private final ParseFileUseCase parseFileUseCase;
 
   public UploadFileUseCase(com.example.shared.identifier.contract.IdService idService,
-                          ParseTaskRepository parseTaskRepository) {
+                          ParseTaskRepository parseTaskRepository,
+                          TemplateConfigRepository configRepository,
+                          ParseFileUseCase parseFileUseCase) {
     this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
+    this.configRepository = configRepository;
+    this.parseFileUseCase = parseFileUseCase;
   }
 
   @Transactional
@@ -41,6 +61,31 @@ public class UploadFileUseCase {
       task.bindTemplate(TemplateCode.of(cmd.templateCode()));
     }
     parseTaskRepository.save(task);
+
+    boolean isFormUpload = configRepository.findActive(BizType.of(cmd.bizType())).isPresent();
+    if (isFormUpload) {
+      scheduleAsyncParsing(taskId, cmd.uploader());
+    }
     return new UploadFileResult(task.id().value(), task.status().name(), task.createdAt());
+  }
+
+  /**
+   * 事务提交后异步触发解析（afterCommit 确保异步线程能读到已提交的 ParseTask）.
+   */
+  private void scheduleAsyncParsing(FileTaskId taskId, String operator) {
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        VirtualThreadExecutor.executeAsync(() -> {
+          try {
+            log.info("异步解析触发: fileTaskId={}", taskId.value());
+            parseFileUseCase.execute(new ParseFileCommand(taskId.value(), operator));
+          } catch (Exception e) {
+            // ParseFileUseCase 内部吞异常并 markFailed（失败事件已发）——此处仅兜底日志
+            log.error("异步解析触发失败: fileTaskId={}", taskId.value(), e);
+          }
+        });
+      }
+    });
   }
 }

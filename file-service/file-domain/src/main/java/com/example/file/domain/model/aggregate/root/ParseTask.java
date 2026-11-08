@@ -1,6 +1,7 @@
 package com.example.file.domain.model.aggregate.root;
 
 import com.example.shared.exception.CommonError;
+import com.example.file.domain.event.FileParsedEvent;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.enums.ErrorPolicy;
@@ -125,12 +126,14 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     }
     this.status = TaskStatus.SUCCESS;
     this.finishedAt = LocalDateTime.now();
+    registerDomainEvent(FileParsedEvent.of(this));
   }
 
   public void markPartialSuccess(int failedCount) {
     this.status = TaskStatus.PARTIAL_SUCCESS;
     this.invalidCount = failedCount;
     this.finishedAt = LocalDateTime.now();
+    registerDomainEvent(FileParsedEvent.of(this));
   }
 
   public void markFailed(TaskError error) {
@@ -139,6 +142,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
       this.errors.add(error);
     }
     this.finishedAt = LocalDateTime.now();
+    registerDomainEvent(FileParsedEvent.of(this));
   }
 
   @Override

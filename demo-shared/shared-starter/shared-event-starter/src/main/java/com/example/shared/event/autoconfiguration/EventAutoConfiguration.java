@@ -82,14 +82,78 @@ public class EventAutoConfiguration {
     return new DefaultEventBus(dispatchers, eventStore, eventDeliverer, actualConverters);
   }
 
+  /**
+   * Redis 事件通道（2026-11-08 批次1：收发闭环）.
+   *
+   * <p>发布端 {@link RedisEventDispatcher}（Envelope 防回声）+ 订阅端
+   * {@link RedisEventSubscriber}（event.* → 本地 Spring 事件）——
+   * 本服务发布的事件经 Redis 到达远端服务，远端服务的 @EventListener
+   * 消费方即可收到跨服务事件；同时本服务的订阅端把远端事件转回本地.</p>
+   */
   @Configuration(proxyBeanMethods = false)
   @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisTemplate")
   @ConditionalOnProperty(prefix = "shared.event.redis", name = "enabled", havingValue = "true")
   static class RedisConfig {
+
+    /**
+     * 事件通道实例标识（防回声：订阅端跳过自己发布的消息）.
+     */
+    @Bean
+    public String sharedEventInstanceId() {
+      return java.util.UUID.randomUUID().toString();
+    }
+
+    /**
+     * 事件专用 RedisTemplate：JSON 序列化携带类型信息（消费端按 @class 还原 DTO）.
+     *
+     * <p>不复用宿主的 RedisTemplate（序列化策略可能不同——如 sa-token 的），
+     * 事件通道自持一套，互不干扰.</p>
+     */
+    @Bean("sharedEventRedisTemplate")
+    @ConditionalOnMissingBean(name = "sharedEventRedisTemplate")
+    public org.springframework.data.redis.core.RedisTemplate<String, Object> sharedEventRedisTemplate(
+      org.springframework.data.redis.connection.RedisConnectionFactory factory) {
+      org.springframework.data.redis.core.RedisTemplate<String, Object> template =
+        new org.springframework.data.redis.core.RedisTemplate<>();
+      template.setConnectionFactory(factory);
+      org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer serializer =
+        new org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer();
+      template.setKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
+      template.setValueSerializer(serializer);
+      template.setHashKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
+      template.setHashValueSerializer(serializer);
+      template.afterPropertiesSet();
+      return template;
+    }
+
     @Bean
     public EventDispatcher redisEventDispatcher(
-      org.springframework.data.redis.core.RedisTemplate<String, Object> template) {
-      return new RedisEventDispatcher(template);
+      @org.springframework.beans.factory.annotation.Qualifier("sharedEventRedisTemplate")
+      org.springframework.data.redis.core.RedisTemplate<String, Object> template,
+      String sharedEventInstanceId) {
+      return new RedisEventDispatcher(template, sharedEventInstanceId);
+    }
+
+    @Bean
+    public com.example.shared.event.dispatcher.RedisEventSubscriber redisEventSubscriber(
+      @org.springframework.beans.factory.annotation.Qualifier("sharedEventRedisTemplate")
+      org.springframework.data.redis.core.RedisTemplate<String, Object> template,
+      ApplicationEventPublisher publisher,
+      String sharedEventInstanceId) {
+      return new com.example.shared.event.dispatcher.RedisEventSubscriber(template, publisher, sharedEventInstanceId);
+    }
+
+    @Bean
+    public org.springframework.data.redis.listener.RedisMessageListenerContainer sharedEventListenerContainer(
+      org.springframework.data.redis.connection.RedisConnectionFactory factory,
+      com.example.shared.event.dispatcher.RedisEventSubscriber subscriber) {
+      org.springframework.data.redis.listener.RedisMessageListenerContainer container =
+        new org.springframework.data.redis.listener.RedisMessageListenerContainer();
+      container.setConnectionFactory(factory);
+      // PatternTopic 模式订阅：event.FileParsedEvent / event.OutboundReadyEvent 等全部事件通道
+      container.addMessageListener(subscriber,
+        new org.springframework.data.redis.listener.PatternTopic("event.*"));
+      return container;
     }
   }
 

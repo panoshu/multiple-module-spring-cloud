@@ -12,6 +12,14 @@
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>shared-event-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>file-domain</artifactId>
     </dependency>
     <dependency>

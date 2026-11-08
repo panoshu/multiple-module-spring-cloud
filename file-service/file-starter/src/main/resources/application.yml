@@ -102,3 +102,9 @@ file:
     redis:
       key-prefix: "file:token:used:"
       default-ttl: 15m
+
+shared:
+  event:
+    # 跨服务事件通道（2026-11-08 批次1）：Redis pub/sub 发布+订阅闭环
+    redis:
+      enabled: true

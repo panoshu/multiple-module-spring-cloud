@@ -1,5 +1,6 @@
 package com.example.file.infrastructure.storage;
 
+import com.example.shared.exception.DomainException;
 import com.example.file.domain.model.aggregate.valueobject.FileUsage;
 import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
 import com.example.file.domain.model.aggregate.valueobject.StorageType;
@@ -59,8 +60,8 @@ class PropertiesBasedStorageTargetResolverTest {
     props.getRouting().setParsed("oss-bad");
 
     assertThatThrownBy(() -> new PropertiesBasedStorageTargetResolver(props))
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessageContaining("endpoint");
+      .isInstanceOf(DomainException.class)
+      .satisfies(e -> assertThat(((DomainException) e).displayMessage()).contains("endpoint"));
   }
 
   @Test

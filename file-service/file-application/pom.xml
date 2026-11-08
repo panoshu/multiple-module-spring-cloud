@@ -12,6 +12,10 @@
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>shared-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>file-api</artifactId>
     </dependency>
     <dependency>
