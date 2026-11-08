@@ -31,7 +31,7 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   /**
    * 批次3 cache-starter 接入：模板配置读缓存（file 宿主必备 cache-starter——自动装配保证非空）.
    */
-  private final com.example.shared.cache.core.ICacheTemplate cacheTemplate;
+  private final org.springframework.beans.factory.ObjectProvider<com.example.shared.cache.core.ICacheTemplate> cacheProvider;
 
   @Override
   public Optional<TemplateConfig> findById(TemplateConfigId id) {
@@ -46,15 +46,23 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
       mapper.insert(aDo);
     } else {
       mapper.update(aDo);
+      config.syncVersionAfterUpdate();
     }
     publishDomainEvents(config);
-    cacheTemplate.evictAll("file-template-cache");
+    com.example.shared.cache.core.ICacheTemplate cacheTemplate = cacheProvider.getIfAvailable();
+    if (cacheTemplate != null) {
+      cacheTemplate.evictAll("file-template-cache");
+    }
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public java.util.List<TemplateConfig> findAllActive(BizType bizType) {
     // 批次3 cache-starter 接入：配置读多写少——L2 缓存 + save 时 evictAll
+    com.example.shared.cache.core.ICacheTemplate cacheTemplate = cacheProvider.getIfAvailable();
+    if (cacheTemplate == null) {
+      return queryAllActive(bizType);
+    }
     Object cached = cacheTemplate.getOrLoad("file-template-cache", "active:" + bizType.value(),
       _ -> queryAllActive(bizType), Object.class);
     if (cached instanceof java.util.List<?> list) {

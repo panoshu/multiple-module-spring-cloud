@@ -45,6 +45,22 @@ public abstract class Entity<ID extends Identifier<?>> implements Serializable {
     // 子类必须在自己的构造函数末尾显式调用 this.validateInvariants()。
   }
 
+  /**
+   * 持久化后乐观锁版本回写（2026-11-08 批次4 框架级修复）.
+   *
+   * <p><b>背景</b>：MyBatis-Flex @Column(version=true) 的 UPDATE 自动
+   * {@code SET version = version + 1}（数据库侧推进），但内存对象不回写——
+   * 聚合在同一次业务操作中连续两次 save（状态机推进的典型模式）时，
+   * 第二次 UPDATE 的 WHERE version = 旧值 匹配 0 行静默失败.</p>
+   *
+   * <p><b>使用约定</b>：Repository 实现在 update 分支执行成功后调用本方法
+   * （与数据库侧的 version+1 对齐）。历史代码靠方法级大事务掩盖（未提交时
+   * 数据库 version 未变），去事务化后缺陷暴露——本方法为框架级修复.</p>
+   */
+  public void syncVersionAfterUpdate() {
+    this.version = this.version.next();
+  }
+
   // 通常在更新操作时调用，更新updatedAt并增加版本
   protected void markUpdated(String operator) {
     if (operator == null) {

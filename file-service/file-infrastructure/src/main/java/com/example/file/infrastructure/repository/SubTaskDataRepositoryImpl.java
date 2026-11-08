@@ -48,6 +48,7 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
       mapper.insert(aDo);
     } else {
       mapper.update(aDo);
+      subTask.syncVersionAfterUpdate();
     }
     publishDomainEvents(subTask);
   }

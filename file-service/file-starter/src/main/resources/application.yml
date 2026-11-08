@@ -26,6 +26,10 @@ spring:
     include: local
 
 mybatis-flex:
+  global-config:
+    print-banner: false
+  configuration:
+    sql-print: true
   mapper-locations: classpath*:/mapper/**/*.xml
 
 shared:
@@ -40,8 +44,8 @@ shared:
         mode: L1_ONLY
         ttl: 24h
       file-template-cache:
-        # 模板配置缓存（批次3：读多写少；save 时 evictAll 广播失效）
-        mode: L2_ONLY
+        # 模板配置缓存（批次3：读多写少；L1 本地 + evictAll 广播失效，多实例最终一致）
+        mode: L1_ONLY
         ttl: 10m
 
 trace:
@@ -53,6 +57,8 @@ trace:
       BatchId: X-Batch-Id
 
 logging:
+  level:
+    com.mybatisflex.core: debug
   file:
     path: /applog/${spring.application.name}
     name: ${spring.application.name}.log

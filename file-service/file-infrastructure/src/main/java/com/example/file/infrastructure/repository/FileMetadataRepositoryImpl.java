@@ -52,6 +52,7 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
       log.debug("新增文件元数据: fileId={}", file.id());
     } else {
       mapper.update(aDo);
+      file.syncVersionAfterUpdate();
       log.debug("更新文件元数据: fileId={}, version={}", file.id(), file.version());
     }
     publishDomainEvents(file);

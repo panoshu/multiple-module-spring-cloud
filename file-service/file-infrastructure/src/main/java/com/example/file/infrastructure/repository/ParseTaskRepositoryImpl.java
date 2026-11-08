@@ -36,7 +36,11 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
     if (mapper.selectOneById(aDo.getId()) == null) {
       mapper.insert(aDo);
     } else {
-      mapper.update(aDo);
+      int affected = mapper.update(aDo);
+      org.slf4j.LoggerFactory.getLogger("FILE-SQL-TRACE")
+        .info("[save] id={} status={} doVersion={} affected={}",
+          aDo.getId(), aDo.getStatus(), aDo.getVersion(), affected);
+      task.syncVersionAfterUpdate();
     }
     publishDomainEvents(task);
   }

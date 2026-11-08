@@ -52,8 +52,18 @@ public class JdbcEventStore implements EventStore {
     }
   }
 
+  /**
+   * 投递日志初始化（2026-11-08 批次4 修正事务策略）.
+   *
+   * <p>原 MANDATORY 与 DefaultEventBus 的无事务发布分支自相矛盾（bus 的 else
+   * 分支明确支持无事务直发，但 MANDATORY 在此先行抛 IllegalTransactionStateException，
+   * 分支不可达）——同流程的 save 也是 REQUIRED 语义，本方法曾独树一帜.</p>
+   *
+   * <p>SUPPORTS：有事务加入（保持 Outbox 原子性——业务回滚日志同生共死）；
+   * 无事务独立提交（与 save 对齐），交付 bus 的双分支设计.</p>
+   */
   @Override
-  @Transactional(propagation = Propagation.MANDATORY)
+  @Transactional(propagation = Propagation.SUPPORTS)
   public long initDispatchLog(String eventId, String channel) {
     KeyHolder keyHolder = new GeneratedKeyHolder();
     String sql = "INSERT INTO sys_event_dispatch_log (event_id, channel, status, created_at) VALUES (?, ?, 'PENDING', ?)";
