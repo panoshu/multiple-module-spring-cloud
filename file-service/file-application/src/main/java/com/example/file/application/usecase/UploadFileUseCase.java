@@ -6,6 +6,7 @@ import com.example.file.application.result.UploadFileResult;
 import com.example.file.domain.model.aggregate.root.ParseTask;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.repository.ParseTaskRepository;
+import com.example.file.domain.model.aggregate.root.TemplateConfig;
 import com.example.file.domain.repository.TemplateConfigRepository;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
@@ -34,15 +35,18 @@ public class UploadFileUseCase {
   private final ParseTaskRepository parseTaskRepository;
   private final TemplateConfigRepository configRepository;
   private final ParseFileUseCase parseFileUseCase;
+  private final com.example.file.domain.service.TemplateRoutingService routingService;
 
   public UploadFileUseCase(com.example.shared.identifier.contract.IdService idService,
                           ParseTaskRepository parseTaskRepository,
                           TemplateConfigRepository configRepository,
-                          ParseFileUseCase parseFileUseCase) {
+                          ParseFileUseCase parseFileUseCase,
+                          com.example.file.domain.service.TemplateRoutingService routingService) {
     this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
     this.configRepository = configRepository;
     this.parseFileUseCase = parseFileUseCase;
+    this.routingService = routingService;
   }
 
   @Transactional
@@ -62,8 +66,22 @@ public class UploadFileUseCase {
     }
     parseTaskRepository.save(task);
 
-    boolean isFormUpload = configRepository.findActive(BizType.of(cmd.bizType())).isPresent();
+    // 品类判定（批次3 A1/A3）：显式 category 优先；空则按配置存在性兼容（存量行为）
+    boolean isFormUpload;
+    if (cmd.category() != null && !cmd.category().isBlank()) {
+      isFormUpload = "FORM".equals(cmd.category());
+    } else {
+      isFormUpload = configRepository.findActive(BizType.of(cmd.bizType())).isPresent();
+    }
     if (isFormUpload) {
+      // 路由选择（批次3 A3）：上下文→模板配置；命中即绑定模板（解析阶段精确使用）
+      TemplateConfig routed = routingService
+        .route(configRepository.findAllActive(BizType.of(cmd.bizType())), cmd.routingContext())
+        .orElse(null);
+      if (routed != null) {
+        task.bindTemplate(TemplateCode.of(routed.id().value()));
+        parseTaskRepository.save(task);
+      }
       scheduleAsyncParsing(taskId, cmd.uploader());
     }
     return new UploadFileResult(task.id().value(), task.status().name(), task.createdAt());

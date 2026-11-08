@@ -28,6 +28,10 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
   private final TemplateConfigMapper mapper;
   private final TemplateConfigConverter converter;
   private final ApplicationEventPublisher eventPublisher;
+  /**
+   * 批次3 cache-starter 接入：模板配置读缓存（file 宿主必备 cache-starter——自动装配保证非空）.
+   */
+  private final com.example.shared.cache.core.ICacheTemplate cacheTemplate;
 
   @Override
   public Optional<TemplateConfig> findById(TemplateConfigId id) {
@@ -44,6 +48,28 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
       mapper.update(aDo);
     }
     publishDomainEvents(config);
+    cacheTemplate.evictAll("file-template-cache");
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public java.util.List<TemplateConfig> findAllActive(BizType bizType) {
+    // 批次3 cache-starter 接入：配置读多写少——L2 缓存 + save 时 evictAll
+    Object cached = cacheTemplate.getOrLoad("file-template-cache", "active:" + bizType.value(),
+      _ -> queryAllActive(bizType), Object.class);
+    if (cached instanceof java.util.List<?> list) {
+      return (java.util.List<TemplateConfig>) list;
+    }
+    return queryAllActive(bizType);
+  }
+
+  private java.util.List<TemplateConfig> queryAllActive(BizType bizType) {
+    return mapper.selectListByQuery(
+        QueryWrapper.create()
+          .where(TEMPLATE_CONFIG_DO.BIZ_TYPE.eq(bizType.value()))
+          .where(TEMPLATE_CONFIG_DO.STATUS.eq(ConfigStatus.ACTIVE.name()))
+          .orderBy(TEMPLATE_CONFIG_DO.EFFECTIVE_FROM.desc()))
+      .stream().map(converter::toDomain).toList();
   }
 
   @Override

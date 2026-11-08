@@ -40,9 +40,24 @@ public class ApplyUploadTokenUseCase {
   private final StorageTargetResolver targetResolver;
   private final FileTokenService tokenService;
   private final FileAccessLogRepository logRepository;
+  private final com.example.file.domain.repository.TemplateConfigRepository configRepository;
+  private final com.example.file.domain.service.TemplateRoutingService routingService;
 
   @Transactional
   public ApplyUploadTokenResult apply(ApplyUploadTokenCommand cmd) {
+    // 路由预判（批次3 A2，设计决策 D2）：FORM 品类在申请阶段即完成"上下文→模板配置"路由，
+    // 无可用配置立即拒绝（fail-fast）——别等文件上传完才发现没有配置
+    if (cmd.category() != null && "FORM".equals(cmd.category())) {
+      boolean routed = routingService
+        .route(configRepository.findAllActive(com.example.file.types.BizType.of(cmd.bizType())),
+          cmd.routingContext())
+        .isPresent();
+      if (!routed) {
+        throw new com.example.shared.exception.BusinessException(
+            com.example.shared.exception.CommonError.BAD_REQUEST)
+          .withUserDetail("该业务上下文未配置表单解析模板（bizType=" + cmd.bizType() + "）");
+      }
+    }
     if (cmd.ttl() == null) {
       throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
         .withLogDetail("ttl 不能为空");

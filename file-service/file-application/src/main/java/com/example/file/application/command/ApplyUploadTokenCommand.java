@@ -26,6 +26,8 @@ import java.util.List;
  */
 public record ApplyUploadTokenCommand(
   String bizType,
+  String category,
+  java.util.Map<String, String> routingContext,
   String sourceApp,
   BatchId businessBatchId,
   FileAccessScope accessScope,

@@ -240,4 +240,31 @@ public interface TemplateConfigConverter {
       throw new RuntimeException("反序列化目标映射失败", e);
     }
   }
+
+  @org.mapstruct.AfterMapping
+  default void attachRoutingRules(@org.mapstruct.MappingTarget TemplateConfig domain, TemplateConfigDO aDo) {
+    if (aDo.getRoutingRules() == null || aDo.getRoutingRules().isBlank()) {
+      return;
+    }
+    try {
+      List<com.example.file.domain.model.valueobject.config.RoutingRule> rules =
+        OBJECT_MAPPER.readValue(aDo.getRoutingRules(),
+          new com.fasterxml.jackson.core.type.TypeReference<List<com.example.file.domain.model.valueobject.config.RoutingRule>>() {
+          });
+      domain.attachRoutingRules(rules);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("反序列化路由规则失败", e);
+    }
+  }
+
+  static String routingRulesToJson(List<com.example.file.domain.model.valueobject.config.RoutingRule> rules) {
+    if (rules == null || rules.isEmpty()) {
+      return null;
+    }
+    try {
+      return OBJECT_MAPPER.writeValueAsString(rules);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("序列化路由规则失败", e);
+    }
+  }
 }

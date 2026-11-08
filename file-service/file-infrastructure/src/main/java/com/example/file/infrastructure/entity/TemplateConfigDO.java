@@ -25,6 +25,8 @@ public class TemplateConfigDO {
   private String sourceTemplates;
   private String targetTemplateRef;
   private String targetMapping;
+  /** 上下文路由规则（批次3 A3）JSONB */
+  private String routingRules;
   private String status;
   private LocalDateTime effectiveFrom;
   private LocalDateTime effectiveTo;

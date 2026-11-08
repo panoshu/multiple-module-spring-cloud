@@ -106,7 +106,7 @@ class StrongTypeIdDeserializationTest {
   @DisplayName("ApplyUploadTokenRequest round-trip: 序列化后反序列化保持一致")
   void should_round_trip_apply_upload_token_request() throws Exception {
     ApplyUploadTokenRequest original = new ApplyUploadTokenRequest(
-      "annuity",
+    "annuity", null, null,
       "approval-service",
       "BATCH_001",
       CustomerNo.of("C001"),

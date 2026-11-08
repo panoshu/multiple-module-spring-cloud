@@ -87,7 +87,8 @@ class ApplyUploadTokenUseCaseTest {
     targetResolver = mock(StorageTargetResolver.class);
     tokenService = mock(FileTokenService.class);
     logRepository = mock(FileAccessLogRepository.class);
-    useCase = new ApplyUploadTokenUseCase(TEST_IDS, metadataRepository, targetResolver, tokenService, logRepository);
+    useCase = new ApplyUploadTokenUseCase(TEST_IDS, metadataRepository, targetResolver, tokenService,
+      logRepository, null, null);
   }
 
   @Test
@@ -102,7 +103,7 @@ class ApplyUploadTokenUseCaseTest {
       .thenReturn("encrypted-token");
 
     ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
-      "annuity", "approval-service", new BatchId("b001"),
+    "annuity", null, null, "approval-service", new BatchId("b001"),
       new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
       UserNo.of("u1"), LocalDateTime.now().plusDays(7),
       List.of("application/xlsx"), 10L * 1024 * 1024, Duration.ofMinutes(15)
@@ -124,7 +125,7 @@ class ApplyUploadTokenUseCaseTest {
   @DisplayName("apply 在 ttl 为空时应抛 DomainException(INVALID_OPERATION)")
   void apply_should_throw_when_ttl_is_null() {
     ApplyUploadTokenCommand cmd = new ApplyUploadTokenCommand(
-      "annuity", "approval-service", new BatchId("b001"),
+    "annuity", null, null, "approval-service", new BatchId("b001"),
       new FileAccessScope(CustomerNo.of("C001"), ProductNo.of("P001")),
       UserNo.of("u1"), LocalDateTime.now().plusDays(7),
       List.of("application/xlsx"), 10L * 1024 * 1024, null

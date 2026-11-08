@@ -33,6 +33,8 @@ public interface FileAccessConverter {
   default ApplyUploadTokenCommand toCommand(ApplyUploadTokenRequest request, Duration ttl) {
     return new ApplyUploadTokenCommand(
       request.bizType(),
+      request.category(),
+      request.routingContext(),
       request.sourceApp(),
       new BatchId(request.businessBatchId()),
       new FileAccessScope(request.customerNo(), request.productNo()),

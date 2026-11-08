@@ -34,6 +34,10 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
   private ConfigStatus status;
   private LocalDateTime effectiveFrom;
   private LocalDateTime effectiveTo;
+  /**
+   * 上下文路由规则（批次3 A3）——可变扩展字段（attach 注入，不改构造签名）.
+   */
+  private java.util.List<com.example.file.domain.model.valueobject.config.RoutingRule> routingRules = java.util.List.of();
 
   // 业务创建
   private TemplateConfig(TemplateConfigId id, BizType bizType, String version, ErrorPolicy errorPolicy,
@@ -114,6 +118,17 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
   public void deprecate() {
     this.status = ConfigStatus.DEPRECATED;
     this.effectiveTo = LocalDateTime.now();
+  }
+
+  public java.util.List<com.example.file.domain.model.valueobject.config.RoutingRule> routingRules() {
+    return List.copyOf(routingRules);
+  }
+
+  /**
+   * 注入路由规则（配置装配阶段）.
+   */
+  public void attachRoutingRules(java.util.List<com.example.file.domain.model.valueobject.config.RoutingRule> rules) {
+    this.routingRules = rules == null ? List.of() : List.copyOf(rules);
   }
 
   public Optional<SourceTemplateDef> findSourceTemplate(TemplateCode code) {

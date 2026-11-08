@@ -130,4 +130,16 @@ public class FileAccessIntegrationTestConfiguration {
   public FileTokenStore fileTokenStore(StringRedisTemplate redisTemplate, FileTokenProperties properties) {
     return new RedisFileTokenStore(redisTemplate, properties);
   }
+
+  @org.springframework.context.annotation.Bean
+  com.example.shared.cache.core.ICacheTemplate testCacheTemplate() {
+    com.example.shared.cache.core.ICacheTemplate mock =
+      org.mockito.Mockito.mock(com.example.shared.cache.core.ICacheTemplate.class);
+    // getOrLoad 直通 loader
+    org.mockito.Mockito.when(mock.getOrLoad(
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.<Class<Object>>any()))
+      .thenAnswer(inv -> ((java.util.function.Function<String, Object>) inv.getArgument(2)).apply(inv.getArgument(1)));
+    return mock;
+  }
 }

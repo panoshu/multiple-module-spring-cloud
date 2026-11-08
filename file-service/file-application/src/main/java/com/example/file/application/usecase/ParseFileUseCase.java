@@ -18,7 +18,6 @@ import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.List;
@@ -42,7 +41,6 @@ public class ParseFileUseCase {
   private final DataDeriver deriver;
   private final DataValidator validator;
   private final TaskSplitter splitter;
-  private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
   public ParseFileUseCase(com.example.shared.identifier.contract.IdService idService, ParseTaskRepository parseTaskRepository,
                           SubTaskDataRepository subTaskRepository,
@@ -55,8 +53,7 @@ public class ParseFileUseCase {
                           CanonicalModelBuilder modelBuilder,
                           DataDeriver deriver,
                           DataValidator validator,
-                          TaskSplitter splitter,
-                          org.springframework.transaction.support.TransactionTemplate transactionTemplate) {
+                          TaskSplitter splitter) {
     this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
     this.subTaskRepository = subTaskRepository;
@@ -70,10 +67,8 @@ public class ParseFileUseCase {
     this.deriver = deriver;
     this.validator = validator;
     this.splitter = splitter;
-    this.transactionTemplate = transactionTemplate;
   }
 
-  @Transactional
   public void execute(ParseFileCommand cmd) {
     FileTaskId taskId = FileTaskId.of(cmd.fileTaskId());
     ParseTask task = parseTaskRepository.findById(taskId)
@@ -175,9 +170,7 @@ public class ParseFileUseCase {
           "解析失败: " + ex.getMessage(),
           "stack: " + ex
         ));
-        // 独立事务持久化失败终态：原事务已 rollback-only（原始异常标记），
-        // 同事务 save 会被吞——失败状态必须"失败也要记录"
-        persistInNewTransaction(task);
+        parseTaskRepository.save(task);
       } catch (Exception persistEx) {
         log.error("markFailed 持久化失败: fileTaskId={}", cmd.fileTaskId(), persistEx);
       }
@@ -205,12 +198,4 @@ public class ParseFileUseCase {
     return CanonicalData.of(props, tables);
   }
 
-  /**
-   * REQUIRES_NEW 独立事务持久化（失败终态 + 其事件发布）.
-   */
-  private void persistInNewTransaction(ParseTask task) {
-    transactionTemplate.setPropagationBehavior(
-      org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-    transactionTemplate.executeWithoutResult(_ -> parseTaskRepository.save(task));
-  }
 }

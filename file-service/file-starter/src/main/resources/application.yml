@@ -39,6 +39,10 @@ shared:
       segment_buffer:
         mode: L1_ONLY
         ttl: 24h
+      file-template-cache:
+        # 模板配置缓存（批次3：读多写少；save 时 evictAll 广播失效）
+        mode: L2_ONLY
+        ttl: 10m
 
 trace:
   context:
