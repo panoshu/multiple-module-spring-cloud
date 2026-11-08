@@ -74,7 +74,7 @@ class FileMetadataConverterTest {
     aDo.setUpdatedBy("u1");
     aDo.setCreateTime(LocalDateTime.now());
     aDo.setUpdateTime(LocalDateTime.now());
-    aDo.setDeleted(false);
+    aDo.setDeleted(0);
     aDo.setVersion(0);
     return aDo;
   }

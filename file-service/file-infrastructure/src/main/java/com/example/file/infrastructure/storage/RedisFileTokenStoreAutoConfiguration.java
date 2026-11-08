@@ -3,7 +3,6 @@ package com.example.file.infrastructure.storage;
 import com.example.file.domain.gateway.FileTokenStore;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +37,6 @@ public class RedisFileTokenStoreAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(FileTokenStore.class)
-  @ConditionalOnBean(StringRedisTemplate.class)
   public FileTokenStore redisFileTokenStore(StringRedisTemplate redisTemplate, FileTokenProperties properties) {
     return new RedisFileTokenStore(redisTemplate, properties);
   }

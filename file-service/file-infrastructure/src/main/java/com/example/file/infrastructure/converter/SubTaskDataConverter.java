@@ -42,7 +42,7 @@ public interface SubTaskDataConverter {
   @Mapping(target = "createTime", expression = "java(subTask.createdAt())")
   @Mapping(target = "updateTime", expression = "java(subTask.updatedAt())")
   @Mapping(target = "version", expression = "java((int) subTask.version().value())")
-  @Mapping(target = "deleted", constant = "false")
+  @Mapping(target = "deleted", constant = "0")
   SubTaskDataDO toDO(SubTaskData subTask);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toSubTaskId")

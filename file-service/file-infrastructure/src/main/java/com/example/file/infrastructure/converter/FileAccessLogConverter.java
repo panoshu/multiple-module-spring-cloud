@@ -45,7 +45,7 @@ public interface FileAccessLogConverter {
     aDo.setUpdatedBy(log.updatedBy());
     aDo.setCreateTime(log.createdAt());
     aDo.setUpdateTime(log.updatedAt());
-    aDo.setDeleted(false);
+    aDo.setDeleted(0);
     aDo.setVersion(log.version() != null ? (int) log.version().value() : 0);
     return aDo;
   }

@@ -43,7 +43,7 @@ public interface TemplateConfigConverter {
   @Mapping(target = "createTime", expression = "java(config.createdAt())")
   @Mapping(target = "updateTime", expression = "java(config.updatedAt())")
   @Mapping(target = "version", expression = "java((int) config.version().value())")
-  @Mapping(target = "deleted", constant = "false")
+  @Mapping(target = "deleted", constant = "0")
   TemplateConfigDO toDO(TemplateConfig config);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toTemplateConfigId")

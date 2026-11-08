@@ -51,7 +51,7 @@ public interface FileMetadataConverter {
     aDo.setUpdatedBy(file.updatedBy());
     aDo.setCreateTime(file.createdAt());
     aDo.setUpdateTime(file.updatedAt());
-    aDo.setDeleted(false);
+    aDo.setDeleted(0);
     aDo.setVersion(file.version() != null ? (int) file.version().value() : 0);
     return aDo;
   }
