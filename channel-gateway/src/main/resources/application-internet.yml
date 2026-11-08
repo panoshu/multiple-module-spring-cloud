@@ -61,3 +61,9 @@ auth:
       - /actuator
       - /favicon.ico
       - /internet/auth/login
+      # file-service Token 自鉴权端点（批次5/设计决策 D4：file token 机制自成鉴权体系，
+      # 跳过 sa-token 会话校验——上传/下载由 X-File-Token 短时效+一次性+会话比对保障）
+      - /internet/file/api/file/access/upload-tokens
+      - /internet/file/api/file/access/upload
+      - /internet/file/api/file/access/download-tokens
+      - /internet/file/api/file/access/download

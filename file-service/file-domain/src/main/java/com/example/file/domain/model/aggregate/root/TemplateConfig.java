@@ -38,6 +38,11 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
    * 上下文路由规则（批次3 A3）——可变扩展字段（attach 注入，不改构造签名）.
    */
   private java.util.List<com.example.file.domain.model.valueobject.config.RoutingRule> routingRules = java.util.List.of();
+  /**
+   * 导出数据增强端点（批次5：设计文档 §7——业务服务实现的 enrichment 端点 URL，
+   * 生成流程在模板填充前回调；空=无增强）.
+   */
+  private String enrichmentEndpoint;
 
   // 业务创建
   private TemplateConfig(TemplateConfigId id, BizType bizType, String version, ErrorPolicy errorPolicy,
@@ -129,6 +134,14 @@ public class TemplateConfig extends AggregateRoot<TemplateConfigId> {
    */
   public void attachRoutingRules(java.util.List<com.example.file.domain.model.valueobject.config.RoutingRule> rules) {
     this.routingRules = rules == null ? List.of() : List.copyOf(rules);
+  }
+
+  public String enrichmentEndpoint() {
+    return enrichmentEndpoint;
+  }
+
+  public void attachEnrichmentEndpoint(String endpoint) {
+    this.enrichmentEndpoint = (endpoint == null || endpoint.isBlank()) ? null : endpoint;
   }
 
   public Optional<SourceTemplateDef> findSourceTemplate(TemplateCode code) {

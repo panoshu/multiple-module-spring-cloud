@@ -92,3 +92,12 @@ auth:
       - /branch/auth/secondary-auth/initiate
       - /branch/auth/secondary-auth/confirm
       - /branch/auth/secondary-auth/status/**
+      # file-service Token 自鉴权端点（批次5/设计决策 D4）
+      - /hq/file/api/file/access/upload-tokens
+      - /hq/file/api/file/access/upload
+      - /hq/file/api/file/access/download-tokens
+      - /hq/file/api/file/access/download
+      - /branch/file/api/file/access/upload-tokens
+      - /branch/file/api/file/access/upload
+      - /branch/file/api/file/access/download-tokens
+      - /branch/file/api/file/access/download

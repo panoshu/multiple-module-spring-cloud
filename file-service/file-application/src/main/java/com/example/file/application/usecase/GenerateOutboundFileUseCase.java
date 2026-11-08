@@ -52,6 +52,8 @@ public class GenerateOutboundFileUseCase {
   private final IdService idService;
   private final SubTaskDataRepository subTaskRepository;
   private final FileMetadataRepository fileMetadataRepository;
+  private final com.example.file.domain.gateway.OutboundEnricherGateway enricherGateway;
+  private final com.example.file.domain.repository.TemplateConfigRepository configRepository;
   private final TargetTemplateStorage targetTemplateStorage;
   private final ExcelExporter excelExporter;
   private final FileStorageGateway fileStorageGateway;
@@ -59,6 +61,8 @@ public class GenerateOutboundFileUseCase {
 
   public GenerateOutboundFileUseCase(IdService idService, SubTaskDataRepository subTaskRepository,
                                      FileMetadataRepository fileMetadataRepository,
+                                     com.example.file.domain.gateway.OutboundEnricherGateway enricherGateway,
+                                     com.example.file.domain.repository.TemplateConfigRepository configRepository,
                                      TargetTemplateStorage targetTemplateStorage,
                                      ExcelExporter excelExporter,
                                      FileStorageGateway fileStorageGateway,
@@ -66,6 +70,8 @@ public class GenerateOutboundFileUseCase {
     this.idService = idService;
     this.subTaskRepository = subTaskRepository;
     this.fileMetadataRepository = fileMetadataRepository;
+    this.enricherGateway = enricherGateway;
+    this.configRepository = configRepository;
     this.targetTemplateStorage = targetTemplateStorage;
     this.excelExporter = excelExporter;
     this.fileStorageGateway = fileStorageGateway;
@@ -79,6 +85,12 @@ public class GenerateOutboundFileUseCase {
       ? cmd.supplementalData() : Map.of();
 
     validateSupplementalData(supplementalData);
+
+    // enricher 端点（批次5 §7）：按目标模板配置解析（空=无增强直出）
+    String enrichmentEndpoint = configRepository
+      .findById(com.example.file.types.TemplateConfigId.of(cmd.targetTemplateId()))
+      .map(com.example.file.domain.model.aggregate.root.TemplateConfig::enrichmentEndpoint)
+      .orElse(null);
 
     List<SubTaskSummary> summaries = subTaskRepository.findSummariesByTask(fileTaskId);
     if (summaries.isEmpty()) {
@@ -96,7 +108,7 @@ public class GenerateOutboundFileUseCase {
             .withLogDetail("subTaskId=" + summary.subTaskId()));
 
         OutboundFileGeneratedEvent.GeneratedFileInfo info =
-          generateSingleFile(subTask, supplementalData, templateStream, cmd, operator);
+          generateSingleFile(subTask, supplementalData, templateStream, cmd, operator, enrichmentEndpoint);
         generatedFiles.add(info);
       }
     } catch (BusinessException e) {
@@ -120,10 +132,21 @@ public class GenerateOutboundFileUseCase {
 
   private OutboundFileGeneratedEvent.GeneratedFileInfo generateSingleFile(
     SubTaskData subTask, Map<String, Object> supplementalData,
-    InputStream templateStream, GenerateOutboundFileCommand cmd, UserNo operator) {
+    InputStream templateStream, GenerateOutboundFileCommand cmd, UserNo operator,
+    String enrichmentEndpoint) {
+
+    // 0. 导出数据增强（批次5 §7：模板填充前回调业务 enricher——fail-fast 容错已定稿）
+    Map<String, Object> enrichedProps = enrichProps(subTask, cmd, enrichmentEndpoint);
+    Map<String, Object> effectiveSupplemental = enrichedProps.isEmpty()
+      ? supplementalData
+      : java.util.stream.Stream.concat(supplementalData.entrySet().stream(),
+          enrichedProps.entrySet().stream())
+        .collect(java.util.stream.Collectors.toMap(
+          java.util.Map.Entry::getKey, java.util.Map.Entry::getValue, (a, b) -> b,
+          java.util.LinkedHashMap::new));
 
     // 1. 合并标准数据与补充数据
-    CanonicalData merged = mergeSupplementalData(subTask, supplementalData);
+    CanonicalData merged = mergeSupplementalData(subTask, effectiveSupplemental);
     SplitUnit unit = buildSplitUnit(subTask, merged);
 
     // 2. Fesod 模板填充
@@ -180,4 +203,26 @@ public class GenerateOutboundFileUseCase {
   private String buildOutboundFileName(SubTaskData subTask, String targetTemplateId) {
     return targetTemplateId + "_" + subTask.splitKeyValue() + ".xlsx";
   }
+
+  /**
+   * 增强调用：subTask 的主表 base 行 → enricher 回调（按行合并为 properties 形态）.
+   */
+  private Map<String, Object> enrichProps(SubTaskData subTask, GenerateOutboundFileCommand cmd,
+                                          String enrichmentEndpoint) {
+    if (enrichmentEndpoint == null) {
+      return Map.of();
+    }
+    // 主表第一行作为增强基准行（当前导出模型=单行属性+明细表；
+    // 明细行级增强的演进留字段域配置模型落地后）
+    var mainRows = subTask.tables().values().stream().findFirst()
+      .map(rows -> rows.isEmpty() ? null : rows.get(0))
+      .orElse(null);
+    if (mainRows == null) {
+      return Map.of();
+    }
+    var enriched = enricherGateway.invoke(enrichmentEndpoint,
+      subTask.id().value(), cmd.fileTaskId(), java.util.List.of(mainRows));
+    return enriched.isEmpty() ? Map.of() : enriched.get(0);
+  }
 }
+
