@@ -158,4 +158,21 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
     eventSimulator.publish(event);
     log.info("[Mock] 已发布 OutboundFileGeneratedEventDTO, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
   }
+
+  /**
+   * Mock 分页拉取（批次2 SPI 新方法）：按页返回 Mock 员工行.
+   */
+  @Override
+  public ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size) {
+    Map<String, Object> row1 = new java.util.LinkedHashMap<>();
+    row1.put("employeeName", "张三");
+    row1.put("monthlySalary", 100000);
+    Map<String, Object> row2 = new java.util.LinkedHashMap<>();
+    row2.put("employeeName", "李四");
+    row2.put("monthlySalary", 150000);
+    List<Map<String, Object>> all = List.of(row1, row2);
+    int from = Math.min((page - 1) * size, all.size());
+    int to = Math.min(from + size, all.size());
+    return new ParsedRowsPage(all.size(), from, to < all.size(), all.subList(from, to));
+  }
 }

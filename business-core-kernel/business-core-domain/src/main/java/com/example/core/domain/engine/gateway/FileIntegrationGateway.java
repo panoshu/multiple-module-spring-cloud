@@ -69,4 +69,26 @@ public interface FileIntegrationGateway {
    */
   void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
                                   Map<String, Object> supplementalData, String operator);
+
+  /**
+   * 5. 分页拉取解析数据（数据消费闭环，2026-11-08 批次2）.
+   *
+   * <p>FileParsedEvent 消费方凭 subTaskId 凭证分页拉取 canonical 行数据——
+   * 数据留在 file 域（数据不动原则），消费方低内存消费、游标续传.
+   *
+   * @param subTaskId 子任务凭证（事件载荷）
+   * @param tableCode 数据表编码（单表场景可空——file 侧取默认表）
+   */
+  ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size);
+
+  /**
+   * 分页结果（行数据为字段名→值的 Map，零 file 契约依赖）.
+   */
+  record ParsedRowsPage(
+    int totalCount,
+    int startPos,
+    boolean hasMore,
+    List<Map<String, Object>> rows
+  ) {
+  }
 }

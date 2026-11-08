@@ -116,8 +116,17 @@ public class EventAutoConfiguration {
       org.springframework.data.redis.core.RedisTemplate<String, Object> template =
         new org.springframework.data.redis.core.RedisTemplate<>();
       template.setConnectionFactory(factory);
+      // JavaTimeModule 必须注册：集成事件 DTO 普遍携带 LocalDateTime（E2E 实证：
+      // 未注册时序列化抛 "Java 8 date/time type not supported"，投递失败）
+      com.fasterxml.jackson.databind.ObjectMapper eventObjectMapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+      eventObjectMapper.findAndRegisterModules();
+      eventObjectMapper.activateDefaultTyping(
+        com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator.instance,
+        com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.NON_FINAL,
+        com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
       org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer serializer =
-        new org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer();
+        new org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer(eventObjectMapper);
       template.setKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
       template.setValueSerializer(serializer);
       template.setHashKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());

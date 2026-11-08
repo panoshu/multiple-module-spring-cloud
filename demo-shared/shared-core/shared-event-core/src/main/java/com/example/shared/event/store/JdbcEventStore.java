@@ -61,9 +61,15 @@ public class JdbcEventStore implements EventStore {
       .param(eventId)
       .param(channel)
       .param(LocalDateTime.now())
-      .update(keyHolder);
-    return Objects.requireNonNull(keyHolder.getKeyAs(Long.class),
-      "插入 event dispatch log 失败");
+      .update(keyHolder, new String[]{"id"});
+    // PG 的 useGeneratedKeys 会 RETURNING 整行（H2 仅回自增 id）——显式声明 key 列后
+    // keyHolder 情况不一（驱动差异），双路兜底取 id
+    Long id = keyHolder.getKeyAs(Long.class);
+    if (id == null && keyHolder.getKeys() != null) {
+      Object v = keyHolder.getKeys().get("id");
+      id = v instanceof Number n ? n.longValue() : (v != null ? Long.parseLong(v.toString()) : null);
+    }
+    return Objects.requireNonNull(id, "插入 event dispatch log 失败");
   }
 
   @Override

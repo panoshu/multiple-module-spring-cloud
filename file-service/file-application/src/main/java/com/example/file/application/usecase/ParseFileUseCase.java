@@ -16,6 +16,7 @@ import com.example.file.domain.repository.TemplateConfigRepository;
 import com.example.file.domain.service.*;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class ParseFileUseCase {
 
@@ -40,6 +42,7 @@ public class ParseFileUseCase {
   private final DataDeriver deriver;
   private final DataValidator validator;
   private final TaskSplitter splitter;
+  private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
   public ParseFileUseCase(com.example.shared.identifier.contract.IdService idService, ParseTaskRepository parseTaskRepository,
                           SubTaskDataRepository subTaskRepository,
@@ -52,7 +55,8 @@ public class ParseFileUseCase {
                           CanonicalModelBuilder modelBuilder,
                           DataDeriver deriver,
                           DataValidator validator,
-                          TaskSplitter splitter) {
+                          TaskSplitter splitter,
+                          org.springframework.transaction.support.TransactionTemplate transactionTemplate) {
     this.idService = idService;
     this.parseTaskRepository = parseTaskRepository;
     this.subTaskRepository = subTaskRepository;
@@ -66,6 +70,7 @@ public class ParseFileUseCase {
     this.deriver = deriver;
     this.validator = validator;
     this.splitter = splitter;
+    this.transactionTemplate = transactionTemplate;
   }
 
   @Transactional
@@ -159,13 +164,23 @@ public class ParseFileUseCase {
         parseTaskRepository.save(task);
       }
     } catch (Exception ex) {
-      task.markFailed(new TaskError(
-        "PARSE_ERROR",
-        "解析失败: " + ex.getMessage(),
-        "stack: " + ex
-      ));
-      parseTaskRepository.save(task);
-      throw new RuntimeException("Parse failed for task: " + cmd.fileTaskId(), ex);
+      // 异步解析的失败语义（2026-11-08 批次2 修正）：
+      // markFailed + 失败事件发布（事务提交，任务终态 FAILED）——不 rethrow。
+      // 原 rethrow 会回滚整个事务：ParseTask 状态回滚至 PENDING（状态机永不终结）、
+      // 触发方重试还会造成重复解析。失败已由 FileParsedEvent(status=FAILED) 通知消费方。
+      log.error("解析失败: fileTaskId={}", cmd.fileTaskId(), ex);
+      try {
+        task.markFailed(new TaskError(
+          "PARSE_ERROR",
+          "解析失败: " + ex.getMessage(),
+          "stack: " + ex
+        ));
+        // 独立事务持久化失败终态：原事务已 rollback-only（原始异常标记），
+        // 同事务 save 会被吞——失败状态必须"失败也要记录"
+        persistInNewTransaction(task);
+      } catch (Exception persistEx) {
+        log.error("markFailed 持久化失败: fileTaskId={}", cmd.fileTaskId(), persistEx);
+      }
     }
   }
 
@@ -188,5 +203,14 @@ public class ParseFileUseCase {
       }
     }
     return CanonicalData.of(props, tables);
+  }
+
+  /**
+   * REQUIRES_NEW 独立事务持久化（失败终态 + 其事件发布）.
+   */
+  private void persistInNewTransaction(ParseTask task) {
+    transactionTemplate.setPropagationBehavior(
+      org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    transactionTemplate.executeWithoutResult(_ -> parseTaskRepository.save(task));
   }
 }

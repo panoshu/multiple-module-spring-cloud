@@ -6,6 +6,9 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.file.api.FileAccessApi;
+import com.example.file.api.ParsedDataApi;
+import com.example.file.api.request.FetchRowsRequest;
+import com.example.file.api.response.ParsedRowDTO;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.OutboundApi;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
@@ -24,6 +27,8 @@ import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -51,6 +56,8 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty("core.integration.file.base-url")
+@EnableConfigurationProperties(FileServiceClientProperties.class)
 @RequiredArgsConstructor
 public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
@@ -65,6 +72,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
     List.of("application/pdf", "image/*");
 
   private final FileAccessApi fileAccessApi;
+  private final ParsedDataApi parsedDataApi;
   private final FileTaskApi fileTaskApi;
   private final OutboundApi outboundApi;
 
@@ -233,5 +241,22 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   private String resolveFileName(FileId fileId) {
     return fileId != null ? fileId.value() + ".json" : "form-detail.json";
+  }
+
+  /**
+   * 分页拉取解析数据（批次2：数据消费闭环）——委托 ParsedDataApi.
+   */
+  @Override
+  public ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size) {
+    var response = parsedDataApi.fetchRows(new FetchRowsRequest(subTaskId, tableCode, page, size));
+    if (response == null || !response.isSuccess() || response.data() == null) {
+      throw new SystemException(CoreInfraErrorCode.FILE_DOWNLOAD_FAILED)
+        .withLogDetail("fetchParsedRows 失败: subTaskId=" + subTaskId
+          + ", code=" + (response != null ? response.code() : "null"));
+    }
+    var pageData = response.data();
+    var rows = pageData.items() == null ? List.<Map<String, Object>>of()
+      : pageData.items().stream().map(ParsedRowDTO::data).toList();
+    return new ParsedRowsPage(pageData.totalCount(), pageData.currentStart(), pageData.hasMore(), rows);
   }
 }
