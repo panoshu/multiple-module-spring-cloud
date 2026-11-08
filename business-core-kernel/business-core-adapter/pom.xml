@@ -14,6 +14,10 @@
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>business-core-api</artifactId>
     </dependency>
     <dependency>
