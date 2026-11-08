@@ -1,12 +1,12 @@
 package com.example.file.application.service;
 
 import com.example.file.application.util.TokenHashUtil;
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
-import com.example.file.domain.model.aggregate.valueobject.SessionUser;
+import com.example.file.domain.model.storage.aggregate.FileAccessLog;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileAccessResult;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileTokenPayload;
+import com.example.file.domain.model.storage.valueobject.SessionUser;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;

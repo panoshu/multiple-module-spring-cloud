@@ -152,6 +152,7 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
     } else {
       // 更新
       flowMapper.update(flowDO);
+      flow.syncVersionAfterUpdate();
       log.debug("更新审批流: flowId={}, version={}", flow.id(), flow.version());
     }
 

@@ -1,6 +1,6 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.repository.ParseTaskRepository;
 import com.example.file.infrastructure.converter.ParseTaskConverter;
 import com.example.file.infrastructure.entity.ParseTaskDO;
@@ -36,10 +36,7 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
     if (mapper.selectOneById(aDo.getId()) == null) {
       mapper.insert(aDo);
     } else {
-      int affected = mapper.update(aDo);
-      org.slf4j.LoggerFactory.getLogger("FILE-SQL-TRACE")
-        .info("[save] id={} status={} doVersion={} affected={}",
-          aDo.getId(), aDo.getStatus(), aDo.getVersion(), affected);
+      mapper.update(aDo);
       task.syncVersionAfterUpdate();
     }
     publishDomainEvents(task);

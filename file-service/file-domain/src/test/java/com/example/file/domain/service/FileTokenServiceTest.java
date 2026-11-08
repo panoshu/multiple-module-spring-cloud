@@ -2,8 +2,8 @@ package com.example.file.domain.service;
 
 import com.example.file.domain.gateway.FileTokenGateway;
 import com.example.file.domain.gateway.FileTokenStore;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.*;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.*;
 import com.example.shared.exception.SystemException;
 import com.example.core.types.BatchId;
 import com.example.core.types.ProductNo;

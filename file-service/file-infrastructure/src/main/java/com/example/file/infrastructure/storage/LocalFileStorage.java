@@ -1,8 +1,8 @@
 package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.errorcode.FileErrorCodes;
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;

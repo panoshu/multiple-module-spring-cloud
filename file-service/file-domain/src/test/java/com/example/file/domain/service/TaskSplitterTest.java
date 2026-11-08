@@ -1,9 +1,9 @@
 package com.example.file.domain.service;
 
 import com.example.file.domain.model.enums.SplitKeyType;
-import com.example.file.domain.model.valueobject.SplitUnit;
-import com.example.file.domain.model.valueobject.config.SplitConfig;
-import com.example.file.domain.model.valueobject.config.SplitKeyDef;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.config.SplitConfig;
+import com.example.file.domain.model.parse.valueobject.config.SplitKeyDef;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -17,7 +17,7 @@ import com.example.file.application.usecase.DownloadFileWithTokenUseCase.Downloa
 import com.example.file.application.usecase.UploadFileWithTokenUseCase;
 import com.example.file.application.util.TokenHashUtil;
 import com.example.file.domain.errorcode.FileErrorCodes;
-import com.example.file.domain.model.aggregate.valueobject.SessionUser;
+import com.example.file.domain.model.storage.valueobject.SessionUser;
 import com.example.file.infrastructure.storage.FileTokenProperties;
 import com.example.shared.exception.BusinessException;
 import com.example.core.types.CustomerNo;

@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.storage;
 
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.tencent.kona.crypto.KonaCryptoProvider;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.BeforeAll;

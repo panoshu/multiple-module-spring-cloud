@@ -1,10 +1,10 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.file.domain.model.aggregate.valueobject.FileStatus;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileStatus;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.infrastructure.FileInfrastructureTestConfiguration;
 import com.example.core.types.BatchId;

@@ -60,6 +60,7 @@ public class SecondaryAuthSessionRepositoryImpl implements SecondaryAuthSessionR
     } else {
       doObj.setVersion(existing.getVersion());
       secondaryAuthSessionMapper.update(doObj);
+      session.syncVersionAfterUpdate();
       log.debug("更新 SecondaryAuthSession: sessionId={}, version={}", session.id(), session.version());
     }
   }

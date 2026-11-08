@@ -1,6 +1,6 @@
 package com.example.file.domain.gateway;
 
-import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
+import com.example.file.domain.model.storage.valueobject.FileTokenPayload;
 
 /**
  * 文件 Token 加密网关 SPI

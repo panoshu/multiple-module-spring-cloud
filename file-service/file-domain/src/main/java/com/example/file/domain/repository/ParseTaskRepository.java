@@ -1,6 +1,6 @@
 package com.example.file.domain.repository;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.types.FileTaskId;
 import com.example.shared.domain.repository.Repository;
 

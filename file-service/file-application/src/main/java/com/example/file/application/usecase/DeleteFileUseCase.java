@@ -1,7 +1,7 @@
 package com.example.file.application.usecase;
 
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileStatus;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileStatus;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.types.FileId;
 import com.example.core.types.UserNo;

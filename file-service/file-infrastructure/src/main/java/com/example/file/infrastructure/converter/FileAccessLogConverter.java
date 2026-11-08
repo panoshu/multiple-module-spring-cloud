@@ -1,9 +1,9 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessAction;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessResult;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.file.domain.model.storage.aggregate.FileAccessLog;
+import com.example.file.domain.model.storage.valueobject.FileAccessAction;
+import com.example.file.domain.model.storage.valueobject.FileAccessResult;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
 import com.example.file.infrastructure.entity.FileAccessLogDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.core.types.ProductNo;

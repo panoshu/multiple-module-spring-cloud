@@ -2,12 +2,12 @@ package com.example.file.domain.service;
 
 import com.example.file.domain.model.enums.KvValuePosition;
 import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.parse.KvRegionResult;
-import com.example.file.domain.model.valueobject.parse.RawRow;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.config.KvStrategy;
+import com.example.file.domain.model.parse.valueobject.config.RegionDef;
+import com.example.file.domain.model.parse.valueobject.KvRegionResult;
+import com.example.file.domain.model.parse.valueobject.RawRow;
+import com.example.file.domain.model.parse.valueobject.RegionParseResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;

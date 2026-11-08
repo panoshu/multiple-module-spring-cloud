@@ -58,6 +58,7 @@ public class AssignmentRepositoryImpl implements AssignmentRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       assignmentMapper.update(doObj);
+      assignment.syncVersionAfterUpdate();
       log.debug("更新 Assignment: assignmentId={}, version={}", assignment.id(), assignment.version());
     }
   }

@@ -1,9 +1,9 @@
 package com.example.file.application.usecase;
 
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileStatus;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileStatus;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.core.types.BatchId;
 import com.example.file.types.FileId;

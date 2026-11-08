@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessAction;
+import com.example.file.domain.model.storage.aggregate.FileAccessLog;
+import com.example.file.domain.model.storage.valueobject.FileAccessAction;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.infrastructure.converter.FileAccessLogConverter;
 import com.example.file.infrastructure.entity.FileAccessLogDO;

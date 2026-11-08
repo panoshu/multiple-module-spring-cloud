@@ -1,6 +1,6 @@
 package com.example.file.domain.gateway;
 
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
 import com.example.core.types.BatchId;
 import com.example.file.types.FileId;
 

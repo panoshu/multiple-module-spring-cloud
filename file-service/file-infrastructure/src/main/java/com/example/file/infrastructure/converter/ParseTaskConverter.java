@@ -1,10 +1,10 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
-import com.example.file.domain.model.valueobject.TaskError;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
+import com.example.file.domain.model.parse.valueobject.TaskError;
 import com.example.file.infrastructure.entity.ParseTaskDO;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;

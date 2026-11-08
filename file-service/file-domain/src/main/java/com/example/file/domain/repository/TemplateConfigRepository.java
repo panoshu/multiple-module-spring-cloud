@@ -1,6 +1,6 @@
 package com.example.file.domain.repository;
 
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
 import com.example.shared.domain.repository.Repository;

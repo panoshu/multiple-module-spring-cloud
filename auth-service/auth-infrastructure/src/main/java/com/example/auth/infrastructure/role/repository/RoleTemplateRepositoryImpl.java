@@ -58,6 +58,7 @@ public class RoleTemplateRepositoryImpl implements RoleTemplateRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       roleTemplateMapper.update(doObj);
+      roleTemplate.syncVersionAfterUpdate();
       log.debug("更新 RoleTemplate: templateId={}, roleCode={}, version={}",
         roleTemplate.id(), roleTemplate.roleCode(), roleTemplate.version());
     }

@@ -64,6 +64,7 @@ public class PermissionItemRepositoryImpl implements PermissionItemRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       mapper.update(doObj);
+      item.syncVersionAfterUpdate();
     }
   }
 

@@ -1,6 +1,6 @@
 package com.example.file.domain.gateway;
 
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.types.BizType;
 
 import java.util.List;

@@ -90,6 +90,7 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
       // 若直接用领域版本，WHERE version=N 不匹配 DB 的旧版本，导致 Updates:0 静默失败。
       batchDO.setVersion(existingBatch.getVersion());
       batchMapper.update(batchDO);
+      batch.syncVersionAfterUpdate();
       log.debug("更新年金员工批次: batchId={}, version={}", batch.id(), batch.version());
     }
 
@@ -102,6 +103,7 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
         // 同 batch：重置为 DB 当前版本，确保乐观锁 WHERE 子句匹配。
         detailDO.setVersion(existingDetail.getVersion());
         detailMapper.update(detailDO);
+        batch.syncVersionAfterUpdate();
       }
     }
 

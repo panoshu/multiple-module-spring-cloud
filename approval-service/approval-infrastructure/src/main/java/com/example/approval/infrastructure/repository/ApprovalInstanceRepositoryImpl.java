@@ -158,6 +158,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
     } else {
       // 更新
       instanceMapper.update(instanceDO);
+      instance.syncVersionAfterUpdate();
       log.debug("更新审批实例: instanceId={}, version={}", instance.id(), instance.version());
     }
 
@@ -286,6 +287,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
       } else {
         // 更新
         executionMapper.update(executionDO);
+        execution.syncVersionAfterUpdate();
       }
 
       // 保存审批记录
@@ -319,6 +321,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
       } else {
         // 更新
         recordMapper.update(recordDO);
+        record.syncVersionAfterUpdate();
       }
     }
 

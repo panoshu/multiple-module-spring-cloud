@@ -2,7 +2,7 @@ package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.ExcelExporter;
-import com.example.file.domain.model.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
 import com.example.shared.exception.SystemException;
 import org.apache.fesod.sheet.ExcelWriter;
 import org.apache.fesod.sheet.FesodSheet;

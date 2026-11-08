@@ -2,8 +2,8 @@ package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.gateway.FileTokenGateway;
 import com.example.file.domain.gateway.FileTokenStore;
-import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.FileTokenPayload;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
 import com.example.file.infrastructure.FileAccessIntegrationTestConfiguration;
 import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;

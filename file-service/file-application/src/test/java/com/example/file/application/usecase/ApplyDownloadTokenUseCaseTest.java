@@ -1,11 +1,11 @@
 package com.example.file.application.usecase;
 
 import com.example.file.application.command.ApplyDownloadTokenCommand;
-import com.example.file.domain.model.aggregate.root.FileAccessLog;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.aggregate.FileAccessLog;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.file.domain.repository.FileAccessLogRepository;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.service.FileTokenService;

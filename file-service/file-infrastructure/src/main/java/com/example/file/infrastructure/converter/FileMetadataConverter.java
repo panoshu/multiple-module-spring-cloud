@@ -1,11 +1,11 @@
 package com.example.file.infrastructure.converter;
 
 import com.example.file.domain.errorcode.FileErrorCodes;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
-import com.example.file.domain.model.aggregate.valueobject.FileStatus;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileStatus;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import com.example.file.infrastructure.entity.FileMetadataDO;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.SystemException;

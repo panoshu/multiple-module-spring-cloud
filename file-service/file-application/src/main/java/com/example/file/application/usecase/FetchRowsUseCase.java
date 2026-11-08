@@ -1,8 +1,8 @@
 package com.example.file.application.usecase;
 
 import com.example.file.api.request.FetchRowsRequest;
-import com.example.file.domain.model.valueobject.FetchPagination;
-import com.example.file.domain.model.valueobject.PagedRows;
+import com.example.file.domain.model.parse.valueobject.FetchPagination;
+import com.example.file.domain.model.parse.valueobject.PagedRows;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.types.SubTaskId;
 import lombok.RequiredArgsConstructor;

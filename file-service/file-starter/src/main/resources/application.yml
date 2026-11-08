@@ -25,6 +25,14 @@ spring:
   profiles:
     include: local
 
+jetcache:
+  statIntervalMinutes: 5
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      limit: 200
+
 mybatis-flex:
   global-config:
     print-banner: false

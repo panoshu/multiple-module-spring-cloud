@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.gateway.ConfigLoader;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.types.BizType;
 import com.example.core.types.UserNo;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.example.file.domain.event;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.TaskStatus;
 import com.example.file.types.BizType;
@@ -22,7 +22,7 @@ class FileParsedEventTest {
     task.markParsing();
     task.markSplitting();
     task.markValidating();
-    task.recordSubTask(new com.example.file.domain.model.valueobject.SubTaskSummary(
+    task.recordSubTask(new com.example.file.domain.model.parse.valueobject.SubTaskSummary(
       com.example.file.types.SubTaskId.of("sub1"), "RD", 5, 5, 0,
       com.example.file.domain.model.enums.SubTaskStatus.VALID));
     task.markSuccess();

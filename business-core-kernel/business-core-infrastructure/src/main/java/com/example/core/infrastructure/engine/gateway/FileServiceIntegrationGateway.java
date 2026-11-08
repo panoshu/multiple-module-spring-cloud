@@ -84,7 +84,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
       return;
     }
     UploadFileRequest request = new UploadFileRequest(
-      BIZ_TYPE_FORM_DETAIL,
+      BIZ_TYPE_FORM_DETAIL, "FORM", null,
       resolveTemplateCode(businessMetaContext),
       formFile.fileName(),
       formFile.fileSizeBytes() != null ? formFile.fileSizeBytes() : 0L,
@@ -98,7 +98,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules) {
     UploadFileRequest request = new UploadFileRequest(
-      BIZ_TYPE_FORM_DETAIL,
+      BIZ_TYPE_FORM_DETAIL, "FORM", null,
       parseTemplateId,
       resolveFileName(sourceFileId),
       0L,
@@ -187,7 +187,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public String applyUploadToken(String clientIp, String userId, long maxSize) {
     ApplyUploadTokenRequest request = new ApplyUploadTokenRequest(
-      BIZ_TYPE_MATERIAL,
+      BIZ_TYPE_MATERIAL, "MATERIAL", null,
       SOURCE_APP,
       null,
       null,

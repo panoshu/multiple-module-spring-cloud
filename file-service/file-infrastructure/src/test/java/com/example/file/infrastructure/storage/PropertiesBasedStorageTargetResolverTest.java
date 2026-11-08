@@ -1,9 +1,9 @@
 package com.example.file.infrastructure.storage;
 
 import com.example.shared.exception.DomainException;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
-import com.example.file.domain.model.aggregate.valueobject.StorageType;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.StorageType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

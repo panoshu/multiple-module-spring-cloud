@@ -3,8 +3,8 @@ package com.example.file.domain.service;
 import com.example.shared.exception.CommonError;
 import com.example.shared.exception.DomainException;
 import com.example.file.domain.gateway.ExcelExporter;
-import com.example.file.domain.model.valueobject.SplitUnit;
-import com.example.file.domain.model.valueobject.ValidationResult;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.ValidationResult;
 import com.example.shared.domain.annotation.DomainService;
 
 import java.io.InputStream;

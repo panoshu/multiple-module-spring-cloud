@@ -1,8 +1,8 @@
 package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.gateway.StorageTargetResolver;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.aggregate.valueobject.StorageTarget;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.StorageTarget;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;

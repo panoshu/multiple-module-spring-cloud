@@ -8,12 +8,12 @@ import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
 import com.example.file.domain.gateway.StoreResult;
 import com.example.file.domain.gateway.TargetTemplateStorage;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.root.SubTaskData;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
-import com.example.file.domain.model.valueobject.CanonicalData;
-import com.example.file.domain.model.valueobject.SplitUnit;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.parse.aggregate.SubTaskData;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
+import com.example.file.domain.model.parse.valueobject.CanonicalData;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.types.FileTaskId;
@@ -89,7 +89,7 @@ public class GenerateOutboundFileUseCase {
     // enricher 端点（批次5 §7）：按目标模板配置解析（空=无增强直出）
     String enrichmentEndpoint = configRepository
       .findById(com.example.file.types.TemplateConfigId.of(cmd.targetTemplateId()))
-      .map(com.example.file.domain.model.aggregate.root.TemplateConfig::enrichmentEndpoint)
+      .map(com.example.file.domain.model.parse.aggregate.TemplateConfig::enrichmentEndpoint)
       .orElse(null);
 
     List<SubTaskSummary> summaries = subTaskRepository.findSummariesByTask(fileTaskId);

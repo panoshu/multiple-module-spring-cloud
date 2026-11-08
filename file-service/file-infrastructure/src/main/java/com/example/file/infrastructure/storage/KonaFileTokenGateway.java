@@ -2,7 +2,7 @@ package com.example.file.infrastructure.storage;
 
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.gateway.FileTokenGateway;
-import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
+import com.example.file.domain.model.storage.valueobject.FileTokenPayload;
 import com.example.shared.crypto.Sm4Encryptor;
 import com.example.shared.exception.SystemException;
 import com.fasterxml.jackson.databind.ObjectMapper;

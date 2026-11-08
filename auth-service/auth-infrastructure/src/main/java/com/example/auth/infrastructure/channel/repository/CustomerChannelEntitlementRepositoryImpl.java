@@ -56,6 +56,7 @@ public class CustomerChannelEntitlementRepositoryImpl implements CustomerChannel
     } else {
       doObj.setVersion(existing.getVersion());
       mapper.update(doObj);
+      entitlement.syncVersionAfterUpdate();
       log.debug("更新 CustomerChannelEntitlement: id={}, customerNo={}, version={}",
         entitlement.id(), entitlement.customerNo(), entitlement.version());
     }

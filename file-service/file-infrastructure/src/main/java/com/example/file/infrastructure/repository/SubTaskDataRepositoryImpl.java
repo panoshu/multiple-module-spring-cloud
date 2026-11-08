@@ -1,11 +1,11 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.SubTaskData;
+import com.example.file.domain.model.parse.aggregate.SubTaskData;
 import com.example.file.domain.model.enums.SubTaskStatus;
-import com.example.file.domain.model.valueobject.FetchPagination;
-import com.example.file.domain.model.valueobject.PageInfo;
-import com.example.file.domain.model.valueobject.PagedRows;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
+import com.example.file.domain.model.parse.valueobject.FetchPagination;
+import com.example.file.domain.model.parse.valueobject.PageInfo;
+import com.example.file.domain.model.parse.valueobject.PagedRows;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
 import com.example.file.domain.repository.SubTaskDataRepository;
 import com.example.file.infrastructure.converter.SubTaskDataConverter;
 import com.example.file.infrastructure.entity.SubTaskDataDO;

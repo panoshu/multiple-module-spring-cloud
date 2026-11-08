@@ -4,7 +4,7 @@ import com.example.file.application.command.CopyFileCommand;
 import com.example.file.domain.gateway.CopyResult;
 import com.example.file.domain.gateway.FileStorageGateway;
 import com.example.file.domain.gateway.StorageTargetResolver;
-import com.example.file.domain.model.aggregate.root.FileMetadata;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
 import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.types.FileId;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.example.file.domain.event;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
 import com.example.file.domain.model.enums.TaskStatus;
-import com.example.file.domain.model.valueobject.SubTaskSummary;
+import com.example.file.domain.model.parse.valueobject.SubTaskSummary;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;
 import com.example.shared.domain.event.DomainEvent;

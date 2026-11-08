@@ -1,9 +1,9 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.root.SubTaskData;
+import com.example.file.domain.model.parse.aggregate.SubTaskData;
 import com.example.file.domain.model.enums.SubTaskStatus;
 import com.example.file.domain.model.valueobject.BusinessContext;
-import com.example.file.domain.model.valueobject.ValidationError;
+import com.example.file.domain.model.parse.valueobject.ValidationError;
 import com.example.file.infrastructure.entity.SubTaskDataDO;
 import com.example.file.types.BizType;
 import com.example.file.types.FileTaskId;

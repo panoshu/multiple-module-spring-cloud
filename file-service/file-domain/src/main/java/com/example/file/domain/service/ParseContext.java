@@ -1,8 +1,8 @@
 package com.example.file.domain.service;
 
 import com.example.file.domain.model.enums.TriggerMatchType;
-import com.example.file.domain.model.valueobject.config.*;
-import com.example.file.domain.model.valueobject.parse.RawRow;
+import com.example.file.domain.model.parse.valueobject.config.*;
+import com.example.file.domain.model.parse.valueobject.RawRow;
 
 import java.util.ArrayList;
 import java.util.List;

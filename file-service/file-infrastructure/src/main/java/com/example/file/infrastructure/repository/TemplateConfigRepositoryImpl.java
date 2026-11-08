@@ -1,6 +1,6 @@
 package com.example.file.infrastructure.repository;
 
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.ConfigStatus;
 import com.example.file.domain.repository.TemplateConfigRepository;
 import com.example.file.infrastructure.converter.TemplateConfigConverter;

@@ -81,6 +81,7 @@ public class GrantRepositoryImpl implements GrantRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       grantMapper.update(doObj);
+      grant.syncVersionAfterUpdate();
       log.debug("更新 Grant: grantId={}, status={}, version={}",
         grant.id(), grant.status(), grant.version());
     }

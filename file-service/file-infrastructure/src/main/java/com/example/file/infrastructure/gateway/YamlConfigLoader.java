@@ -1,10 +1,10 @@
 package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.gateway.ConfigLoader;
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.*;
-import com.example.file.domain.model.valueobject.config.*;
+import com.example.file.domain.model.parse.valueobject.config.*;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;

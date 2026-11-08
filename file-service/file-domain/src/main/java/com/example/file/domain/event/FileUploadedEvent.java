@@ -1,7 +1,7 @@
 package com.example.file.domain.event;
 
-import com.example.file.domain.model.aggregate.root.FileMetadata;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.file.domain.model.storage.aggregate.FileMetadata;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.shared.identifier.id.EventId;
 import com.example.file.types.FileId;

@@ -57,6 +57,7 @@ public class UserRepositoryImpl implements UserRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       userMapper.update(doObj);
+      user.syncVersionAfterUpdate();
       log.debug("更新 UserAggregate: userId={}, version={}", user.id(), user.version());
     }
   }

@@ -1,10 +1,10 @@
 package com.example.file.infrastructure.converter;
 
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.ConfigStatus;
 import com.example.file.domain.model.enums.ErrorPolicy;
-import com.example.file.domain.model.valueobject.config.*;
+import com.example.file.domain.model.parse.valueobject.config.*;
 import com.example.file.infrastructure.entity.TemplateConfigDO;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
@@ -247,9 +247,9 @@ public interface TemplateConfigConverter {
       return;
     }
     try {
-      List<com.example.file.domain.model.valueobject.config.RoutingRule> rules =
+      List<com.example.file.domain.model.parse.valueobject.config.RoutingRule> rules =
         OBJECT_MAPPER.readValue(aDo.getRoutingRules(),
-          new com.fasterxml.jackson.core.type.TypeReference<List<com.example.file.domain.model.valueobject.config.RoutingRule>>() {
+          new com.fasterxml.jackson.core.type.TypeReference<List<com.example.file.domain.model.parse.valueobject.config.RoutingRule>>() {
           });
       domain.attachRoutingRules(rules);
     } catch (JsonProcessingException e) {
@@ -257,7 +257,7 @@ public interface TemplateConfigConverter {
     }
   }
 
-  static String routingRulesToJson(List<com.example.file.domain.model.valueobject.config.RoutingRule> rules) {
+  static String routingRulesToJson(List<com.example.file.domain.model.parse.valueobject.config.RoutingRule> rules) {
     if (rules == null || rules.isEmpty()) {
       return null;
     }

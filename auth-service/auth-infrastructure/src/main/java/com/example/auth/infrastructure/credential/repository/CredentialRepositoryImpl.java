@@ -62,6 +62,7 @@ public class CredentialRepositoryImpl implements CredentialRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       credentialMapper.update(doObj);
+      credential.syncVersionAfterUpdate();
       log.debug("更新 Credential: credentialId={}, version={}", credential.id(), credential.version());
     }
   }

@@ -1,7 +1,7 @@
 package com.example.file.domain.service;
 
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
-import com.example.file.domain.model.valueobject.config.RoutingRule;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
+import com.example.file.domain.model.parse.valueobject.config.RoutingRule;
 import com.example.shared.domain.annotation.DomainService;
 
 import java.util.Comparator;

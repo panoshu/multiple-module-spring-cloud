@@ -1,6 +1,6 @@
 package com.example.file.application.command;
 
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
 import com.example.file.types.FileId;
 import com.example.core.types.UserNo;
 

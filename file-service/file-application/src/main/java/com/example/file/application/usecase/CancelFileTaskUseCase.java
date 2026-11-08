@@ -1,7 +1,7 @@
 package com.example.file.application.usecase;
 
-import com.example.file.domain.model.aggregate.root.ParseTask;
-import com.example.file.domain.model.valueobject.TaskError;
+import com.example.file.domain.model.parse.aggregate.ParseTask;
+import com.example.file.domain.model.parse.valueobject.TaskError;
 import com.example.file.domain.repository.ParseTaskRepository;
 import com.example.file.types.FileTaskId;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
 package com.example.file.infrastructure.storage;
 
-import com.example.file.domain.model.aggregate.valueobject.FileTokenPayload;
-import com.example.file.domain.model.aggregate.valueobject.FileUsage;
+import com.example.file.domain.model.storage.valueobject.FileTokenPayload;
+import com.example.file.domain.model.storage.valueobject.FileUsage;
 import com.example.shared.crypto.Sm4Encryptor;
 import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;

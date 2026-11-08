@@ -4,10 +4,10 @@ import com.example.shared.exception.DomainException;
 import com.example.file.domain.gateway.ExcelExporter;
 import com.example.file.domain.model.enums.FieldType;
 import com.example.file.domain.model.enums.ValidationScope;
-import com.example.file.domain.model.valueobject.SplitUnit;
-import com.example.file.domain.model.valueobject.ValidationError;
-import com.example.file.domain.model.valueobject.ValidationResult;
-import com.example.file.domain.model.valueobject.config.ValidationRule;
+import com.example.file.domain.model.parse.valueobject.SplitUnit;
+import com.example.file.domain.model.parse.valueobject.ValidationError;
+import com.example.file.domain.model.parse.valueobject.ValidationResult;
+import com.example.file.domain.model.parse.valueobject.config.ValidationRule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

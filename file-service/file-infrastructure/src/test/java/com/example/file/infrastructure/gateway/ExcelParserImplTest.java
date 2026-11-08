@@ -2,12 +2,12 @@ package com.example.file.infrastructure.gateway;
 
 import com.example.file.domain.gateway.ExcelParser;
 import com.example.file.domain.model.enums.*;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.*;
-import com.example.file.domain.model.valueobject.parse.KvRegionResult;
-import com.example.file.domain.model.valueobject.parse.RawRow;
-import com.example.file.domain.model.valueobject.parse.RegionParseResult;
-import com.example.file.domain.model.valueobject.parse.TableRegionResult;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.config.*;
+import com.example.file.domain.model.parse.valueobject.KvRegionResult;
+import com.example.file.domain.model.parse.valueobject.RawRow;
+import com.example.file.domain.model.parse.valueobject.RegionParseResult;
+import com.example.file.domain.model.parse.valueobject.TableRegionResult;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;

@@ -68,6 +68,7 @@ public class PermissionMenuRepositoryImpl implements PermissionMenuRepository {
     } else {
       doObj.setVersion(existing.getVersion());
       menuMapper.update(doObj);
+      menu.syncVersionAfterUpdate();
     }
 
     // 全量替换绑定

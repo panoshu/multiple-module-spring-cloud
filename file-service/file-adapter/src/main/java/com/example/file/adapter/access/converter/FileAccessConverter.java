@@ -4,7 +4,7 @@ import com.example.file.api.request.ApplyDownloadTokenRequest;
 import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.file.application.command.ApplyDownloadTokenCommand;
 import com.example.file.application.command.ApplyUploadTokenCommand;
-import com.example.file.domain.model.aggregate.valueobject.FileAccessScope;
+import com.example.file.domain.model.storage.valueobject.FileAccessScope;
 import com.example.core.types.BatchId;
 import org.mapstruct.Mapper;
 

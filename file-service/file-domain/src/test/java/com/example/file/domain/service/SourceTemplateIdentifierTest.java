@@ -1,17 +1,17 @@
 package com.example.file.domain.service;
 
-import com.example.file.domain.model.aggregate.entity.SourceTemplateDef;
-import com.example.file.domain.model.aggregate.root.TemplateConfig;
+import com.example.file.domain.model.parse.aggregate.entity.SourceTemplateDef;
+import com.example.file.domain.model.parse.aggregate.TemplateConfig;
 import com.example.file.domain.model.enums.ErrorPolicy;
 import com.example.file.domain.model.enums.IdentifyMode;
 import com.example.file.domain.model.enums.KvValuePosition;
 import com.example.file.domain.model.enums.RegionType;
-import com.example.file.domain.model.valueobject.RawRowStream;
-import com.example.file.domain.model.valueobject.config.CanonicalModelDef;
-import com.example.file.domain.model.valueobject.config.KvStrategy;
-import com.example.file.domain.model.valueobject.config.RegionDef;
-import com.example.file.domain.model.valueobject.config.SplitConfig;
-import com.example.file.domain.model.valueobject.parse.RawRow;
+import com.example.file.domain.model.parse.valueobject.RawRowStream;
+import com.example.file.domain.model.parse.valueobject.config.CanonicalModelDef;
+import com.example.file.domain.model.parse.valueobject.config.KvStrategy;
+import com.example.file.domain.model.parse.valueobject.config.RegionDef;
+import com.example.file.domain.model.parse.valueobject.config.SplitConfig;
+import com.example.file.domain.model.parse.valueobject.RawRow;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateCode;
 import com.example.file.types.TemplateConfigId;
