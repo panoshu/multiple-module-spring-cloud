@@ -2,6 +2,8 @@ package com.example.core.infrastructure.engine.evaluation;
 
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
+import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
+import com.example.shared.exception.SystemException;
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.AviatorEvaluatorInstance;
 import com.googlecode.aviator.Expression;
@@ -25,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  * <p>
  * 编译后的 {@link Expression} 实例会被缓存,避免相同表达式重复编译。
+ * 表达式语法或求值错误属于配置缺陷，必须显式失败，不能静默当作条件不满足而跳过动作。
  * 通过配置 {@code core.engine.condition-evaluator.type=aviator} 启用本实现,
  * 缺省时使用 {@link SpelConditionEvaluationGateway}。
  *
@@ -71,7 +74,8 @@ public class AviatorConditionEvaluationGateway implements ConditionEvaluationGat
       return Boolean.TRUE.equals(result);
     } catch (Exception e) {
       log.error("Aviator 表达式执行失败: expression={}", expressionStr, e);
-      return false; // 容错策略:校验异常视为不通过
+      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
+        .withLogDetail("条件表达式: " + expressionStr);
     }
   }
 }

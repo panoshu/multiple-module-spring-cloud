@@ -1103,7 +1103,8 @@ Application 层按用例拆分：
 |---|---|---|---|
 | 批次 1 | `79f74b0a` | 批次先行与申请归属闭环：重定位 `BusinessBatch`/`BusinessApplication`、新增 `ApplicationSource`、批次状态机与计数不变量、`markUpdated()` 乐观锁版本适配、表单裂变链路 | 35 个目标测试通过；全仓主代码编译通过；架构不变量测试通过 |
 | 批次 2 | `69575979` | 版本化流程定义**纯领域模型**：`BusinessTypeCode`/`StepCode`/`DefinitionVersion` 强类型编码，`StartMode`/`InstanceGranularity`/`BatchMode`/`TaskType`/`ActionType` 枚举，`StepTransition`/`RetryPolicy`/`StepDefinition`/`ProcessDefinition` 不可变值对象及发布校验，`ProcessDefinitionGateway` SPI，`CORE.DOMAIN.0008-0013` 错误码 | 领域模块 93 个测试全部通过（新增 23 个）；全仓主代码编译通过；架构不变量 7 项通过；`git diff --check` 通过 |
-| 批次 3 | 本次（未提交） | 版本化流程定义**运行时接管**：默认 `ProcessDefinitionGateway`（过渡期委托存量路由、按业务类型+版本缓存不可变定义）、`StepDefinitionResolver` 按实例固定版本解析、`StepRouteConfigAssembler` 无损还原执行配置；`FlowOrchestrationService`/`StepAutoAdvanceListener` 改按定义解析；`BusinessApplication` 增加 `definitionVersion` 与双库 DDL/DO/Converter；`batchMode` 运行时校验（`NONE` 可不关联批次）；`CORE.APP.0007-0008` 错误码 | 领域 97、应用 92、基础设施 40、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 3 | `5095c9d3` | 版本化流程定义**运行时接管**：默认 `ProcessDefinitionGateway`（过渡期委托存量路由、按业务类型+版本缓存不可变定义）、`StepDefinitionResolver` 按实例固定版本解析、`StepRouteConfigAssembler` 无损还原执行配置；`FlowOrchestrationService`/`StepAutoAdvanceListener` 改按定义解析；`BusinessApplication` 增加 `definitionVersion` 与双库 DDL/DO/Converter；`batchMode` 运行时校验（`NONE` 可不关联批次）；`CORE.APP.0007-0008` 错误码 | 领域 97、应用 92、基础设施 40、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 4 | 本次（未提交） | 条件表达式求值**显式失败**：追加 `CORE.INFRA.0006`；SpEL/Aviator/QLExpress 三个网关的求值异常由静默 `return false` 改为抛 `SystemException`（保留 cause 与表达式上下文），空表达式短路保持不变；`StepPipelineExecutor` 不改，`false` 仍为 SKIPPED、异常则中断事务；补 SpEL 网关测试与管道异常传播测试 | 领域 97、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1128,5 +1129,5 @@ Application 层按用例拆分：
 - **已定**：路由切换采用「默认 Gateway 过渡适配 + 保留枚举做持久化表示」的渐进策略；在途实例通过持久化 `definitionVersion` 固定版本，过渡期默认实现仅存在初始版本，其他版本返回空并交由对账处理。
 - 独立版本化定义存储（替代过渡期委托适配器）与定义发布、缓存失效机制；
 - `ApplicationFlowStep`（17 步枚举）的退役时机，以及 `current_step` 列与领域事件签名向开放 `StepCode` 的迁移；
-- 条件表达式求值显式失败契约：三个 `ConditionEvaluationGateway` 实现目前求值异常一律 `return false`（SpEL/Aviator/QLExpress），与 §7.1/§10.2「关键校验表达式错误必须显式失败」冲突，需专项修复；
+- **已解决（批次 4）**：三个 `ConditionEvaluationGateway` 实现的求值异常统一抛 `SystemException(CORE.INFRA.0006)`，不再静默跳过；`StepPipelineExecutor` 保持不变，`false` 仍表示条件不满足（SKIPPED），异常则中断事务。后续仍需为流程定义发布增加表达式语法预校验；
 - 默认 Gateway 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 声明应由业务服务的自定义实现覆盖。

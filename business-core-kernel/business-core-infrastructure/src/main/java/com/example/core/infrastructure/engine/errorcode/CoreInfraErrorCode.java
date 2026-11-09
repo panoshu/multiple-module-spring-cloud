@@ -27,6 +27,7 @@ public enum CoreInfraErrorCode implements ErrorDefinition {
   EXTENSION_SERIALIZATION_FAILED("CORE.INFRA.0003", "业务扩展字段序列化失败"),
   EXTENSION_DESERIALIZATION_FAILED("CORE.INFRA.0004", "业务扩展字段反序列化失败"),
   OPTIMISTIC_LOCK_FAILURE("CORE.INFRA.0005", "数据版本冲突"),
+  CONDITION_EVALUATION_FAILED("CORE.INFRA.0006", "条件表达式求值失败"),
   ;
 
   final String code;

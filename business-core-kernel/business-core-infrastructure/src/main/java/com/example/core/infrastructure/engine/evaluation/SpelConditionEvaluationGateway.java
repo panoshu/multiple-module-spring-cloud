@@ -2,6 +2,8 @@ package com.example.core.infrastructure.engine.evaluation;
 
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
+import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
+import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.expression.Expression;
@@ -18,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 基于 Spring SpEL 的条件求值网关实现
  * <p>
  * 解析后的 {@link Expression} 实例会被缓存，避免相同表达式重复解析带来的性能开销。
+ * <p>
+ * 表达式语法或求值错误属于配置缺陷，必须显式失败，不能静默当作条件不满足而跳过动作。
  * <p>
  * 通过配置 {@code core.engine.condition-evaluator.type=spel} 显式启用,或保持缺省(无配置)
  * 自动启用。若需切换为 Aviator 引擎,设置 {@code core.engine.condition-evaluator.type=aviator}
@@ -72,7 +76,8 @@ public class SpelConditionEvaluationGateway implements ConditionEvaluationGatewa
       return Boolean.TRUE.equals(result);
     } catch (Exception e) {
       log.error("SpEL 表达式执行失败: expression={}", expressionStr, e);
-      return false; // 容错策略：校验异常视为不通过
+      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
+        .withLogDetail("条件表达式: " + expressionStr);
     }
   }
 }
