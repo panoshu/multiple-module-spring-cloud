@@ -1,5 +1,6 @@
 package com.example.core.domain.engine.aggregate.valueobject;
 
+import com.example.core.domain.engine.aggregate.valueobject.config.StepExtensionConfig;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.ActionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.BatchMode;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InstanceGranularity;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -136,6 +138,21 @@ class ProcessDefinitionTest {
         .isInstanceOf(DomainException.class);
       assertThatThrownBy(() -> StepDefinition.business(StepCode.of("A"), TaskType.USER_TASK, "  ", List.of()))
         .isInstanceOf(DomainException.class);
+    }
+
+    @Test
+    @DisplayName("扩展链完整保留 StepExtensionConfig 配置对象")
+    void keepsFullExtensionConfig() {
+      StepExtensionConfig audit = new StepExtensionConfig(
+        "auditAction", 1, "AUDIT", false, false, null, Map.of("k", "v"));
+      StepDefinition definition = new StepDefinition(
+        StepCode.of("A"), TaskType.SYSTEM_TASK, ActionType.BUSINESS, "handler",
+        List.of(audit), List.of(), List.of(), List.of(), RetryPolicy.defaults(), null);
+
+      assertThat(definition.preValidations()).containsExactly(audit);
+      assertThat(definition.preValidations().get(0).params()).containsEntry("k", "v");
+      assertThatThrownBy(() -> definition.preValidations().clear())
+        .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

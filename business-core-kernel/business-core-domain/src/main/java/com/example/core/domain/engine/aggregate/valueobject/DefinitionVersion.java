@@ -9,6 +9,8 @@ import com.example.shared.exception.DomainException;
  */
 public record DefinitionVersion(String value) implements ValueObject {
 
+  private static final String INITIAL_VERSION = "v1";
+
   public DefinitionVersion {
     if (value == null || value.isBlank()) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
@@ -18,5 +20,10 @@ public record DefinitionVersion(String value) implements ValueObject {
 
   public static DefinitionVersion of(String value) {
     return new DefinitionVersion(value);
+  }
+
+  /** 存量数据未记录版本时使用的初始版本，与默认流程定义版本一致。 */
+  public static DefinitionVersion initial() {
+    return new DefinitionVersion(INITIAL_VERSION);
   }
 }

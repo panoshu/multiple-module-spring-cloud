@@ -11,6 +11,7 @@ import com.example.core.types.OperatingMode;
 import com.example.shared.enumeration.EnumCodeCache;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizApplicationRef;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.infrastructure.business.entity.BusinessApplicationDO;
 import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
@@ -89,6 +90,7 @@ public abstract class BusinessApplicationConverter {
 
     aDo.setStatus(app.status() != null ? app.status().name() : null);
     aDo.setCurrentStep(app.currentStep() != null ? app.currentStep().name() : null);
+    aDo.setDefinitionVersion(app.definitionVersion() != null ? app.definitionVersion().value() : null);
     aDo.setApplyTime(app.applyTime());
     aDo.setCompleteTime(app.completeTime());
 
@@ -130,6 +132,8 @@ public abstract class BusinessApplicationConverter {
       extension,
       aDo.getParsedJsonFileId() != null ? new FileId(aDo.getParsedJsonFileId()) : null,
       aDo.getExpectedDetailCount() != null ? aDo.getExpectedDetailCount() : 0,
+      aDo.getDefinitionVersion() != null
+        ? DefinitionVersion.of(aDo.getDefinitionVersion()) : DefinitionVersion.initial(),
       aDo.getStatus() != null ? ApplicationStatus.valueOf(aDo.getStatus()) : null,
       aDo.getCurrentStep() != null ? ApplicationFlowStep.valueOf(aDo.getCurrentStep()) : null,
       aDo.getApplyTime(),

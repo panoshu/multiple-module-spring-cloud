@@ -1091,7 +1091,7 @@ Application 层按用例拆分：
 | §20 阶段 | 状态 | 说明 |
 |---|---|---|
 | 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
-| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位已完成；版本化流程定义领域模型已完成。`StepExecution`、`ExternalInteraction` 及 `BusinessApplication` 完整状态机待后续批次 |
+| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、实例 `definitionVersion` 持久化、`batchMode` 运行时校验均已完成。`StepExecution`、`ExternalInteraction` 及 `BusinessApplication` 完整状态机待后续批次 |
 | 阶段 2 建立可靠性底座 | 未开始 | — |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
 | 阶段 4 收敛可选能力与公共 API | 未开始 | — |
@@ -1102,7 +1102,8 @@ Application 层按用例拆分：
 | 批次 | 提交 | 内容 | 验证 |
 |---|---|---|---|
 | 批次 1 | `79f74b0a` | 批次先行与申请归属闭环：重定位 `BusinessBatch`/`BusinessApplication`、新增 `ApplicationSource`、批次状态机与计数不变量、`markUpdated()` 乐观锁版本适配、表单裂变链路 | 35 个目标测试通过；全仓主代码编译通过；架构不变量测试通过 |
-| 批次 2 | 本次（未提交） | 版本化流程定义**纯领域模型**：`BusinessTypeCode`/`StepCode`/`DefinitionVersion` 强类型编码，`StartMode`/`InstanceGranularity`/`BatchMode`/`TaskType`/`ActionType` 枚举，`StepTransition`/`RetryPolicy`/`StepDefinition`/`ProcessDefinition` 不可变值对象及发布校验，`ProcessDefinitionGateway` SPI，`CORE.DOMAIN.0008-0013` 错误码 | 领域模块 93 个测试全部通过（新增 23 个）；全仓主代码编译通过；架构不变量 8 项通过；`git diff --check` 通过 |
+| 批次 2 | `69575979` | 版本化流程定义**纯领域模型**：`BusinessTypeCode`/`StepCode`/`DefinitionVersion` 强类型编码，`StartMode`/`InstanceGranularity`/`BatchMode`/`TaskType`/`ActionType` 枚举，`StepTransition`/`RetryPolicy`/`StepDefinition`/`ProcessDefinition` 不可变值对象及发布校验，`ProcessDefinitionGateway` SPI，`CORE.DOMAIN.0008-0013` 错误码 | 领域模块 93 个测试全部通过（新增 23 个）；全仓主代码编译通过；架构不变量 7 项通过；`git diff --check` 通过 |
+| 批次 3 | 本次（未提交） | 版本化流程定义**运行时接管**：默认 `ProcessDefinitionGateway`（过渡期委托存量路由、按业务类型+版本缓存不可变定义）、`StepDefinitionResolver` 按实例固定版本解析、`StepRouteConfigAssembler` 无损还原执行配置；`FlowOrchestrationService`/`StepAutoAdvanceListener` 改按定义解析；`BusinessApplication` 增加 `definitionVersion` 与双库 DDL/DO/Converter；`batchMode` 运行时校验（`NONE` 可不关联批次）；`CORE.APP.0007-0008` 错误码 | 领域 97、应用 92、基础设施 40、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1113,15 +1114,19 @@ Application 层按用例拆分：
 - 不改持久化、不新增 DDL、不接线 `ProcessDefinitionGateway` 实现；
 - 不触碰 file-service / approval-service / annuity-service。
 
-因此 `ProcessDefinition` 当前尚未参与运行时。留待后续批次：
+批次 3 已完成上述第 1、2、4 项，并对第 3 项采用渐进策略：
 
-1. `ProcessDefinitionGateway` 实现与不可变定义缓存（按 `businessType + version`，§14/§19.1）；
-2. `BusinessApplication` 增加 `definitionVersion`，启动时固定版本（§6.2）；
-3. 路由由版本化定义接管，替换封闭的 `ApplicationFlowStep` 枚举（§7.1/§10.3）；
-4. `batchMode` 运行时校验，创建工厂强制批次归属（§6.3）。
+1. 默认 `ProcessDefinitionGateway` 由 `CoreKernelAutoConfiguration` 以 `@ConditionalOnMissingBean` 注册，过渡期委托 `BusinessConfigGateway.getNextStep()` 适配出初始版本定义并按「业务类型 + 版本」缓存，不新增第二套配置；
+2. `BusinessApplication` 持久化 `definitionVersion`，`StepDefinitionResolver` 始终按实例固定版本加载；存量无版本行回退到 `DefinitionVersion.initial()`；
+3. **保留** `ApplicationFlowStep` 枚举作为存量持久化表示（`current_step` 列、领域事件签名、DO/Converter 均不改），`StepCode` 仅在定义层使用，经 `StepCode.of(step.name())` 映射；枚举退役留到阶段 5；
+4. `batchMode=REQUIRED` 时创建工厂强制校验批次存在且可接收，`NONE` 时申请不关联批次；`ApplicationSource` 不再硬编码批次必填。
+
+批次 3 额外同步：annuity 侧三份复制的建表脚本（H2/PG/MySQL）同步增加 `definition_version` 列，否则复用 kernel DO 时运行期 SQL 会失败。
 
 ### 23.4 后续批次待定决策
 
-- `ProcessDefinition` 接管 `getNextStep()` 路由的切换方式与在途实例兼容策略；
-- 存量 `ApplicationFlowStep`（17 步枚举）到开放 `StepCode` 的迁移映射；
-- 条件表达式求值的显式失败契约（本批次仅拒绝空白表达式，语法与求值错误留给运行时 `ConditionEvaluationGateway`，§7.1/§10.2）。
+- **已定**：路由切换采用「默认 Gateway 过渡适配 + 保留枚举做持久化表示」的渐进策略；在途实例通过持久化 `definitionVersion` 固定版本，过渡期默认实现仅存在初始版本，其他版本返回空并交由对账处理。
+- 独立版本化定义存储（替代过渡期委托适配器）与定义发布、缓存失效机制；
+- `ApplicationFlowStep`（17 步枚举）的退役时机，以及 `current_step` 列与领域事件签名向开放 `StepCode` 的迁移；
+- 条件表达式求值显式失败契约：三个 `ConditionEvaluationGateway` 实现目前求值异常一律 `return false`（SpEL/Aviator/QLExpress），与 §7.1/§10.2「关键校验表达式错误必须显式失败」冲突，需专项修复；
+- 默认 Gateway 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 声明应由业务服务的自定义实现覆盖。

@@ -1,5 +1,6 @@
 package com.example.core.application.engine.step.service;
 
+import com.example.core.application.engine.errorcode.CoreAppErrorCode;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
@@ -9,10 +10,15 @@ import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessTypeCode;
+import com.example.core.domain.engine.aggregate.valueobject.ProcessDefinition;
 import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.BatchMode;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
+import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
 import com.example.shared.domain.event.EventBus;
+import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.FormId;
@@ -41,6 +47,7 @@ public class BusinessFormAppService {
   private final FileIntegrationGateway fileIntegrationGateway;
   private final EventBus eventBus;
   private final IdService idService;
+  private final ProcessDefinitionGateway processDefinitionGateway;
 
   /**
    * 步骤 1：确认文件已上传 (由 BFF 层调用)
@@ -82,11 +89,20 @@ public class BusinessFormAppService {
 
   /**
    * 步骤 3：处理底层解析回调并【裂变新生】 (由底层文件服务回调触发)
+   * <p>
+   * 批次是否强制由流程定义的 batchMode 决定：REQUIRED 时校验批次存在且可接收申请，
+   * NONE 时申请不关联批次。创建出的申请单固定保存启动时使用的流程定义版本。
    */
   @Transactional
   public void handleParsingResult(FormId formId, List<ParsedPlanResult> parsedResults) {
     BusinessForm form = formRepository.loadOrThrow(formId);
-    BusinessBatch batch = batchRepository.loadOrThrow(form.batchId());
+    ProcessDefinition definition = loadDefinition(form);
+
+    BusinessBatch batch = null;
+    if (definition.batchMode() == BatchMode.REQUIRED) {
+      // 批次驱动业务必须先校验批次可用，再落表单状态，避免产生无批次归属的申请
+      batch = batchRepository.loadOrThrow(form.batchId());
+    }
 
     form.markAsParsed();
     formRepository.save(form);
@@ -96,21 +112,32 @@ public class BusinessFormAppService {
       return;
     }
 
-    batch.receiveApplications(parsedResults.size(), form.operatorInfo());
-    ApplicationSource source = new ApplicationSource(form.id(), batch.id());
+    ApplicationSource source = new ApplicationSource(form.id(), batch == null ? null : batch.id());
+    if (batch != null) {
+      batch.receiveApplications(parsedResults.size(), form.operatorInfo());
+    }
     for (ParsedPlanResult result : parsedResults) {
       BusinessApplication newApp = BusinessApplication.createFromForm(
         idService.nextId(ApplicationId.class, ""), source,
-        form.businessContext(), form.operatorInfo(), result.jsonFileId()
+        form.businessContext(), form.operatorInfo(), result.jsonFileId(), definition.version()
       );
 
       applicationRepository.save(newApp);
       newApp.domainEvents().forEach(eventBus::publish);
       newApp.clearDomainEvents();
     }
-    batchRepository.save(batch);
+    if (batch != null) {
+      batchRepository.save(batch);
+    }
 
     log.info("表单解析回调处理完成，共创建 {} 个申请单", parsedResults.size());
+  }
+
+  private ProcessDefinition loadDefinition(BusinessForm form) {
+    BusinessTypeCode businessType = BusinessTypeCode.of(form.businessContext().businessType().name());
+    return processDefinitionGateway.loadLatest(businessType)
+      .orElseThrow(() -> new SystemException(CoreAppErrorCode.PROCESS_DEFINITION_NOT_FOUND)
+        .withLogDetail("未找到业务类型对应的流程定义"));
   }
 
   /**

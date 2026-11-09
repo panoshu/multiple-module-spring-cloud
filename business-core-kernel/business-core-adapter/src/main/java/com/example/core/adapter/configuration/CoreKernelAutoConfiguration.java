@@ -4,6 +4,9 @@ import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.application.business.guard.BusinessAccessGuard;
 import com.example.core.application.business.guard.DefaultBusinessAccessGuard;
+import com.example.core.application.engine.service.BusinessConfigProcessDefinitionAdapter;
+import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -18,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
  * <ul>
  *   <li>SessionContextResolver / BusinessMetaContextAssembler(会话基础设施)</li>
  *   <li>DefaultBusinessAccessGuard(默认权限守门人,业务服务可覆盖)</li>
+ *   <li>默认 ProcessDefinitionGateway(过渡期适配存量步骤路由,业务服务可覆盖)</li>
  *   <li>5 类公共 API 的 Controller(Batch/Form/Application/Material/Progress)</li>
  *   <li>SupportedBusinessTypeValidator(业务类型校验)</li>
  * </ul>
@@ -29,6 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
  * <ol>
  *   <li>提供 {@link com.example.core.api.registrar.BusinessTypeRegistrar} Bean 声明支持的业务类型</li>
  *   <li>(可选)提供自定义 {@link BusinessAccessGuard} 覆盖默认实现</li>
+ *   <li>(可选)提供自定义 {@link ProcessDefinitionGateway} 覆盖过渡期默认适配器</li>
  * </ol>
  *
  * <p>后续新增自动注册组件流程:
@@ -60,5 +65,15 @@ public class CoreKernelAutoConfiguration {
   @ConditionalOnMissingBean(BusinessAccessGuard.class)
   public BusinessAccessGuard defaultBusinessAccessGuard() {
     return new DefaultBusinessAccessGuard();
+  }
+
+  /**
+   * 过渡期默认流程定义网关：把存量 BusinessConfigGateway 的步骤路由适配为版本化定义。
+   * 业务服务提供自定义 {@link ProcessDefinitionGateway} 后本默认实现自动让位。
+   */
+  @Bean
+  @ConditionalOnMissingBean(ProcessDefinitionGateway.class)
+  public ProcessDefinitionGateway defaultProcessDefinitionGateway(BusinessConfigGateway configGateway) {
+    return new BusinessConfigProcessDefinitionAdapter(configGateway);
   }
 }

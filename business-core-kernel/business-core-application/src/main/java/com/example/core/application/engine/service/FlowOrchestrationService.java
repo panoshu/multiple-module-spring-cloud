@@ -5,6 +5,7 @@ import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.StepDefinition;
 import com.example.core.domain.engine.aggregate.valueobject.config.ExtractorConfig;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
@@ -50,11 +51,15 @@ public class FlowOrchestrationService {
   private final StepPipelineExecutor pipelineExecutor;
   private final EventBus eventBus;
   private final TransactionTemplate transactionTemplate;
+  private final StepDefinitionResolver stepDefinitionResolver;
+  private final StepRouteConfigAssembler stepRouteConfigAssembler;
 
   public void advanceStep(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     BusinessMetaContext context = buildFullConfigContext(app);
-    StepRouteConfig routeConfig = configGateway.getNextStep(context, app.currentStep());
+    // 路由由版本化流程定义接管，不再直接查询过宽的 BusinessConfigGateway
+    StepDefinition stepDefinition = stepDefinitionResolver.resolve(app);
+    StepRouteConfig routeConfig = stepRouteConfigAssembler.toRouteConfig(stepDefinition);
 
     // 【删除】之前对 isUserActionCompletedForCurrentStep() 的判断
     // 现在的逻辑：既然你能调到 advanceStep，说明是外部手动触发的(或者SystemTask自动触发的)。
@@ -94,6 +99,15 @@ public class FlowOrchestrationService {
       app.domainEvents().forEach(eventBus::publish);
       app.clearDomainEvents();
     });
+  }
+
+  /**
+   * 按版本化流程定义判断申请单当前步骤是否为系统任务。
+   * 供 {@code StepAutoAdvanceListener} 在事务提交后决定是否自动推进。
+   */
+  public boolean isSystemTask(ApplicationId appId) {
+    BusinessApplication app = applicationRepository.loadOrThrow(appId);
+    return stepDefinitionResolver.isSystemTask(app);
   }
 
   /**

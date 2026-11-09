@@ -13,8 +13,18 @@ import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
+import com.example.core.domain.engine.aggregate.valueobject.BusinessTypeCode;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
+import com.example.core.domain.engine.aggregate.valueobject.ProcessDefinition;
+import com.example.core.domain.engine.aggregate.valueobject.StepCode;
+import com.example.core.domain.engine.aggregate.valueobject.StepDefinition;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.BatchMode;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InstanceGranularity;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.StartMode;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.TaskType;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
+import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.core.types.Channel;
@@ -33,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,6 +66,7 @@ class BusinessFormAppServiceTest {
   private FileIntegrationGateway fileIntegrationGateway;
   private EventBus eventBus;
   private IdService idService;
+  private ProcessDefinitionGateway processDefinitionGateway;
   private BusinessFormAppService appService;
 
   @BeforeEach
@@ -66,9 +78,12 @@ class BusinessFormAppServiceTest {
     fileIntegrationGateway = mock(FileIntegrationGateway.class);
     eventBus = mock(EventBus.class);
     idService = mock(IdService.class);
+    processDefinitionGateway = mock(ProcessDefinitionGateway.class);
+    when(processDefinitionGateway.loadLatest(any()))
+      .thenReturn(Optional.of(definitionWith(BatchMode.REQUIRED)));
     appService = new BusinessFormAppService(
       formRepository, applicationRepository, batchRepository, configGateway,
-      fileIntegrationGateway, eventBus, idService
+      fileIntegrationGateway, eventBus, idService, processDefinitionGateway
     );
   }
 
@@ -128,11 +143,34 @@ class BusinessFormAppServiceTest {
       .allSatisfy(app -> {
         assertThat(app.formId()).isEqualTo(FORM_ID);
         assertThat(app.batchId()).isEqualTo(batch.id());
+        assertThat(app.definitionVersion()).isEqualTo(DefinitionVersion.initial());
       });
     assertThat(batch.totalApplicationCount()).isEqualTo(2);
     assertThat(batch.status()).isEqualTo(BatchStatus.PROCESSING);
     verify(batchRepository, times(1)).save(batch);
     verify(formRepository).save(form);
+  }
+
+  @Test
+  @DisplayName("batchMode=NONE 时不加载批次，申请不携带批次归属")
+  void handleParsingResult_createsApplicationsWithoutBatchWhenModeNone() {
+    when(processDefinitionGateway.loadLatest(any()))
+      .thenReturn(Optional.of(definitionWith(BatchMode.NONE)));
+    BusinessForm form = mockForm(BatchId.of("B-UNUSED"));
+    when(formRepository.loadOrThrow(FORM_ID)).thenReturn(form);
+    when(idService.nextId(ApplicationId.class, "")).thenReturn(new ApplicationId("APP-1"));
+    List<ParsedPlanResult> results = List.of(
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1)
+    );
+
+    appService.handleParsingResult(FORM_ID, results);
+
+    verify(batchRepository, never()).loadOrThrow(any());
+    verify(batchRepository, never()).save(any());
+    ArgumentCaptor<BusinessApplication> captor = ArgumentCaptor.forClass(BusinessApplication.class);
+    verify(applicationRepository).save(captor.capture());
+    assertThat(captor.getValue().batchId()).isNull();
+    assertThat(captor.getValue().definitionVersion()).isEqualTo(DefinitionVersion.initial());
   }
 
   @Test
@@ -189,6 +227,16 @@ class BusinessFormAppServiceTest {
 
     verify(formRepository, never()).save(any());
     verify(applicationRepository, never()).save(any());
+  }
+
+  private ProcessDefinition definitionWith(BatchMode batchMode) {
+    return new ProcessDefinition(
+      BusinessTypeCode.of("ACC_PLAN_CREATE"), DefinitionVersion.initial(),
+      StartMode.FORM_DRIVEN, InstanceGranularity.PER_SUB_TASK, batchMode,
+      StepCode.of("FORM_DETAIL_INGESTION"),
+      List.of(StepDefinition.business(StepCode.of("FORM_DETAIL_INGESTION"),
+        TaskType.SYSTEM_TASK, "handler", List.of()))
+    );
   }
 
   private BusinessForm mockForm(BatchId batchId) {

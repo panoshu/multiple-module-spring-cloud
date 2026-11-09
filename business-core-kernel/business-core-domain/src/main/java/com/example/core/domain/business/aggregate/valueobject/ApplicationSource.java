@@ -7,7 +7,7 @@ import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.shared.exception.DomainException;
 
 /**
- * 申请来源。批次驱动业务必须先有批次和表单，再创建申请。
+ * 申请来源。表单来源必填；批次引用是否必填由流程定义的 batchMode 在应用层决定。
  */
 public record ApplicationSource(
   FormId formId,
@@ -18,10 +18,6 @@ public record ApplicationSource(
     if (formId == null) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
         .withLogDetail("申请来源表单不能为空");
-    }
-    if (batchId == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("申请所属批次不能为空");
     }
   }
 }

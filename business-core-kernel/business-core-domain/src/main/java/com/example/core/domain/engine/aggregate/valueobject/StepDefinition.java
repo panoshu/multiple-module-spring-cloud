@@ -1,6 +1,7 @@
 package com.example.core.domain.engine.aggregate.valueobject;
 
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
+import com.example.core.domain.engine.aggregate.valueobject.config.StepExtensionConfig;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.ActionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.TaskType;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
@@ -11,7 +12,7 @@ import java.util.List;
 /**
  * 单个步骤定义，属于不可变流程定义的一部分。
  * <p>
- * 扩展链以处理器名称引用，kernel 不在领域模型中感知业务 Handler 实现；
+ * 扩展链保留完整 {@link StepExtensionConfig}，以便运行时无损还原执行配置；
  * 外部协作步骤必须声明外部配置引用，业务步骤必须声明主处理器。
  */
 public record StepDefinition(
@@ -19,9 +20,9 @@ public record StepDefinition(
   TaskType taskType,
   ActionType actionType,
   String mainProcessor,
-  List<String> preValidations,
-  List<String> detailProcessors,
-  List<String> sideEffects,
+  List<StepExtensionConfig> preValidations,
+  List<StepExtensionConfig> detailProcessors,
+  List<StepExtensionConfig> sideEffects,
   List<StepTransition> successors,
   RetryPolicy retryPolicy,
   String externalConfigRef
@@ -69,7 +70,7 @@ public record StepDefinition(
       List.of(), List.of(), List.of(), successors, RetryPolicy.defaults(), externalConfigRef);
   }
 
-  private static List<String> immutableCopy(List<String> source) {
+  private static List<StepExtensionConfig> immutableCopy(List<StepExtensionConfig> source) {
     return source == null ? List.of() : List.copyOf(source);
   }
 

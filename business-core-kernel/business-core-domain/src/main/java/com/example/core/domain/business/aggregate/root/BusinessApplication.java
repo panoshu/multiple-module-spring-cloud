@@ -5,6 +5,7 @@ import com.example.core.domain.business.aggregate.valueobject.enums.status.Appli
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.domain.engine.event.PipelineExecutedEvent;
@@ -34,6 +35,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   private BatchId batchId;
   private FormId formId;
+  private DefinitionVersion definitionVersion;
 
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
@@ -75,14 +77,19 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   public static BusinessApplication createFromForm(ApplicationId applicationId, ApplicationSource source,
                                                     BusinessContext businessContext, OperatorInfo operatorInfo,
-                                                    FileId jsonFileId) {
+                                                    FileId jsonFileId, DefinitionVersion definitionVersion) {
     if (source == null) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
         .withLogDetail("申请来源不能为空");
     }
+    if (definitionVersion == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("流程定义版本不能为空");
+    }
     BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo, jsonFileId);
     app.formId = source.formId();
     app.batchId = source.batchId();
+    app.definitionVersion = definitionVersion;
     app.status = ApplicationStatus.PROCESSING;
     app.currentStep = ApplicationFlowStep.FORM_DETAIL_INGESTION;
     app.registerDomainEvent(ApplicationSpawnedEvent.of(app.id()));
@@ -111,6 +118,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     BusinessExtension businessExtension,
     FileId parsedJsonFileId,
     int expectedDetailCount,
+    DefinitionVersion definitionVersion,
     ApplicationStatus status,
     ApplicationFlowStep currentStep,
     LocalDateTime applyTime,
@@ -125,6 +133,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.businessExtension = businessExtension;
     app.parsedJsonFileId = parsedJsonFileId;
     app.expectedDetailCount = expectedDetailCount;
+    app.definitionVersion = definitionVersion;
     app.status = status;
     app.currentStep = currentStep;
     app.applyTime = applyTime;
@@ -184,7 +193,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     // 2. 遍历新的蓝图需求，如果是历史已经传过附件的，利用 withUpload / 构造器 还原状态
     this.planMaterials = requiredBlueprints.stream().map(blueprint -> {
       Optional<MaterialItem.UploadInfo> oldUpload = historyUploads.getOrDefault(blueprint.materialCode(), Optional.empty());
-
       if (oldUpload.isPresent()) {
         // 因为是 record，我们直接通过全参构造器，把老文件的 uploadInfo 塞给新蓝图
         return new MaterialItem(
@@ -384,6 +392,14 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   public BatchId batchId() {
     return batchId;
+  }
+
+  /**
+   * 流程实例启动时固定的流程定义版本（只读）。
+   * 定义升级不影响在途实例：加载定义时始终使用本版本。
+   */
+  public DefinitionVersion definitionVersion() {
+    return definitionVersion;
   }
 
   /**

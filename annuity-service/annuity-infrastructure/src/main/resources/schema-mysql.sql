@@ -39,6 +39,10 @@ CREATE TABLE IF NOT EXISTS t_business_application
 (
   64
 ) DEFAULT NULL COMMENT '关联表单 ID',
+  definition_version VARCHAR
+(
+  64
+) DEFAULT NULL COMMENT '流程定义版本',
 
   -- BusinessContext 拍平字段
   business_type VARCHAR

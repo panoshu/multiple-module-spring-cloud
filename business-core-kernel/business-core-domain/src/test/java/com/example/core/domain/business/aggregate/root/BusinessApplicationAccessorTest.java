@@ -6,6 +6,7 @@ import com.example.core.types.Channel;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
@@ -78,6 +79,7 @@ class BusinessApplicationAccessorTest {
       BatchId.of("B-1"), new FormId("F-1"),
       buildContext(), buildOperator(), null,
       new FileId("FILE-R"), 5,
+      DefinitionVersion.of("v2"),
       ApplicationStatus.COMPLETED, ApplicationFlowStep.COMPLETED,
       now, now,
       List.of(item), new BusinessFile(new FileId("PKG-1"), "pkg.zip", "zip", 100L)
@@ -88,6 +90,7 @@ class BusinessApplicationAccessorTest {
     assertThat(app.formId().value()).isEqualTo("F-1");
     assertThat(app.parsedJsonFileId().value()).isEqualTo("FILE-R");
     assertThat(app.expectedDetailCount()).isEqualTo(5);
+    assertThat(app.definitionVersion()).isEqualTo(DefinitionVersion.of("v2"));
     assertThat(app.status()).isEqualTo(ApplicationStatus.COMPLETED);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
     assertThat(app.applyTime()).isEqualTo(now);
@@ -99,23 +102,22 @@ class BusinessApplicationAccessorTest {
   }
 
   @Test
-  @DisplayName("createFromForm() 保存表单和批次归属")
+  @DisplayName("createFromForm() 保存表单、批次归属与定义版本")
   void createFromForm_savesSourceReferences() {
     BusinessApplication app = buildTestApp();
 
     assertThat(app.formId().value()).isEqualTo("F-001");
     assertThat(app.batchId().value()).isEqualTo("B-001");
+    assertThat(app.definitionVersion()).isEqualTo(DefinitionVersion.initial());
     assertThat(app.status()).isEqualTo(ApplicationStatus.PROCESSING);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
     assertThat(app.domainEvents()).hasSize(1);
   }
 
   @Test
-  @DisplayName("申请来源必须同时包含表单和批次")
-  void applicationSource_requiresFormAndBatch() {
+  @DisplayName("申请来源必须包含表单")
+  void applicationSource_requiresFormId() {
     assertThatThrownBy(() -> new ApplicationSource(null, BatchId.of("B-001")))
-      .isInstanceOf(DomainException.class);
-    assertThatThrownBy(() -> new ApplicationSource(new FormId("F-001"), null))
       .isInstanceOf(DomainException.class);
   }
 
@@ -123,7 +125,7 @@ class BusinessApplicationAccessorTest {
     return BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      buildContext(), buildOperator(), new FileId("FILE-001")
+      buildContext(), buildOperator(), new FileId("FILE-001"), DefinitionVersion.initial()
     );
   }
 

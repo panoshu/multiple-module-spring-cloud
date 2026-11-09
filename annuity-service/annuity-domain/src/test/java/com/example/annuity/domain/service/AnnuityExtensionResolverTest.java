@@ -2,6 +2,7 @@ package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
@@ -66,7 +67,7 @@ class AnnuityExtensionResolverTest {
     return BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      context, operator, new FileId("FILE-001")
+      context, operator, new FileId("FILE-001"), DefinitionVersion.initial()
     );
   }
 }

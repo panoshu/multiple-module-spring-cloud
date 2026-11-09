@@ -9,6 +9,7 @@ import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
@@ -284,7 +285,7 @@ class AnnuityEndToEndTest {
 
     BusinessApplication app = BusinessApplication.createFromForm(
       appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
-      context, operator, jsonFileId
+      context, operator, jsonFileId, DefinitionVersion.initial()
     );
     // 设置年金业务扩展字段（通过 kernel 公开的 attachExtension 方法）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(

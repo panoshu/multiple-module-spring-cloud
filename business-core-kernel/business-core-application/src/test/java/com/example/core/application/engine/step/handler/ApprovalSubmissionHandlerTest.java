@@ -1,6 +1,7 @@
 package com.example.core.application.engine.step.handler;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
@@ -78,7 +79,7 @@ class ApprovalSubmissionHandlerTest {
     );
     application = BusinessApplication.createFromForm(
       APPLICATION_ID, new ApplicationSource(new FormId("form-001"), BatchId.of("batch-001")),
-      businessContext, operatorInfo, PARSED_JSON_FILE_ID
+      businessContext, operatorInfo, PARSED_JSON_FILE_ID, DefinitionVersion.initial()
     );
     context = BusinessMetaContext.of(businessContext);
   }

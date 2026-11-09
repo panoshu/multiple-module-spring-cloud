@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS t_business_application
 (
   64
 ),
+  definition_version VARCHAR
+(
+  64
+),
 
   -- BusinessContext 拍平字段
   business_type VARCHAR

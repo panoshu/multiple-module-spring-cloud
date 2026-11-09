@@ -58,6 +58,7 @@ public class BusinessApplicationDO {
   // ===== 状态机字段 =====
   private String status;
   private String currentStep;
+  private String definitionVersion;
 
   private LocalDateTime applyTime;
   private LocalDateTime completeTime;
