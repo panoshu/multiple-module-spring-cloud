@@ -1,6 +1,6 @@
 # 生产级业务流程内核详细设计
 
-> 状态：待评审（仅设计，不包含实现授权）
+> 状态：设计已确认，分阶段实施中（实施进度见 §23）
 >
 > 日期：2026-11-08
 >
@@ -1079,3 +1079,49 @@ Application 层按用例拆分：
 - 不在流程重构中顺手改变无关模块行为。
 - file/approval 契约变更需要独立评审和契约测试。
 - 每一阶段完成后执行对应模块测试和架构测试，并更新本文状态。
+
+---
+
+## 23. 实施进度台账
+
+> 记录实现批次与 §20 阶段的对应关系。实现批次按「先写失败测试 → 再实现 → 跑测试」小步推进。
+
+### 23.1 阶段进度总览
+
+| §20 阶段 | 状态 | 说明 |
+|---|---|---|
+| 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
+| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位已完成；版本化流程定义领域模型已完成。`StepExecution`、`ExternalInteraction` 及 `BusinessApplication` 完整状态机待后续批次 |
+| 阶段 2 建立可靠性底座 | 未开始 | — |
+| 阶段 3 重构 file/approval 协作 | 未开始 | — |
+| 阶段 4 收敛可选能力与公共 API | 未开始 | — |
+| 阶段 5 清理与生产验收 | 未开始 | — |
+
+### 23.2 实现批次
+
+| 批次 | 提交 | 内容 | 验证 |
+|---|---|---|---|
+| 批次 1 | `79f74b0a` | 批次先行与申请归属闭环：重定位 `BusinessBatch`/`BusinessApplication`、新增 `ApplicationSource`、批次状态机与计数不变量、`markUpdated()` 乐观锁版本适配、表单裂变链路 | 35 个目标测试通过；全仓主代码编译通过；架构不变量测试通过 |
+| 批次 2 | 本次（未提交） | 版本化流程定义**纯领域模型**：`BusinessTypeCode`/`StepCode`/`DefinitionVersion` 强类型编码，`StartMode`/`InstanceGranularity`/`BatchMode`/`TaskType`/`ActionType` 枚举，`StepTransition`/`RetryPolicy`/`StepDefinition`/`ProcessDefinition` 不可变值对象及发布校验，`ProcessDefinitionGateway` SPI，`CORE.DOMAIN.0008-0013` 错误码 | 领域模块 93 个测试全部通过（新增 23 个）；全仓主代码编译通过；架构不变量 8 项通过；`git diff --check` 通过 |
+
+### 23.3 批次 2 范围边界
+
+按评审确认的「纯领域模型」范围，本批次**不**包含：
+
+- 不接管运行时路由（`FlowOrchestrationService` / `StepAutoAdvanceListener` 仍使用 `BusinessConfigGateway.getNextStep()`）；
+- 不修改 `BusinessConfigGateway` 现有方法，不新增旁路配置；
+- 不改持久化、不新增 DDL、不接线 `ProcessDefinitionGateway` 实现；
+- 不触碰 file-service / approval-service / annuity-service。
+
+因此 `ProcessDefinition` 当前尚未参与运行时。留待后续批次：
+
+1. `ProcessDefinitionGateway` 实现与不可变定义缓存（按 `businessType + version`，§14/§19.1）；
+2. `BusinessApplication` 增加 `definitionVersion`，启动时固定版本（§6.2）；
+3. 路由由版本化定义接管，替换封闭的 `ApplicationFlowStep` 枚举（§7.1/§10.3）；
+4. `batchMode` 运行时校验，创建工厂强制批次归属（§6.3）。
+
+### 23.4 后续批次待定决策
+
+- `ProcessDefinition` 接管 `getNextStep()` 路由的切换方式与在途实例兼容策略；
+- 存量 `ApplicationFlowStep`（17 步枚举）到开放 `StepCode` 的迁移映射；
+- 条件表达式求值的显式失败契约（本批次仅拒绝空白表达式，语法与求值错误留给运行时 `ConditionEvaluationGateway`，§7.1/§10.2）。

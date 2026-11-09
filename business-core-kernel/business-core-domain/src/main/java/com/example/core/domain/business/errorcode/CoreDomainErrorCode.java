@@ -26,6 +26,13 @@ public enum CoreDomainErrorCode implements ErrorDefinition {
   PROXY_FORBIDDEN("CORE.DOMAIN.0006", "无代办权限"),
   SECONDARY_AUTH_REQUIRED("CORE.DOMAIN.0007", "需要二次授权"),
 
+  PROCESS_DEFINITION_INVALID("CORE.DOMAIN.0008", "流程定义校验失败"),
+  STEP_CODE_DUPLICATED("CORE.DOMAIN.0009", "流程步骤编码重复"),
+  INITIAL_STEP_NOT_FOUND("CORE.DOMAIN.0010", "初始步骤不存在"),
+  SUCCESSOR_STEP_NOT_FOUND("CORE.DOMAIN.0011", "后继步骤不存在"),
+  STEP_CONFIG_INCOMPLETE("CORE.DOMAIN.0012", "步骤配置不完整"),
+  INVALID_STEP_CONDITION("CORE.DOMAIN.0013", "步骤条件表达式非法"),
+
   ;
 
   final String code;
