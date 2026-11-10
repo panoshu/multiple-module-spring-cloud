@@ -9,7 +9,6 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.types.OperatingMode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.repository.BatchRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
@@ -34,17 +33,15 @@ import static org.mockito.Mockito.*;
 class BusinessBatchAppServiceTest {
 
   private BatchRepository batchRepository;
-  private EventBus eventBus;
   private IdService idService;
   private BusinessBatchAppService appService;
 
   @BeforeEach
   void setUp() {
     batchRepository = mock(BatchRepository.class);
-    eventBus = mock(EventBus.class);
     idService = mock(IdService.class);
     when(idService.nextId(BatchId.class)).thenReturn(new BatchId("BATCH20260726001"));
-    appService = new BusinessBatchAppService(batchRepository, eventBus, idService);
+    appService = new BusinessBatchAppService(batchRepository, idService);
   }
 
   private BusinessContext sampleContext() {

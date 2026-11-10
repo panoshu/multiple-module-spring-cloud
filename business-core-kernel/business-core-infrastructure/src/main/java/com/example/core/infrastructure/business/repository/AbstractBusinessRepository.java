@@ -3,12 +3,12 @@ package com.example.core.infrastructure.business.repository;
 import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.domain.event.EventBus;
 import com.example.shared.domain.repository.Repository;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.Identifier;
 import com.mybatisflex.core.BaseMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.Serializable;
 import java.util.List;
@@ -36,10 +36,10 @@ public abstract class AbstractBusinessRepository<
   ID extends Identifier<?>,
   D> implements Repository<T, ID> {
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final EventBus eventBus;
 
-  protected AbstractBusinessRepository(ApplicationEventPublisher eventPublisher) {
-    this.eventPublisher = eventPublisher;
+  protected AbstractBusinessRepository(EventBus eventBus) {
+    this.eventBus = eventBus;
   }
 
   /**
@@ -159,8 +159,10 @@ public abstract class AbstractBusinessRepository<
   }
 
   /**
-   * 发布聚合根内部注册的领域事件并清空事件队列。
+   * 发布聚合根内部注册的领域事件并清空事件队列（spec §13.2）。
    * <p>
+   * 统一通过 {@link EventBus} 发布，由 shared-event 负责 Outbox 落库、本地分发、
+   * 远程投递与恢复；应用服务不再重复 publish，也不提前清空队列。
    * 单条事件发布失败不影响其他事件，仅记录错误日志。
    */
   protected void publishDomainEvents(T aggregate) {
@@ -170,7 +172,7 @@ public abstract class AbstractBusinessRepository<
     }
     for (DomainEvent event : events) {
       try {
-        eventPublisher.publishEvent(event);
+        eventBus.publish(event);
         log.debug("发布领域事件: eventId={}, type={}",
           event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {

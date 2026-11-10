@@ -14,7 +14,6 @@ import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegi
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
-import com.example.shared.domain.event.EventBus;
 import com.example.core.types.ApplicationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +48,6 @@ public class FlowOrchestrationService {
   private final BusinessConfigGateway configGateway;
   private final ApplicationRepository applicationRepository;
   private final StepPipelineExecutor pipelineExecutor;
-  private final EventBus eventBus;
   private final TransactionTemplate transactionTemplate;
   private final StepDefinitionResolver stepDefinitionResolver;
   private final StepRouteConfigAssembler stepRouteConfigAssembler;
@@ -94,11 +92,8 @@ public class FlowOrchestrationService {
       log.info("流程挂起，物理状态: {}", executionStatus);
     }
 
-    transactionTemplate.executeWithoutResult(status -> {
-      applicationRepository.save(app);
-      app.domainEvents().forEach(eventBus::publish);
-      app.clearDomainEvents();
-    });
+    // 领域事件统一由 Repository 经 EventBus 发布（spec §13.2），应用服务不重复 publish
+    transactionTemplate.executeWithoutResult(status -> applicationRepository.save(app));
   }
 
   /**
@@ -170,19 +165,17 @@ public class FlowOrchestrationService {
   private void rejectApplication(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     app.reject();
-    saveAndPublishEvents(app);
+    saveApplication(app);
   }
 
   private void withdrawApplication(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     app.withdraw();
-    saveAndPublishEvents(app);
+    saveApplication(app);
   }
 
-  private void saveAndPublishEvents(BusinessApplication app) {
+  private void saveApplication(BusinessApplication app) {
     applicationRepository.save(app);
-    app.domainEvents().forEach(eventBus::publish);
-    app.clearDomainEvents();
   }
 
   // ==========================================

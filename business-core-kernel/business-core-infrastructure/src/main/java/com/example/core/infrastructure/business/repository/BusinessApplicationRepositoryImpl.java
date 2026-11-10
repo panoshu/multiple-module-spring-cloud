@@ -8,7 +8,7 @@ import com.example.core.infrastructure.business.mapper.BusinessApplicationMapper
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.mybatisflex.core.BaseMapper;
-import org.springframework.context.ApplicationEventPublisher;
+import com.example.shared.domain.event.EventBus;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,10 +33,10 @@ public class BusinessApplicationRepositoryImpl
   protected final BusinessApplicationMapper mapper;
   protected final BusinessApplicationConverter converter;
 
-  public BusinessApplicationRepositoryImpl(ApplicationEventPublisher eventPublisher,
+  public BusinessApplicationRepositoryImpl(EventBus eventBus,
                                            BusinessApplicationMapper mapper,
                                            BusinessApplicationConverter converter) {
-    super(eventPublisher);
+    super(eventBus);
     this.mapper = mapper;
     this.converter = converter;
   }

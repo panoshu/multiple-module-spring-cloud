@@ -12,7 +12,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
-import org.springframework.context.ApplicationEventPublisher;
+import com.example.shared.domain.event.EventBus;
 
 import java.util.Optional;
 
@@ -36,10 +36,10 @@ public class BusinessBatchRepositoryImpl
   protected final BusinessBatchMapper mapper;
   protected final BusinessBatchConverter converter;
 
-  public BusinessBatchRepositoryImpl(ApplicationEventPublisher eventPublisher,
+  public BusinessBatchRepositoryImpl(EventBus eventBus,
                                      BusinessBatchMapper mapper,
                                      BusinessBatchConverter converter) {
-    super(eventPublisher);
+    super(eventBus);
     this.mapper = mapper;
     this.converter = converter;
   }

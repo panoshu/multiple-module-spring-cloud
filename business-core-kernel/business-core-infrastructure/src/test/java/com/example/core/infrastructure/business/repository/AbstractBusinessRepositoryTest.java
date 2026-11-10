@@ -16,6 +16,8 @@ import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.shared.domain.aggregate.valueobject.Version;
+import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.SystemException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,20 +26,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("通用业务仓储乐观锁测试")
+@DisplayName("通用业务仓储乐观锁与事件发布测试")
 class AbstractBusinessRepositoryTest {
 
   @Mock
@@ -45,13 +49,13 @@ class AbstractBusinessRepositoryTest {
   @Mock
   private BusinessBatchConverter converter;
   @Mock
-  private ApplicationEventPublisher eventPublisher;
+  private EventBus eventBus;
 
   private BusinessBatchRepositoryImpl repository;
 
   @BeforeEach
   void setUp() {
-    repository = new BusinessBatchRepositoryImpl(eventPublisher, mapper, converter);
+    repository = new BusinessBatchRepositoryImpl(eventBus, mapper, converter);
   }
 
   @Test
@@ -110,6 +114,37 @@ class AbstractBusinessRepositoryTest {
     assertThat(batch.version().value()).isEqualTo(3L);
   }
 
+  @Test
+  @DisplayName("保存时通过 EventBus 发布全部领域事件并清空队列")
+  void save_publishesEventsViaEventBusAndClearsQueue() {
+    BusinessBatch batch = batchWithEvents();
+    int registered = batch.domainEvents().size();
+    BusinessBatchDO inserted = new BusinessBatchDO();
+    inserted.setId("B-1");
+    when(mapper.selectOneById("B-1")).thenReturn(null);
+    when(converter.toDO(batch)).thenReturn(inserted);
+
+    repository.save(batch);
+
+    verify(eventBus, times(registered)).publish(any(DomainEvent.class));
+    assertThat(batch.domainEvents()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("单条事件发布失败不阻断保存且仍清空队列")
+  void save_isolatesEventPublishFailure() {
+    BusinessBatch batch = batchWithEvents();
+    BusinessBatchDO inserted = new BusinessBatchDO();
+    inserted.setId("B-1");
+    when(mapper.selectOneById("B-1")).thenReturn(null);
+    when(converter.toDO(batch)).thenReturn(inserted);
+    doThrow(new RuntimeException("publish failed")).when(eventBus).publish(any(DomainEvent.class));
+
+    assertThatCode(() -> repository.save(batch)).doesNotThrowAnyException();
+    assertThat(batch.domainEvents()).isEmpty();
+    verify(mapper).insert(any(BusinessBatchDO.class));
+  }
+
   private void stubExistingUpdate(BusinessBatch batch, BusinessBatchDO updateDO,
                                   int persistedVersion, int updateResult) {
     BusinessBatchDO existing = doWithVersion(persistedVersion);
@@ -123,6 +158,12 @@ class AbstractBusinessRepositoryTest {
     aDo.setId("B-1");
     aDo.setVersion(version);
     return aDo;
+  }
+
+  private BusinessBatch batchWithEvents() {
+    BusinessBatch batch = BusinessBatch.create(BatchId.of("B-1"), context(), operator());
+    batch.receiveApplications(1, operator());
+    return batch;
   }
 
   private BusinessBatch batchWithVersion(long version) {

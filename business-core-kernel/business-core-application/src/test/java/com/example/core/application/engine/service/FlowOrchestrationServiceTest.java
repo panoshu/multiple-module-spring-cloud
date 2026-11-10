@@ -24,7 +24,6 @@ import com.example.core.types.CustomerNo;
 import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.shared.domain.event.EventBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -69,7 +68,7 @@ class FlowOrchestrationServiceTest {
 
     service = new FlowOrchestrationService(
       handlerRegistry, mock(BusinessFactExtractorRegistry.class), configGateway,
-      applicationRepository, pipelineExecutor, mock(EventBus.class), transactionTemplate,
+      applicationRepository, pipelineExecutor, transactionTemplate,
       stepDefinitionResolver, stepRouteConfigAssembler);
   }
 
@@ -103,6 +102,7 @@ class FlowOrchestrationServiceTest {
     verify(stepRouteConfigAssembler).toRouteConfig(step);
     verify(app).completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION);
     verify(applicationRepository).save(app);
+    verify(app, never()).clearDomainEvents();
   }
 
   @Test

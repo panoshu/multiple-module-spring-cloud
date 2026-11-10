@@ -5,7 +5,6 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.repository.BatchRepository;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
@@ -37,7 +36,6 @@ import java.util.Optional;
 public class BusinessBatchAppService {
 
   private final BatchRepository batchRepository;
-  private final EventBus eventBus;
   private final IdService idService;
 
   /**
@@ -51,10 +49,7 @@ public class BusinessBatchAppService {
   public BusinessBatch createBatch(BusinessContext context, OperatorInfo operator) {
     BatchId batchId = idService.nextId(BatchId.class);
     BusinessBatch batch = BusinessBatch.create(batchId, context, operator);
-    batchRepository.save(batch);
-    batch.domainEvents().forEach(eventBus::publish);
-    batch.clearDomainEvents();
-    log.info("创建业务批次成功: batchId={}, businessType={}", batchId.value(), context.businessType());
+    batchRepository.save(batch);    log.info("创建业务批次成功: batchId={}, businessType={}", batchId.value(), context.businessType());
     return batch;
   }
 
@@ -96,9 +91,6 @@ public class BusinessBatchAppService {
   public void cancel(BatchId batchId, String reason) {
     BusinessBatch batch = batchRepository.loadOrThrow(batchId);
     batch.cancel(reason);
-    batchRepository.save(batch);
-    batch.domainEvents().forEach(eventBus::publish);
-    batch.clearDomainEvents();
-    log.info("取消业务批次: batchId={}, reason={}", batchId.value(), reason);
+    batchRepository.save(batch);    log.info("取消业务批次: batchId={}, reason={}", batchId.value(), reason);
   }
 }

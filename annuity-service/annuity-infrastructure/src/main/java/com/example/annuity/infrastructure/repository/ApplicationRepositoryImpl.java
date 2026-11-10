@@ -3,7 +3,7 @@ package com.example.annuity.infrastructure.repository;
 import com.example.core.infrastructure.business.converter.BusinessApplicationConverter;
 import com.example.core.infrastructure.business.mapper.BusinessApplicationMapper;
 import com.example.core.infrastructure.business.repository.BusinessApplicationRepositoryImpl;
-import org.springframework.context.ApplicationEventPublisher;
+import com.example.shared.domain.event.EventBus;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ApplicationRepositoryImpl extends BusinessApplicationRepositoryImpl {
 
-  public ApplicationRepositoryImpl(ApplicationEventPublisher eventPublisher,
+  public ApplicationRepositoryImpl(EventBus eventBus,
                                    BusinessApplicationMapper mapper,
                                    BusinessApplicationConverter converter) {
-    super(eventPublisher, mapper, converter);
+    super(eventBus, mapper, converter);
   }
 }

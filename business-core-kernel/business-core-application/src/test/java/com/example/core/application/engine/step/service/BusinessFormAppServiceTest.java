@@ -34,7 +34,6 @@ import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.file.types.FileId;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +63,6 @@ class BusinessFormAppServiceTest {
   private BatchRepository batchRepository;
   private BusinessConfigGateway configGateway;
   private FileIntegrationGateway fileIntegrationGateway;
-  private EventBus eventBus;
   private IdService idService;
   private ProcessDefinitionGateway processDefinitionGateway;
   private BusinessFormAppService appService;
@@ -76,14 +74,13 @@ class BusinessFormAppServiceTest {
     batchRepository = mock(BatchRepository.class);
     configGateway = mock(BusinessConfigGateway.class);
     fileIntegrationGateway = mock(FileIntegrationGateway.class);
-    eventBus = mock(EventBus.class);
     idService = mock(IdService.class);
     processDefinitionGateway = mock(ProcessDefinitionGateway.class);
     when(processDefinitionGateway.loadLatest(any()))
       .thenReturn(Optional.of(definitionWith(BatchMode.REQUIRED)));
     appService = new BusinessFormAppService(
       formRepository, applicationRepository, batchRepository, configGateway,
-      fileIntegrationGateway, eventBus, idService, processDefinitionGateway
+      fileIntegrationGateway, idService, processDefinitionGateway
     );
   }
 

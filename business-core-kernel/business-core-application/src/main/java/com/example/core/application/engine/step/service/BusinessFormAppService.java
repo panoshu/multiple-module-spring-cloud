@@ -17,7 +17,6 @@ import com.example.core.domain.engine.aggregate.valueobject.enums.definition.Bat
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
-import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.core.types.ApplicationId;
@@ -45,7 +44,6 @@ public class BusinessFormAppService {
   private final BatchRepository batchRepository;
   private final BusinessConfigGateway configGateway;
   private final FileIntegrationGateway fileIntegrationGateway;
-  private final EventBus eventBus;
   private final IdService idService;
   private final ProcessDefinitionGateway processDefinitionGateway;
 
@@ -59,10 +57,7 @@ public class BusinessFormAppService {
     // 聚合根行为：记录上传文件，修改状态为 UPLOADED，内部产生 FormUploadedEvent
     form.markAsUploaded(uploadedFile);
 
-    formRepository.save(form);
-    form.domainEvents().forEach(eventBus::publish);
-    form.clearDomainEvents();
-  }
+    formRepository.save(form);  }
 
   /**
    * 步骤 2：触发异步解析 (由 FormUploadedEvent 的监听器调用)
@@ -123,8 +118,6 @@ public class BusinessFormAppService {
       );
 
       applicationRepository.save(newApp);
-      newApp.domainEvents().forEach(eventBus::publish);
-      newApp.clearDomainEvents();
     }
     if (batch != null) {
       batchRepository.save(batch);
@@ -165,10 +158,7 @@ public class BusinessFormAppService {
   public void deleteForm(FormId formId) {
     BusinessForm form = formRepository.loadOrThrow(formId);
     form.markAsDeleted();
-    formRepository.save(form);
-    form.domainEvents().forEach(eventBus::publish);
-    form.clearDomainEvents();
-    log.info("删除表单: formId={}", formId.value());
+    formRepository.save(form);    log.info("删除表单: formId={}", formId.value());
   }
 
   /**
