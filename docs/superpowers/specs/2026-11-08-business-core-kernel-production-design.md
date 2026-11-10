@@ -1092,7 +1092,7 @@ Application 层按用例拆分：
 |---|---|---|
 | 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
 | 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 聚合领域模型均已完成。`ExternalInteraction` 聚合、`StepExecution` 持久化/DDL 与运行时接线待后续批次 |
-| 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2），Outbox 落库生效。`StepExecution`/`ExternalInteraction` 聚合、事件回执、重试恢复、`IdService`/`DistributedLock` 接入、移除不受控异步线程待后续批次 |
+| 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效。`StepExecution`/`ExternalInteraction` 聚合持久化与接线、事件回执、重试恢复、`IdService`/`DistributedLock` 接入、发布失败事务回滚（§9.1 原子性）、移除不受控异步线程（含异步动作传 `null` app 缺陷）待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
 | 阶段 4 收敛可选能力与公共 API | 未开始 | — |
 | 阶段 5 清理与生产验收 | 未开始 | — |
@@ -1107,7 +1107,8 @@ Application 层按用例拆分：
 | 批次 4 | `71d5e1ca` | 条件表达式求值**显式失败**：追加 `CORE.INFRA.0006`；SpEL/Aviator/QLExpress 三个网关的求值异常由静默 `return false` 改为抛 `SystemException`（保留 cause 与表达式上下文），空表达式短路保持不变；`StepPipelineExecutor` 不改，`false` 仍为 SKIPPED、异常则中断事务；补 SpEL 网关测试与管道异常传播测试 | 领域 97、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 | 批次 5 | `791d7b33` | `BusinessApplication` **宏观状态机收敛**：`ApplicationStatus` 扩展到 §8.1 的 9 态并实现合法迁移表与终态约束（保留 `PROCESSING` 存量兼容并归一为 `RUNNING`）；`transit()` 收敛为 `completeCurrentStep()`（终态不可推进、同节点幂等、后继非空校验），补齐 `start`/`waitForUser`/`waitForExternal`/`fail`/`retry`/`cancel`/`complete`/`reject`/`withdraw`，所有更新统一调 `markUpdated` 并记录 `completeTime`；`FlowOrchestrationService` 适配 | 领域 117、应用 94、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 | 批次 6 | `7aa17a22` | **统一领域事件发布所有权**（§13.2）：`AbstractBusinessRepository` 改注入 `EventBus` 替代 `ApplicationEventPublisher`，`publishDomainEvents` 统一经 EventBus 发布（Outbox 落库 + 本地分发 + 远程投递）并清理队列；移除 3 个应用服务共 7 处手动 `publish`/`clear` 及不再需要的 `EventBus` 注入；适配 kernel 与 annuity 共 6 个 Repository 子类构造；补仓储事件发布测试 | 领域 117、应用 94、基础设施 51、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
-| 批次 7 | 本次（未提交） | **StepExecution 步骤执行聚合（纯领域模型）**：新增 `StepExecutionId`（BIGINT/SEGMENT，§16.3）、`StepExecutionState` 执行状态枚举（与现有 Handler 返回值 `StepExecutionStatus` 区分命名）、`StepExecution` 聚合根（`create`/`reconstitute`/`retryFrom` 与状态行为）、`StepExecutionRepository` 契约（`findByRequestNo`/`findByApplicationAndStep`/`findRunningByApplication`）；唯一性语义与领域测试。不接线运行时、不注册事件、不改 DDL | 领域 136、应用 94、基础设施 51、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 7 | `08cb15ca` | **StepExecution 步骤执行聚合（纯领域模型）**：新增 `StepExecutionId`（BIGINT/SEGMENT，§16.3）、`StepExecutionState` 执行状态枚举（与现有 Handler 返回值 `StepExecutionStatus` 区分命名）、`StepExecution` 聚合根（`create`/`reconstitute`/`retryFrom` 与状态行为）、`StepExecutionRepository` 契约（`findByRequestNo`/`findByApplicationAndStep`/`findRunningByApplication`）；唯一性语义与领域测试。不接线运行时、不注册事件、不改 DDL | 领域 136、应用 94、基础设施 51、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 8 | 本次（未提交） | **修复 Outbox 序列化 P0**（批次 7 发现）：`EventAutoConfiguration.eventStore()` 改为自持专用 `ObjectMapper`（显式注册 `JavaTimeModule` + `DddJacksonModule`），不再注入宿主 `@Primary` mapper；`jackson-datatype-jsr310` 依赖由 `test` 提升为 compile 以支撑生产期显式注册；补 `EventAutoConfigurationTest` 2 项（配置解耦契约 + H2 真实落库含 `LocalDateTime` 的领域事件） | 事件 starter 3、event-core 14、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 日志 `Failed to save event` 归零；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1137,7 +1138,9 @@ Application 层按用例拆分：
 - **已解决（批次 5）**：`ApplicationStatus` 合法迁移表与终态约束落地；`transit()` 收敛为 `completeCurrentStep()`，`PROCESSING` 作为存量兼容状态归一为 `RUNNING`（阶段 5 清理时移除）。
 - **已解决（批次 6）**：§2 点名的「Spring 本地事件发布与 EventBus 发布分叉」——原先 Repository 先本地分发并清空队列，应用服务随后的 `eventBus.publish()` 拿到空队列，Outbox 从未落库；现统一由 Repository 经 `EventBus` 发布。
 - 发布失败隔离策略沿用既有 `publishDomainEvents` catch（单条失败仅记录日志、不回滚事务），与 §9.1「状态与 Outbox 同事务」的严格原子性仍有差距，需在阶段 2 复核是否改为失败即回滚。
-- **新发现（批次 7，P0）**：`AnnuityJacksonConfiguration` 的 `@Primary ObjectMapper` 由裸 `new ObjectMapper()` 构造，未注册 `JavaTimeModule`；`EventAutoConfiguration.eventStore()` 注入该容器 mapper 后，`JdbcEventStore.save()` 序列化含 `LocalDateTime occurredOn` 的领域事件抛 `Java 8 date/time type not supported`，`DefaultEventBus` 落库失败并 rethrow，最终被 `AbstractBusinessRepository.publishDomainEvents` 的 catch 静默吞掉 —— annuity 链路的 Outbox 实际仍不落库。批次 6 只修了发布所有权，未覆盖序列化能力；需在后续批次改 EventStore 使用自带 `JavaTimeModule` 的专用 mapper（不复用业务服务 `@Primary` mapper），或统一要求各服务 mapper 注册该模块。`EventAutoConfiguration` 中 RedisTemplate 序列化器已有 `findAndRegisterModules()` 的同类修复先例，可参照。
+- **已解决（批次 8，P0，批次 7 发现）**：`AnnuityJacksonConfiguration` 的 `@Primary ObjectMapper` 由裸 `new ObjectMapper()` 构造，未注册 `JavaTimeModule`；`EventAutoConfiguration.eventStore()` 注入该容器 mapper 后，`JdbcEventStore.save()` 序列化含 `LocalDateTime occurredOn` 的领域事件抛 `Java 8 date/time type not supported`，`DefaultEventBus` 落库失败并 rethrow，最终被 `AbstractBusinessRepository.publishDomainEvents` 的 catch 静默吞掉 —— annuity 链路的 Outbox 实际仍不落库。批次 6 只修了发布所有权，未覆盖序列化能力；批次 8 改为 EventStore 自持专用 mapper（显式注册 `JavaTimeModule` + `DddJacksonModule`），不复用业务服务 `@Primary` mapper。`shared-event-core` 已有 compile scope 的 jsr310 传递依赖，starter 侧原 `test` scope 声明会覆盖它导致生产期不可用，已一并提升为 compile。
+- **新发现（批次 8）**：`StepPipelineExecutor.dispatchAsyncAction()` 在 `CompletableFuture.runAsync` 中硬编码以 `action.execute(null, context, params)` 派发异步扩展动作，而 `AnnuityMaterialPreparedNotificationAction.execute()` 直接调 `app.operatorInfo()` —— E2E 日志每次运行稳定出现 2 处 `NullPointerException`（被 catch 记录、不影响断言）。属 §10.3「不受控异步线程」的深层缺陷：异步动作契约要求 app，派发方却传 null，且 `BusinessMetaContext` 为 ThreadLocal 无法跨线程共享。与 Outbox 修复无关，留待移除异步派发的批次一并处理。
+- **新发现（批次 8）**：`JdbcEventStore.save()` 以 `event.eventId().toString()` 写 `event_id`，而 `EventId` 是 record（默认 `toString()` 为 `EventId[value=xxx]`），与通常期望的 ULID 字符串不一致；`EventDeliverer`/`claimPendingLogs` 按 `event_id` 关联时依赖同一写法，暂可工作但语义脆弱，后续统一为 `eventId().value()` 或显式序列化。
 
 ### 23.5 批次 5 渐进边界
 
@@ -1161,3 +1164,11 @@ Application 层按用例拆分：
 - 执行状态枚举命名为 `StepExecutionState`，与既有 Handler 返回值枚举 `StepExecutionStatus`（SUCCESS/SUSPEND_ASYNC_WAIT/FAILED，10+ 处引用）刻意区分，避免语义冲突；后者退役待独立批次。
 - annuity E2E 6 项虽 `BUILD SUCCESS`，但日志暴露 `DefaultEventBus: Failed to save event`（详见 §23.4 P0 条目）：Outbox 仍因序列化失败被上层 catch 吞掉。该缺陷属 annuity Jackson 配置 / shared-event-starter 注入策略，跨业务服务，不在本批次（kernel 领域模型）范围内修复，列为下一批次优先候选。
 - `StepExecutionId` 采用 BIGINT + SEGMENT（§16.3），与存量三个 String 强类型 ID 不同；E2E 已验证 `IdService` 启动期对该 ID 定义的加载正常。
+
+### 23.8 批次 8 范围边界
+
+- 修复仅落在 `shared-event-starter`（`EventAutoConfiguration` + `pom.xml` + 测试），**不改 annuity 的 `AnnuityJacksonConfiguration`**：该 `@Primary` mapper 仍服务于 DO ↔ 领域对象的扩展字段多态转换，其缺少 `JavaTimeModule` 只影响被它序列化的对象；EventStore 现已与其解耦，从基础设施层一处修复覆盖所有业务服务。
+- 采用显式 `registerModule(new JavaTimeModule())` 而非 `findAndRegisterModules()`：后者依赖运行期 ServiceLoader 扫描，模块缺失时会静默退化回到本缺陷；显式注册在编译期即被强制。与 `shared-logging-starter`/`file-infrastructure` 的既有写法一致。
+- 专用 mapper 一并注册 `DddJacksonModule`，使领域事件中的强类型 `Identifier` 序列化为字符串而非嵌套对象（新增测试断言覆盖）。`dddJacksonModule()` 仍作为 `@Bean` 供 Spring Boot 自动注册到容器 mapper，两者互不冲突。
+- 未改 `JdbcEventStore` / `DefaultEventBus` / `AbstractBusinessRepository`：`publishDomainEvents` 的单条失败隔离（§23.4 待复核项）与 §9.1 事务原子性差距仍在；本批次只保证「落库不再因序列化失败」。
+- E2E 日志中 2 处异步扩展动作 `NullPointerException` 为既有缺陷（见 §23.4 新发现条目），本批次未处理；`Failed to save event` 已归零，作为 Outbox 落库恢复的验收信号。
