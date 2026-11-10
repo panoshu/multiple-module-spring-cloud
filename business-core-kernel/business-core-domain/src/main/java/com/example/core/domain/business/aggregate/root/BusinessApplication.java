@@ -90,7 +90,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.formId = source.formId();
     app.batchId = source.batchId();
     app.definitionVersion = definitionVersion;
-    app.status = ApplicationStatus.PROCESSING;
+    app.status = ApplicationStatus.RUNNING;
     app.currentStep = ApplicationFlowStep.FORM_DETAIL_INGESTION;
     app.registerDomainEvent(ApplicationSpawnedEvent.of(app.id()));
     return app;
@@ -280,18 +280,85 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     return this.currentStep;
   }
 
-  public void transit(ApplicationFlowStep nextStep) {
-    // TODO 增加状态控制?
+  /**
+   * 完成当前步骤并跃迁到后继步骤。终态申请单不可继续推进；
+   * 重复推进同一节点保持幂等。所有更新统一递增版本并记录操作人。
+   */
+  public void completeCurrentStep(ApplicationFlowStep nextStep) {
+    if (nextStep == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("后继步骤不能为空");
+    }
+    // 幂等先于终态检查：终点步骤的自环推进不产生状态变化
     if (this.currentStep == nextStep) {
       return;
+    }
+    if (currentStatus() == null || currentStatus().isTerminal()) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("终态申请单不可继续推进步骤");
     }
 
     ApplicationFlowStep previousStep = this.currentStep;
     this.currentStep = nextStep;
     if (nextStep == ApplicationFlowStep.COMPLETED) {
-      this.status = ApplicationStatus.COMPLETED;
+      transitStatus(ApplicationStatus.COMPLETED);
+    } else {
+      this.markUpdated(requireOperator());
     }
     this.registerDomainEvent(StepEnteredEvent.of(this.id(), previousStep, nextStep));
+  }
+
+  public void start() {
+    transitStatus(ApplicationStatus.RUNNING);
+  }
+
+  public void waitForUser() {
+    transitStatus(ApplicationStatus.WAITING_USER);
+  }
+
+  public void waitForExternal() {
+    transitStatus(ApplicationStatus.WAITING_EXTERNAL);
+  }
+
+  public void fail() {
+    transitStatus(ApplicationStatus.FAILED);
+  }
+
+  public void retry() {
+    transitStatus(ApplicationStatus.RUNNING);
+  }
+
+  public void cancel() {
+    transitStatus(ApplicationStatus.CANCELLED);
+  }
+
+  public void complete() {
+    transitStatus(ApplicationStatus.COMPLETED);
+  }
+
+  private void transitStatus(ApplicationStatus target) {
+    ApplicationStatus current = currentStatus();
+    if (current == null || !current.canTransitTo(target)) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("申请单状态不允许从 %s 迁移到 %s".formatted(current, target));
+    }
+    this.status = target;
+    if (target == ApplicationStatus.COMPLETED) {
+      this.completeTime = LocalDateTime.now();
+    }
+    this.markUpdated(requireOperator());
+  }
+
+  private ApplicationStatus currentStatus() {
+    return this.status == null ? null : this.status.normalized();
+  }
+
+  private String requireOperator() {
+    if (this.operatorInfo == null || this.operatorInfo.operatorId() == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("申请单缺少操作人信息，无法执行状态更新");
+    }
+    return this.operatorInfo.operatorId();
   }
 
   /**
@@ -301,10 +368,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * 状态一旦进入 REJECTED 即为终态，不可再流转。
    */
   public void reject() {
-    if (this.status == ApplicationStatus.REJECTED) {
-      return;
-    }
-    this.status = ApplicationStatus.REJECTED;
+    terminateAs(ApplicationStatus.REJECTED);
   }
 
   /**
@@ -314,10 +378,24 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * 状态一旦进入 WITHDRAWN 即为终态，不可再流转。
    */
   public void withdraw() {
-    if (this.status == ApplicationStatus.WITHDRAWN) {
+    terminateAs(ApplicationStatus.WITHDRAWN);
+  }
+
+  /**
+   * 审批拒绝与业务撤回属于 §8.1 注明的「明确终止行为」，不受一般迁移表约束。
+   * 过渡期外部协作尚未接线、等待态未建立；阶段 3 接入后统一为仅 WAITING_EXTERNAL 可进入。
+   */
+  private void terminateAs(ApplicationStatus terminal) {
+    ApplicationStatus current = currentStatus();
+    if (current == terminal) {
       return;
     }
-    this.status = ApplicationStatus.WITHDRAWN;
+    if (current == null || current.isTerminal()) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("终态申请单不可再变更状态");
+    }
+    this.status = terminal;
+    this.markUpdated(requireOperator());
   }
 
   /**
@@ -410,7 +488,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 申请单状态
    */
   public ApplicationStatus status() {
-    return this.status;
+    return currentStatus();
   }
 
   /**

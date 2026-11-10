@@ -88,7 +88,7 @@ public class FlowOrchestrationService {
       postResult = pipelineExecutor.executeChain(app, context, routeConfig.sideEffects());
       app.recordPipelineExecution("SIDE_EFFECTS", postResult);
 
-      app.transit(routeConfig.nextStep());
+      app.completeCurrentStep(routeConfig.nextStep());
 
     } else {
       log.info("流程挂起，物理状态: {}", executionStatus);

@@ -1091,7 +1091,7 @@ Application 层按用例拆分：
 | §20 阶段 | 状态 | 说明 |
 |---|---|---|
 | 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
-| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、实例 `definitionVersion` 持久化、`batchMode` 运行时校验均已完成。`StepExecution`、`ExternalInteraction` 及 `BusinessApplication` 完整状态机待后续批次 |
+| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机与合法迁移均已完成。`StepExecution`、`ExternalInteraction` 聚合与步骤执行记录待后续批次 |
 | 阶段 2 建立可靠性底座 | 未开始 | — |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
 | 阶段 4 收敛可选能力与公共 API | 未开始 | — |
@@ -1104,7 +1104,8 @@ Application 层按用例拆分：
 | 批次 1 | `79f74b0a` | 批次先行与申请归属闭环：重定位 `BusinessBatch`/`BusinessApplication`、新增 `ApplicationSource`、批次状态机与计数不变量、`markUpdated()` 乐观锁版本适配、表单裂变链路 | 35 个目标测试通过；全仓主代码编译通过；架构不变量测试通过 |
 | 批次 2 | `69575979` | 版本化流程定义**纯领域模型**：`BusinessTypeCode`/`StepCode`/`DefinitionVersion` 强类型编码，`StartMode`/`InstanceGranularity`/`BatchMode`/`TaskType`/`ActionType` 枚举，`StepTransition`/`RetryPolicy`/`StepDefinition`/`ProcessDefinition` 不可变值对象及发布校验，`ProcessDefinitionGateway` SPI，`CORE.DOMAIN.0008-0013` 错误码 | 领域模块 93 个测试全部通过（新增 23 个）；全仓主代码编译通过；架构不变量 7 项通过；`git diff --check` 通过 |
 | 批次 3 | `5095c9d3` | 版本化流程定义**运行时接管**：默认 `ProcessDefinitionGateway`（过渡期委托存量路由、按业务类型+版本缓存不可变定义）、`StepDefinitionResolver` 按实例固定版本解析、`StepRouteConfigAssembler` 无损还原执行配置；`FlowOrchestrationService`/`StepAutoAdvanceListener` 改按定义解析；`BusinessApplication` 增加 `definitionVersion` 与双库 DDL/DO/Converter；`batchMode` 运行时校验（`NONE` 可不关联批次）；`CORE.APP.0007-0008` 错误码 | 领域 97、应用 92、基础设施 40、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
-| 批次 4 | 本次（未提交） | 条件表达式求值**显式失败**：追加 `CORE.INFRA.0006`；SpEL/Aviator/QLExpress 三个网关的求值异常由静默 `return false` 改为抛 `SystemException`（保留 cause 与表达式上下文），空表达式短路保持不变；`StepPipelineExecutor` 不改，`false` 仍为 SKIPPED、异常则中断事务；补 SpEL 网关测试与管道异常传播测试 | 领域 97、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 4 | `71d5e1ca` | 条件表达式求值**显式失败**：追加 `CORE.INFRA.0006`；SpEL/Aviator/QLExpress 三个网关的求值异常由静默 `return false` 改为抛 `SystemException`（保留 cause 与表达式上下文），空表达式短路保持不变；`StepPipelineExecutor` 不改，`false` 仍为 SKIPPED、异常则中断事务；补 SpEL 网关测试与管道异常传播测试 | 领域 97、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 5 | 本次（未提交） | `BusinessApplication` **宏观状态机收敛**：`ApplicationStatus` 扩展到 §8.1 的 9 态并实现合法迁移表与终态约束（保留 `PROCESSING` 存量兼容并归一为 `RUNNING`）；`transit()` 收敛为 `completeCurrentStep()`（终态不可推进、同节点幂等、后继非空校验），补齐 `start`/`waitForUser`/`waitForExternal`/`fail`/`retry`/`cancel`/`complete`/`reject`/`withdraw`，所有更新统一调 `markUpdated` 并记录 `completeTime`；`FlowOrchestrationService` 适配 | 领域 117、应用 94、基础设施 49、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1131,3 +1132,13 @@ Application 层按用例拆分：
 - `ApplicationFlowStep`（17 步枚举）的退役时机，以及 `current_step` 列与领域事件签名向开放 `StepCode` 的迁移；
 - **已解决（批次 4）**：三个 `ConditionEvaluationGateway` 实现的求值异常统一抛 `SystemException(CORE.INFRA.0006)`，不再静默跳过；`StepPipelineExecutor` 保持不变，`false` 仍表示条件不满足（SKIPPED），异常则中断事务。后续仍需为流程定义发布增加表达式语法预校验；
 - 默认 Gateway 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 声明应由业务服务的自定义实现覆盖。
+- **已解决（批次 5）**：`ApplicationStatus` 合法迁移表与终态约束落地；`transit()` 收敛为 `completeCurrentStep()`，`PROCESSING` 作为存量兼容状态归一为 `RUNNING`（阶段 5 清理时移除）。
+
+### 23.5 批次 5 渐进边界
+
+本批次刻意保留以下过渡形态，避免一次性改动扩散到尚未接线的外部协作链路：
+
+- `reject()` / `withdraw()` 属于 §8.1 注明的「明确终止行为」，不走 `canTransitTo` 一般迁移表，仅校验非终态 + 幂等 + `markUpdated`。过渡期 `WAITING_EXTERNAL` 尚未由阶段 3 的外部协作接线建立，因此审批驳回仍从 `RUNNING` 触发；阶段 3 接入后应统一为「仅 `WAITING_EXTERNAL` 可进入驳回/撤回」并移除该例外。
+- `completeCurrentStep()` 只校验「终态不可推进」与后继非空，不强制套用完整迁移表（同样因为等待态未接线）；幂等检查先于终态检查，以兼容终点步骤 `COMPLETED → COMPLETED` 自环。
+- 状态更新统一取聚合内 `operatorInfo().operatorId()` 作为操作人，未在 API 层引入显式 operator 传递；外部事件回调按 §15.3 不伪造用户会话，后续接入会话时再改为显式传入。
+- 不改 DDL/DO：`status` 仍以枚举名持久化；存量 `PROCESSING` 行读出后经 `normalized()` 归一，后续保存即写回 `RUNNING`。

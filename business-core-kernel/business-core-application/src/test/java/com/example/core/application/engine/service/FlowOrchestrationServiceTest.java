@@ -101,7 +101,7 @@ class FlowOrchestrationServiceTest {
     verify(configGateway, never()).getNextStep(any(), any());
     verify(stepDefinitionResolver).resolve(app);
     verify(stepRouteConfigAssembler).toRouteConfig(step);
-    verify(app).transit(ApplicationFlowStep.DATA_VERIFICATION);
+    verify(app).completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION);
     verify(applicationRepository).save(app);
   }
 

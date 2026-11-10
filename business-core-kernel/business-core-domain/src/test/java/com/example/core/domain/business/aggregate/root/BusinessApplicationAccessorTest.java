@@ -109,7 +109,7 @@ class BusinessApplicationAccessorTest {
     assertThat(app.formId().value()).isEqualTo("F-001");
     assertThat(app.batchId().value()).isEqualTo("B-001");
     assertThat(app.definitionVersion()).isEqualTo(DefinitionVersion.initial());
-    assertThat(app.status()).isEqualTo(ApplicationStatus.PROCESSING);
+    assertThat(app.status()).isEqualTo(ApplicationStatus.RUNNING);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
     assertThat(app.domainEvents()).hasSize(1);
   }
