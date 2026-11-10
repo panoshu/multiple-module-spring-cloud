@@ -31,7 +31,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -131,17 +130,22 @@ class AbstractBusinessRepositoryTest {
   }
 
   @Test
-  @DisplayName("单条事件发布失败不阻断保存且仍清空队列")
-  void save_isolatesEventPublishFailure() {
+  @DisplayName("事件发布失败应抛出并保留事件队列，使业务写入与 Outbox 同事务回滚")
+  void save_propagatesEventPublishFailureAndKeepsQueue() {
     BusinessBatch batch = batchWithEvents();
+    int registered = batch.domainEvents().size();
     BusinessBatchDO inserted = new BusinessBatchDO();
     inserted.setId("B-1");
     when(mapper.selectOneById("B-1")).thenReturn(null);
     when(converter.toDO(batch)).thenReturn(inserted);
     doThrow(new RuntimeException("publish failed")).when(eventBus).publish(any(DomainEvent.class));
 
-    assertThatCode(() -> repository.save(batch)).doesNotThrowAnyException();
-    assertThat(batch.domainEvents()).isEmpty();
+    assertThatThrownBy(() -> repository.save(batch))
+      .isInstanceOf(RuntimeException.class)
+      .hasMessageContaining("publish failed");
+    assertThat(batch.domainEvents()).hasSize(registered);
+    // 首个事件失败即中断，不继续发布后续事件
+    verify(eventBus, times(1)).publish(any(DomainEvent.class));
     verify(mapper).insert(any(BusinessBatchDO.class));
   }
 

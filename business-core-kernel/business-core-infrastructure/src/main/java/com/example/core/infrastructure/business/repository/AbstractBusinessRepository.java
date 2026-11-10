@@ -159,11 +159,12 @@ public abstract class AbstractBusinessRepository<
   }
 
   /**
-   * 发布聚合根内部注册的领域事件并清空事件队列（spec §13.2）。
+   * 发布聚合根内部注册的领域事件并清空事件队列（spec §13.2 / §9.1）。
    * <p>
    * 统一通过 {@link EventBus} 发布，由 shared-event 负责 Outbox 落库、本地分发、
    * 远程投递与恢复；应用服务不再重复 publish，也不提前清空队列。
-   * 单条事件发布失败不影响其他事件，仅记录错误日志。
+   * 发布失败直接抛出，使应用服务的 {@code @Transactional} 连同业务写入一并回滚，
+   * 保证业务状态与 Outbox 严格同事务；失败时事件队列保留，便于重试后重新发布。
    */
   protected void publishDomainEvents(T aggregate) {
     List<DomainEvent> events = aggregate.domainEvents();
@@ -171,14 +172,9 @@ public abstract class AbstractBusinessRepository<
       return;
     }
     for (DomainEvent event : events) {
-      try {
-        eventBus.publish(event);
-        log.debug("发布领域事件: eventId={}, type={}",
-          event.eventId(), event.getClass().getSimpleName());
-      } catch (Exception e) {
-        log.error("发布领域事件失败: eventId={}, type={}",
-          event.eventId(), event.getClass().getSimpleName(), e);
-      }
+      eventBus.publish(event);
+      log.debug("发布领域事件: eventId={}, type={}",
+        event.eventId(), event.getClass().getSimpleName());
     }
     aggregate.clearDomainEvents();
   }
