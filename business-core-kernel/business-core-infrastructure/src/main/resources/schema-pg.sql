@@ -510,3 +510,34 @@ COMMENT
 ON COLUMN t_business_form.deleted         IS '逻辑删除标志';
 COMMENT
 ON COLUMN t_business_form.version         IS '乐观锁版本号';
+
+-- ===== 步骤执行记录（spec §7.2 / §16.3） =====
+CREATE TABLE IF NOT EXISTS t_step_execution
+(
+  id                  BIGINT       NOT NULL,
+  application_id     VARCHAR(64) NOT NULL,
+  definition_version  VARCHAR(64) NOT NULL,
+  step_code           VARCHAR(64) NOT NULL,
+  attempt             INT         NOT NULL,
+  request_no          VARCHAR(64) NOT NULL,
+  status              VARCHAR(32) NOT NULL,
+  started_at          TIMESTAMP,
+  ended_at            TIMESTAMP,
+  error_code          VARCHAR(64),
+  error_summary       TEXT,
+  checkpoint_ref      VARCHAR(255),
+  created_by          VARCHAR(64) NOT NULL,
+  updated_by          VARCHAR(64),
+  create_time         TIMESTAMP   NOT NULL,
+  update_time         TIMESTAMP   NOT NULL,
+  deleted             BOOLEAN     NOT NULL DEFAULT FALSE,
+  version             INT         NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_step_execution_app_step_attempt
+  ON t_step_execution (application_id, step_code, attempt);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_step_execution_request_no
+  ON t_step_execution (request_no);
+CREATE INDEX IF NOT EXISTS idx_step_execution_app_status
+  ON t_step_execution (application_id, status);

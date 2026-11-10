@@ -363,3 +363,34 @@ CREATE INDEX idx_business_form_batch_id ON t_business_form (batch_id);
 CREATE INDEX idx_business_form_status ON t_business_form (form_status);
 CREATE INDEX idx_business_form_customer_no ON t_business_form (customer_no);
 CREATE INDEX idx_business_form_create_time ON t_business_form (create_time);
+
+-- ===== 步骤执行记录（spec §7.2 / §16.3） =====
+CREATE TABLE IF NOT EXISTS t_step_execution
+(
+  id                  BIGINT       NOT NULL,
+  application_id      VARCHAR(64)  NOT NULL,
+  definition_version  VARCHAR(64)  NOT NULL,
+  step_code           VARCHAR(64)  NOT NULL,
+  attempt             INT          NOT NULL,
+  request_no          VARCHAR(64)  NOT NULL,
+  status              VARCHAR(32)  NOT NULL,
+  started_at          DATETIME,
+  ended_at            DATETIME,
+  error_code          VARCHAR(64),
+  error_summary       TEXT,
+  checkpoint_ref      VARCHAR(255),
+  created_by          VARCHAR(64)  NOT NULL,
+  updated_by          VARCHAR(64),
+  create_time         DATETIME     NOT NULL,
+  update_time         DATETIME     NOT NULL,
+  deleted             TINYINT(1)   NOT NULL DEFAULT 0,
+  version             INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='步骤执行记录';
+
+CREATE UNIQUE INDEX uk_step_execution_app_step_attempt
+  ON t_step_execution (application_id, step_code, attempt);
+CREATE UNIQUE INDEX uk_step_execution_request_no
+  ON t_step_execution (request_no);
+CREATE INDEX idx_step_execution_app_status
+  ON t_step_execution (application_id, status);
