@@ -10,14 +10,14 @@ import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.engine.service.registry.ExtensionActionRegistry;
 import com.example.core.domain.engine.spi.StepExtensionAction;
 import com.example.shared.exception.SystemException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * 步骤管道执行器 (微编排核心)
@@ -28,11 +28,19 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class StepPipelineExecutor {
 
   private final ExtensionActionRegistry extensionRegistry;
   private final ConditionEvaluationGateway conditionEvaluator;
+  private final Executor taskExecutor;
+
+  public StepPipelineExecutor(ExtensionActionRegistry extensionRegistry,
+                              ConditionEvaluationGateway conditionEvaluator,
+                              @Qualifier("applicationTaskExecutor") Executor taskExecutor) {
+    this.extensionRegistry = extensionRegistry;
+    this.conditionEvaluator = conditionEvaluator;
+    this.taskExecutor = taskExecutor;
+  }
 
   /**
    * 执行扩展动作链
@@ -64,7 +72,7 @@ public class StepPipelineExecutor {
       // 2. 策略路由分发：调用语义化方法返回 Record
       PipelineExecutionResult.ActionExecutionRecord record;
       if (config.isAsync()) {
-        record = dispatchAsyncAction(action, context, config);
+        record = dispatchAsyncAction(action, app, context, config);
       } else {
         record = executeSyncAction(action, app, context, config);
       }
@@ -96,12 +104,16 @@ public class StepPipelineExecutor {
     return matched;
   }
 
-  private PipelineExecutionResult.ActionExecutionRecord dispatchAsyncAction(StepExtensionAction action, BusinessMetaContext context, StepExtensionConfig config) {
+  private PipelineExecutionResult.ActionExecutionRecord dispatchAsyncAction(StepExtensionAction action,
+                                                                            BusinessApplication app,
+                                                                            BusinessMetaContext context,
+                                                                            StepExtensionConfig config) {
     long startTime = System.currentTimeMillis();
 
-    CompletableFuture.runAsync(() -> {
+    // 受控线程池替代 ForkJoinPool.commonPool；app 只读传递，使通知类动作可读取操作人与申请单号。
+    taskExecutor.execute(() -> {
       try {
-        action.execute(null, context, config.params());
+        action.execute(app, context, config.params());
         log.info("异步动作 [{}] 执行完毕", action.actionName());
       } catch (Exception e) {
         log.error("异步扩展动作 [{}] 执行异常", config.beanName(), e);
