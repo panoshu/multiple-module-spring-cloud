@@ -3,18 +3,24 @@ package com.example.core.application.engine.service;
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.root.StepExecution;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
+import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
+import com.example.core.domain.engine.aggregate.valueobject.StepCode;
 import com.example.core.domain.engine.aggregate.valueobject.StepDefinition;
 import com.example.core.domain.engine.aggregate.valueobject.config.ExtractorConfig;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.repository.StepExecutionRepository;
 import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.StepExecutionId;
+import com.example.shared.identifier.contract.IdService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,6 +58,8 @@ public class FlowOrchestrationService {
   private final TransactionTemplate transactionTemplate;
   private final StepDefinitionResolver stepDefinitionResolver;
   private final StepRouteConfigAssembler stepRouteConfigAssembler;
+  private final StepExecutionRepository stepExecutionRepository;
+  private final IdService idService;
 
   public void advanceStep(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
@@ -58,6 +67,11 @@ public class FlowOrchestrationService {
     // 路由由版本化流程定义接管，不再直接查询过宽的 BusinessConfigGateway
     StepDefinition stepDefinition = stepDefinitionResolver.resolve(app);
     StepRouteConfig routeConfig = stepRouteConfigAssembler.toRouteConfig(stepDefinition);
+
+    // 每次步骤尝试独立建记录，不把执行历史塞进 BusinessApplication（§7.2）
+    String operator = operatorOf(app);
+    StepExecution execution = newStepExecution(appId, app, stepDefinition);
+    execution.start(operator);
 
     // 【删除】之前对 isUserActionCompletedForCurrentStep() 的判断
     // 现在的逻辑：既然你能调到 advanceStep，说明是外部手动触发的(或者SystemTask自动触发的)。
@@ -92,8 +106,39 @@ public class FlowOrchestrationService {
       log.info("流程挂起，物理状态: {}", executionStatus);
     }
 
-    // 领域事件统一由 Repository 经 EventBus 发布（spec §13.2），应用服务不重复 publish
-    transactionTemplate.executeWithoutResult(status -> applicationRepository.save(app));
+    // 领域事件统一由 Repository 经 EventBus 发布（spec §13.2），应用服务不重复 publish；
+    // 申请单状态、步骤执行记录与 Outbox 在同一本地事务保存（spec §9.1）
+    StepExecutionStatus finalStatus = executionStatus;
+    transactionTemplate.executeWithoutResult(status -> {
+      applicationRepository.save(app);
+      applyHandlerResult(execution, finalStatus, operator);
+      stepExecutionRepository.save(execution);
+    });
+  }
+
+  private StepExecution newStepExecution(ApplicationId appId, BusinessApplication app,
+                                         StepDefinition stepDefinition) {
+    StepCode stepCode = stepDefinition.stepCode();
+    List<StepExecution> history = stepExecutionRepository.findByApplicationAndStep(appId, stepCode);
+    int attempt = (history == null ? 0 : history.size()) + 1;
+    String requestNo = "%s:%s:%d".formatted(appId.value(), stepCode.value(), attempt);
+    DefinitionVersion version = app.definitionVersion() != null
+      ? app.definitionVersion() : DefinitionVersion.initial();
+    return StepExecution.create(
+      idService.nextLongId(StepExecutionId.class, "STEP_EXECUTION"),
+      appId, version, stepCode, attempt, requestNo, operatorOf(app));
+  }
+
+  private void applyHandlerResult(StepExecution execution, StepExecutionStatus status, String operator) {
+    switch (status) {
+      case SUCCESS -> execution.succeed(operator);
+      case SUSPEND_ASYNC_WAIT -> execution.waitForExternal(operator);
+      case FAILED -> execution.fail("STEP_FAILED", "步骤执行失败", operator);
+    }
+  }
+
+  private String operatorOf(BusinessApplication app) {
+    return app.operatorInfo() != null ? app.operatorInfo().operatorId() : "SYSTEM";
   }
 
   /**

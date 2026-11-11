@@ -690,7 +690,7 @@ CREATE TABLE IF NOT EXISTS t_step_execution
   definition_version  VARCHAR(64)  NOT NULL,
   step_code           VARCHAR(64)  NOT NULL,
   attempt             INT          NOT NULL,
-  request_no          VARCHAR(64)  NOT NULL,
+  request_no          VARCHAR(128)  NOT NULL,
   status              VARCHAR(32)  NOT NULL,
   started_at          TIMESTAMP,
   ended_at            TIMESTAMP,
@@ -745,3 +745,13 @@ CREATE INDEX IF NOT EXISTS idx_external_interaction_status_retry
   ON t_business_external_interaction (status, next_retry_time);
 CREATE INDEX IF NOT EXISTS idx_external_interaction_application_id
   ON t_business_external_interaction (application_id);
+
+-- ===== 号段 ID 生成表（shared-id-core / §16.3） =====
+CREATE TABLE IF NOT EXISTS t_id_generator
+(
+  seq_key     VARCHAR(64) NOT NULL PRIMARY KEY,
+  max_id      BIGINT      NOT NULL DEFAULT 0,
+  step        INT         NOT NULL DEFAULT 100,
+  create_time TIMESTAMP,
+  update_time TIMESTAMP
+);

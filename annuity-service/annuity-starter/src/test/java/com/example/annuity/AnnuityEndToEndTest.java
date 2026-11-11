@@ -34,6 +34,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -75,6 +76,9 @@ class AnnuityEndToEndTest {
 
   @Autowired
   private ApplicationRepository applicationRepository;
+
+  @Autowired
+  private JdbcClient jdbcClient;
 
   @Autowired
   private IntegrationEventSimulator eventSimulator;
@@ -157,6 +161,14 @@ class AnnuityEndToEndTest {
     orchestrationService.advanceStep(appId);
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
+
+    // 步骤执行记录随流程推进真实落库（§9.1：与申请单状态、Outbox 同事务）
+    Long executionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_step_execution")
+      .query(Long.class).single();
+    assertThat(executionCount).isGreaterThanOrEqualTo(4L);
+    Long segmentCount = jdbcClient.sql("SELECT COUNT(*) FROM t_id_generator")
+      .query(Long.class).single();
+    assertThat(segmentCount).isGreaterThanOrEqualTo(1L);
   }
 
   @Test
