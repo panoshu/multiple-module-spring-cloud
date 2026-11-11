@@ -563,3 +563,36 @@ CREATE UNIQUE INDEX uk_step_execution_request_no
   ON t_step_execution (request_no);
 CREATE INDEX idx_step_execution_app_status
   ON t_step_execution (application_id, status);
+
+-- ===== 外部协作记录（spec §7.3 / §16.1，复用 kernel DO） =====
+CREATE TABLE IF NOT EXISTS t_business_external_interaction
+(
+  id                   BIGINT       NOT NULL,
+  application_id       VARCHAR(64)  NOT NULL,
+  step_execution_id    BIGINT       NOT NULL,
+  interaction_type     VARCHAR(32)  NOT NULL,
+  request_no           VARCHAR(64)  NOT NULL,
+  external_task_id     VARCHAR(64),
+  status               VARCHAR(32)  NOT NULL,
+  result_ref           VARCHAR(255),
+  retry_count          INT          NOT NULL DEFAULT 0,
+  next_retry_time      DATETIME,
+  last_error           TEXT,
+  completed_at         DATETIME,
+  created_by           VARCHAR(64)  NOT NULL,
+  updated_by           VARCHAR(64),
+  create_time          DATETIME     NOT NULL,
+  update_time          DATETIME     NOT NULL,
+  deleted              TINYINT(1)   NOT NULL DEFAULT 0,
+  version              INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外部协作记录';
+
+CREATE UNIQUE INDEX uk_external_interaction_request_no
+  ON t_business_external_interaction (request_no);
+CREATE UNIQUE INDEX uk_external_interaction_type_task
+  ON t_business_external_interaction (interaction_type, external_task_id);
+CREATE INDEX idx_external_interaction_status_retry
+  ON t_business_external_interaction (status, next_retry_time);
+CREATE INDEX idx_external_interaction_application_id
+  ON t_business_external_interaction (application_id);
