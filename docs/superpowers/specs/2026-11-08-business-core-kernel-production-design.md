@@ -1091,7 +1091,7 @@ Application 层按用例拆分：
 | §20 阶段 | 状态 | 说明 |
 |---|---|---|
 | 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
-| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 聚合领域模型与持久化/双库 DDL 均已完成。`ExternalInteraction` 聚合与 `StepExecution` 运行时接线待后续批次 |
+| 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 聚合领域模型与持久化/双库 DDL、`ExternalInteraction` 聚合领域模型均已完成。三类核心概念（ProcessDefinition/StepExecution/ExternalInteraction）领域模型齐备；`StepExecution` 与 `ExternalInteraction` 运行时接线、`EventReceipt` 待后续批次 |
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`StepExecution`/`ExternalInteraction` 聚合持久化与接线、事件回执、重试恢复、`IdService`/`DistributedLock` 接入、其他业务服务本地事件发布失败隔离待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
 | 阶段 4 收敛可选能力与公共 API | 未开始 | — |
@@ -1111,7 +1111,8 @@ Application 层按用例拆分：
 | 批次 8 | `c88105d6` | **修复 Outbox 序列化 P0**（批次 7 发现）：`EventAutoConfiguration.eventStore()` 改为自持专用 `ObjectMapper`（显式注册 `JavaTimeModule` + `DddJacksonModule`），不再注入宿主 `@Primary` mapper；`jackson-datatype-jsr310` 依赖由 `test` 提升为 compile 以支撑生产期显式注册；补 `EventAutoConfigurationTest` 2 项（配置解耦契约 + H2 真实落库含 `LocalDateTime` 的领域事件） | 事件 starter 3、event-core 14、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 日志 `Failed to save event` 归零；`git diff --check` 通过 |
 | 批次 9 | `38db9c3c` | **移除不受控异步线程**（§10.3，批次 8 发现的 NPE 实证）：`StepPipelineExecutor` 去掉 `@RequiredArgsConstructor` 改显式构造，注入 `@Qualifier("applicationTaskExecutor") Executor`；`dispatchAsyncAction` 以 `taskExecutor.execute` 替代 `CompletableFuture.runAsync`（ForkJoinPool.commonPool），并把 `app` 只读传入而非 `null`，修复 `AnnuityMaterialPreparedNotificationAction` 的 NPE；`StepPipelineExecutorTest` 补 3 项（app 非 null、异常隔离、执行线程为注入 Executor） | 应用 97、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 日志 `app is null` NPE 由 2 归零、`Failed to save event` 保持 0、异步动作完成日志 2 次；`git diff --check` 通过 |
 | 批次 10 | `a3b09fd5` | **发布失败事务回滚**（§9.1 原子性）：移除 `AbstractBusinessRepository.publishDomainEvents` 的 try/catch，`eventBus.publish` 失败直接传播使应用服务 `@Transactional` 连同业务写入与 Outbox 一并回滚；失败时事件队列保留、首个事件失败即中断后续发布；仓储测试断言由「失败被隔离」改为「失败即抛、队列保留、快速失败」 | 基础设施 51、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 日志 `Failed to save event` 保持 0、无回归；`git diff --check` 通过 |
-| 批次 11 | 本次（未提交） | **StepExecution 持久化落地**（§16.3/§17）：新增 `StepExecutionDO`（BIGINT 主键、`KeyType.None`）、`StepExecutionMapper`、手写 `StepExecutionConverter`（`reconstitute` 往返）、`StepExecutionRepositoryImpl`（复用 `AbstractBusinessRepository`，提供 `findByRequestNo`/`findByApplicationAndStep`/`findRunningByApplication` 的 QueryWrapper 查询）；kernel PG/MySQL 与 annuity PG/MySQL/H2 共 5 份 DDL 增加 `t_step_execution` 与唯一索引 `(application_id,step_code,attempt)`、`request_no` 及 `(application_id,status)` 索引；不接线编排器 | 基础设施 59（新增 8）、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过、H2 建表脚本经 E2E 实执行成功；`git diff --check` 通过 |
+| 批次 11 | `d9d77ab4` | **StepExecution 持久化落地**（§16.3/§17）：新增 `StepExecutionDO`（BIGINT 主键、`KeyType.None`）、`StepExecutionMapper`、手写 `StepExecutionConverter`（`reconstitute` 往返）、`StepExecutionRepositoryImpl`（复用 `AbstractBusinessRepository`，提供 `findByRequestNo`/`findByApplicationAndStep`/`findRunningByApplication` 的 QueryWrapper 查询）；kernel PG/MySQL 与 annuity PG/MySQL/H2 共 5 份 DDL 增加 `t_step_execution` 与唯一索引 `(application_id,step_code,attempt)`、`request_no` 及 `(application_id,status)` 索引；不接线编排器 | 基础设施 59（新增 8）、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过、H2 建表脚本经 E2E 实执行成功；`git diff --check` 通过 |
+| 批次 12 | 本次（未提交） | **ExternalInteraction 外部协作聚合（纯领域模型）**（§7.3/§8.3/§16.3）：新增 `ExternalInteractionId`（BIGINT/SEGMENT）、`InteractionType`（FILE_PARSE/FILE_OUTBOUND/APPROVAL）、`ExternalInteractionStatus` 八态与合法迁移表（`UNKNOWN` 须先对账确认、不得直接重派）、`ExternalInteraction` 聚合根（`requestNo` 由 stepExecutionId 稳定派生且重试沿用、externalTaskId 关联回退、全字段 `reconstitute`）、`ExternalInteractionRepository` 契约；补 16 项领域测试。不接线运行时、不注册事件、不改 DDL | 领域 152（新增 16）、基础设施 59、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1202,3 +1203,14 @@ Application 层按用例拆分：
 - 5 份 DDL 同步：kernel 的 PG/MySQL 与 annuity 的 PG/MySQL/H2（annuity 复用 kernel DO，三份为复制脚本）。H2 的 `deleted` 用 `INT DEFAULT 0`、PG 用 `BOOLEAN`、MySQL 用 `TINYINT(1)`，与既有脚本风格一致；E2E 已实执行 H2 建表。
 - 测试用 mock mapper + `ArgumentCaptor<QueryWrapper>` 断言查询列名，未做真实 DB 的 insert/select 集成测试；Repository 的乐观锁与事件发布行为继承自已测的 `AbstractBusinessRepository`（StepExecution 不注册事件，发布环节为空操作）。
 - `event.eventId().toString()` 统一、`ExternalInteraction` 聚合与运行时接线仍未处理。
+
+### 23.12 批次 12 范围边界
+
+- 纯领域模型切片，不接线运行时、不注册领域事件、不改 DDL/DO/Converter；`ExternalInteractionRepository` 仅定义契约（`findByRequestNo`/`findByExternalTaskId`/`findPendingRetry`/`findByApplication`），无实现，物理唯一索引留待持久化批次。
+- 主键按 §16.3 用 BIGINT + `@IdDefinition(type = IdType.SEGMENT)`，与 `StepExecutionId` 一致；E2E 已验证新增 ID 类型在启动期正常加载（日志中 `IdDefinitionStartupValidator` 的 `validation.packages` 为空为既有配置警告，与本批次无关）。
+- `requestNo` 由 `create` 内部按 `stepExecutionId` 派生为 `SE-<id>`，不提供外部传入入口：落实 §7.3「同一 requestNo 重试不得重新生成」，重试走同一聚合的 `FAILED → RETRY_WAIT → DISPATCHING` 状态迁移而非新建聚合。后续若需对接已有外部请求号，应引入 Parameter Object 显式传入并保持派生语义。
+- `UNKNOWN` 只能经 `confirmSucceededAfterReconciliation` / `confirmFailedAfterReconciliation` 对账确认后进 `SUCCEEDED`/`FAILED`，迁移表显式禁止 `UNKNOWN → DISPATCHING/RETRY_WAIT`，避免超时场景重复创建外部任务。
+- `matches()` 落实「优先按 requestNo、其次按 externalTaskId」关联规则，两者皆缺失时返回 false，防止盲目推进流程；该函数只做关联判定，不触发状态变更。
+- 状态迁移方法统一「先 `transitTo` 校验并改状态、后写附带字段」，保证非法迁移抛 `DomainException` 时不留下部分字段变更。
+- `reconstitute` 沿用批次 7 `StepExecution` 的多参数形态（未引入 Parameter Object），与既有领域模型保持一致；该形态参数数超出 04 规范 10.1 的建议上限，属既有先例的延续。
+- 三类核心概念的领域模型现已齐备；`EventReceipt`（§7.4，基础设施模型）、`StepExecution`/`ExternalInteraction` 持久化与运行时接线、`event.eventId().toString()` 统一仍未处理。
