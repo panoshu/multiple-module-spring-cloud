@@ -437,3 +437,23 @@ CREATE TABLE IF NOT EXISTS t_id_generator
   create_time TIMESTAMP,
   update_time TIMESTAMP
 );
+
+-- ===== 事件消费回执（spec §7.4 / §16.1） =====
+CREATE TABLE IF NOT EXISTS t_business_event_receipt
+(
+  id             BIGINT       NOT NULL,
+  event_id       VARCHAR(128) NOT NULL,
+  consumer       VARCHAR(64)  NOT NULL,
+  status         VARCHAR(32)  NOT NULL,
+  error_summary  TEXT,
+  created_by     VARCHAR(64)  NOT NULL,
+  updated_by     VARCHAR(64),
+  create_time    DATETIME     NOT NULL,
+  update_time    DATETIME     NOT NULL,
+  deleted        TINYINT(1)   NOT NULL DEFAULT 0,
+  version        INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='事件消费回执';
+
+CREATE UNIQUE INDEX uk_event_receipt_event_consumer
+  ON t_business_event_receipt (event_id, consumer);

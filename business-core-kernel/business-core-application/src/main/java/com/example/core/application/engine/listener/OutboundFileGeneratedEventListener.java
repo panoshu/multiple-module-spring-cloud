@@ -1,5 +1,6 @@
 package com.example.core.application.engine.listener;
 
+import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import com.example.file.api.event.OutboundFileGeneratedEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +25,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OutboundFileGeneratedEventListener {
 
+  private static final String CONSUMER = "OutboundFileGeneratedEventListener";
+
   private final com.example.core.application.engine.service.FlowOrchestrationService orchestrationService;
+  private final EventReceiptGateway eventReceiptGateway;
 
   @EventListener
   public void onOutboundFileGenerated(OutboundFileGeneratedEventDTO event) {
+    if (!eventReceiptGateway.tryConsume(event.eventId(), CONSUMER)) {
+      log.info("重复出站文件生成事件已忽略, eventId: {}", event.eventId());
+      return;
+    }
     log.info("收到出站文件生成事件, fileTaskId: {}, targetTemplateId: {}, files: {}",
       event.fileTaskId(), event.targetTemplateId(),
       event.generatedFiles() == null ? 0 : event.generatedFiles().size());

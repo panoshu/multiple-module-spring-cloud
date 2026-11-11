@@ -1,6 +1,7 @@
 package com.example.core.application.engine.listener;
 
 import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import com.example.file.api.event.FileParsedEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,10 @@ public class FileParsedEventListener {
 
   private static final String STATUS_SUCCESS = "SUCCESS";
   private static final String STATUS_PARTIAL = "PARTIAL";
+  private static final String CONSUMER = "FileParsedEventListener";
 
   private final FlowOrchestrationService orchestrationService;
+  private final EventReceiptGateway eventReceiptGateway;
 
   /**
    * Spring 事件入口：接收 {@link FileParsedEventDTO} 并委托给处理方法。
@@ -48,6 +51,10 @@ public class FileParsedEventListener {
    * @param event 文件解析完成事件 DTO
    */
   public void handleFileParsed(FileParsedEventDTO event) {
+    if (!eventReceiptGateway.tryConsume(event.eventId(), CONSUMER)) {
+      log.info("重复文件解析事件已忽略, eventId: {}", event.eventId());
+      return;
+    }
     log.info("收到文件解析完成事件, fileTaskId: {}, status: {}", event.fileTaskId(), event.status());
     if (STATUS_SUCCESS.equals(event.status()) || STATUS_PARTIAL.equals(event.status())) {
       orchestrationService.advanceByFileTaskId(event.fileTaskId());

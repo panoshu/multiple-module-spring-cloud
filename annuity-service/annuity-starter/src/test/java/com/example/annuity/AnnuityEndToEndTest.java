@@ -197,6 +197,14 @@ class AnnuityEndToEndTest {
     // 验证 FileParsedEventListener 已通过 findByFileTaskId 反查并推进流程
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.DATA_VERIFICATION);
+
+    // 重复投递同一 eventId 应被消费回执短路，不重复推进流程
+    eventSimulator.publish(event);
+    app = applicationRepository.loadOrThrow(appId);
+    assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.DATA_VERIFICATION);
+    Long receiptCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_event_receipt WHERE event_id = ?")
+      .param(event.eventId()).query(Long.class).single();
+    assertThat(receiptCount).isEqualTo(1L);
   }
 
   @Test

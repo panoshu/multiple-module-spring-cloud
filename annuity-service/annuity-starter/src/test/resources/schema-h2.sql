@@ -574,3 +574,21 @@ CREATE TABLE IF NOT EXISTS t_id_generator
   create_time TIMESTAMP,
   update_time TIMESTAMP
 );
+
+-- ===== 事件消费回执（spec §7.4 / §16.1，复用 kernel DO） =====
+CREATE TABLE IF NOT EXISTS t_business_event_receipt
+(
+  id             BIGINT       NOT NULL,
+  event_id       VARCHAR(128) NOT NULL,
+  consumer       VARCHAR(64)  NOT NULL,
+  status         VARCHAR(32)  NOT NULL,
+  error_summary  TEXT,
+  created_by     VARCHAR(64)  NOT NULL,
+  updated_by     VARCHAR(64),
+  create_time    TIMESTAMP    NOT NULL,
+  update_time    TIMESTAMP    NOT NULL,
+  deleted        INT          NOT NULL DEFAULT 0,
+  version        INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_event_receipt_event_consumer ON t_business_event_receipt(event_id, consumer);

@@ -4,6 +4,7 @@ import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
 import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -33,8 +34,14 @@ public class ApprovalResultEventListener {
   private static final String APPROVAL_RESULT_APPROVED = "APPROVED";
   private static final String APPROVAL_RESULT_REJECTED = "REJECTED";
   private static final String APPROVAL_RESULT_WITHDRAWN = "WITHDRAWN";
+  private static final String CONSUMER = "ApprovalResultEventListener";
 
   private final FlowOrchestrationService orchestrationService;
+  private final EventReceiptGateway eventReceiptGateway;
+
+  private boolean isDuplicate(String eventId) {
+    return !eventReceiptGateway.tryConsume(eventId, CONSUMER);
+  }
 
   /**
    * Spring 事件入口：接收审批通过事件。
@@ -72,6 +79,10 @@ public class ApprovalResultEventListener {
    * @param event 审批通过事件 DTO
    */
   public void handleApproved(ApprovalInstanceApprovedEventDTO event) {
+    if (isDuplicate(event.eventId())) {
+      log.info("重复审批结果事件已忽略, eventId: {}", event.eventId());
+      return;
+    }
     log.info("审批通过, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
     orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_APPROVED);
   }
@@ -82,6 +93,10 @@ public class ApprovalResultEventListener {
    * @param event 审批驳回事件 DTO
    */
   public void handleRejected(ApprovalInstanceRejectedEventDTO event) {
+    if (isDuplicate(event.eventId())) {
+      log.info("重复审批结果事件已忽略, eventId: {}", event.eventId());
+      return;
+    }
     log.info("审批驳回, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
     orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_REJECTED);
   }
@@ -92,6 +107,10 @@ public class ApprovalResultEventListener {
    * @param event 审批撤回事件 DTO
    */
   public void handleWithdrawn(ApprovalInstanceWithdrawnEventDTO event) {
+    if (isDuplicate(event.eventId())) {
+      log.info("重复审批结果事件已忽略, eventId: {}", event.eventId());
+      return;
+    }
     log.info("审批撤回, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
     orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_WITHDRAWN);
   }
