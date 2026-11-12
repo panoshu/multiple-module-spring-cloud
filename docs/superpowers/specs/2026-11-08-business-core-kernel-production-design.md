@@ -1090,7 +1090,7 @@ Application 层按用例拆分：
 
 | §20 阶段 | 状态 | 说明 |
 |---|---|---|
-| 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式已冻结为组合式版本化定义存储（批次 19，§23.19）；file/approval 的 requestNo 幂等与查询契约仍在阶段 3 接入前独立评审（§11.4/§12.3） |
+| 阶段 0 冻结设计与外部契约 | 设计已确认，外部契约已冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式已冻结为组合式版本化定义存储（批次 19，§23.19）；file/approval 的 requestNo 幂等与查询契约评审已通过并冻结（§23.20，issue 状态 `ready-for-agent`），按 §22 进入编码（§11.4/§12.3） |
 | 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 与 `ExternalInteraction` 聚合领域模型及持久化/双库 DDL 均已完成。三类核心概念（ProcessDefinition/StepExecution/ExternalInteraction）领域模型、持久化与运行时接线齐备；`EventReceipt` 已落地。阶段 1 主线完成，剩余恢复/派发能力归入阶段 2/3 |
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`IdService` 号段生成已接入并补齐 `t_id_generator` DDL，`StepExecution` 运行时接线已完成。事件消费回执与入站幂等已落地（§7.4）。`ExternalInteraction` 运行时接线（阶段 A）已完成。外部协作重试恢复机制（四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领，§19.2）已落地。`DistributedLock` 短临界区互斥已接入（§9.3 第一层，弱依赖可选注入）。§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
@@ -1297,3 +1297,13 @@ Application 层按用例拆分：
 - 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 仅保留在 fallback 适配器路径（服务于未发布的存量业务）；通过 `ProcessDefinitionPublishService` 发布的定义由发布方完整声明 `startMode`/`instanceGranularity`/`batchMode`，不再受其约束。阶段 5 清理时随过渡适配器一并移除。
 - 新存储默认**不含任何定义数据**，annuity E2E 完全走 fallback，路由行为不变；「发布 → 历史版本读取 → latest 更新 → 组合优先/兜底」由 13 项单元测试覆盖。真实业务定义数据与发布入口接线（谁在启动时发布、定义从何加载）属阶段 3/4 接入规范，本批次未做。
 - 仍未处理：§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离与纳入 Outbox、表名偏差（§23.13 待办 1）、`event.eventId().toString()` 统一、条件表达式语法预校验、阶段 3/4/5 主线。
+
+### 23.20 阶段 0 契约评审发起（非代码批次）
+
+- 批次 19 收尾后，按 §22「file/approval 契约变更需要独立评审和契约测试」发起**独立评审**，载体为 `.scratch/file-approval-requestno-contract/issues/01-contract-review.md`（按 `docs/agents/issue-tracker.md` 规范，`Status: needs-triage`）。**本轮不写实现代码**。
+- 评审材料包含：§11.4/§12.3 现状差距证据表（8 项）、建议契约（统一键、file/approval/kernel 三侧、事件 DTO、按 requestNo 查询 API）、兼容迁移策略、§21.3 契约测试 8 项、8 个待决问题、影响面清单、验收标准。
+- 发起依据：阶段 2 主线（批次 6/8/9/10/14/15/17/18）与阶段 0 定义存储决策（批次 19）均已完成，§9.2 阶段 B 事务外派发与阶段 C 回调的前置条件只剩跨服务 requestNo 幂等与查询契约；契约未冻结前继续写编排放大会返工。
+- 关键证据：`UploadFileRequest` 已有 `clientRequestNo` 但 kernel 传 `formId.value()`；`StartApprovalRequest` 无幂等键；6 个事件 DTO 均无 `requestNo`（`eventId` 已稳定）；kernel 侧 `ExternalInteraction.requestNo` 与 `StepExecution.requestNo` 是两套键且列宽 64/128 不一致。
+- **待决问题 6（annuity 冻结）需评审明确**：契约改动会让 annuity 的 `MockFileIntegrationGateway` 与 E2E 事件构造点编译失败；评审需从「临时解冻 annuity 测试替身 / 新建 kernel 自带 E2E 基座 / 接受 E2E 覆盖缺口」三条中选一。
+- 评审结论落地后，建议按「契约变更 → 阶段 B 派发器 → 阶段 C 回调」拆三个批次推进，每批仍按「先写失败测试 → 实现 → 跑测试」小步提交。
+- **评审结论（2026-11-12）**：提案 §3 整体接受，issue 状态由 `needs-triage` 转为 `ready-for-agent`，§22 门禁解除。关键结论：统一键为 `ExternalInteraction.requestNo`；`StartApprovalRequest` 新增 `requestNo`；事件 DTO 采用可空过渡 + 一次性同步构造签名；新增按 requestNo 查询 API；部分成功默认落入 `RETRY_WAIT`；`request_no` 列宽统一 128；annuity **临时解冻测试替身**（仅 `MockFileIntegrationGateway` 与 E2E 事件构造点，不改业务实现/DDL）；拆三批（批次 20 契约变更 → 批次 21 阶段 B 派发器 → 批次 22 阶段 C 回调）。完整结论见 issue `## Comments`。
