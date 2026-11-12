@@ -1090,7 +1090,7 @@ Application 层按用例拆分：
 
 | §20 阶段 | 状态 | 说明 |
 |---|---|---|
-| 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式、file/approval 的 requestNo 幂等与查询契约在阶段 3 接入前独立评审（§11.4/§12.3） |
+| 阶段 0 冻结设计与外部契约 | 设计已确认，部分契约细节待冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式已冻结为组合式版本化定义存储（批次 19，§23.19）；file/approval 的 requestNo 幂等与查询契约仍在阶段 3 接入前独立评审（§11.4/§12.3） |
 | 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 与 `ExternalInteraction` 聚合领域模型及持久化/双库 DDL 均已完成。三类核心概念（ProcessDefinition/StepExecution/ExternalInteraction）领域模型、持久化与运行时接线齐备；`EventReceipt` 已落地。阶段 1 主线完成，剩余恢复/派发能力归入阶段 2/3 |
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`IdService` 号段生成已接入并补齐 `t_id_generator` DDL，`StepExecution` 运行时接线已完成。事件消费回执与入站幂等已落地（§7.4）。`ExternalInteraction` 运行时接线（阶段 A）已完成。外部协作重试恢复机制（四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领，§19.2）已落地。`DistributedLock` 短临界区互斥已接入（§9.3 第一层，弱依赖可选注入）。§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 未开始 | — |
@@ -1118,7 +1118,8 @@ Application 层按用例拆分：
 | 批次 15 | `94732ca0` | **EventReceipt 事件消费回执与入站幂等**（§7.4/§9.2 阶段 C/§16.1）：domain 新增 `EventReceiptGateway` SPI；infrastructure 新增 `EventReceiptDO`/`Mapper`/`JdbcEventReceiptGateway`（先查后插 + `(event_id,consumer)` 唯一索引兜并发）；`FileParsedEventListener`/`ApprovalResultEventListener`（3 个 handle）/`OutboundFileGeneratedEventListener` 在共用入口接入重复事件短路；5 份 DDL 增加 `t_business_event_receipt` 与唯一索引；E2E 验证重复投递不重复推进、回执恰好 1 行 | 基础设施 72（新增 4）、应用 102（新增 2）、架构不变量 7、annuity E2E 6 全部通过；E2E 日志「重复文件解析事件已忽略」、`Failed to save event` 与异步 NPE 保持 0；全仓 `test-compile` 通过；`git diff --check` 通过 |
 | 批次 16 | `0745a821` | **ExternalInteraction 运行时接线（阶段 A 轻量版）**（§9.2）：`FlowOrchestrationService.advanceStep` 在 `SUSPEND_ASYNC_WAIT` 时创建 `ExternalInteraction(PENDING_DISPATCH)`，与 StepExecution/申请单同事务保存；`InteractionType` 过渡期按 `mainProcessor` 名推断（APPROVAL/FILE_OUTBOUND/FILE_PARSE），`requestNo` 沿用 `SE-<stepExecutionId>`；annuity 新增 `@Repository` 注册类；补 3 项编排器测试并加 E2E 表就绪断言 | 应用 105（新增 3）、领域 152、基础设施 72、架构不变量 7、annuity E2E 6 全部通过；E2E 主流程不经过 SUSPEND 路径，记录创建由单元测试验证；`Failed to save event`/异步 NPE 保持 0；全仓 `test-compile` 通过；`git diff --check` 通过 |
 | 批次 17 | `37413686` | **外部协作重试与恢复机制**（§19.2/§13.1）：新增 `ExternalInteractionRequestedEvent`（create 注册、Repository 经 EventBus 发布）与 AFTER_COMMIT 异步认领监听器；`ExternalInteractionRepository` 增加 `findByStatus`/`findStaleDispatching` 扫描契约与 QueryWrapper 实现（复用现有列、不新增索引）；新增 `ExternalInteractionRecoveryService` 四类动作（认领 PENDING_DISPATCH→DISPATCHING、回收滞留 DISPATCHING→UNKNOWN、处理 RETRY_WAIT 到期重派、UNKNOWN 按审批状态对账）与 `@Scheduled` 兜底 Job（`core.kernel.recovery.enabled` 可关闭）；单条失败隔离、绝不盲目重派。不改 annuity、不加 DDL 列、不改 4 个挂起 Handler 的外部调用时机 | 领域 152、应用 120（新增 15）、基础设施 74（新增 2）、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 日志 `Failed to save event`/异步 NPE/恢复任务异常均保持 0；`git diff --check` 通过 |
-| 批次 18 | 本次（未提交） | **接入 DistributedLock 短临界区互斥**（§9.3 第一层）：`business-core-application` 加 `shared-lock` 纯接口依赖；`FlowOrchestrationService` 用 `ObjectProvider<DistributedLock>` 弱依赖可选注入（有 bean 加锁、无 bean 直通），`advanceStep` 拆为锁包装 + `doAdvanceStep`，REJECTED/WITHDRAWN 终止分支纳入锁，避免回调入口递归重复加锁死锁；锁键 `kernel:application:{id}`、等待 3s/租期 10s，获取失败异常传播。不改 annuity、不引入 Redis 强依赖 | 应用 124（新增 4）、领域 152、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 无锁降级路径无 Redis/锁错误；`git diff --check` 通过 |
+| 批次 18 | `ce053752` | **接入 DistributedLock 短临界区互斥**（§9.3 第一层）：`business-core-application` 加 `shared-lock` 纯接口依赖；`FlowOrchestrationService` 用 `ObjectProvider<DistributedLock>` 弱依赖可选注入（有 bean 加锁、无 bean 直通），`advanceStep` 拆为锁包装 + `doAdvanceStep`，REJECTED/WITHDRAWN 终止分支纳入锁，避免回调入口递归重复加锁死锁；锁键 `kernel:application:{id}`、等待 3s/租期 10s，获取失败异常传播。不改 annuity、不引入 Redis 强依赖 | 应用 124（新增 4）、领域 152、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 无锁降级路径无 Redis/锁错误；`git diff --check` 通过 |
+| 批次 19 | 本次（未提交） | **独立版本化定义存储与发布**（§7.1/§14/§19.1，冻结阶段 0 遗留决策）：domain 新增 `ProcessDefinitionStore` SPI 与 `AbstractStrategyRegistry.contains()`；application 新增 `InMemoryProcessDefinitionStore`（进程内缓存、key 含业务类型+版本、发布即更新 latest 指针实现缓存失效、重复版本拒绝）、`ProcessDefinitionPublishService`（主处理器存在校验、已发布定义不可变）、`CompositeProcessDefinitionGateway`（新存储优先、过渡期存量路由 fallback）；`CoreKernelAutoConfiguration` 注册 store bean 并把默认网关改为组合式。零 annuity 改动，E2E 走 fallback 不破坏 | 领域 152、应用 137（新增 13）、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 无定义缺失错误；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1141,7 +1142,7 @@ Application 层按用例拆分：
 ### 23.4 后续批次待定决策
 
 - **已定**：路由切换采用「默认 Gateway 过渡适配 + 保留枚举做持久化表示」的渐进策略；在途实例通过持久化 `definitionVersion` 固定版本，过渡期默认实现仅存在初始版本，其他版本返回空并交由对账处理。
-- 独立版本化定义存储（替代过渡期委托适配器）与定义发布、缓存失效机制；
+- **已解决（批次 19）**：独立版本化定义存储与定义发布、缓存失效机制已落地（组合式，见 §23.19）；过渡期委托适配器保留为未发布业务类型的 fallback。
 - `ApplicationFlowStep`（17 步枚举）的退役时机，以及 `current_step` 列与领域事件签名向开放 `StepCode` 的迁移；
 - **已解决（批次 4）**：三个 `ConditionEvaluationGateway` 实现的求值异常统一抛 `SystemException(CORE.INFRA.0006)`，不再静默跳过；`StepPipelineExecutor` 保持不变，`false` 仍表示条件不满足（SKIPPED），异常则中断事务。后续仍需为流程定义发布增加表达式语法预校验；
 - 默认 Gateway 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 声明应由业务服务的自定义实现覆盖。
@@ -1285,3 +1286,14 @@ Application 层按用例拆分：
 - `isSystemTask` 为只读查询，未加锁；文件/审批等待期间不持锁（等待由 `WAITING_EXTERNAL` 状态表达，非锁持有）。
 - E2E 未引入锁 bean，走无锁直通路径，6 项通过且无 Redis/锁错误；「存在锁 bean 时在锁内执行、REJECTED 分支加锁、获取失败异常传播」由 `FlowOrchestrationServiceTest` 4 项单测覆盖，真实 Redis 下的并发互斥未做集成测试。
 - 仍未处理：§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离与纳入 Outbox、表名偏差（§23.13 待办 1）、`event.eventId().toString()` 统一、独立版本化定义存储（§14）、阶段 3/4/5 主线。
+
+### 23.19 批次 19 范围边界
+
+- 本批次冻结 §20 阶段 0 遗留的「流程定义存储与发布方式」决策，采用**组合式渐进替换**而非直接删除 `BusinessConfigProcessDefinitionAdapter`。原因：annuity E2E 的定义完全由 `BusinessConfigGateway.getNextStep` + step-routes.json 适配而来，完全替换会让 E2E 失去定义来源；而用户已确认「零 annuity 改动」，不能改 annuity 配置或新增注册类。组合网关「新存储优先、存量路由兜底」是满足该约束的唯一自洽方案。
+- `ProcessDefinitionStore`（发布）与 `ProcessDefinitionGateway`（只读加载）按职责分离；`InMemoryProcessDefinitionStore` 为默认实现，`@ConditionalOnMissingBean(ProcessDefinitionStore.class)` 允许业务服务替换为 DB / 配置中心 / 多级缓存实现。业务服务提供自定义 `ProcessDefinitionGateway` 时，整个组合默认实现自动让位。
+- **已发布定义不可变**：`publish` 用 `putIfAbsent` 拒绝重复 `businessType + version`；历史版本按 `businessType:version` 独立保存，`load(type, version)` 可读任意历史版本，`loadLatest` 返回最后发布版本。发布即 `latest.put` 覆盖，等价于缓存失效（spec §19.1「只缓存已发布定义」「key 包含业务类型和版本」）。
+- 进程内 `ConcurrentHashMap` 缓存不依赖 Redis，宿主无需引入 `shared-cache-starter`；spec §14 表格的 `shared-cache-starter` 多级缓存与跨实例共享留待专项批次（可用自定义 `ProcessDefinitionStore` 覆盖）。并发发布下 `latest` 按「最后写入」生效，若需严格顺序应由发布方串行化。
+- 发布校验落地 spec §7.1 的部分约束：主处理器已注册（新增 `AbstractStrategyRegistry.contains` 避免 `get` 抛异常）、重复版本拒绝；定义自身不变量（步骤编码唯一、初始步骤存在、后继步骤存在、外部步骤配置完整）由 `ProcessDefinition`/`StepDefinition` 紧凑构造器保证。**条件表达式语法预校验**（需给 `ConditionEvaluationGateway` 增加 `validate` 并改 3 个实现）与**扩展动作 beanName 存在校验**未纳入，留 §23.4 待办。
+- 硬编码的 `FORM_DRIVEN / PER_SUB_TASK / REQUIRED` 仅保留在 fallback 适配器路径（服务于未发布的存量业务）；通过 `ProcessDefinitionPublishService` 发布的定义由发布方完整声明 `startMode`/`instanceGranularity`/`batchMode`，不再受其约束。阶段 5 清理时随过渡适配器一并移除。
+- 新存储默认**不含任何定义数据**，annuity E2E 完全走 fallback，路由行为不变；「发布 → 历史版本读取 → latest 更新 → 组合优先/兜底」由 13 项单元测试覆盖。真实业务定义数据与发布入口接线（谁在启动时发布、定义从何加载）属阶段 3/4 接入规范，本批次未做。
+- 仍未处理：§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离与纳入 Outbox、表名偏差（§23.13 待办 1）、`event.eventId().toString()` 统一、条件表达式语法预校验、阶段 3/4/5 主线。

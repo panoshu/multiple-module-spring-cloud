@@ -53,6 +53,13 @@ public abstract class AbstractStrategyRegistry<T> {
   }
 
   /**
+   * 判断策略是否已注册（供流程定义发布期校验 Handler 存在，不抛异常）。
+   */
+  public boolean contains(String name) {
+    return name != null && strategyMap.containsKey(name);
+  }
+
+  /**
    * 根据名称获取策略实例
    */
   public T get(String name) {

@@ -6,10 +6,13 @@ import com.example.core.application.business.guard.BusinessAccessGuard;
 import com.example.core.application.business.guard.DefaultBusinessAccessGuard;
 import com.example.core.application.engine.job.ExternalInteractionRecoveryJob;
 import com.example.core.application.engine.service.BusinessConfigProcessDefinitionAdapter;
+import com.example.core.application.engine.service.CompositeProcessDefinitionGateway;
 import com.example.core.application.engine.service.ExternalInteractionRecoveryService;
+import com.example.core.application.engine.service.InMemoryProcessDefinitionStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
+import com.example.core.domain.engine.gateway.ProcessDefinitionStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -24,7 +27,8 @@ import org.springframework.context.annotation.ComponentScan;
  * <ul>
  *   <li>SessionContextResolver / BusinessMetaContextAssembler(会话基础设施)</li>
  *   <li>DefaultBusinessAccessGuard(默认权限守门人,业务服务可覆盖)</li>
- *   <li>默认 ProcessDefinitionGateway(过渡期适配存量步骤路由,业务服务可覆盖)</li>
+ *   <li>默认 ProcessDefinitionGateway(版本化存储优先 + 过渡期路由兜底,业务服务可覆盖)</li>
+ *   <li>ProcessDefinitionStore / ProcessDefinitionPublishService(版本化定义存储与发布)</li>
  *   <li>ExternalInteractionRecoveryJob(外部协作恢复兜底任务,§19.2)</li>
  *   <li>5 类公共 API 的 Controller(Batch/Form/Application/Material/Progress)</li>
  *   <li>SupportedBusinessTypeValidator(业务类型校验)</li>
@@ -72,13 +76,24 @@ public class CoreKernelAutoConfiguration {
   }
 
   /**
-   * 过渡期默认流程定义网关：把存量 BusinessConfigGateway 的步骤路由适配为版本化定义。
+   * 版本化流程定义存储（默认进程内实现，业务服务可提供自定义实现覆盖）。
+   */
+  @Bean
+  @ConditionalOnMissingBean(ProcessDefinitionStore.class)
+  public ProcessDefinitionStore processDefinitionStore() {
+    return new InMemoryProcessDefinitionStore();
+  }
+
+  /**
+   * 默认流程定义网关：版本化存储优先，未发布的业务类型回退过渡期存量路由适配。
    * 业务服务提供自定义 {@link ProcessDefinitionGateway} 后本默认实现自动让位。
    */
   @Bean
   @ConditionalOnMissingBean(ProcessDefinitionGateway.class)
-  public ProcessDefinitionGateway defaultProcessDefinitionGateway(BusinessConfigGateway configGateway) {
-    return new BusinessConfigProcessDefinitionAdapter(configGateway);
+  public ProcessDefinitionGateway defaultProcessDefinitionGateway(
+      BusinessConfigGateway configGateway, ProcessDefinitionStore store) {
+    return new CompositeProcessDefinitionGateway(store,
+      new BusinessConfigProcessDefinitionAdapter(configGateway));
   }
 
   /**
