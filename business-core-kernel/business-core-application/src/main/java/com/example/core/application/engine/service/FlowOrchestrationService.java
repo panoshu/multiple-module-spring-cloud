@@ -3,7 +3,11 @@ package com.example.core.application.engine.service;
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.root.StepExecution;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
+import com.example.core.domain.engine.repository.ExternalInteractionRepository;
+import com.example.core.types.ExternalInteractionId;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
@@ -60,6 +64,7 @@ public class FlowOrchestrationService {
   private final StepRouteConfigAssembler stepRouteConfigAssembler;
   private final StepExecutionRepository stepExecutionRepository;
   private final IdService idService;
+  private final ExternalInteractionRepository externalInteractionRepository;
 
   public void advanceStep(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
@@ -109,11 +114,50 @@ public class FlowOrchestrationService {
     // 领域事件统一由 Repository 经 EventBus 发布（spec §13.2），应用服务不重复 publish；
     // 申请单状态、步骤执行记录与 Outbox 在同一本地事务保存（spec §9.1）
     StepExecutionStatus finalStatus = executionStatus;
+    String mainProcessor = routeConfig.mainProcessor();
     transactionTemplate.executeWithoutResult(status -> {
       applicationRepository.save(app);
       applyHandlerResult(execution, finalStatus, operator);
       stepExecutionRepository.save(execution);
+      if (finalStatus == StepExecutionStatus.SUSPEND_ASYNC_WAIT) {
+        ExternalInteraction interaction = newExternalInteraction(appId, execution, mainProcessor, operator);
+        if (interaction != null) {
+          externalInteractionRepository.save(interaction);
+        }
+      }
     });
+  }
+
+  /**
+   * 过渡期按主处理器名推断外部协作类型；独立定义存储落地后应改由
+   * StepDefinition 显式声明 ActionType（§7.1 / §14）。
+   */
+  private InteractionType interactionTypeOf(String mainProcessor) {
+    if (mainProcessor == null) {
+      return null;
+    }
+    String name = mainProcessor.toLowerCase();
+    if (name.contains("approval")) {
+      return InteractionType.APPROVAL;
+    }
+    if (name.contains("outbound") || name.contains("archive")) {
+      return InteractionType.FILE_OUTBOUND;
+    }
+    if (name.contains("formparsing") || name.contains("form_parse")) {
+      return InteractionType.FILE_PARSE;
+    }
+    return null;
+  }
+
+  private ExternalInteraction newExternalInteraction(ApplicationId appId, StepExecution execution,
+                                                     String mainProcessor, String operator) {
+    InteractionType type = interactionTypeOf(mainProcessor);
+    if (type == null) {
+      return null;
+    }
+    return ExternalInteraction.create(
+      idService.nextLongId(ExternalInteractionId.class, "EXTERNAL_INTERACTION"),
+      appId, execution.id(), type, operator);
   }
 
   private StepExecution newStepExecution(ApplicationId appId, BusinessApplication app,

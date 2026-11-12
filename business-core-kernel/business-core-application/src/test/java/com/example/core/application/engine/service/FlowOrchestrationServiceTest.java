@@ -6,17 +6,21 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.repository.ApplicationRepository;
+import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.root.StepExecution;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
 import com.example.core.domain.engine.aggregate.valueobject.StepCode;
 import com.example.core.domain.engine.aggregate.valueobject.StepDefinition;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepRouteConfig;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.TaskType;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionState;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
+import com.example.core.domain.engine.repository.ExternalInteractionRepository;
 import com.example.core.domain.engine.repository.StepExecutionRepository;
 import com.example.core.domain.engine.service.registry.BusinessFactExtractorRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
@@ -24,6 +28,7 @@ import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.Channel;
 import com.example.core.types.CustomerNo;
+import com.example.core.types.ExternalInteractionId;
 import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
@@ -46,6 +51,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @DisplayName("FlowOrchestrationService 版本化路由与步骤执行接线")
@@ -60,6 +66,7 @@ class FlowOrchestrationServiceTest {
   private StepDefinitionResolver stepDefinitionResolver;
   private StepRouteConfigAssembler stepRouteConfigAssembler;
   private StepExecutionRepository stepExecutionRepository;
+  private ExternalInteractionRepository externalInteractionRepository;
   private IdService idService;
   private FlowOrchestrationService service;
 
@@ -72,9 +79,12 @@ class FlowOrchestrationServiceTest {
     stepDefinitionResolver = mock(StepDefinitionResolver.class);
     stepRouteConfigAssembler = mock(StepRouteConfigAssembler.class);
     stepExecutionRepository = mock(StepExecutionRepository.class);
+    externalInteractionRepository = mock(ExternalInteractionRepository.class);
     idService = mock(IdService.class);
     when(idService.nextLongId(eq(StepExecutionId.class), anyString()))
       .thenReturn(StepExecutionId.of(1L));
+    when(idService.nextLongId(eq(ExternalInteractionId.class), anyString()))
+      .thenReturn(ExternalInteractionId.of(2L));
     when(stepExecutionRepository.findByApplicationAndStep(any(), any())).thenReturn(List.of());
 
     PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
@@ -85,7 +95,7 @@ class FlowOrchestrationServiceTest {
       handlerRegistry, mock(BusinessFactExtractorRegistry.class), configGateway,
       applicationRepository, pipelineExecutor, transactionTemplate,
       stepDefinitionResolver, stepRouteConfigAssembler,
-      stepExecutionRepository, idService);
+      stepExecutionRepository, idService, externalInteractionRepository);
   }
 
   @Test
@@ -152,6 +162,45 @@ class FlowOrchestrationServiceTest {
   }
 
   @Test
+  @DisplayName("Handler 挂起时创建外部协作记录并与步骤执行同事务保存")
+  void advanceStep_whenSuspend_createsExternalInteraction() {
+    stubStep(StepExecutionStatus.SUSPEND_ASYNC_WAIT, "approvalSubmissionHandler");
+
+    service.advanceStep(APP_ID);
+
+    ArgumentCaptor<ExternalInteraction> captor = ArgumentCaptor.forClass(ExternalInteraction.class);
+    verify(externalInteractionRepository).save(captor.capture());
+    ExternalInteraction saved = captor.getValue();
+    assertThat(saved.applicationId()).isEqualTo(APP_ID);
+    assertThat(saved.stepExecutionId()).isEqualTo(StepExecutionId.of(1L));
+    assertThat(saved.type()).isEqualTo(InteractionType.APPROVAL);
+    assertThat(saved.status()).isEqualTo(ExternalInteractionStatus.PENDING_DISPATCH);
+    assertThat(saved.requestNo()).isEqualTo("SE-1");
+    verify(stepExecutionRepository).save(any(StepExecution.class));
+    verify(applicationRepository).save(any(BusinessApplication.class));
+  }
+
+  @Test
+  @DisplayName("Handler 成功时不创建外部协作记录")
+  void advanceStep_whenSuccess_doesNotCreateExternalInteraction() {
+    stubStep(StepExecutionStatus.SUCCESS);
+
+    service.advanceStep(APP_ID);
+
+    verifyNoInteractions(externalInteractionRepository);
+  }
+
+  @Test
+  @DisplayName("Handler 失败时不创建外部协作记录")
+  void advanceStep_whenFailed_doesNotCreateExternalInteraction() {
+    stubStep(StepExecutionStatus.FAILED);
+
+    service.advanceStep(APP_ID);
+
+    verifyNoInteractions(externalInteractionRepository);
+  }
+
+  @Test
   @DisplayName("Handler 失败时步骤执行进入 FAILED")
   void advanceStep_marksFailedOnFailure() {
     stubStep(StepExecutionStatus.FAILED);
@@ -174,21 +223,25 @@ class FlowOrchestrationServiceTest {
   }
 
   private void stubStep(StepExecutionStatus status) {
+    stubStep(status, "mainHandler");
+  }
+
+  private void stubStep(StepExecutionStatus status, String mainProcessor) {
     BusinessApplication app = mock(BusinessApplication.class);
     when(applicationRepository.loadOrThrow(APP_ID)).thenReturn(app);
     when(app.buildConfigQueryContext()).thenReturn(BusinessMetaContext.of(context()));
     when(configGateway.getExtractorConfig(any())).thenReturn(null);
 
     StepDefinition step = StepDefinition.business(
-      StepCode.of("FORM_DETAIL_INGESTION"), TaskType.SYSTEM_TASK, "mainHandler", List.of());
+      StepCode.of("FORM_DETAIL_INGESTION"), TaskType.SYSTEM_TASK, mainProcessor, List.of());
     when(stepDefinitionResolver.resolve(app)).thenReturn(step);
     StepRouteConfig route = new StepRouteConfig(
       ApplicationFlowStep.FORM_DETAIL_INGESTION, ApplicationFlowStep.DATA_VERIFICATION,
-      StepRouteConfig.StepTaskType.SYSTEM_TASK, List.of(), "mainHandler", List.of(), List.of());
+      StepRouteConfig.StepTaskType.SYSTEM_TASK, List.of(), mainProcessor, List.of(), List.of());
     when(stepRouteConfigAssembler.toRouteConfig(any(StepDefinition.class))).thenReturn(route);
 
     StepActionHandler handler = mock(StepActionHandler.class);
-    when(handlerRegistry.get("mainHandler")).thenReturn(handler);
+    when(handlerRegistry.get(mainProcessor)).thenReturn(handler);
     when(handler.execute(any(), any())).thenReturn(status);
     when(pipelineExecutor.executeChain(any(), any(), any()))
       .thenReturn(mock(PipelineExecutionResult.class));

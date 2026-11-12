@@ -131,6 +131,10 @@ class AnnuityEndToEndTest {
     assertThat(orchestrationService).isNotNull();
     assertThat(applicationRepository).isNotNull();
     assertThat(eventSimulator).isNotNull();
+    // 外部协作表 DDL 就绪；E2E 主流程不经过 SUSPEND_ASYNC_WAIT，写入由编排器单元测试验证
+    Long interactionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_external_interaction")
+      .query(Long.class).single();
+    assertThat(interactionCount).isNotNull();
   }
 
   @Test
