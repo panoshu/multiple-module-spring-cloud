@@ -59,6 +59,10 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    */
   private final String businessType;
   /**
+   * 外部协作幂等键（spec §12.3）：按该键幂等启动并可查询；旧构造路径为 null。
+   */
+  private String requestNo;
+  /**
    * 发起人方案
    */
   private final String initiatorPlan;
@@ -133,6 +137,14 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
   public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                                         ApplicationId businessApplicationId, String businessType,
                                         String initiatorPlan, String operator) {
+    return create(id, flowId, flowVersion, businessApplicationId, businessType,
+      initiatorPlan, operator, null);
+  }
+
+  /** 带外部协作幂等键的创建（spec §12.3）。 */
+  public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
+                                        ApplicationId businessApplicationId, String businessType,
+                                        String initiatorPlan, String operator, String requestNo) {
     if (flowId == null) {
       throw new IllegalArgumentException("审批流ID不能为空");
     }
@@ -147,8 +159,9 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     }
     ApprovalInstance instance = new ApprovalInstance(id, flowId, flowVersion, businessApplicationId,
       businessType, initiatorPlan, operator);
+    instance.requestNo = requestNo;
     instance.registerDomainEvent(
-      ApprovalInstanceCreated.of(id, businessApplicationId.value(), businessType));
+      ApprovalInstanceCreated.of(id, businessApplicationId.value(), businessType, requestNo));
     return instance;
   }
 
@@ -159,8 +172,25 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
                                               ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                                               String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
                                               String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
-    return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
-      initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version);
+    return reconstitute(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
+      initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version, null);
+  }
+
+  /** 带外部协作幂等键的重建（spec §12.3）。 */
+  public static ApprovalInstance reconstitute(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
+                                              ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
+                                              String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
+                                              String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version,
+                                              String requestNo) {
+    ApprovalInstance instance = new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType,
+      currentNodeOrder, status, initiatorPlan, currentPlan, nodeExecutions,
+      createdBy, updatedBy, createdAt, updatedAt, version);
+    instance.requestNo = requestNo;
+    return instance;
+  }
+
+  public String requestNo() {
+    return requestNo;
   }
 
   /**
@@ -206,7 +236,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     // 当状态变为 APPROVED 时派发领域事件
     if (this.status == InstanceStatus.APPROVED) {
       registerDomainEvent(
-        ApprovalInstanceApproved.of(id(), businessApplicationId.value(), businessType));
+        ApprovalInstanceApproved.of(id(), businessApplicationId.value(), businessType, requestNo));
     }
   }
 
@@ -238,7 +268,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     // 当状态变为 REJECTED 时派发领域事件
     if (this.status == InstanceStatus.REJECTED) {
       registerDomainEvent(
-        ApprovalInstanceRejected.of(id(), businessApplicationId.value(), businessType));
+        ApprovalInstanceRejected.of(id(), businessApplicationId.value(), businessType, requestNo));
     }
   }
 
@@ -287,7 +317,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
 
     // 派发领域事件
     registerDomainEvent(
-      ApprovalInstanceWithdrawn.of(id(), businessApplicationId.value(), businessType));
+      ApprovalInstanceWithdrawn.of(id(), businessApplicationId.value(), businessType, requestNo));
   }
 
   /**

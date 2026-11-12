@@ -251,6 +251,21 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
   }
 
   @Override
+  public Optional<ApprovalInstance> findByRequestNo(String requestNo) {
+    if (requestNo == null || requestNo.isBlank()) {
+      return Optional.empty();
+    }
+    ApprovalInstanceDO instanceDO = instanceMapper.selectOneByQuery(
+      QueryWrapper.create()
+        .where(APPROVAL_INSTANCE_DO.REQUEST_NO.eq(requestNo))
+    );
+    if (instanceDO == null) {
+      return Optional.empty();
+    }
+    return load(converter.toDomain(instanceDO).id());
+  }
+
+  @Override
   public List<ApprovalInstance> findByApproverId(UserNo approverId, InstanceStatus status) {
     if (approverId == null) {
       return Collections.emptyList();

@@ -18,7 +18,9 @@ public record ApprovalInstanceCreated(
   LocalDateTime occurredOn,
   ApprovalInstanceId instanceId,
   String businessNo,
-  String businessType
+  String businessType,
+  /** 外部协作幂等键；过渡期可空。 */
+  String requestNo
 ) implements DomainEvent {
 
   /**
@@ -31,7 +33,12 @@ public record ApprovalInstanceCreated(
    */
   public static ApprovalInstanceCreated of(ApprovalInstanceId instanceId,
                                            String businessNo, String businessType) {
+    return of(instanceId, businessNo, businessType, null);
+  }
+
+  public static ApprovalInstanceCreated of(ApprovalInstanceId instanceId,
+                                           String businessNo, String businessType, String requestNo) {
     return new ApprovalInstanceCreated(EventId.generate(), LocalDateTime.now(),
-      instanceId, businessNo, businessType);
+      instanceId, businessNo, businessType, requestNo);
   }
 }

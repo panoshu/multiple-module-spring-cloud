@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS t_approval_instance
 (
   128
 ) NOT NULL,
+  request_no VARCHAR(128),
   current_node_order INT NOT NULL,
   status VARCHAR
 (
@@ -186,6 +187,7 @@ CREATE INDEX IF NOT EXISTS idx_approval_instance_business_application_id ON t_ap
 CREATE INDEX IF NOT EXISTS idx_approval_instance_business_no ON t_approval_instance(business_no);
 CREATE INDEX IF NOT EXISTS idx_approval_instance_status ON t_approval_instance(status);
 CREATE INDEX IF NOT EXISTS idx_approval_instance_create_time ON t_approval_instance(create_time);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_approval_instance_request_no ON t_approval_instance(request_no);
 
 COMMENT
 ON TABLE t_approval_instance IS '审批实例表';

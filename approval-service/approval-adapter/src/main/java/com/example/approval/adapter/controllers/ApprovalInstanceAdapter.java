@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 审批实例适配器
@@ -40,6 +41,16 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
     log.info("启动审批: flowId={}, businessNo={}", request.flowId(), request.businessNo());
     var instanceId = approvalInstanceService.startApproval(request);
     return ApiResult.success(new ApprovalInstanceIdResponse(instanceId));
+  }
+
+  @Override
+  public ApiResult<ApprovalInstanceIdResponse> getByRequestNo(GetByRequestNoRequest request) {
+    Optional<com.example.approval.types.ApprovalInstanceId> found =
+      approvalInstanceService.findByRequestNo(request.requestNo());
+    if (found.isEmpty()) {
+      return ApiResult.success(null);
+    }
+    return ApiResult.success(new ApprovalInstanceIdResponse(found.get()));
   }
 
   @Override

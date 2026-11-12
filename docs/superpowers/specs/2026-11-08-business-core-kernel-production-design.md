@@ -1093,7 +1093,7 @@ Application 层按用例拆分：
 | 阶段 0 冻结设计与外部契约 | 设计已确认，外部契约已冻结 | 本文定稿；`batchMode`、批次创建顺序与状态规则已补入 §6.3/§6.4/§8.5。流程定义存储与发布方式已冻结为组合式版本化定义存储（批次 19，§23.19）；file/approval 的 requestNo 幂等与查询契约评审已通过并冻结（§23.20，issue 状态 `ready-for-agent`），按 §22 进入编码（§11.4/§12.3） |
 | 阶段 1 建立领域模型与状态机 | 进行中 | 批次/申请重定位、版本化流程定义模型与运行时接管、`definitionVersion` 持久化、`batchMode` 运行时校验、`BusinessApplication` 宏观状态机、`StepExecution` 与 `ExternalInteraction` 聚合领域模型及持久化/双库 DDL 均已完成。三类核心概念（ProcessDefinition/StepExecution/ExternalInteraction）领域模型、持久化与运行时接线齐备；`EventReceipt` 已落地。阶段 1 主线完成，剩余恢复/派发能力归入阶段 2/3 |
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`IdService` 号段生成已接入并补齐 `t_id_generator` DDL，`StepExecution` 运行时接线已完成。事件消费回执与入站幂等已落地（§7.4）。`ExternalInteraction` 运行时接线（阶段 A）已完成。外部协作重试恢复机制（四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领，§19.2）已落地。`DistributedLock` 短临界区互斥已接入（§9.3 第一层，弱依赖可选注入）。§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离待后续批次 |
-| 阶段 3 重构 file/approval 协作 | 进行中 | 契约形状（批次 20）与 kernel requestNo 贯通（批次 21）已落地；服务侧幂等/查询 API、事件转换器透传、阶段 B 派发器、阶段 C 回调待后续批次 |
+| 阶段 3 重构 file/approval 协作 | 进行中 | 契约形状（批次 20）、kernel requestNo 贯通（批次 21）、approval 侧 requestNo 幂等闭环（批次 22：聚合/事件/Converter/DDL/Service 幂等/查询 API）已落地；file 侧 ParseTask 同构幂等闭环、阶段 B 事务外派发器、阶段 C 回调按 requestNo 关联待后续批次 |
 | 阶段 4 收敛可选能力与公共 API | 未开始 | — |
 | 阶段 5 清理与生产验收 | 未开始 | — |
 
@@ -1121,7 +1121,8 @@ Application 层按用例拆分：
 | 批次 18 | `ce053752` | **接入 DistributedLock 短临界区互斥**（§9.3 第一层）：`business-core-application` 加 `shared-lock` 纯接口依赖；`FlowOrchestrationService` 用 `ObjectProvider<DistributedLock>` 弱依赖可选注入（有 bean 加锁、无 bean 直通），`advanceStep` 拆为锁包装 + `doAdvanceStep`，REJECTED/WITHDRAWN 终止分支纳入锁，避免回调入口递归重复加锁死锁；锁键 `kernel:application:{id}`、等待 3s/租期 10s，获取失败异常传播。不改 annuity、不引入 Redis 强依赖 | 应用 124（新增 4）、领域 152、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 无锁降级路径无 Redis/锁错误；`git diff --check` 通过 |
 | 批次 19 | `c6a84d78` | **独立版本化定义存储与发布**（§7.1/§14/§19.1，冻结阶段 0 遗留决策）：domain 新增 `ProcessDefinitionStore` SPI 与 `AbstractStrategyRegistry.contains()`；application 新增 `InMemoryProcessDefinitionStore`（进程内缓存、key 含业务类型+版本、发布即更新 latest 指针实现缓存失效、重复版本拒绝）、`ProcessDefinitionPublishService`（主处理器存在校验、已发布定义不可变）、`CompositeProcessDefinitionGateway`（新存储优先、过渡期存量路由 fallback）；`CoreKernelAutoConfiguration` 注册 store bean 并把默认网关改为组合式。零 annuity 改动，E2E 走 fallback 不破坏 | 领域 152、应用 137（新增 13）、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；E2E 无定义缺失错误；`git diff --check` 通过 |
 | 批次 20 | `b7657fa0` | **file/approval requestNo 契约形状**（评审 §3 第一步，§22 小步）：`StartApprovalRequest`、`GenerateOutboundFileRequest`、6 个集成事件 DTO 增加可空 `requestNo` 并保留旧签名辅助构造器（提案 §4 过渡重载），`UploadFileRequest.clientRequestNo` 语义明确为外部协作幂等键；新增审批侧 5 项、文件侧 6 项契约形状测试。全仓 30 处既有构造点零改动、零 annuity 改动 | 审批契约 5、文件契约 6、领域 152、应用 137、基础设施 74、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
-| 批次 21 | 本次（未提交） | **kernel requestNo 贯通**（评审 §3 第二步）：`BusinessMetaContext` 加保留键 `kernel.requestNo` 与 `requestNo()` 访问器；`advanceStep` 在 StepExecution 创建后把 `SE-<步骤执行ID>` 注入上下文（与 `ExternalInteraction.requestNo` 同源）；`ApprovalIntegrationGateway`/`FileIntegrationGateway` 加带 requestNo 的 default 重载（旧签名委托，annuity Mock 零改动）；4 个挂起 Handler 透传；2 个 kernel Gateway 实现覆盖重载并把 requestNo 写入 `StartApprovalRequest`/`UploadFileRequest.clientRequestNo`/`GenerateOutboundFileRequest`。零 DDL、零 annuity 改动 | 领域 155（+3）、应用 139（+2）、基础设施 76（+2）、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 21 | `e9c56dd0` | **kernel requestNo 贯通**（评审 §3 第二步）：`BusinessMetaContext` 加保留键 `kernel.requestNo` 与 `requestNo()` 访问器；`advanceStep` 在 StepExecution 创建后把 `SE-<步骤执行ID>` 注入上下文（与 `ExternalInteraction.requestNo` 同源）；`ApprovalIntegrationGateway`/`FileIntegrationGateway` 加带 requestNo 的 default 重载（旧签名委托，annuity Mock 零改动）；4 个挂起 Handler 透传；2 个 kernel Gateway 实现覆盖重载并把 requestNo 写入 `StartApprovalRequest`/`UploadFileRequest.clientRequestNo`/`GenerateOutboundFileRequest`。零 DDL、零 annuity 改动 | 领域 155（+3）、应用 139（+2）、基础设施 76（+2）、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 22 | 本次（未提交） | **approval 侧 requestNo 幂等闭环**（评审 §3 第三步，§22 小步）：`ApprovalInstance` 聚合加 `requestNo` 字段与 `create`/`reconstitute` 8/16 参重载；4 个领域事件加 `requestNo` 与 `of()` 4 参重载；4 个集成事件 Converter 透传真实值；`ApprovalInstanceDO` 加列、Converter 映射、Repository 加 `findByRequestNo` 与 Impl 查询；双库 DDL 加 `request_no` 唯一索引；`ApprovalInstanceService.startApproval` 按 requestNo 幂等（命中返回原 instanceId、`findByRequestNo` 供对账）；`ApprovalInstanceApi`/`Adapter` 加 `getByRequestNo`（`GetByRequestNoRequest`）。`approval-application` 补 `spring-boot-starter-test` 测试依赖。零 annuity 改动 | 审批领域 87、应用 4（新增幂等行为）、基础设施 21（契约形状 6 + 事件转换器 15 含新增透传断言）、kernel 139、架构不变量 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1318,6 +1319,7 @@ Application 层按用例拆分：
 - `request_no` 列宽统一 128（评审 #7）与 `t_approval_instance` / `t_file_parse_task` 加列一起留批次 21；kernel 侧 `t_business_external_interaction.request_no` 现为 64，annuity 复制脚本写入值短、不受影响，故无需同步（符合 #6 临时解冻范围）。
 - 当前 `requestNo` 均为可空过渡：kernel 侧未传值，服务侧转换器经辅助构造器传 `null`。阶段 3 回调按 requestNo 关联（批次 22）前需先由批次 21 把真实值贯通。
 - 仍未处理：服务侧幂等与查询 API、事件转换器透传、kernel Gateway 签名与派发器（批次 21）、阶段 C 回调关联（批次 22）、§23.19 其余待办。
+- **编号对齐注记**（批次 22 补）：以上两段写于批次 20，其中的「批次 21/22」为当时的预测编号；按 §22 小步提交实际推进后重新对齐为——批次 21 = kernel requestNo 贯通（§23.22）、批次 22 = approval 侧幂等闭环（§23.23）、批次 23 = file 侧幂等闭环 + 阶段 B 事务外派发器、批次 24 = 阶段 C 回调按 requestNo 关联。以各批次正文与 §23.1 阶段进度为准。
 
 ### 23.22 批次 21 范围边界（requestNo 贯通）
 
@@ -1325,5 +1327,14 @@ Application 层按用例拆分：
 - **键的来源**：`advanceStep` 里 `StepExecution` 在 Handler 之前创建，`"SE-" + execution.id().value()` 与批次 16 `ExternalInteraction.requestNo`（`SE-<stepExecutionId>`）同源；经 `BusinessMetaContext.extensionFacts` 的可变 `ConcurrentHashMap` 注入（保留键 `kernel.requestNo`），4 个挂起 Handler 用 `context.requestNo()` 读取。不改 `StepActionHandler` SPI、不加 DDL 列、annuity 复制脚本零改动。
 - **Gateway 兼容策略**：`ApprovalIntegrationGateway.startApproval(app, requestNo)` 与 `FileIntegrationGateway` 的两个 5 参重载均为 **default 方法委托旧签名**；kernel 两个实现覆盖重载写入请求 DTO，annuity `MockFileIntegrationGateway` 与 `BusinessFormAppService.triggerParsing` 沿用旧签名、零改动。评审 #6「临时解冻测试替身」实际未触发（比预期更轻）。
 - `FileServiceIntegrationGateway.triggerAsyncParsing` 5 参重载在 requestNo 为空时回退 `formId.value()`，保持既有 `clientRequestNo` 语义；`triggerOutboundGeneration` 5 参重载构造 5 参 `GenerateOutboundFileRequest`。
-- **仍未处理**（批次 22）：服务侧 `request_no` 唯一约束与创建幂等、按 requestNo 查询 API、6 个事件转换器透传真实值、领域事件增加 requestNo、`request_no` 列宽统一 128；批次 23 阶段 B 派发器与 kernel 外部调用移出事务；批次 24 阶段 C 回调按 requestNo 关联。
-- 当前 requestNo 已由 kernel 传入服务请求 DTO，但服务侧尚未按该键幂等、完成事件仍经辅助构造器传 `null`（可空过渡）。Gateway 实现写入请求 DTO 由 `GatewayRequestNoContractTest` 的重载契约测试与全仓编译保证，端到端幂等验证留批次 22。
+- 批次 21 结束时服务侧尚未按 requestNo 幂等、完成事件经辅助构造器传 `null`（可空过渡）、Gateway 实现写入请求 DTO 由 `GatewayRequestNoContractTest` 重载契约测试与全仓编译保证；**approval 侧这些缺口已由批次 22 补齐**（见 §23.23），file 侧仍待后续批次。
+
+### 23.23 批次 22 范围边界（approval 侧幂等闭环）
+
+- 本批次仅完成 **approval 服务**的 requestNo 贯通闭环；**file 服务 ParseTask 侧的同构改造**（`t_file_parse_task` 加 `request_no` 唯一索引、上传按 requestNo 幂等、2 个事件转换器透传真实值、`FileTaskApi` 按 requestNo 查询）留批次 23 与阶段 B 派发器一并完成，理由同 §23.21「服务侧幂等只有在 kernel 真正传值时才有意义」。
+- **领域层过渡重载**：`ApprovalInstance.create`/`reconstitute` 各加带 `requestNo` 的重载（旧 7/15 参委托传 `null`），4 个领域事件加 `requestNo` 组件与 `of()` 4 参重载（旧 3 参委托传 `null`）。因此既有 7 处 `create`、9 处 `of()` 调用点零改动、`requestNo` 默认可空。
+- **幂等语义**：`startApproval` 在 `requestNo` 非空时先 `findByRequestNo`，命中直接返回原 `instanceId`，不加载审批流、不创建、不发布事件；唯一索引 `uk_approval_instance_request_no` 兜并发撞键。`requestNo` 为空（旧调用方）走原创建路径，行为不变。
+- **查询 API**：`getByRequestNo`（`GetByRequestNoRequest`）供响应丢失后按统一键对账；未命中返回 `ApiResult.success(null)`，调用方按空处理。
+- **测试落点**：`approval-application` 原无测试依赖，新增 `spring-boot-starter-test`（test scope）后以纯 Mockito 单测覆盖幂等短路、空键不查重、`findByRequestNo` 委托；Service 层不启动 Spring 上下文。4 个 Converter 透传由 `ApprovalEventConverterTest` 用 `of()` 4 参重载断言。
+- **DDL**：`t_approval_instance` 的 PG/MySQL 双库加 `request_no VARCHAR(128)` 与唯一索引；`request_no` 列宽按评审结论统一 128（与批次 14 `t_step_execution` 一致），新列可空、无存量数据兼容问题。annuity 的 H2 建表脚本不含 `t_approval_instance`（E2E 不查该表），零 annuity 改动。
+- **仍未处理**：file 侧幂等闭环、6 个事件转换器中的 file 侧 2 个透传真实值、领域事件/DO 列宽在 kernel `t_business_external_interaction`（批次 13）与 `t_step_execution`（批次 11）仍为 64（本批未统一、属 §23.13 待办 1 与列宽待办）；阶段 B 事务外派发器（批次 23）、阶段 C 回调按 requestNo 关联（批次 24）。

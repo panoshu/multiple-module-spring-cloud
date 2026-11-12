@@ -187,6 +187,32 @@ class ApprovalEventConverterTest {
   }
 
   @Test
+  @DisplayName("4 个 Converter 均透传领域事件的 requestNo 到集成事件 DTO")
+  void converters_shouldPassThroughRequestNo() {
+    String requestNo = "SE-9";
+
+    ApprovalInstanceCreatedEventDTO created = (ApprovalInstanceCreatedEventDTO)
+      new ApprovalInstanceCreatedEventConverter().toIntegrationEvent(
+        ApprovalInstanceCreated.of(INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, requestNo));
+    assertThat(created.requestNo()).isEqualTo(requestNo);
+
+    ApprovalInstanceApprovedEventDTO approved = (ApprovalInstanceApprovedEventDTO)
+      new ApprovalInstanceApprovedEventConverter().toIntegrationEvent(
+        ApprovalInstanceApproved.of(INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, requestNo));
+    assertThat(approved.requestNo()).isEqualTo(requestNo);
+
+    ApprovalInstanceRejectedEventDTO rejected = (ApprovalInstanceRejectedEventDTO)
+      new ApprovalInstanceRejectedEventConverter().toIntegrationEvent(
+        ApprovalInstanceRejected.of(INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, requestNo));
+    assertThat(rejected.requestNo()).isEqualTo(requestNo);
+
+    ApprovalInstanceWithdrawnEventDTO withdrawn = (ApprovalInstanceWithdrawnEventDTO)
+      new ApprovalInstanceWithdrawnEventConverter().toIntegrationEvent(
+        ApprovalInstanceWithdrawn.of(INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, requestNo));
+    assertThat(withdrawn.requestNo()).isEqualTo(requestNo);
+  }
+
+  @Test
   @DisplayName("EventId 应为 ULID 字符串")
   void eventId_shouldBeUlidString() {
     // given

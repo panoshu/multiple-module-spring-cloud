@@ -44,6 +44,9 @@ public interface ApprovalInstanceRepository extends Repository<ApprovalInstance,
    */
   Optional<ApprovalInstance> findByBusinessApplicationId(ApplicationId applicationId);
 
+  /** 按外部协作幂等键查询（spec §12.3）：用于重复启动幂等与响应丢失对账。 */
+  Optional<ApprovalInstance> findByRequestNo(String requestNo);
+
   /**
    * 根据审批人ID和状态查找审批实例列表
    *

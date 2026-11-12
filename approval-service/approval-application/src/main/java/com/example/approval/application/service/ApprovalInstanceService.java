@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 审批实例应用服务
@@ -51,6 +52,14 @@ public class ApprovalInstanceService {
    */
   @Transactional
   public ApprovalInstanceId startApproval(StartApprovalRequest request) {
+    // 外部协作幂等（spec §12.3）：同一 requestNo 重复启动直接返回原实例，不重复创建
+    if (request.requestNo() != null && !request.requestNo().isBlank()) {
+      Optional<ApprovalInstance> existing = instanceRepository.findByRequestNo(request.requestNo());
+      if (existing.isPresent()) {
+        return existing.get().id();
+      }
+    }
+
     // 加载审批流
     ApprovalFlow flow = loadFlowOrThrow(request.flowId());
 
@@ -63,7 +72,8 @@ public class ApprovalInstanceService {
       new ApplicationId(request.businessNo()),
       request.businessType(),
       null, // initiatorPlan
-      request.initiator()
+      request.initiator(),
+      request.requestNo()
     );
 
     // 启动审批流程
@@ -79,6 +89,14 @@ public class ApprovalInstanceService {
     log.info("审批实例创建成功: instanceId={}, flowId={}, businessNo={}",
       instanceId, request.flowId(), request.businessNo());
     return instanceId;
+  }
+
+  /** 按外部协作幂等键查询实例 ID（响应丢失对账，spec §12.3）。 */
+  public Optional<ApprovalInstanceId> findByRequestNo(String requestNo) {
+    if (requestNo == null || requestNo.isBlank()) {
+      return Optional.empty();
+    }
+    return instanceRepository.findByRequestNo(requestNo).map(ApprovalInstance::id);
   }
 
   /**
