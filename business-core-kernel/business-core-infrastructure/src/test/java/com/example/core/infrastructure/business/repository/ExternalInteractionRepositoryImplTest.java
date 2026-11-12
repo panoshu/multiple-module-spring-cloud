@@ -2,6 +2,8 @@ package com.example.core.infrastructure.business.repository;
 
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
+import com.example.shared.domain.event.DomainEvent;
 import com.example.core.infrastructure.business.converter.ExternalInteractionConverter;
 import com.example.core.infrastructure.business.entity.ExternalInteractionDO;
 import com.example.core.infrastructure.business.mapper.ExternalInteractionMapper;
@@ -112,8 +114,36 @@ class ExternalInteractionRepositoryImplTest {
   }
 
   @Test
-  @DisplayName("save 新增时委托 insert 且不发布领域事件")
-  void save_insertsWithoutPublishingEvents() {
+  @DisplayName("findByStatus 按状态扫描待派发/未知协作")
+  void findByStatus_queriesByStatus() {
+    ExternalInteractionDO aDo = new ExternalInteractionDO();
+    when(mapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(aDo));
+    when(converter.toDomain(aDo)).thenReturn(pendingInteraction());
+
+    assertThat(repository.findByStatus(ExternalInteractionStatus.PENDING_DISPATCH)).hasSize(1);
+
+    ArgumentCaptor<QueryWrapper> captor = ArgumentCaptor.forClass(QueryWrapper.class);
+    verify(mapper).selectListByQuery(captor.capture());
+    assertThat(captor.getValue().toSQL()).contains("status", "PENDING_DISPATCH");
+  }
+
+  @Test
+  @DisplayName("findStaleDispatching 按状态与更新时间扫描滞留派发")
+  void findStaleDispatching_filtersByStatusAndUpdateTime() {
+    ExternalInteractionDO aDo = new ExternalInteractionDO();
+    when(mapper.selectListByQuery(any(QueryWrapper.class))).thenReturn(List.of(aDo));
+    when(converter.toDomain(aDo)).thenReturn(pendingInteraction());
+
+    assertThat(repository.findStaleDispatching(LocalDateTime.of(2026, 11, 12, 9, 30))).hasSize(1);
+
+    ArgumentCaptor<QueryWrapper> captor = ArgumentCaptor.forClass(QueryWrapper.class);
+    verify(mapper).selectListByQuery(captor.capture());
+    assertThat(captor.getValue().toSQL()).contains("status", "DISPATCHING", "update_time");
+  }
+
+  @Test
+  @DisplayName("save 新增时委托 insert 并发布协作创建事件")
+  void save_insertsAndPublishesRequestedEvent() {
     ExternalInteraction interaction = pendingInteraction();
     ExternalInteractionDO aDo = new ExternalInteractionDO();
     aDo.setId(7001L);
@@ -123,7 +153,8 @@ class ExternalInteractionRepositoryImplTest {
     repository.save(interaction);
 
     verify(mapper).insert(aDo);
-    verifyNoInteractions(eventBus);
+    verify(eventBus).publish(any(DomainEvent.class));
+    assertThat(interaction.domainEvents()).isEmpty();
   }
 
   private ExternalInteraction pendingInteraction() {

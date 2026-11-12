@@ -4,7 +4,10 @@ import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.application.business.guard.BusinessAccessGuard;
 import com.example.core.application.business.guard.DefaultBusinessAccessGuard;
+import com.example.core.application.engine.job.ExternalInteractionRecoveryJob;
 import com.example.core.application.engine.service.BusinessConfigProcessDefinitionAdapter;
+import com.example.core.application.engine.service.ExternalInteractionRecoveryService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +25,7 @@ import org.springframework.context.annotation.ComponentScan;
  *   <li>SessionContextResolver / BusinessMetaContextAssembler(会话基础设施)</li>
  *   <li>DefaultBusinessAccessGuard(默认权限守门人,业务服务可覆盖)</li>
  *   <li>默认 ProcessDefinitionGateway(过渡期适配存量步骤路由,业务服务可覆盖)</li>
+ *   <li>ExternalInteractionRecoveryJob(外部协作恢复兜底任务,§19.2)</li>
  *   <li>5 类公共 API 的 Controller(Batch/Form/Application/Material/Progress)</li>
  *   <li>SupportedBusinessTypeValidator(业务类型校验)</li>
  * </ul>
@@ -75,5 +79,16 @@ public class CoreKernelAutoConfiguration {
   @ConditionalOnMissingBean(ProcessDefinitionGateway.class)
   public ProcessDefinitionGateway defaultProcessDefinitionGateway(BusinessConfigGateway configGateway) {
     return new BusinessConfigProcessDefinitionAdapter(configGateway);
+  }
+
+  /**
+   * 外部协作恢复兜底任务（§19.2）。默认启用，可通过
+   * {@code core.kernel.recovery.enabled=false} 关闭；调度依赖宿主的 {@code @EnableScheduling}。
+   */
+  @Bean
+  @ConditionalOnProperty(name = "core.kernel.recovery.enabled", havingValue = "true", matchIfMissing = true)
+  public ExternalInteractionRecoveryJob externalInteractionRecoveryJob(
+      ExternalInteractionRecoveryService recoveryService) {
+    return new ExternalInteractionRecoveryJob(recoveryService);
   }
 }

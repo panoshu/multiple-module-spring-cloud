@@ -2,6 +2,7 @@ package com.example.core.domain.engine.aggregate.root;
 
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
+import com.example.core.domain.engine.event.ExternalInteractionRequestedEvent;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.ExternalInteractionId;
 import com.example.core.types.StepExecutionId;
@@ -38,7 +39,9 @@ class ExternalInteractionTest {
     assertThat(interaction.nextRetryAt()).isNull();
     assertThat(interaction.lastError()).isNull();
     assertThat(interaction.completedAt()).isNull();
-    assertThat(interaction.domainEvents()).isEmpty();
+    assertThat(interaction.domainEvents()).hasSize(1);
+    assertThat(interaction.domainEvents().get(0))
+      .isInstanceOf(ExternalInteractionRequestedEvent.class);
   }
 
   @Test

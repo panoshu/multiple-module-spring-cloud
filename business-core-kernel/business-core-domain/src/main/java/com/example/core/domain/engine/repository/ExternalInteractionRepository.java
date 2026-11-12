@@ -2,6 +2,7 @@ package com.example.core.domain.engine.repository;
 
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
+import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.ExternalInteractionId;
 import com.example.shared.domain.repository.Repository;
@@ -26,4 +27,16 @@ public interface ExternalInteractionRepository
   List<ExternalInteraction> findPendingRetry(LocalDateTime retryBefore);
 
   List<ExternalInteraction> findByApplication(ApplicationId applicationId);
+
+  /**
+   * 按状态扫描协作记录，供恢复任务认领 PENDING_DISPATCH 与对账 UNKNOWN（§19.2）。
+   */
+  List<ExternalInteraction> findByStatus(ExternalInteractionStatus status);
+
+  /**
+   * 扫描长时间停留在 DISPATCHING 的协作，供恢复任务回收为 UNKNOWN（§19.2）。
+   *
+   * @param updatedBefore 更新时间上界（含）
+   */
+  List<ExternalInteraction> findStaleDispatching(LocalDateTime updatedBefore);
 }

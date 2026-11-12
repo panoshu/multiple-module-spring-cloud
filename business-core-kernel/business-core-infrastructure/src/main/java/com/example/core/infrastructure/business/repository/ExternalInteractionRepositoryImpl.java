@@ -22,8 +22,9 @@ import static com.example.core.infrastructure.business.entity.table.ExternalInte
 /**
  * 外部协作仓储实现。
  * <p>
- * 复用 {@link AbstractBusinessRepository} 的通用 CRUD 与乐观锁；ExternalInteraction 不注册领域事件，
- * 故发布环节为空操作。查询与 t_business_external_interaction 的索引一一对应。
+ * 复用 {@link AbstractBusinessRepository} 的通用 CRUD 与乐观锁；create 注册的
+ * {@link com.example.core.domain.engine.event.ExternalInteractionRequestedEvent} 由 EventBus 发布。
+ * 查询与 t_business_external_interaction 的索引一一对应，恢复扫描复用现有列、不新增索引。
  * <p>
  * 本类<b>不标注 {@code @Repository}</b>，由具体业务服务继承并标注，与其余 kernel 仓储一致。
  */
@@ -111,6 +112,27 @@ public class ExternalInteractionRepositoryImpl
     }
     return mapper.selectListByQuery(QueryWrapper.create()
         .where(EXTERNAL_INTERACTION_DO.APPLICATION_ID.eq(applicationId.value())))
+      .stream().map(converter::toDomain).toList();
+  }
+
+  @Override
+  public List<ExternalInteraction> findByStatus(ExternalInteractionStatus status) {
+    if (status == null) {
+      return List.of();
+    }
+    return mapper.selectListByQuery(QueryWrapper.create()
+        .where(EXTERNAL_INTERACTION_DO.STATUS.eq(status.name())))
+      .stream().map(converter::toDomain).toList();
+  }
+
+  @Override
+  public List<ExternalInteraction> findStaleDispatching(LocalDateTime updatedBefore) {
+    if (updatedBefore == null) {
+      return List.of();
+    }
+    return mapper.selectListByQuery(QueryWrapper.create()
+        .where(EXTERNAL_INTERACTION_DO.STATUS.eq(ExternalInteractionStatus.DISPATCHING.name()))
+        .and(EXTERNAL_INTERACTION_DO.UPDATE_TIME.le(updatedBefore)))
       .stream().map(converter::toDomain).toList();
   }
 }

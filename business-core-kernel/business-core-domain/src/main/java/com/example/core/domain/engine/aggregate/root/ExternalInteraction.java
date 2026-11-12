@@ -3,6 +3,7 @@ package com.example.core.domain.engine.aggregate.root;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
+import com.example.core.domain.engine.event.ExternalInteractionRequestedEvent;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.ExternalInteractionId;
 import com.example.core.types.StepExecutionId;
@@ -19,7 +20,8 @@ import java.time.LocalDateTime;
  * {@code stepExecutionId} 派生且重试时沿用，保证同一外部请求不被重复创建；
  * 事件关联优先按 requestNo、其次按 externalTaskId，缺少任一关联信息不得盲目推进。
  * <p>
- * 本批次为纯领域模型切片，不接线运行时、不注册事件、不改 DDL。
+ * 创建时注册 {@link ExternalInteractionRequestedEvent}，由 Repository 经 EventBus 发布（§13.2），
+ * 供 AFTER_COMMIT 尽快认领与恢复任务兜底；本类不触发外部调用。
  */
 public class ExternalInteraction extends AggregateRoot<ExternalInteractionId> {
 
@@ -63,6 +65,8 @@ public class ExternalInteraction extends AggregateRoot<ExternalInteractionId> {
     interaction.requestNo = deriveRequestNo(stepExecutionId);
     interaction.status = ExternalInteractionStatus.PENDING_DISPATCH;
     interaction.validateInvariants();
+    interaction.registerDomainEvent(
+      ExternalInteractionRequestedEvent.of(id, applicationId, interaction.requestNo));
     return interaction;
   }
 
