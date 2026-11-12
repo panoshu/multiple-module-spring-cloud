@@ -14,8 +14,17 @@ public record OutboundFileGeneratedEventDTO(
   String fileTaskId,
   String targetTemplateId,
   List<GeneratedFileInfoDTO> generatedFiles,
-  LocalDateTime occurredOn
+  LocalDateTime occurredOn,
+  /** 外部协作幂等键；过渡期可空，阶段 3 回调按此关联协作记录。 */
+  String requestNo
 ) {
+
+  public OutboundFileGeneratedEventDTO(String eventId, String fileTaskId, String targetTemplateId,
+                                       List<GeneratedFileInfoDTO> generatedFiles,
+                                       LocalDateTime occurredOn) {
+    this(eventId, fileTaskId, targetTemplateId, generatedFiles, occurredOn, null);
+  }
+
   public record GeneratedFileInfoDTO(
     String subTaskId,
     String splitKeyValue,

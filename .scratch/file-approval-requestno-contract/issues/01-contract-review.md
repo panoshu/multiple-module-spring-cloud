@@ -129,7 +129,8 @@ Status: ready-for-agent
 - 2026-11-12（评审结论）：**提案 §3 整体接受**，状态转为 `ready-for-agent`，门禁解除。8 个待决问题结论如下：
   - #1 统一键：以 `ExternalInteraction.requestNo`（`SE-<stepExecutionId>`）为唯一跨服务幂等键；`StepExecution.requestNo` 保留为步骤尝试审计键，不用于跨服务关联。
   - #2 `StartApprovalRequest` **新增 `requestNo`**（不采用 `businessNo + 步骤` 等价约束）。
-  - #3 事件 DTO 新增 `requestNo` 采用**可空过渡 + 一次性同步构造签名**（无存量事件重放）；契约落地后收紧为非空。
+  - #3 事件 DTO 新增 `requestNo` 采用**可空过渡**（无存量事件重放）；契约落地后收紧为非空。
+  - 2026-11-12（实现注记）：批次 20 按提案 §4 的「**过渡重载**」选项落地——8 个 DTO 保留旧参数列表的辅助构造器（委托 canonical 构造并传 `null`），全仓 30 处既有构造点零改动。原「一次性同步构造签名」措辞据此修正为「可空过渡 + 旧签名兼容重载」。服务侧幂等 / 查询 API / 事件转换器透传 / kernel Gateway 签名因与派发器强耦合，并入批次 21（见台账 §23.21）。
   - #4 新增按 `requestNo` 查询 API，沿用 `queryApprovalStatus` 的「按外部标识查询」模式；具体路径 / 返回体在实现批次确定。
   - #5 部分成功默认映射：`PARTIAL` → `StepExecution.RETRY_WAIT` + `ExternalInteraction.RETRY_WAIT`，保留子任务结果引用、不推进流程；只有全部成功才 `SUCCEEDED`。实现批次可细化。
   - #6 annuity 冻结：**临时解冻测试替身**——仅允许改 `MockFileIntegrationGateway` 与 E2E 事件构造点（测试代码），不改 annuity 业务实现；DDL 复制脚本本次无需动（kernel 侧列宽统一只改 kernel PG/MySQL，annuity 写入值短不受影响）。

@@ -29,6 +29,16 @@ public record StartApprovalRequest(
    * 发起人
    */
   @NotBlank(message = "发起人不能为空")
-  String initiator
+  String initiator,
+  /**
+   * 外部协作幂等键（spec §12.3）：kernel 传入 {@code ExternalInteraction.requestNo}。
+   * 同一键重复启动只产生一个审批实例；过渡期允许为空，旧调用方经辅助构造器传 null。
+   */
+  String requestNo
 ) {
+
+  public StartApprovalRequest(ApprovalFlowId flowId, String businessNo,
+                              String businessType, String initiator) {
+    this(flowId, businessNo, businessType, initiator, null);
+  }
 }

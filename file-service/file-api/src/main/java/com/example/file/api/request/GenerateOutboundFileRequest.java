@@ -12,6 +12,13 @@ public record GenerateOutboundFileRequest(
   @NotBlank String fileTaskId,
   @NotBlank String targetTemplateId,
   Map<String, Object> supplementalData,
-  String operator
+  String operator,
+  /** 外部协作幂等键（spec §11.4）：kernel 传入 {@code ExternalInteraction.requestNo}；过渡期可空。 */
+  String requestNo
 ) {
+
+  public GenerateOutboundFileRequest(String fileTaskId, String targetTemplateId,
+                                     Map<String, Object> supplementalData, String operator) {
+    this(fileTaskId, targetTemplateId, supplementalData, operator, null);
+  }
 }

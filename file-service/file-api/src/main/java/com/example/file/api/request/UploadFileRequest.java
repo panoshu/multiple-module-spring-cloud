@@ -16,6 +16,10 @@ public record UploadFileRequest(
   @NotBlank String fileName,
   long fileSize,
   @NotBlank String uploader,
+  /**
+   * 外部协作幂等键（spec §11.4）：kernel 传入 {@code ExternalInteraction.requestNo}，
+   * 同一键重复上传只产生一个解析任务。过渡期允许为空，由业务引用兼容。
+   */
   String clientRequestNo
 ) {
 }
