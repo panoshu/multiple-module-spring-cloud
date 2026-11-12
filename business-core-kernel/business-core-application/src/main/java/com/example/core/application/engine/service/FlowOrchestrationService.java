@@ -25,8 +25,10 @@ import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.StepExecutionId;
 import com.example.shared.identifier.contract.IdService;
+import com.example.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -36,6 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 应用层编排服务
@@ -52,6 +56,9 @@ public class FlowOrchestrationService {
   private static final String APPROVAL_RESULT_APPROVED = "APPROVED";
   private static final String APPROVAL_RESULT_REJECTED = "REJECTED";
   private static final String APPROVAL_RESULT_WITHDRAWN = "WITHDRAWN";
+  private static final String LOCK_KEY_PREFIX = "kernel:application:";
+  private static final long LOCK_WAIT_SECONDS = 3L;
+  private static final long LOCK_LEASE_SECONDS = 10L;
 
   private final StepActionHandlerRegistry handlerRegistry;
   private final BusinessFactExtractorRegistry factExtractorRegistry;
@@ -65,8 +72,31 @@ public class FlowOrchestrationService {
   private final StepExecutionRepository stepExecutionRepository;
   private final IdService idService;
   private final ExternalInteractionRepository externalInteractionRepository;
+  private final ObjectProvider<DistributedLock> lockProvider;
 
   public void advanceStep(ApplicationId appId) {
+    withApplicationLock(appId, () -> {
+      doAdvanceStep(appId);
+      return null;
+    });
+  }
+
+  /**
+   * 流程推进短临界区互斥（spec §9.3 第一层）。
+   * <p>
+   * 弱依赖：宿主未引入 shared-lock-starter 时无锁直通，由乐观锁与唯一约束兜底；
+   * 锁等待 3s、租期 10s 且无看门狗，绝不覆盖远程 IO 或长批量处理。
+   */
+  private <T> T withApplicationLock(ApplicationId appId, Supplier<T> task) {
+    DistributedLock lock = lockProvider.getIfAvailable();
+    if (lock == null) {
+      return task.get();
+    }
+    return lock.lockAndRun(LOCK_KEY_PREFIX + appId.value(),
+      LOCK_WAIT_SECONDS, LOCK_LEASE_SECONDS, TimeUnit.SECONDS, task);
+  }
+
+  private void doAdvanceStep(ApplicationId appId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     BusinessMetaContext context = buildFullConfigContext(app);
     // 路由由版本化流程定义接管，不再直接查询过宽的 BusinessConfigGateway
@@ -231,8 +261,14 @@ public class FlowOrchestrationService {
     ApplicationId appId = new ApplicationId(businessNo);
     switch (result) {
       case APPROVAL_RESULT_APPROVED -> advanceStep(appId);
-      case APPROVAL_RESULT_REJECTED -> rejectApplication(appId);
-      case APPROVAL_RESULT_WITHDRAWN -> withdrawApplication(appId);
+      case APPROVAL_RESULT_REJECTED -> withApplicationLock(appId, () -> {
+        rejectApplication(appId);
+        return null;
+      });
+      case APPROVAL_RESULT_WITHDRAWN -> withApplicationLock(appId, () -> {
+        withdrawApplication(appId);
+        return null;
+      });
       default -> throw new IllegalArgumentException("未知的审批结果类型: " + result);
     }
   }

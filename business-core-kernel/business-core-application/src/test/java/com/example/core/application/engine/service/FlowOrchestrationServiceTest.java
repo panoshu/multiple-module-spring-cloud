@@ -33,21 +33,31 @@ import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.StepExecutionId;
+import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.IdService;
+import com.example.shared.lock.DistributedLock;
+import com.example.shared.lock.errorcode.LockErrorDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -67,9 +77,11 @@ class FlowOrchestrationServiceTest {
   private StepRouteConfigAssembler stepRouteConfigAssembler;
   private StepExecutionRepository stepExecutionRepository;
   private ExternalInteractionRepository externalInteractionRepository;
+  private ObjectProvider<DistributedLock> lockProvider;
   private IdService idService;
   private FlowOrchestrationService service;
 
+  @SuppressWarnings("unchecked")
   @BeforeEach
   void setUp() {
     handlerRegistry = mock(StepActionHandlerRegistry.class);
@@ -80,6 +92,7 @@ class FlowOrchestrationServiceTest {
     stepRouteConfigAssembler = mock(StepRouteConfigAssembler.class);
     stepExecutionRepository = mock(StepExecutionRepository.class);
     externalInteractionRepository = mock(ExternalInteractionRepository.class);
+    lockProvider = mock(ObjectProvider.class);
     idService = mock(IdService.class);
     when(idService.nextLongId(eq(StepExecutionId.class), anyString()))
       .thenReturn(StepExecutionId.of(1L));
@@ -95,7 +108,7 @@ class FlowOrchestrationServiceTest {
       handlerRegistry, mock(BusinessFactExtractorRegistry.class), configGateway,
       applicationRepository, pipelineExecutor, transactionTemplate,
       stepDefinitionResolver, stepRouteConfigAssembler,
-      stepExecutionRepository, idService, externalInteractionRepository);
+      stepExecutionRepository, idService, externalInteractionRepository, lockProvider);
   }
 
   @Test
@@ -220,6 +233,73 @@ class FlowOrchestrationServiceTest {
     when(stepDefinitionResolver.isSystemTask(app)).thenReturn(true);
 
     assertThat(service.isSystemTask(APP_ID)).isTrue();
+  }
+
+  @Test
+  @DisplayName("存在 DistributedLock 时 advanceStep 在锁内执行且使用申请单锁键")
+  void advanceStep_usesDistributedLockWhenAvailable() {
+    DistributedLock lock = mock(DistributedLock.class);
+    when(lockProvider.getIfAvailable()).thenReturn(lock);
+    stubLockAndRun(lock);
+    stubStep(StepExecutionStatus.SUCCESS);
+
+    service.advanceStep(APP_ID);
+
+    ArgumentCaptor<Long> waitCaptor = ArgumentCaptor.forClass(Long.class);
+    ArgumentCaptor<Long> leaseCaptor = ArgumentCaptor.forClass(Long.class);
+    verify(lock).lockAndRun(eq("kernel:application:APP-001"), waitCaptor.capture(),
+      leaseCaptor.capture(), eq(TimeUnit.SECONDS), any());
+    assertThat(waitCaptor.getValue()).isEqualTo(3L);
+    assertThat(leaseCaptor.getValue()).isEqualTo(10L);
+    verify(applicationRepository).save(any(BusinessApplication.class));
+  }
+
+  @Test
+  @DisplayName("无 DistributedLock bean 时 advanceStep 无锁直通")
+  void advanceStep_withoutLockBean_runsDirectly() {
+    stubStep(StepExecutionStatus.SUCCESS);
+
+    service.advanceStep(APP_ID);
+
+    verify(lockProvider).getIfAvailable();
+    verify(applicationRepository).save(any(BusinessApplication.class));
+  }
+
+  @Test
+  @DisplayName("审批驳回终止流程也纳入申请单锁")
+  void advanceByApprovalResult_rejectedUsesApplicationLock() {
+    DistributedLock lock = mock(DistributedLock.class);
+    when(lockProvider.getIfAvailable()).thenReturn(lock);
+    stubLockAndRun(lock);
+    BusinessApplication app = mock(BusinessApplication.class);
+    when(applicationRepository.loadOrThrow(any())).thenReturn(app);
+
+    service.advanceByApprovalResult("APP-001", "REJECTED");
+
+    verify(lock).lockAndRun(eq("kernel:application:APP-001"), anyLong(), anyLong(),
+      eq(TimeUnit.SECONDS), any());
+    verify(app).reject();
+    verify(applicationRepository).save(app);
+  }
+
+  @Test
+  @DisplayName("获取锁失败时异常直接传播，不吞掉")
+  void lockAcquisitionFailure_propagates() {
+    DistributedLock lock = mock(DistributedLock.class);
+    when(lockProvider.getIfAvailable()).thenReturn(lock);
+    doThrow(new SystemException(LockErrorDefinition.GET_LOCK_FAILED)).when(lock)
+      .lockAndRun(anyString(), anyLong(), anyLong(), any(TimeUnit.class), any());
+
+    assertThatThrownBy(() -> service.advanceStep(APP_ID))
+      .isInstanceOf(SystemException.class);
+    verifyNoInteractions(applicationRepository);
+  }
+
+  private void stubLockAndRun(DistributedLock lock) {
+    doAnswer(invocation -> {
+      Supplier<?> task = invocation.getArgument(4);
+      return task.get();
+    }).when(lock).lockAndRun(anyString(), anyLong(), anyLong(), any(TimeUnit.class), any());
   }
 
   private void stubStep(StepExecutionStatus status) {

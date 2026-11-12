@@ -21,6 +21,12 @@
       <artifactId>business-core-domain</artifactId>
     </dependency>
 
+    <!-- 流程推进短临界区互斥（纯接口依赖）；宿主引入 shared-lock-starter 后自动生效 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-lock</artifactId>
+    </dependency>
+
     <!-- 外部服务 API（@HttpExchange 接口，供通用 Handler 调用 file-service / approval-service） -->
     <dependency>
       <groupId>com.example</groupId>
