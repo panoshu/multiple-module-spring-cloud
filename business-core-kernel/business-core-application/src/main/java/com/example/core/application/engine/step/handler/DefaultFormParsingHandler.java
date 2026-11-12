@@ -63,7 +63,8 @@ public class DefaultFormParsingHandler implements StepActionHandler {
       app.formId(),
       targetFile,
       parsingConfig.parseTemplateId(),
-      parsingConfig.splitRules()
+      parsingConfig.splitRules(),
+      context.requestNo()
     );
 
     log.info("已成功向底层文件服务派发表单解析任务, formId={}, templateId={}",

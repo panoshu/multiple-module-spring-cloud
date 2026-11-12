@@ -108,6 +108,11 @@ public class FlowOrchestrationService {
     StepExecution execution = newStepExecution(appId, app, stepDefinition);
     execution.start(operator);
 
+    // 外部协作幂等键与 ExternalInteraction.requestNo 同源（SE-<步骤执行ID>），
+    // 经上下文传给挂起 Handler 透传到 file/approval（§7.3 / §11.4 / §12.3）
+    context.extensionFacts().put(BusinessMetaContext.REQUEST_NO_FACT,
+      "SE-" + execution.id().value());
+
     // 【删除】之前对 isUserActionCompletedForCurrentStep() 的判断
     // 现在的逻辑：既然你能调到 advanceStep，说明是外部手动触发的(或者SystemTask自动触发的)。
     // 到底业务数据填没填好？全靠下面的 preExtensions 里面的业务校验器来拦截！

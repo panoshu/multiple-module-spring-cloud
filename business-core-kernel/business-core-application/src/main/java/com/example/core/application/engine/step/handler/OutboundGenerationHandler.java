@@ -51,7 +51,7 @@ public class OutboundGenerationHandler implements StepActionHandler {
     String operator = "SYSTEM";
 
     fileIntegrationGateway.triggerOutboundGeneration(
-      fileTaskId, targetTemplateId, supplementalData, operator);
+      fileTaskId, targetTemplateId, supplementalData, operator, context.requestNo());
 
     log.info("已派发出站生成任务, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
     // 异步挂起：等待 OutboundFileGeneratedEvent 唤醒（同表单解析的 SUSPEND 模式）

@@ -97,13 +97,20 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules) {
+    triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules, null);
+  }
+
+  @Override
+  public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+                                  Map<String, Object> splitRules, String requestNo) {
+    String clientRequestNo = requestNo != null ? requestNo : formId.value();
     UploadFileRequest request = new UploadFileRequest(
       BIZ_TYPE_FORM_DETAIL, "FORM", null,
       parseTemplateId,
       resolveFileName(sourceFileId),
       0L,
       "system",
-      formId.value()
+      clientRequestNo
     );
     invokeUpload(request, formId.value());
   }
@@ -205,8 +212,15 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
                                           Map<String, Object> supplementalData, String operator) {
+    triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator, null);
+  }
+
+  @Override
+  public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                          Map<String, Object> supplementalData, String operator,
+                                          String requestNo) {
     GenerateOutboundFileRequest request = new GenerateOutboundFileRequest(
-      fileTaskId, targetTemplateId, supplementalData, operator
+      fileTaskId, targetTemplateId, supplementalData, operator, requestNo
     );
     ApiResult<OutboundFileIdResponse> result = outboundApi.generate(request);
     if (result == null || !result.isSuccess()) {

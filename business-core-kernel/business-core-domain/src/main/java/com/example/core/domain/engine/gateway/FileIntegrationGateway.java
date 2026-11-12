@@ -36,6 +36,15 @@ public interface FileIntegrationGateway {
   void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId, Map<String, Object> splitRules);
 
   /**
+   * 带外部协作幂等键的解析触发（spec §11.4）。默认委托旧签名；
+   * kernel 基础设施实现覆盖本方法，把 {@code requestNo} 写入 {@code UploadFileRequest.clientRequestNo}。
+   */
+  default void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+                                   Map<String, Object> splitRules, String requestNo) {
+    triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules);
+  }
+
+  /**
    * 2. 流式下载文件 (防 OOM 大杀器)
    * <p>
    * 供应用层的 AbstractJsonStreamIngestionAction 使用，直接获取底层 JSON 流。
@@ -69,6 +78,16 @@ public interface FileIntegrationGateway {
    */
   void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
                                   Map<String, Object> supplementalData, String operator);
+
+  /**
+   * 带外部协作幂等键的出站生成触发（spec §11.4）。默认委托旧签名；
+   * kernel 基础设施实现覆盖本方法，把 {@code requestNo} 写入 {@code GenerateOutboundFileRequest}。
+   */
+  default void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
+                                          Map<String, Object> supplementalData, String operator,
+                                          String requestNo) {
+    triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator);
+  }
 
   /**
    * 5. 分页拉取解析数据（数据消费闭环，2026-11-08 批次2）.

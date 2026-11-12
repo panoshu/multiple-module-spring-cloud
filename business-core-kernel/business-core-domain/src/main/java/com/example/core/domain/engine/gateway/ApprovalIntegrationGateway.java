@@ -36,6 +36,16 @@ public interface ApprovalIntegrationGateway {
   String startApproval(BusinessApplication application);
 
   /**
+   * 带外部协作幂等键的启动审批（spec §12.3）。
+   * <p>
+   * 默认委托旧签名以保持既有实现兼容；kernel 基础设施实现覆盖本方法，
+   * 把 {@code requestNo} 写入 {@code StartApprovalRequest} 实现服务端幂等。
+   */
+  default String startApproval(BusinessApplication application, String requestNo) {
+    return startApproval(application);
+  }
+
+  /**
    * 查询审批实例状态
    *
    * @param instanceId 审批实例 ID (由 {@link #startApproval} 返回)

@@ -226,6 +226,18 @@ class FlowOrchestrationServiceTest {
   }
 
   @Test
+  @DisplayName("挂起步骤把 SE-<步骤执行ID> 注入上下文供外部协作幂等")
+  void advanceStep_injectsRequestNoIntoContext() {
+    stubStep(StepExecutionStatus.SUSPEND_ASYNC_WAIT, "approvalSubmissionHandler");
+
+    service.advanceStep(APP_ID);
+
+    ArgumentCaptor<BusinessMetaContext> captor = ArgumentCaptor.forClass(BusinessMetaContext.class);
+    verify(pipelineExecutor).executeChain(any(), captor.capture(), any());
+    assertThat(captor.getValue().requestNo()).isEqualTo("SE-1");
+  }
+
+  @Test
   @DisplayName("isSystemTask 加载申请单并委托定义解析")
   void isSystemTaskLoadsApplicationAndDelegates() {
     BusinessApplication app = mock(BusinessApplication.class);

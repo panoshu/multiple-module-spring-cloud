@@ -61,7 +61,8 @@ public class ArchiveSubmissionHandler implements StepActionHandler {
     log.info("开始触发出站文件生成, applicationId={}, targetTemplateId={}", app.id(), targetTemplateId);
 
     try {
-      fileIntegrationGateway.triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator);
+      fileIntegrationGateway.triggerOutboundGeneration(
+        fileTaskId, targetTemplateId, supplementalData, operator, context.requestNo());
       log.info("已成功触发出站文件生成, applicationId={}", app.id());
       return StepExecutionStatus.SUSPEND_ASYNC_WAIT;
     } catch (Exception e) {

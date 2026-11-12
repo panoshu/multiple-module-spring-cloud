@@ -43,7 +43,7 @@ public class ApprovalSubmissionHandler implements StepActionHandler {
     log.info("开始派发审批任务, applicationId={}", app.id());
 
     try {
-      String instanceId = approvalGateway.startApproval(app);
+      String instanceId = approvalGateway.startApproval(app, context.requestNo());
       log.info("已成功派发审批任务, applicationId={}, instanceId={}", app.id(), instanceId);
       return StepExecutionStatus.SUSPEND_ASYNC_WAIT;
     } catch (Exception e) {

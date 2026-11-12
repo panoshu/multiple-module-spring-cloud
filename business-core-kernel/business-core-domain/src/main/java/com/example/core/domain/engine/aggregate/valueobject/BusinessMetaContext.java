@@ -45,6 +45,15 @@ public record BusinessMetaContext(
     }
   }
 
+  /** 外部协作幂等键在扩展事实中的保留键（spec §7.3 / §11.4）。 */
+  public static final String REQUEST_NO_FACT = "kernel.requestNo";
+
+  /** 读取编排器注入的外部协作幂等键；未注入时返回 null（可空过渡）。 */
+  public String requestNo() {
+    Object value = extensionFacts == null ? null : extensionFacts.get(REQUEST_NO_FACT);
+    return value == null ? null : String.valueOf(value);
+  }
+
   public static BusinessMetaContext of(BusinessContext businessContext) {
     return new BusinessMetaContext(
       businessContext.customerNo(), businessContext.productNo(), businessContext.operationModel(), businessContext.planNo(),
