@@ -178,6 +178,55 @@ class StepExecutionTest {
     assertThat(execution.domainEvents()).isEmpty();
   }
 
+  @Test
+  @DisplayName("recordDispatchPayload 写入挂起点恢复载荷并递增版本")
+  void recordDispatchPayload_storesPayloadAndMarksUpdated() {
+    StepExecution execution = create(1, "REQ-1");
+    long before = execution.version().value();
+    String payload = "{\"fileTaskId\":\"FT-1\",\"targetTemplateId\":\"TPL-1\"}";
+
+    execution.recordDispatchPayload(payload, OPERATOR);
+
+    assertThat(execution.checkpointRef()).isEqualTo(payload);
+    assertThat(execution.version().value()).isEqualTo(before + 1);
+  }
+
+  @Test
+  @DisplayName("recordDispatchPayload 允许恰好 255 字符边界")
+  void recordDispatchPayload_acceptsBoundaryLength() {
+    StepExecution execution = create(1, "REQ-1");
+    String payload = "X".repeat(255);
+
+    execution.recordDispatchPayload(payload, OPERATOR);
+
+    assertThat(execution.checkpointRef()).hasSize(255);
+  }
+
+  @Test
+  @DisplayName("recordDispatchPayload 超长拒绝且不留下部分变更")
+  void recordDispatchPayload_rejectsTooLong() {
+    StepExecution execution = create(1, "REQ-1");
+    long before = execution.version().value();
+    String tooLong = "X".repeat(256);
+
+    assertThatThrownBy(() -> execution.recordDispatchPayload(tooLong, OPERATOR))
+      .isInstanceOf(DomainException.class);
+
+    assertThat(execution.checkpointRef()).isNull();
+    assertThat(execution.version().value()).isEqualTo(before);
+  }
+
+  @Test
+  @DisplayName("recordDispatchPayload 允许以 null 清除检查点")
+  void recordDispatchPayload_allowsNullClear() {
+    StepExecution execution = create(1, "REQ-1");
+    execution.recordDispatchPayload("{\"a\":1}", OPERATOR);
+
+    execution.recordDispatchPayload(null, OPERATOR);
+
+    assertThat(execution.checkpointRef()).isNull();
+  }
+
   private StepExecution create(int attempt, String requestNo) {
     return StepExecution.create(
       StepExecutionId.of(1L), new ApplicationId("APP-1"), DefinitionVersion.of("v1"),

@@ -23,6 +23,9 @@ import java.time.LocalDateTime;
  */
 public class StepExecution extends AggregateRoot<StepExecutionId> {
 
+  /** checkpoint_ref 列宽（VARCHAR(255)），派发载荷必须适配，超出即拒绝。 */
+  private static final int MAX_CHECKPOINT_LENGTH = 255;
+
   private ApplicationId applicationId;
   private DefinitionVersion definitionVersion;
   private StepCode stepCode;
@@ -145,6 +148,23 @@ public class StepExecution extends AggregateRoot<StepExecutionId> {
 
   public void retry(String operator) {
     transitTo(StepExecutionState.RUNNING, operator);
+  }
+
+  /**
+   * 记录挂起点恢复载荷（spec §7.2 检查点 / §9.2 阶段 B 事务外派发的参数恢复依据）。
+   * <p>
+   * 载荷由应用层的紧凑 JSON 构成，写入前校验不超过 {@code checkpoint_ref} 列宽；
+   * 校验失败先于任何字段变更，避免留下部分状态。允许传入 {@code null} 清除检查点。
+   * 本方法不改变步骤执行状态，仅更新检查点与乐观锁版本。
+   */
+  public void recordDispatchPayload(String payload, String operator) {
+    if (payload != null && payload.length() > MAX_CHECKPOINT_LENGTH) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("派发载荷超过 checkpoint_ref 列宽 %d：%d"
+          .formatted(MAX_CHECKPOINT_LENGTH, payload.length()));
+    }
+    this.checkpointRef = payload;
+    this.markUpdated(operator);
   }
 
   private void transitTo(StepExecutionState target, String operator) {
