@@ -45,6 +45,22 @@ public interface FileIntegrationGateway {
   }
 
   /**
+   * 带外部任务 ID 返回的解析触发（spec §9.2 阶段 B）：外部明确受理后返回 fileTaskId，
+   * 供 {@code ExternalInteraction.markWaitingCallback} 保存关联。
+   * <p>
+   * 默认委托旧签名并返回 {@code null}——仅提供 mock / 未升级实现（如演示环境）的兼容；
+   * kernel 基础设施实现覆盖本方法返回真实任务 ID。返回 {@code null} 时调用方不得强推
+   * WAITING_CALLBACK，应保留 DISPATCHING 交由恢复任务回收对账。
+   */
+  default String triggerAsyncParsingAndGetTaskId(FormId formId, FileId sourceFileId,
+                                                 String parseTemplateId,
+                                                 Map<String, Object> splitRules,
+                                                 String requestNo) {
+    triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules, requestNo);
+    return null;
+  }
+
+  /**
    * 2. 流式下载文件 (防 OOM 大杀器)
    * <p>
    * 供应用层的 AbstractJsonStreamIngestionAction 使用，直接获取底层 JSON 流。
@@ -87,6 +103,19 @@ public interface FileIntegrationGateway {
                                           Map<String, Object> supplementalData, String operator,
                                           String requestNo) {
     triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator);
+  }
+
+  /**
+   * 带外部任务 ID 返回的出站生成触发（spec §9.2 阶段 B）。
+   * <p>
+   * 默认委托旧签名并返回 {@code null}；kernel 基础设施实现覆盖本方法返回真实任务 ID。
+   * 返回 {@code null} 时调用方应保留 DISPATCHING 交由恢复任务回收，不强推 WAITING_CALLBACK。
+   */
+  default String triggerOutboundGenerationAndGetTaskId(String fileTaskId, String targetTemplateId,
+                                                        Map<String, Object> supplementalData,
+                                                        String operator, String requestNo) {
+    triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator, requestNo);
+    return null;
   }
 
   /**
