@@ -133,8 +133,16 @@ public class ApprovalResultEventListener {
     CorrelationResult correlation = callbackCorrelationService.correlate(new CallbackCommand(
       requestNo, instanceId, InteractionType.APPROVAL, outcome, instanceId, "SYSTEM"));
     switch (correlation.classification()) {
-      case APPLIED -> orchestrationService.advanceByApprovalResult(
-        correlation.applicationId().value(), result);
+      case APPLIED -> {
+        if (APPROVAL_RESULT_APPROVED.equals(result)) {
+          // 审批通过：完成等待步骤（不重跑 Handler 管线）
+          orchestrationService.completeWaitingStep(correlation.applicationId());
+        } else {
+          // 驳回/撤回：保持终止语义
+          orchestrationService.advanceByApprovalResult(
+            correlation.applicationId().value(), result);
+        }
+      }
       case NO_CORRELATION -> orchestrationService.advanceByApprovalResult(businessNo, result);
       case UNMATCHED, OUT_OF_ORDER -> log.warn(
         "审批结果回调未推进流程, classification={}, requestNo={}, instanceId={}, eventId={}",

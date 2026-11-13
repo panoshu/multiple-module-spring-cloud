@@ -50,7 +50,7 @@ public class OutboundFileGeneratedEventListener {
         event.requestNo(), event.fileTaskId(), InteractionType.FILE_OUTBOUND,
         CallbackOutcome.SUCCEEDED, event.fileTaskId(), "SYSTEM"));
       switch (result.classification()) {
-        case APPLIED -> orchestrationService.advanceStep(result.applicationId());
+        case APPLIED -> orchestrationService.completeWaitingStep(result.applicationId());
         case NO_CORRELATION -> orchestrationService.advanceByFileTaskId(event.fileTaskId());
         case UNMATCHED, OUT_OF_ORDER -> log.warn(
           "出站生成回调未推进流程, classification={}, requestNo={}, fileTaskId={}",

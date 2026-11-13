@@ -2,6 +2,7 @@ package com.example.core.application.engine.service;
 
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.root.StepExecution;
@@ -290,6 +291,48 @@ public class FlowOrchestrationService {
   public void advanceByOutboundFile(String fileTaskId) {
     ApplicationId appId = new ApplicationId(fileTaskId);
     advanceStep(appId);
+  }
+
+  /**
+   * 完成等待中的外部步骤（spec §9.2 阶段 C）。
+   * <p>
+   * 外部协作回调到达后，用本门面把流程从 WAITING_EXTERNAL 归位 RUNNING 并按版本化
+   * 定义推进到 nextStep；与 {@link #advanceStep(ApplicationId)} 不同，本方法
+   * <b>不重跑 Handler 管线、不新建步骤执行或协作记录、不重复触发外部调用</b>——
+   * 这些副作用在挂起时已经发生，回调只负责推进流程实例。
+   * <p>
+   * 仅接受 WAITING_EXTERNAL / RUNNING 在途态；终态、FAILED、WAITING_USER 及后继为空
+   * 均不推进（由调用方分类处理），避免乱序回调盲目跃迁。
+   *
+   * @param appId 关联到的权威申请单 ID（来自 ExternalInteraction）
+   */
+  @Transactional
+  public void completeWaitingStep(ApplicationId appId) {
+    withApplicationLock(appId, () -> {
+      doCompleteWaitingStep(appId);
+      return null;
+    });
+  }
+
+  private void doCompleteWaitingStep(ApplicationId appId) {
+    BusinessApplication app = applicationRepository.loadOrThrow(appId);
+    ApplicationStatus status = app.status();
+    if (status == null || (status != ApplicationStatus.WAITING_EXTERNAL
+      && status != ApplicationStatus.RUNNING)) {
+      log.warn("完成等待步骤：申请单非在途等待态，不推进, appId={}, status={}", appId, status);
+      return;
+    }
+    StepDefinition stepDefinition = stepDefinitionResolver.resolve(app);
+    StepRouteConfig routeConfig = stepRouteConfigAssembler.toRouteConfig(stepDefinition);
+    if (routeConfig.nextStep() == null) {
+      log.warn("完成等待步骤：后继为空，不推进, appId={}, step={}", appId, app.currentStep());
+      return;
+    }
+    if (status == ApplicationStatus.WAITING_EXTERNAL) {
+      app.retry(); // WAITING_EXTERNAL → RUNNING（合法迁移，§8.1）
+    }
+    app.completeCurrentStep(routeConfig.nextStep());
+    applicationRepository.save(app);
   }
 
   private void rejectApplication(ApplicationId appId) {

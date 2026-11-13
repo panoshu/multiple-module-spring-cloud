@@ -73,8 +73,8 @@ public class FileParsedEventListener {
     switch (result.classification()) {
       case APPLIED -> {
         if (success) {
-          // 用关联到的权威 appId 推进，不再依赖 fileTaskId 反查
-          orchestrationService.advanceStep(result.applicationId());
+          // 用关联到的权威 appId 完成等待步骤（不重跑 Handler 管线、不重复触发外部调用）
+          orchestrationService.completeWaitingStep(result.applicationId());
         } else {
           log.error("文件解析失败（协作已闭环为 FAILED，不推进）, fileTaskId: {}, failureReason: {}",
             event.fileTaskId(), event.failureReason());

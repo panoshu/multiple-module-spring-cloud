@@ -153,8 +153,8 @@ class ApprovalResultEventListenerTest {
   }
 
   @Test
-  @DisplayName("带 requestNo 且关联命中(APPLIED)：用权威 appId 推进 APPROVED")
-  void handleApproved_whenApplied_shouldAdvanceByApplicationId() {
+  @DisplayName("APPROVED 关联命中(APPLIED)：用权威 appId 完成等待步骤，不重跑管线")
+  void handleApproved_whenApplied_shouldCompleteWaitingStep() {
     when(callbackCorrelationService.correlate(any()))
       .thenReturn(CorrelationResult.applied(new ApplicationId("APP-9")));
     ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
@@ -163,7 +163,23 @@ class ApprovalResultEventListenerTest {
 
     listener.handleApproved(event);
 
-    verify(orchestrationService).advanceByApprovalResult("APP-9", "APPROVED");
+    verify(orchestrationService).completeWaitingStep(new ApplicationId("APP-9"));
+    verify(orchestrationService, org.mockito.Mockito.never()).advanceByApprovalResult(any(), any());
+  }
+
+  @Test
+  @DisplayName("REJECTED 关联命中(APPLIED)：保持 advanceByApprovalResult 终止语义")
+  void handleRejected_whenApplied_shouldStillTerminate() {
+    when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.applied(new ApplicationId("APP-9")));
+    ApprovalInstanceRejectedEventDTO event = new ApprovalInstanceRejectedEventDTO(
+      EVENT_ID, INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, OCCURRED_ON, "SE-9"
+    );
+
+    listener.handleRejected(event);
+
+    verify(orchestrationService).advanceByApprovalResult("APP-9", "REJECTED");
+    verify(orchestrationService, org.mockito.Mockito.never()).completeWaitingStep(any());
   }
 
   @Test

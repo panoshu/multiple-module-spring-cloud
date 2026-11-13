@@ -132,8 +132,8 @@ class FileParsedEventListenerTest {
   }
 
   @Test
-  @DisplayName("带 requestNo 且关联命中(APPLIED)：用权威 appId 推进，不再反查 fileTaskId")
-  void handleFileParsed_whenApplied_shouldAdvanceByApplicationId() {
+  @DisplayName("带 requestNo 且关联命中(APPLIED)：用权威 appId 完成等待步骤，不重跑管线")
+  void handleFileParsed_whenApplied_shouldCompleteWaitingStep() {
     ApplicationId appId = new ApplicationId("APP-9");
     when(callbackCorrelationService.correlate(any()))
       .thenReturn(CorrelationResult.applied(appId));
@@ -144,7 +144,8 @@ class FileParsedEventListenerTest {
 
     listener.handleFileParsed(event);
 
-    verify(orchestrationService).advanceStep(appId);
+    verify(orchestrationService).completeWaitingStep(appId);
+    verify(orchestrationService, org.mockito.Mockito.never()).advanceStep(any());
     verify(orchestrationService, org.mockito.Mockito.never()).advanceByFileTaskId(any());
   }
 

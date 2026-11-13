@@ -66,8 +66,8 @@ class OutboundFileGeneratedEventListenerTest {
   }
 
   @Test
-  @DisplayName("关联命中 APPLIED：用权威 appId 推进流程")
-  void onOutbound_whenApplied_shouldAdvanceByApplicationId() {
+  @DisplayName("关联命中 APPLIED：用权威 appId 完成等待步骤，不重跑管线")
+  void onOutbound_whenApplied_shouldCompleteWaitingStep() {
     ApplicationId appId = new ApplicationId("APP-9");
     when(callbackCorrelationService.correlate(any()))
       .thenReturn(CorrelationResult.applied(appId));
@@ -76,7 +76,8 @@ class OutboundFileGeneratedEventListenerTest {
 
     listener.onOutboundFileGenerated(event);
 
-    verify(orchestrationService).advanceStep(appId);
+    verify(orchestrationService).completeWaitingStep(appId);
+    verify(orchestrationService, never()).advanceStep(any());
     verify(orchestrationService, never()).advanceByFileTaskId(any());
   }
 

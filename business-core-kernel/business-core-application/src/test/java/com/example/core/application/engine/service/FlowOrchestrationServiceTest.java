@@ -3,6 +3,7 @@ package com.example.core.application.engine.service;
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.repository.ApplicationRepository;
@@ -305,6 +306,94 @@ class FlowOrchestrationServiceTest {
     assertThatThrownBy(() -> service.advanceStep(APP_ID))
       .isInstanceOf(SystemException.class);
     verifyNoInteractions(applicationRepository);
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：WAITING_EXTERNAL 先归位 RUNNING 再按定义推进 nextStep")
+  void completeWaitingStep_resumesAndAdvancesNextStep() {
+    BusinessApplication app = stubWaitingApp(ApplicationStatus.WAITING_EXTERNAL,
+      ApplicationFlowStep.DATA_VERIFICATION);
+
+    service.completeWaitingStep(APP_ID);
+
+    verify(app).retry();
+    verify(app).completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION);
+    verify(applicationRepository).save(app);
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：不重跑 Handler 管线、不新建步骤执行或协作")
+  void completeWaitingStep_doesNotRerunHandlerPipeline() {
+    stubWaitingApp(ApplicationStatus.WAITING_EXTERNAL, ApplicationFlowStep.DATA_VERIFICATION);
+
+    service.completeWaitingStep(APP_ID);
+
+    verifyNoInteractions(handlerRegistry, pipelineExecutor, configGateway,
+      stepExecutionRepository, externalInteractionRepository, idService);
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：nextStep 来自版本化定义解析")
+  void completeWaitingStep_resolvesNextStepFromDefinition() {
+    BusinessApplication app = stubWaitingApp(ApplicationStatus.RUNNING,
+      ApplicationFlowStep.DATA_VERIFICATION);
+
+    service.completeWaitingStep(APP_ID);
+
+    verify(stepDefinitionResolver).resolve(app);
+    verify(app, never()).retry(); // RUNNING 无需归位
+    verify(app).completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION);
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：终态申请单不推进、不保存")
+  void completeWaitingStep_terminalState_doesNotAdvance() {
+    BusinessApplication app = stubWaitingApp(ApplicationStatus.COMPLETED,
+      ApplicationFlowStep.DATA_VERIFICATION);
+
+    service.completeWaitingStep(APP_ID);
+
+    verify(app, never()).completeCurrentStep(any());
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：后继为空不推进")
+  void completeWaitingStep_nullNextStep_doesNotAdvance() {
+    BusinessApplication app = stubWaitingApp(ApplicationStatus.WAITING_EXTERNAL, null);
+
+    service.completeWaitingStep(APP_ID);
+
+    verify(app, never()).completeCurrentStep(any());
+    verify(applicationRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("completeWaitingStep：纳入申请单短锁")
+  void completeWaitingStep_usesApplicationLock() {
+    DistributedLock lock = mock(DistributedLock.class);
+    when(lockProvider.getIfAvailable()).thenReturn(lock);
+    stubLockAndRun(lock);
+    stubWaitingApp(ApplicationStatus.WAITING_EXTERNAL, ApplicationFlowStep.DATA_VERIFICATION);
+
+    service.completeWaitingStep(APP_ID);
+
+    verify(lock).lockAndRun(eq("kernel:application:APP-001"), anyLong(), anyLong(),
+      eq(TimeUnit.SECONDS), any());
+  }
+
+  private BusinessApplication stubWaitingApp(ApplicationStatus status, ApplicationFlowStep nextStep) {
+    BusinessApplication app = mock(BusinessApplication.class);
+    when(applicationRepository.loadOrThrow(APP_ID)).thenReturn(app);
+    when(app.status()).thenReturn(status);
+    StepDefinition step = StepDefinition.business(
+      StepCode.of("FORM_DETAIL_INGESTION"), TaskType.SYSTEM_TASK, "mainHandler", List.of());
+    when(stepDefinitionResolver.resolve(app)).thenReturn(step);
+    StepRouteConfig route = new StepRouteConfig(
+      ApplicationFlowStep.FORM_DETAIL_INGESTION, nextStep,
+      StepRouteConfig.StepTaskType.SYSTEM_TASK, List.of(), "mainHandler", List.of(), List.of());
+    when(stepRouteConfigAssembler.toRouteConfig(step)).thenReturn(route);
+    return app;
   }
 
   private void stubLockAndRun(DistributedLock lock) {
