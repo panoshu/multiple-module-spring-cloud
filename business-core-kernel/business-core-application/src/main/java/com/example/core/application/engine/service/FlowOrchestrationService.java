@@ -151,9 +151,15 @@ public class FlowOrchestrationService {
     // 申请单状态、步骤执行记录与 Outbox 在同一本地事务保存（spec §9.1）
     StepExecutionStatus finalStatus = executionStatus;
     String mainProcessor = routeConfig.mainProcessor();
+    // 挂起 Handler 登记的事务外派发载荷：写入步骤执行检查点，供派发器事务外重建参数（§9.2 阶段 B）
+    String dispatchPayload = finalStatus == StepExecutionStatus.SUSPEND_ASYNC_WAIT
+      ? context.dispatchPayload() : null;
     transactionTemplate.executeWithoutResult(status -> {
       applicationRepository.save(app);
       applyHandlerResult(execution, finalStatus, operator);
+      if (dispatchPayload != null) {
+        execution.recordDispatchPayload(dispatchPayload, operator);
+      }
       stepExecutionRepository.save(execution);
       if (finalStatus == StepExecutionStatus.SUSPEND_ASYNC_WAIT) {
         ExternalInteraction interaction = newExternalInteraction(appId, execution, mainProcessor, operator);

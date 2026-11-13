@@ -195,6 +195,36 @@ class FlowOrchestrationServiceTest {
   }
 
   @Test
+  @DisplayName("挂起 Handler 登记的派发载荷写入步骤执行检查点")
+  void advanceStep_whenSuspend_recordsDispatchPayloadToCheckpoint() {
+    stubStep(StepExecutionStatus.SUSPEND_ASYNC_WAIT, "archiveSubmissionHandler");
+    StepActionHandler handler = handlerRegistry.get("archiveSubmissionHandler");
+    doAnswer(invocation -> {
+      BusinessMetaContext ctx = invocation.getArgument(1);
+      ctx.registerDispatchPayload("FT-7\u001FTPL-7");
+      return StepExecutionStatus.SUSPEND_ASYNC_WAIT;
+    }).when(handler).execute(any(), any());
+
+    service.advanceStep(APP_ID);
+
+    ArgumentCaptor<StepExecution> captor = ArgumentCaptor.forClass(StepExecution.class);
+    verify(stepExecutionRepository).save(captor.capture());
+    assertThat(captor.getValue().checkpointRef()).isEqualTo("FT-7\u001FTPL-7");
+  }
+
+  @Test
+  @DisplayName("挂起但无派发载荷时不写检查点")
+  void advanceStep_whenSuspendWithoutPayload_leavesCheckpointNull() {
+    stubStep(StepExecutionStatus.SUSPEND_ASYNC_WAIT, "approvalSubmissionHandler");
+
+    service.advanceStep(APP_ID);
+
+    ArgumentCaptor<StepExecution> captor = ArgumentCaptor.forClass(StepExecution.class);
+    verify(stepExecutionRepository).save(captor.capture());
+    assertThat(captor.getValue().checkpointRef()).isNull();
+  }
+
+  @Test
   @DisplayName("Handler 成功时不创建外部协作记录")
   void advanceStep_whenSuccess_doesNotCreateExternalInteraction() {
     stubStep(StepExecutionStatus.SUCCESS);

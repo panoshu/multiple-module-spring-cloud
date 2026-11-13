@@ -48,10 +48,24 @@ public record BusinessMetaContext(
   /** 外部协作幂等键在扩展事实中的保留键（spec §7.3 / §11.4）。 */
   public static final String REQUEST_NO_FACT = "kernel.requestNo";
 
+  /** 事务外派发载荷在扩展事实中的保留键（spec §9.2 阶段 B / §16.4 检查点）。 */
+  public static final String DISPATCH_PAYLOAD_FACT = "kernel.dispatchPayload";
+
   /** 读取编排器注入的外部协作幂等键；未注入时返回 null（可空过渡）。 */
   public String requestNo() {
     Object value = extensionFacts == null ? null : extensionFacts.get(REQUEST_NO_FACT);
     return value == null ? null : String.valueOf(value);
+  }
+
+  /** 读取挂起 Handler 登记的事务外派发载荷；未登记时返回 null。 */
+  public String dispatchPayload() {
+    Object value = extensionFacts == null ? null : extensionFacts.get(DISPATCH_PAYLOAD_FACT);
+    return value == null ? null : String.valueOf(value);
+  }
+
+  /** 挂起 Handler 登记事务外派发载荷（由编排器写入 StepExecution 检查点）。 */
+  public void registerDispatchPayload(String payload) {
+    extensionFacts.put(DISPATCH_PAYLOAD_FACT, payload);
   }
 
   public static BusinessMetaContext of(BusinessContext businessContext) {
