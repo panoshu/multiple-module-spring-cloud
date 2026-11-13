@@ -43,10 +43,11 @@ public interface StepActionHandler {
    *
    * @param app     当前业务申请单聚合根 (可直接调用其业务方法改变状态)
    * @param context 包含扩展事实的业务全局上下文，只读 (Immutable)
-   * @return 真实物理执行状态，决定引擎后续行为（成功、失败阻断、异步挂起）
+   * @return 领域执行结果（{@link StepExecutionStatus}），<b>不是</b> §8.2 的步骤执行持久化状态；
+   * 应用服务据此结合重试策略迁移 {@code StepExecutionState}，Handler 不直接写库。
    * SUCCESS: 表示执行成功，需引擎继续流转
-   * SUSPEND_ASYNC_WAIT: 触发了异步动作需等待
-   * FAILED: 失败
+   * SUSPEND_ASYNC_WAIT: 已登记外部协作意图，挂起等待回调唤醒
+   * FAILED: 失败，阻断流程
    */
   StepExecutionStatus execute(BusinessApplication app, BusinessMetaContext context);
 }

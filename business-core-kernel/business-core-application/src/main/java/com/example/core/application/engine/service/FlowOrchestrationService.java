@@ -220,6 +220,11 @@ public class FlowOrchestrationService {
       appId, version, stepCode, attempt, requestNo, operatorOf(app));
   }
 
+  /**
+   * §8.2 唯一的结果→状态转换点：Handler 只返回领域结果（{@code StepExecutionStatus}），
+   * 由应用服务在此迁移 {@code StepExecutionState} 八态状态机；不得把返回值直接写入聚合，
+   * 也不得让 Handler 自行决定持久化状态。
+   */
   private void applyHandlerResult(StepExecution execution, StepExecutionStatus status, String operator) {
     switch (status) {
       case SUCCESS -> execution.succeed(operator);

@@ -138,7 +138,7 @@
 |---|---|---|---|---|
 | D1 | 表名 | `t_step_execution` | `t_business_step_execution`（§16.1） | 36 |
 | D2 | `request_no` 列宽 | kernel 侧两表仍 `VARCHAR(64)`（`t_step_execution` 已在批次 14 扩 128，`t_business_external_interaction` 仍 64） | 统一 128（评审 #7） | 36 |
-| D3 | 命名 | `StepExecutionStatus`（Handler 返回值）vs `StepExecutionState`（持久化） | §8.2 步骤执行状态语义需统一/退役其一 | 32 |
+| D3 | 命名 | `StepExecutionStatus`（Handler 返回值）vs `StepExecutionState`（持久化） | §8.2 本身区分「Handler 返回值」与持久化状态；批次 32 评估后决策**保留两者、不重命名公开 SPI**，以显式边界 + `StepExecutionSemanticsContractTest` 契约测试收敛（见设计文档 §23.33） | 32（已收敛） |
 | D4 | `requestNo` 来源 | 编排器内部派生（`app:step:attempt` / `SE-<stepExecutionId>`） | §15.1 由推进 Command 携带 | 35（CQE 化） |
 | D5 | `InteractionType` 推断 | 按 `mainProcessor` 名关键字推断 | `StepDefinition.actionType()` 显式声明（§7.1） | 31 |
 | D6 | 出站凭证来源 | `extensionFacts`（无 extractor 注入） | 应由入站 FILE_PARSE 协作的 `externalTaskId` 或定义配置提供 | 30 |

@@ -5,7 +5,10 @@ package com.example.core.domain.engine.aggregate.valueobject.enums.status;
  * <p>
  * 与现有 {@code StepExecutionStatus}（Handler 返回值：SUCCESS/SUSPEND_ASYNC_WAIT/FAILED）
  * 语义不同，故独立命名。Handler 返回值只表达领域结果，应用服务据此与重试策略
- * 决定本状态迁移，不直接写库。
+ * 决定本状态迁移，不直接写库；唯一转换点是
+ * {@code FlowOrchestrationService.applyHandlerResult}。
+ * <p>
+ * 两者职责不同、必须并存，边界由 {@code StepExecutionSemanticsContractTest} 机器校验。
  */
 public enum StepExecutionState {
   PENDING,
