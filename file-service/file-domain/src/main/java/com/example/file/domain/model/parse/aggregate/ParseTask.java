@@ -37,10 +37,12 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
   private List<TaskError> errors = new ArrayList<>();
   private LocalDateTime startedAt;
   private LocalDateTime finishedAt;
+  /** 外部协作幂等键（spec §11.4），来自 UploadFileRequest.clientRequestNo；过渡期可空。 */
+  private String requestNo;
 
   // 业务创建
   private ParseTask(FileTaskId id, BizType bizType, String sourceFileName, FileId sourceFileId,
-                    ErrorPolicy errorPolicy, List<String> splitKeys, String userNo) {
+                    ErrorPolicy errorPolicy, List<String> splitKeys, String userNo, String requestNo) {
     super(id, userNo);
     this.bizType = bizType;
     this.sourceFileName = sourceFileName;
@@ -49,6 +51,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     this.splitKeys = List.copyOf(splitKeys);
     this.status = TaskStatus.PENDING;
     this.startedAt = LocalDateTime.now();
+    this.requestNo = requestNo;
     this.validateInvariants();
   }
 
@@ -58,7 +61,8 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
                    int totalRows, int subTaskCount, int validCount, int invalidCount,
                    List<SubTaskSummary> subTaskSummaries, List<TaskError> errors,
                    LocalDateTime startedAt, LocalDateTime finishedAt,
-                   String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
+                   String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt,
+                   Version version, String requestNo) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.bizType = bizType;
     this.templateCode = templateCode;
@@ -75,12 +79,20 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     this.errors = new ArrayList<>(errors);
     this.startedAt = startedAt;
     this.finishedAt = finishedAt;
+    this.requestNo = requestNo;
     this.validateInvariants();
   }
 
   public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
                                  FileId sourceFileId, ErrorPolicy errorPolicy,
                                  List<String> splitKeys, String userNo) {
+    return create(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo, null);
+  }
+
+  /** 带外部协作幂等键的创建（spec §11.4）。 */
+  public static ParseTask create(FileTaskId id, BizType bizType, String sourceFileName,
+                                 FileId sourceFileId, ErrorPolicy errorPolicy,
+                                 List<String> splitKeys, String userNo, String requestNo) {
     if (bizType == null) {
       throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("bizType null");
     }
@@ -90,7 +102,7 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
     if (sourceFileName == null || sourceFileName.isBlank()) {
       throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("sourceFileName empty");
     }
-    return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo);
+    return new ParseTask(id, bizType, sourceFileName, sourceFileId, errorPolicy, splitKeys, userNo, requestNo);
   }
 
   public void markParsing() {
@@ -214,5 +226,9 @@ public class ParseTask extends AggregateRoot<FileTaskId> {
 
   public LocalDateTime finishedAt() {
     return finishedAt;
+  }
+
+  public String requestNo() {
+    return requestNo;
   }
 }

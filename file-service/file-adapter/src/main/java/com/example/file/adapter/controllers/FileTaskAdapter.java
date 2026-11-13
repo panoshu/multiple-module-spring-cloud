@@ -5,6 +5,7 @@ import com.example.shared.security.annotation.RequirePermission;
 import com.example.file.adapter.converter.FileTaskConverter;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.request.CancelFileTaskRequest;
+import com.example.file.api.request.GetByRequestNoRequest;
 import com.example.file.api.request.GetFileTaskRequest;
 import com.example.file.api.request.ListSubTasksRequest;
 import com.example.file.api.request.UploadFileRequest;
@@ -48,6 +49,16 @@ public class FileTaskAdapter implements FileTaskApi {
   public ApiResult<FileTaskDTO> get(GetFileTaskRequest request) {
     var result = getUseCase.execute(request.fileTaskId());
     return ApiResult.success(converter.toDTO(result));
+  }
+
+  @Override
+  @RequirePermission(business = "FILE_TASK", action = "VIEW", category = PermissionCategory.PLATFORM)
+  public ApiResult<FileTaskIdResponse> getByRequestNo(GetByRequestNoRequest request) {
+    var found = getUseCase.findIdByRequestNo(request.requestNo());
+    if (found.isEmpty()) {
+      return ApiResult.success(null);
+    }
+    return ApiResult.success(new FileTaskIdResponse(found.get()));
   }
 
   @Override

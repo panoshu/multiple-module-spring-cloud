@@ -34,7 +34,8 @@ public class OutboundFileGeneratedEventConverter
           f.splitKeyValue(),
           f.outboundFileId()))
         .toList(),
-      event.occurredOn()
+      event.occurredOn(),
+      event.requestNo()
     );
   }
 }

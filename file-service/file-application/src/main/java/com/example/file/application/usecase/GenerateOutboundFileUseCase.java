@@ -118,7 +118,7 @@ public class GenerateOutboundFileUseCase {
         .withLogDetail("fileTaskId=" + cmd.fileTaskId());
     }
 
-    return OutboundFileGeneratedEvent.of(fileTaskId, generatedFiles, cmd.targetTemplateId());
+    return OutboundFileGeneratedEvent.of(fileTaskId, generatedFiles, cmd.targetTemplateId(), cmd.requestNo());
   }
 
   private void validateSupplementalData(Map<String, Object> supplementalData) {

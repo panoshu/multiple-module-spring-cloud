@@ -243,6 +243,10 @@ CREATE TABLE IF NOT EXISTS `t_file_parse_task`
   `errors` JSON DEFAULT NULL COMMENT '错误列表（JSON 数组）',
   `started_at` TIMESTAMP NULL DEFAULT NULL COMMENT '开始时间',
   `finished_at` TIMESTAMP NULL DEFAULT NULL COMMENT '完成时间',
+  `request_no` VARCHAR
+(
+  128
+) DEFAULT NULL COMMENT '外部协作幂等键（spec §11.4）',
 
   `created_by` VARCHAR
 (
@@ -272,6 +276,10 @@ CREATE TABLE IF NOT EXISTS `t_file_parse_task`
   KEY `idx_file_parse_task_create_time`
 (
   `create_time`
+),
+  UNIQUE KEY `uk_file_parse_task_request_no`
+(
+  `request_no`
 )
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件解析任务表';
 

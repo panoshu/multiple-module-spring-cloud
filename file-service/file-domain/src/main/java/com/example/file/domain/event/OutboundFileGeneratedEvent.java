@@ -20,18 +20,26 @@ public record OutboundFileGeneratedEvent(
   LocalDateTime occurredOn,
   FileTaskId fileTaskId,
   List<GeneratedFileInfo> generatedFiles,
-  String targetTemplateId
+  String targetTemplateId,
+  String requestNo
 ) implements DomainEvent {
 
   public static OutboundFileGeneratedEvent of(FileTaskId fileTaskId,
                                                List<GeneratedFileInfo> generatedFiles,
                                                String targetTemplateId) {
+    return of(fileTaskId, generatedFiles, targetTemplateId, null);
+  }
+
+  public static OutboundFileGeneratedEvent of(FileTaskId fileTaskId,
+                                               List<GeneratedFileInfo> generatedFiles,
+                                               String targetTemplateId, String requestNo) {
     return new OutboundFileGeneratedEvent(
       EventId.generate(),
       LocalDateTime.now(),
       fileTaskId,
       generatedFiles,
-      targetTemplateId
+      targetTemplateId,
+      requestNo
     );
   }
 

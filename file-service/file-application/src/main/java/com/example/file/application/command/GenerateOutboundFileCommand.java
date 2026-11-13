@@ -12,6 +12,8 @@ public record GenerateOutboundFileCommand(
   String fileTaskId,
   String targetTemplateId,
   Map<String, Object> supplementalData,
-  String operator
+  String operator,
+  /** 外部协作幂等键（spec §11.4），由 GenerateOutboundFileRequest 透传。 */
+  String requestNo
 ) {
 }
