@@ -3,8 +3,11 @@ package com.example.core.application.engine.listener;
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
+import com.example.core.application.engine.callback.CallbackCorrelationService;
+import com.example.core.application.engine.callback.CorrelationResult;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
+import com.example.core.types.ApplicationId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,6 +54,8 @@ class ApprovalResultEventListenerTest {
   private FlowOrchestrationService orchestrationService;
   @Mock
   private EventReceiptGateway eventReceiptGateway;
+  @Mock
+  private CallbackCorrelationService callbackCorrelationService;
 
   @InjectMocks
   private ApprovalResultEventListener listener;
@@ -58,6 +63,8 @@ class ApprovalResultEventListenerTest {
   @BeforeEach
   void setUp() {
     lenient().when(eventReceiptGateway.tryConsume(any(), any())).thenReturn(true);
+    lenient().when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.noCorrelation());
   }
 
   @Test
@@ -138,6 +145,34 @@ class ApprovalResultEventListenerTest {
     when(eventReceiptGateway.tryConsume(EVENT_ID, CONSUMER)).thenReturn(false);
     ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
       EVENT_ID, INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, OCCURRED_ON
+    );
+
+    listener.handleApproved(event);
+
+    verifyNoInteractions(orchestrationService);
+  }
+
+  @Test
+  @DisplayName("带 requestNo 且关联命中(APPLIED)：用权威 appId 推进 APPROVED")
+  void handleApproved_whenApplied_shouldAdvanceByApplicationId() {
+    when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.applied(new ApplicationId("APP-9")));
+    ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
+      EVENT_ID, INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, OCCURRED_ON, "SE-9"
+    );
+
+    listener.handleApproved(event);
+
+    verify(orchestrationService).advanceByApprovalResult("APP-9", "APPROVED");
+  }
+
+  @Test
+  @DisplayName("关联分类为 OUT_OF_ORDER：审批回调不盲目推进")
+  void handleApproved_whenOutOfOrder_shouldNotAdvance() {
+    when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.outOfOrder());
+    ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
+      EVENT_ID, INSTANCE_ID, BUSINESS_NO, BUSINESS_TYPE, OCCURRED_ON, "SE-9"
     );
 
     listener.handleApproved(event);

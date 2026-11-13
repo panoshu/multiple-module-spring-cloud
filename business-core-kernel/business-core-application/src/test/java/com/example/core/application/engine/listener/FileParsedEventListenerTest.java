@@ -1,7 +1,10 @@
 package com.example.core.application.engine.listener;
 
+import com.example.core.application.engine.callback.CallbackCorrelationService;
+import com.example.core.application.engine.callback.CorrelationResult;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
+import com.example.core.types.ApplicationId;
 import com.example.file.api.event.FileParsedEventDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +51,8 @@ class FileParsedEventListenerTest {
   private FlowOrchestrationService orchestrationService;
   @Mock
   private EventReceiptGateway eventReceiptGateway;
+  @Mock
+  private CallbackCorrelationService callbackCorrelationService;
 
   @InjectMocks
   private FileParsedEventListener listener;
@@ -55,6 +60,9 @@ class FileParsedEventListenerTest {
   @BeforeEach
   void setUp() {
     lenient().when(eventReceiptGateway.tryConsume(any(), any())).thenReturn(true);
+    // 既有事件为旧构造（requestNo 为空），关联服务返回 NO_CORRELATION，走 legacy 路径
+    lenient().when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.noCorrelation());
   }
 
   @Test
@@ -116,6 +124,38 @@ class FileParsedEventListenerTest {
     FileParsedEventDTO event = new FileParsedEventDTO(
       EVENT_ID, FILE_TASK_ID, BIZ_TYPE, "SUCCESS",
       1, Collections.emptyList(), null, OCCURRED_ON
+    );
+
+    listener.handleFileParsed(event);
+
+    verifyNoInteractions(orchestrationService);
+  }
+
+  @Test
+  @DisplayName("带 requestNo 且关联命中(APPLIED)：用权威 appId 推进，不再反查 fileTaskId")
+  void handleFileParsed_whenApplied_shouldAdvanceByApplicationId() {
+    ApplicationId appId = new ApplicationId("APP-9");
+    when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.applied(appId));
+    FileParsedEventDTO event = new FileParsedEventDTO(
+      EVENT_ID, FILE_TASK_ID, BIZ_TYPE, "SUCCESS",
+      1, Collections.emptyList(), null, OCCURRED_ON, "SE-9"
+    );
+
+    listener.handleFileParsed(event);
+
+    verify(orchestrationService).advanceStep(appId);
+    verify(orchestrationService, org.mockito.Mockito.never()).advanceByFileTaskId(any());
+  }
+
+  @Test
+  @DisplayName("关联分类为 UNMATCHED/OUT_OF_ORDER：不盲目推进流程")
+  void handleFileParsed_whenUnmatched_shouldNotAdvance() {
+    when(callbackCorrelationService.correlate(any()))
+      .thenReturn(CorrelationResult.unmatched());
+    FileParsedEventDTO event = new FileParsedEventDTO(
+      EVENT_ID, FILE_TASK_ID, BIZ_TYPE, "SUCCESS",
+      1, Collections.emptyList(), null, OCCURRED_ON, "SE-9"
     );
 
     listener.handleFileParsed(event);

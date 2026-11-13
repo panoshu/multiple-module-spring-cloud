@@ -3,7 +3,12 @@ package com.example.core.application.engine.listener;
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceRejectedEventDTO;
 import com.example.approval.api.event.ApprovalInstanceWithdrawnEventDTO;
+import com.example.core.application.engine.callback.CallbackCommand;
+import com.example.core.application.engine.callback.CallbackCorrelationService;
+import com.example.core.application.engine.callback.CallbackOutcome;
+import com.example.core.application.engine.callback.CorrelationResult;
 import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +43,7 @@ public class ApprovalResultEventListener {
 
   private final FlowOrchestrationService orchestrationService;
   private final EventReceiptGateway eventReceiptGateway;
+  private final CallbackCorrelationService callbackCorrelationService;
 
   private boolean isDuplicate(String eventId) {
     return !eventReceiptGateway.tryConsume(eventId, CONSUMER);
@@ -84,7 +90,8 @@ public class ApprovalResultEventListener {
       return;
     }
     log.info("审批通过, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
-    orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_APPROVED);
+    route(event.eventId(), event.requestNo(), event.instanceId(), event.businessNo(),
+      APPROVAL_RESULT_APPROVED, CallbackOutcome.SUCCEEDED);
   }
 
   /**
@@ -98,7 +105,8 @@ public class ApprovalResultEventListener {
       return;
     }
     log.info("审批驳回, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
-    orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_REJECTED);
+    route(event.eventId(), event.requestNo(), event.instanceId(), event.businessNo(),
+      APPROVAL_RESULT_REJECTED, CallbackOutcome.REJECTED);
   }
 
   /**
@@ -112,6 +120,25 @@ public class ApprovalResultEventListener {
       return;
     }
     log.info("审批撤回, instanceId: {}, businessNo: {}", event.instanceId(), event.businessNo());
-    orchestrationService.advanceByApprovalResult(event.businessNo(), APPROVAL_RESULT_WITHDRAWN);
+    route(event.eventId(), event.requestNo(), event.instanceId(), event.businessNo(),
+      APPROVAL_RESULT_WITHDRAWN, CallbackOutcome.WITHDRAWN);
+  }
+
+  /**
+   * 阶段 C：优先按 requestNo 关联外部协作并闭环状态；命中则用权威 appId 推进流程，
+   * 缺少关联键（过渡期旧构造）回退既有 businessNo 路径，乱序/未命中不盲目推进。
+   */
+  private void route(String eventId, String requestNo, String instanceId, String businessNo,
+                     String result, CallbackOutcome outcome) {
+    CorrelationResult correlation = callbackCorrelationService.correlate(new CallbackCommand(
+      requestNo, instanceId, InteractionType.APPROVAL, outcome, instanceId, "SYSTEM"));
+    switch (correlation.classification()) {
+      case APPLIED -> orchestrationService.advanceByApprovalResult(
+        correlation.applicationId().value(), result);
+      case NO_CORRELATION -> orchestrationService.advanceByApprovalResult(businessNo, result);
+      case UNMATCHED, OUT_OF_ORDER -> log.warn(
+        "审批结果回调未推进流程, classification={}, requestNo={}, instanceId={}, eventId={}",
+        correlation.classification(), requestNo, instanceId, eventId);
+    }
   }
 }
