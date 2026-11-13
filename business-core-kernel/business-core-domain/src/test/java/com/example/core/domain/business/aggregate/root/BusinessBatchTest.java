@@ -177,6 +177,58 @@ class BusinessBatchTest {
       .doesNotThrowAnyException();
   }
 
+  @Test
+  @DisplayName("对账重算修正计数偏差并推导终态")
+  void reconcile_correctsDriftedCountsAndTerminalStatus() {
+    BusinessBatch batch = batchWith(BatchStatus.PROCESSING, 3, 1, 0);
+
+    batch.reconcile(3, 2, 1, operator());
+
+    assertThat(batch.totalApplicationCount()).isEqualTo(3);
+    assertThat(batch.successCount()).isEqualTo(2);
+    assertThat(batch.failedCount()).isEqualTo(1);
+    assertThat(batch.status()).isEqualTo(BatchStatus.PARTIAL_FAILED);
+    assertThat(batch.domainEvents()).hasSize(1);
+  }
+
+  @Test
+  @DisplayName("重复对账计数未变时不递增版本、不重复发事件")
+  void reconcile_isIdempotentWhenCountsUnchanged() {
+    BusinessBatch batch = batchWith(BatchStatus.PROCESSING, 3, 1, 0);
+    batch.reconcile(3, 2, 1, operator());
+    long versionAfterFirst = batch.version().value();
+    int eventsAfterFirst = batch.domainEvents().size();
+
+    batch.reconcile(3, 2, 1, operator());
+
+    assertThat(batch.version().value()).isEqualTo(versionAfterFirst);
+    assertThat(batch.domainEvents()).hasSize(eventsAfterFirst);
+  }
+
+  @Test
+  @DisplayName("已取消批次重算不复活终态")
+  void reconcile_doesNotReviveCancelledBatch() {
+    BusinessBatch batch = batchWith(BatchStatus.CANCELLED, 2, 1, 0);
+
+    batch.reconcile(2, 1, 1, operator());
+
+    assertThat(batch.status()).isEqualTo(BatchStatus.CANCELLED);
+    assertThat(batch.successCount()).isEqualTo(1);
+    assertThat(batch.failedCount()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("对账拒绝非法计数且不留部分变更")
+  void reconcile_rejectsInvalidCountsWithoutPartialChange() {
+    BusinessBatch batch = batchWith(BatchStatus.PROCESSING, 2, 1, 0);
+
+    assertThatThrownBy(() -> batch.reconcile(2, 2, 1, operator()))
+      .isInstanceOf(DomainException.class);
+    assertThat(batch.totalApplicationCount()).isEqualTo(2);
+    assertThat(batch.successCount()).isEqualTo(1);
+    assertThat(batch.failedCount()).isZero();
+  }
+
   private BusinessBatch processingBatch(int applicationCount) {
     BusinessBatch batch = newBatch();
     batch.receiveApplications(applicationCount, operator());

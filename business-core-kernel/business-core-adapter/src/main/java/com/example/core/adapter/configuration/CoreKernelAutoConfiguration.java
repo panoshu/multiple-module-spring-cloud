@@ -4,6 +4,7 @@ import com.example.core.adapter.context.BusinessMetaContextAssembler;
 import com.example.core.adapter.context.SessionContextResolver;
 import com.example.core.application.business.guard.BusinessAccessGuard;
 import com.example.core.application.business.guard.DefaultBusinessAccessGuard;
+import com.example.core.application.business.service.BusinessBatchAppService;
 import com.example.core.application.engine.dispatch.ExternalInteractionDispatcher;
 import com.example.core.application.engine.job.ExternalInteractionRecoveryJob;
 import com.example.core.application.engine.service.BusinessConfigProcessDefinitionAdapter;
@@ -105,7 +106,8 @@ public class CoreKernelAutoConfiguration {
   @ConditionalOnProperty(name = "core.kernel.recovery.enabled", havingValue = "true", matchIfMissing = true)
   public ExternalInteractionRecoveryJob externalInteractionRecoveryJob(
       ExternalInteractionDispatcher dispatcher,
-      ExternalInteractionRecoveryService recoveryService) {
-    return new ExternalInteractionRecoveryJob(dispatcher, recoveryService);
+      ExternalInteractionRecoveryService recoveryService,
+      BusinessBatchAppService batchAppService) {
+    return new ExternalInteractionRecoveryJob(dispatcher, recoveryService, batchAppService);
   }
 }

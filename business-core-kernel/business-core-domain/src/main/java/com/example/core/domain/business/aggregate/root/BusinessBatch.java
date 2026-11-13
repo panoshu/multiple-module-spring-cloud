@@ -118,6 +118,52 @@ public class BusinessBatch extends AggregateRoot<BatchId> {
     this.markUpdated(operatorId);
   }
 
+  /**
+   * 按批次下全部申请的真实终态重算计数与批次终态（spec §6.4 对账能力）。
+   * <p>
+   * 采用绝对赋值而非增量，重复触发（重复事件或重复调度）不会重复计数；
+   * 计数未变化时直接返回，不递增乐观锁版本、不重复发布状态变更事件。
+   * 已取消批次属人工终态，对账只修正计数、不复活状态。
+   *
+   * @return 是否发生变更；false 表示计数已一致，调用方无需持久化
+   */
+  public boolean reconcile(int totalCount, int reconciledSuccess, int reconciledFailure,
+                           OperatorInfo operator) {
+    String operatorId = requireOperator(operator);
+    long processed = (long) reconciledSuccess + reconciledFailure;
+    if (totalCount < 0 || reconciledSuccess < 0 || reconciledFailure < 0
+      || processed > totalCount) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("对账计数非法: total=%d, success=%d, failed=%d"
+          .formatted(totalCount, reconciledSuccess, reconciledFailure));
+    }
+    if (this.totalApplicationCount == totalCount
+      && this.successCount == reconciledSuccess
+      && this.failedCount == reconciledFailure) {
+      return false;
+    }
+
+    this.totalApplicationCount = totalCount;
+    this.successCount = reconciledSuccess;
+    this.failedCount = reconciledFailure;
+    if (this.status != BatchStatus.CANCELLED) {
+      transitTo(determineStatusFromCounts());
+    }
+    this.markUpdated(operatorId);
+    validateInvariants();
+    return true;
+  }
+
+  private BatchStatus determineStatusFromCounts() {
+    if (this.totalApplicationCount == 0) {
+      return BatchStatus.CREATED;
+    }
+    if (processedCount() < this.totalApplicationCount) {
+      return BatchStatus.PROCESSING;
+    }
+    return BatchStatus.determine(this.failedCount, this.totalApplicationCount);
+  }
+
   private void requirePendingApplication() {
     if (this.status != BatchStatus.PROCESSING || processedCount() >= this.totalApplicationCount) {
       throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)

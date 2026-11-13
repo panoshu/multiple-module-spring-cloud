@@ -230,6 +230,7 @@
 - 改动：`BusinessBatchAppService`/`BusinessBatch`（重算）+ 恢复任务接入 + 测试。
 - 红灯测试：手工造成计数偏差后，重算恢复一致；重复事件不重复计数。
 - 规模：4–6 文件。
+- 状态：已完成（设计文档 §23.34）。「消费端按 eventId 幂等」以全量重算的绝对赋值幂等性覆盖；增量事件消费端与 `EventReceiptGateway` 短路留阶段 5。
 
 #### 批次 34 — 条件表达式语法预校验（§7.1/§23.4）
 - 目标：`ConditionEvaluationGateway` 增加 `validate`，SpEL/Aviator/QLExpress 三实现支持，定义发布时校验全部步骤条件。
