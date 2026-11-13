@@ -155,6 +155,11 @@ public class FlowOrchestrationService {
     String dispatchPayload = finalStatus == StepExecutionStatus.SUSPEND_ASYNC_WAIT
       ? context.dispatchPayload() : null;
     transactionTemplate.executeWithoutResult(status -> {
+      // 挂起登记阶段即把申请单置 WAITING_EXTERNAL（§8.1），与状态/步骤/协作同事务保存（§9.1）。
+      // 外部受理后派发器再把协作推进 WAITING_CALLBACK；回调经 completeWaitingStep 归位 RUNNING。
+      if (finalStatus == StepExecutionStatus.SUSPEND_ASYNC_WAIT) {
+        app.waitForExternal();
+      }
       applicationRepository.save(app);
       applyHandlerResult(execution, finalStatus, operator);
       if (dispatchPayload != null) {

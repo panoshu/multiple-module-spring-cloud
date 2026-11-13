@@ -225,6 +225,27 @@ class FlowOrchestrationServiceTest {
   }
 
   @Test
+  @DisplayName("挂起时把申请单置 WAITING_EXTERNAL 并同事务保存")
+  void advanceStep_whenSuspend_setsApplicationWaitingExternal() {
+    BusinessApplication app = stubStep(StepExecutionStatus.SUSPEND_ASYNC_WAIT, "approvalSubmissionHandler");
+
+    service.advanceStep(APP_ID);
+
+    verify(app).waitForExternal();
+    verify(applicationRepository).save(app);
+  }
+
+  @Test
+  @DisplayName("成功推进时不置 WAITING_EXTERNAL")
+  void advanceStep_whenSuccess_doesNotSetWaitingExternal() {
+    BusinessApplication app = stubStep(StepExecutionStatus.SUCCESS);
+
+    service.advanceStep(APP_ID);
+
+    verify(app, never()).waitForExternal();
+  }
+
+  @Test
   @DisplayName("Handler 成功时不创建外部协作记录")
   void advanceStep_whenSuccess_doesNotCreateExternalInteraction() {
     stubStep(StepExecutionStatus.SUCCESS);
@@ -433,11 +454,11 @@ class FlowOrchestrationServiceTest {
     }).when(lock).lockAndRun(anyString(), anyLong(), anyLong(), any(TimeUnit.class), any());
   }
 
-  private void stubStep(StepExecutionStatus status) {
-    stubStep(status, "mainHandler");
+  private BusinessApplication stubStep(StepExecutionStatus status) {
+    return stubStep(status, "mainHandler");
   }
 
-  private void stubStep(StepExecutionStatus status, String mainProcessor) {
+  private BusinessApplication stubStep(StepExecutionStatus status, String mainProcessor) {
     BusinessApplication app = mock(BusinessApplication.class);
     when(applicationRepository.loadOrThrow(APP_ID)).thenReturn(app);
     when(app.buildConfigQueryContext()).thenReturn(BusinessMetaContext.of(context()));
@@ -456,6 +477,7 @@ class FlowOrchestrationServiceTest {
     when(handler.execute(any(), any())).thenReturn(status);
     when(pipelineExecutor.executeChain(any(), any(), any()))
       .thenReturn(mock(PipelineExecutionResult.class));
+    return app;
   }
 
   private BusinessContext context() {
