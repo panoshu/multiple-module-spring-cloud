@@ -1,5 +1,6 @@
 package com.example.core.application.engine.job;
 
+import com.example.core.application.engine.dispatch.ExternalInteractionDispatcher;
 import com.example.core.application.engine.service.ExternalInteractionRecoveryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,13 +22,15 @@ import static org.mockito.Mockito.verify;
 class ExternalInteractionRecoveryJobTest {
 
   @Mock
+  private ExternalInteractionDispatcher dispatcher;
+  @Mock
   private ExternalInteractionRecoveryService recoveryService;
 
   private ExternalInteractionRecoveryJob job;
 
   @BeforeEach
   void setUp() {
-    job = new ExternalInteractionRecoveryJob(recoveryService);
+    job = new ExternalInteractionRecoveryJob(dispatcher, recoveryService);
   }
 
   @Test
@@ -38,20 +41,20 @@ class ExternalInteractionRecoveryJobTest {
   }
 
   @Test
-  @DisplayName("一次调度依次执行四类恢复动作")
-  void recover_runsAllFourActions() {
+  @DisplayName("一次调度先派发，再执行三类恢复动作")
+  void recover_runsDispatchAndThreeRecoveryActions() {
     job.recover();
 
-    verify(recoveryService).claimPendingDispatch();
+    verify(dispatcher).dispatchPending();
     verify(recoveryService).reclaimStaleDispatching(any(LocalDateTime.class));
     verify(recoveryService).processDueRetries(any(LocalDateTime.class));
     verify(recoveryService).reconcileUnknown();
   }
 
   @Test
-  @DisplayName("单个动作异常不阻断其余动作")
+  @DisplayName("派发动作异常不阻断其余恢复动作")
   void recover_isolatesActionFailure() {
-    doThrow(new RuntimeException("db down")).when(recoveryService).claimPendingDispatch();
+    doThrow(new RuntimeException("db down")).when(dispatcher).dispatchPending();
 
     job.recover();
 

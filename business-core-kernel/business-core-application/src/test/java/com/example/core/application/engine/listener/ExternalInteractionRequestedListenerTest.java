@@ -1,6 +1,6 @@
 package com.example.core.application.engine.listener;
 
-import com.example.core.application.engine.service.ExternalInteractionRecoveryService;
+import com.example.core.application.engine.dispatch.ExternalInteractionDispatcher;
 import com.example.core.domain.engine.event.ExternalInteractionRequestedEvent;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.ExternalInteractionId;
@@ -17,37 +17,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ExternalInteractionRequestedListener 事务提交后尽快认领")
+@DisplayName("ExternalInteractionRequestedListener 事务提交后尽快派发")
 class ExternalInteractionRequestedListenerTest {
 
   @Mock
-  private ExternalInteractionRecoveryService recoveryService;
+  private ExternalInteractionDispatcher dispatcher;
 
   private ExternalInteractionRequestedListener listener;
 
   @BeforeEach
   void setUp() {
-    listener = new ExternalInteractionRequestedListener(recoveryService);
+    listener = new ExternalInteractionRequestedListener(dispatcher);
   }
 
   @Test
-  @DisplayName("标注 @TransactionalEventListener(AFTER_COMMIT)")
+  @DisplayName("标注 @TransactionalEventListener(AFTER_COMMIT) 与 @Async")
   void hasAfterCommitAnnotation() throws NoSuchMethodException {
     TransactionalEventListener annotation = ExternalInteractionRequestedListener.class
       .getMethod("onInteractionRequested", ExternalInteractionRequestedEvent.class)
       .getAnnotation(TransactionalEventListener.class);
     assertThat(annotation).isNotNull();
     assertThat(annotation.phase()).isEqualTo(TransactionPhase.AFTER_COMMIT);
+    assertThat(ExternalInteractionRequestedListener.class
+      .getMethod("onInteractionRequested", ExternalInteractionRequestedEvent.class)
+      .isAnnotationPresent(org.springframework.scheduling.annotation.Async.class)).isTrue();
   }
 
   @Test
-  @DisplayName("协作创建事件触发尽快认领待派发协作")
-  void onInteractionRequested_claimsPendingDispatch() {
+  @DisplayName("协作创建事件触发事务外派发")
+  void onInteractionRequested_dispatchesPending() {
     ExternalInteractionRequestedEvent event = ExternalInteractionRequestedEvent.of(
       ExternalInteractionId.of(1L), new ApplicationId("APP-1"), "SE-9");
 
     listener.onInteractionRequested(event);
 
-    verify(recoveryService).claimPendingDispatch();
+    verify(dispatcher).dispatchPending();
   }
 }
