@@ -271,6 +271,8 @@
 - 目标：显式接入 web/cache/logging/permission，生产配置缺失 fail-fast；MDC 统一携带。
 - 改动：各 starter 依赖与自动配置 + MDC + 测试。
 - 规模：4–6 文件。
+- **拆分（设计文档 §23.43）**：38-1 = adapter 显式依赖 web/cache/logging starter + `KernelProductionReadinessValidator` 生产 fail-fast（**已完成**）；38-2 = MDC 统一携带 applicationId/stepExecutionId/requestNo/businessType/traceId（待推进）。
+- 状态：38-1 已完成，仅 38-2 待推进。
 
 #### 批次 39 — §21.3 外部协作验收测试 + §21.5 最终验收
 - 目标：补相同 requestNo 重复推进、并发推进、乐观锁冲突、重复/乱序事件、超时 UNKNOWN、响应丢失对账、服务重启恢复、文件部分成功等契约测试。
