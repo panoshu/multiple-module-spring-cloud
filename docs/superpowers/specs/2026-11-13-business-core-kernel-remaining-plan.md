@@ -260,6 +260,11 @@
 - 改动：`BusinessApplication` + 业务服务自有聚合 + Converter + 测试。
 - 红灯测试：核心聚合不再持有这些字段，行为不变。
 - 规模：6–8 文件（可能拆两批）。
+- **拆分（实测影响面 20+ 文件，设计文档 §23.39）**：
+  - 37a：`planMaterials`/`packageFile` → 可选材料能力 `ApplicationMaterialState`（内存态，零 DDL、零 annuity 改动）。**已完成**（反射契约锁 + 7 项值对象测试）。
+  - 37b：`BusinessExtension` → annuity 业务服务自有聚合（需新增 annuity 存储、改 3 处业务读取点、移除 kernel DO 列与 5 份 DDL）。
+  - 37c：`parsedJsonFileId` → `ExternalInteraction`（需改摄入 Action/`requireFileForParsing`/详情响应/E2E 事件构造，移除 DO 列与 5 份 DDL）。
+- 状态：37a 已完成，37b/37c 待推进。
 
 #### 批次 38 — starter 显式接入与生产 fail-fast（§14）
 - 目标：显式接入 web/cache/logging/permission，生产配置缺失 fail-fast；MDC 统一携带。

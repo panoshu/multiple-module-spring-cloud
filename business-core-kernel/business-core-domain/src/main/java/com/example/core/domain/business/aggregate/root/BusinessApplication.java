@@ -20,9 +20,6 @@ import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 业务申请，对应每个表单中的一笔企业计划维度的申请
@@ -52,8 +49,8 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   private LocalDateTime applyTime;
   private LocalDateTime completeTime;
 
-  private List<MaterialItem> planMaterials;
-  private BusinessFile packageFile;
+  /** 可选材料能力状态（§6.2，批次 37a）：核心聚合不再直接持有材料清单与打包文件。 */
+  private ApplicationMaterialState materialState = ApplicationMaterialState.empty();
 
   private BusinessFile acceptanceFile;
 
@@ -138,8 +135,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.currentStep = currentStep;
     app.applyTime = applyTime;
     app.completeTime = completeTime;
-    app.planMaterials = planMaterials;
-    app.packageFile = packageFile;
+    app.materialState = ApplicationMaterialState.of(planMaterials, packageFile);
     return app;
   }
 
@@ -173,53 +169,15 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   }
 
   /**
-   * 分配材料并智能合并历史附件 (适配 Immutable Record)
+   * 分配材料并智能合并历史附件（委托给可选材料能力，§6.2）。
    */
   public void assignMaterials(List<MaterialItem> requiredBlueprints) {
-    if (this.planMaterials == null || this.planMaterials.isEmpty()) {
-      this.planMaterials = requiredBlueprints;
-      return;
-    }
-
-    // 1. 提取历史上传记录，建立索引：materialCode -> UploadInfo
-    Map<String, Optional<MaterialItem.UploadInfo>> historyUploads = this.planMaterials.stream()
-      .collect(Collectors.toMap(
-        MaterialItem::materialCode,
-        MaterialItem::uploadInfo,
-        // 如果有重复的code，保留现有的
-        (existing, replacement) -> existing
-      ));
-
-    // 2. 遍历新的蓝图需求，如果是历史已经传过附件的，利用 withUpload / 构造器 还原状态
-    this.planMaterials = requiredBlueprints.stream().map(blueprint -> {
-      Optional<MaterialItem.UploadInfo> oldUpload = historyUploads.getOrDefault(blueprint.materialCode(), Optional.empty());
-      if (oldUpload.isPresent()) {
-        // 因为是 record，我们直接通过全参构造器，把老文件的 uploadInfo 塞给新蓝图
-        return new MaterialItem(
-          blueprint.materialCode(),
-          blueprint.materialName(),
-          blueprint.level(),
-          blueprint.requirement(),
-          blueprint.conditionRule(),
-          oldUpload
-        );
-      }
-      return blueprint;
-    }).toList();
+    this.materialState = this.materialState.assignMaterials(requiredBlueprints);
   }
 
-  /**
-   * 逐个上传计划层材料
-   */
+  /** 逐个上传计划层材料。 */
   public void uploadIndividualPlanMaterial(String materialCode, BusinessFile file) {
-    // 如果已经打包上传了，不允许再逐个传
-    if (this.packageFile != null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_OPERATION)
-        .withLogDetail("Application: %s 已使用打包上传模式(%s)，不可逐个上传计划层材料".formatted(this.id(), this.packageFile.fileName()));
-    }
-    this.planMaterials = this.planMaterials.stream()
-      .map(m -> m.materialCode().equals(materialCode) ? m.withUpload(file) : m)
-      .toList();
+    this.materialState = this.materialState.uploadIndividualPlanMaterial(materialCode, file, this.id());
   }
 
   /**
@@ -229,51 +187,22 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @param fileId       文件 ID
    */
   public void removeIndividualPlanMaterial(String materialCode, FileId fileId) {
-    if (this.packageFile != null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_OPERATION)
-        .withLogDetail("Application: %s 已使用打包上传模式(%s)，不可逐个移除材料".formatted(this.id(), this.packageFile.fileName()));
-    }
-    this.planMaterials = this.planMaterials.stream()
-      .map(m -> m.materialCode().equals(materialCode) ? m.removeUpload(fileId) : m)
-      .toList();
+    this.materialState = this.materialState.removeIndividualPlanMaterial(materialCode, fileId, this.id());
   }
 
-  /**
-   * 打包上传
-   */
+  /** 打包上传。 */
   public void uploadPackage(BusinessFile zipFile) {
-    // 事实发生：记录压缩包ID
-    this.packageFile = zipFile;
-
-    // 一旦打包上传，清空之前逐个上传的文件记录
-    this.planMaterials = this.planMaterials.stream()
-      .map(m -> new MaterialItem(
-        m.materialCode(), m.materialName(), m.level(),
-        m.requirement(), m.conditionRule(),
-        Optional.empty() // 清空已有的上传记录
-      ))
-      .toList();
+    this.materialState = this.materialState.uploadPackage(zipFile);
   }
 
-  /**
-   * 校验计划层材料是否满足要求
-   */
+  /** 校验计划层材料是否满足要求。 */
   public boolean isPlanMaterialSatisfied(MaterialConditionContext context) {
-    // 1. 只要存在打包文件，计划层直接放行
-    if (this.packageFile != null) {
-      return true;
-    }
-
-    // 2. 逐个上传模式：流式校验每一个 MaterialItem 内聚的规则
-    return this.planMaterials.stream()
-      .allMatch(m -> m.isSatisfied(context));
+    return this.materialState.isPlanMaterialSatisfied(context);
   }
 
-  /**
-   * 提供查询方法，供外部（应用层/明细层）判断是否处于打包模式
-   */
+  /** 供外部（应用层/明细层）判断是否处于打包模式。 */
   public boolean isPackageUploadMode() {
-    return this.packageFile != null;
+    return this.materialState.isPackageUploadMode();
   }
 
   public ApplicationFlowStep currentStep() {
@@ -499,7 +428,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 打包文件,未打包上传时为 null
    */
   public BusinessFile packageFile() {
-    return this.packageFile;
+    return this.materialState.packageFile();
   }
 
   /**
@@ -510,7 +439,12 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 计划层材料列表
    */
   public List<MaterialItem> planMaterials() {
-    return this.planMaterials;
+    return this.materialState.planMaterials();
+  }
+
+  /** 可选材料能力状态（§6.2，批次 37a）。 */
+  public ApplicationMaterialState materialState() {
+    return this.materialState;
   }
 
   /**

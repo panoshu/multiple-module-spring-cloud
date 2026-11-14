@@ -102,6 +102,15 @@ class BusinessApplicationAccessorTest {
   }
 
   @Test
+  @DisplayName("核心聚合不再直接持有 planMaterials/packageFile 字段（§6.2，批次 37a）")
+  void coreAggregate_doesNotDeclareMaterialFields() {
+    assertThat(java.util.Arrays.stream(BusinessApplication.class.getDeclaredFields())
+      .map(java.lang.reflect.Field::getName)
+      .toList())
+      .doesNotContain("planMaterials", "packageFile");
+  }
+
+  @Test
   @DisplayName("createFromForm() 保存表单、批次归属与定义版本")
   void createFromForm_savesSourceReferences() {
     BusinessApplication app = buildTestApp();
