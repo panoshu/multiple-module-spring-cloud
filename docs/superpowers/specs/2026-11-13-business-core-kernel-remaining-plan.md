@@ -302,6 +302,11 @@
 - 拆分：**43-1**（并发推进只产生一次有效跃迁，application 模块 `ConcurrentAdvanceAcceptanceTest`）+ **43-2**（乐观锁并发写冲突不覆盖新状态，infrastructure 模块）。
 - 状态：**全部完成**（设计文档 §23.50）。43-1 完成并发推进幂等验收（内存锁 + 状态化仓储），43-2 完成乐观锁写冲突不覆盖新状态（状态化 fake mapper + CAS），两者均含反向红灯验证与连续 5 次稳定性运行。§23.46 偏差 3 收敛、核对表 3 行更新为 ✅；如实保留「多进程 + 真实 Redis 锁 + 真实数据库集成测试」为阶段 5 遗留。
 
+#### 批次 44 — 不禁用自动推进的独立 E2E（§23.46 偏差 1）
+- 背景：§21.5 第 8 条要求「端到端测试不预置流程实例、不禁用自动推进机制」，现状 `AnnuityEndToEndTest` 用 `@MockitoBean` 替换 `StepAutoAdvanceListener` 为 noop。
+- 方案：保留现有 6 项手动确定性 E2E 不动，新增 `AutoAdvanceEnabledEndToEndTest`——不声明该 mock（独立 Spring context）、独立 H2 库隔离、`createFromForm` 正常入口建单、一次手动点火后轮询等待 AFTER_COMMIT + @Async 级联至 USER_TASK(APPROVAL) 挂起。连续 5 次运行全绿。
+- 状态：**完成**（设计文档 §23.51）。§21.5 第 8 条核对表由 ❌ 更新为 ✅，§23.46 四项偏差全部有处置。
+
 ---
 
 ## 6. 全局约束与验收基线

@@ -1173,6 +1173,8 @@ Application 层按用例拆分：
 
 | 批次 43-2 | `64422c14` | **乐观锁并发写冲突不覆盖新状态**（偏差 3 收口）：新增 infrastructure 模块 `OptimisticLockConcurrencyTest`，真实 `BusinessBatchRepositoryImpl` + 状态化 fake mapper（`bothRead` 屏障保证两节点读到同一版本、`update` 用 `AtomicInteger` CAS 等价 DB 版本 WHERE 条件），两节点基于 version=3 并发 save，断言一个成功一个 `OPTIMISTIC_LOCK_FAILURE`、库版本只 +1；反向去掉 CAS 验证两个都成功红灯，连续 5 次全绿。**批次 43 全部完成，§23.46 偏差 3 收敛** | kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
+| 批次 44 | 本次（未提交） | **新增不禁用自动推进的独立 E2E**（§23.46 偏差 1 收口）：新增 `AutoAdvanceEnabledEndToEndTest`，刻意不声明 `StepAutoAdvanceListener` 的 `@MockitoBean`（独立 Spring context，断言 `mockingDetails(...).isMock()` 为 false）、用独立 H2 库 `auto_advance_e2e` 与现有 E2E 隔离、`createFromForm` 正常入口建单不预置 DB 记录、一次手动 `advanceStep` 点火后轮询等待 `@Async @TransactionalEventListener(AFTER_COMMIT)` 级联推进 3 个 SYSTEM_TASK 步骤至 USER_TASK（APPROVAL）挂起；断言该申请单步骤执行记录 ≥3。**保留现有 6 项手动推进 E2E 不动**，两边互补。连续 5 次运行全绿 | annuity-starter 全量 7 项（新 1 + 原 6）全绿，日志确认 task-1/2/3 自动级联与 USER_TASK 挂起；kernel domain 174 / application 219 / infra 88 / adapter 13 / 架构 11 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1664,13 +1666,13 @@ Application 层按用例拆分：
 | 5. 流程定义升级不影响在途实例 | `FinalAcceptanceContractTest.definitionUpgrade_doesNotAffectInFlightInstance`、`CompositeProcessDefinitionGatewayTest.load_readsHistoricalVersionFromStore`、`StepDefinitionResolverTest` | ✅ |
 | 6. 状态、执行历史和事件可审计 | `FinalAcceptanceContractTest.stepExecutionHistory_isAuditable`、`StepExecutionTest`、`ExternalInteractionTest`、`AbstractBusinessRepositoryTest` | ✅ |
 | 7. 通用技术能力全部通过 shared starter 提供 | `KernelProductionReadinessValidatorTest`（38-1）、`ArchitectureInvariantTest` 不变量 8、adapter pom 显式依赖 | ✅ |
-| 8. 端到端测试不预置流程实例、不禁用自动推进机制 | `AnnuityEndToEndTest` | ❌ 用 `@MockitoBean` 禁用 `StepAutoAdvanceListener` 以手动控制推进节奏；生产环境该监听器正常，未做不禁用自动推进的独立 E2E |
+| 8. 端到端测试不预置流程实例、不禁用自动推进机制 | `AutoAdvanceEnabledEndToEndTest`（批次 44，不 mock 监听器、独立 H2 库、正常入口建单、一次手动点火后自动级联至 USER_TASK 挂起）、`AnnuityEndToEndTest`（保留手动确定性断言） | ✅ 已收敛（§23.51）。现有 E2E 仍禁用自动推进以保持确定性，但另有不禁用机制的独立 E2E 覆盖生产形态链路 |
 
 #### 收口结论与遗留（阶段 5）
 
 - **阶段 0–5 全部收口**：规格 §20 规划的全部批次（含 37/38/39 的拆分）已完成并逐批提交推送；核心聚合已无 §6.2 遗留字段，外部协作具备「可追踪、可重试、可对账、可恢复」能力，§21.1/§21.2/§21.3/§21.5 主要验收点均有可执行测试。
 - **如实标注的偏差**（不冒充已覆盖）：
-  1. `AnnuityEndToEndTest` 禁用自动推进（§21.5 第 8 条）；annuity 为早期示例服务，若要严格满足需新增独立 E2E。
+  1. **已由批次 44 收敛**（§23.51）：原 `AnnuityEndToEndTest` 用 `@MockitoBean` 禁用 `StepAutoAdvanceListener`；现保留其手动确定性断言，同时新增 `AutoAdvanceEnabledEndToEndTest`——不声明该 mock（独立 Spring context）、独立 H2 库隔离、`createFromForm` 正常入口建单、一次手动点火后 `@Async @TransactionalEventListener(AFTER_COMMIT)` 级联推进 SYSTEM_TASK 至 USER_TASK 挂起。§21.5 第 8 条落地。
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
@@ -1708,7 +1710,7 @@ Application 层按用例拆分：
   3. application 零 file/approval「DTO」依赖——现状监听器消费 `file.api.event.FileParsedEventDTO` 等 API 层事件 DTO，属允许的跨服务契约，与规格字面有张力。
   若要收敛这 3 条，需先做规格修订或专项大重构，不在本批范围。
 - **验证**：arch-tests 11 项（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。§23.46 核对表 §21.4 各行状态与偏差 2 已同步更新。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。**偏差 3 已由批次 43 收敛（§23.50）、偏差 4 已由批次 42 修复（§23.49）**。
+- **仍未处理**：其它阶段 5 遗留项。**偏差 1 已由批次 44 收敛（§23.51）、偏差 3 已由批次 43 收敛（§23.50）、偏差 4 已由批次 42 修复（§23.49）**。
 
 ### 23.49 批次 42 范围边界（审批驳回/撤回回调状态误判修复）
 
@@ -1720,7 +1722,7 @@ Application 层按用例拆分：
 - **兼容性**：现有 `ApprovalResultEventListenerTest` mock 掉 correlate，E2E 只走 APPROVED，二者均不受行为变更影响；`applyOutcome` 仍按 `targetStatus` 分支，FAILED 路径复用既有 `interaction.fail(...)` / `execution.fail(...)`，无需改状态机或 DDL。
 - **验证**：`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
 - **台账同步**：§23.46 偏差 4 更正为「已修复」、§21.3 核对表补该测试、§23.48 末行移除偏差 4；计划文档新增批次 42。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。**偏差 3 已由批次 43 收敛，见 §23.50**。
+- **仍未处理**：其它阶段 5 遗留项。**偏差 1 已由批次 44 收敛（§23.51）、偏差 3 已由批次 43 收敛（§23.50）**。
 
 ### 23.50 批次 43 拆分与 43-1 范围边界（确定性并发验收）
 
@@ -1733,5 +1735,19 @@ Application 层按用例拆分：
 - **防假绿与稳定性**：反向把 `update` 临时改成无条件 `incrementAndGet + 返回 1`（模拟无乐观锁），测试红灯并明确报出「Expected size: 1 but was: 0」（两个节点都成功、覆盖发生），证明测试真的在检验冲突保护；改回后连续 5 次运行全绿，两并发类联合运行全绿，无调度 flaky。线程体捕获 `Throwable` 作为 `Future` 返回值，避免异常伪装成超时。
 - **验证**：kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动。
 - **收口结论**：**批次 43 全部完成，§23.46 偏差 3 收敛**——§21.2 第 2/3 条与 §21.5 第 3 条的「多节点真并发、乐观锁写冲突」现有可执行验收（确定性并发），§23.46 核对表 3 行状态已同步更新为 ✅。
-- **如实保留的边界**：本批是进程内状态化 fake 的确定性并发，用于锁定「锁串行化 + 幂等短路」「CAS 乐观锁不覆盖」两条契约；**多进程 + 真实 Redis `DistributedLock` + 真实数据库**的集成测试仍未做，列为阶段 5 遗留，不冒充已覆盖。此前偏差 2 已由批次 41 部分收敛、偏差 4 由批次 42 修复，四项偏差中仅偏差 1（E2E 禁用自动推进）尚未处理。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）、多进程真 Redis 锁集成测试，及其它阶段 5 遗留项。
+- **如实保留的边界**：本批是进程内状态化 fake 的确定性并发，用于锁定「锁串行化 + 幂等短路」「CAS 乐观锁不覆盖」两条契约；**多进程 + 真实 Redis `DistributedLock` + 真实数据库**的集成测试仍未做，列为阶段 5 遗留，不冒充已覆盖。此前偏差 2 已由批次 41 部分收敛、偏差 4 由批次 42 修复，偏差 1 亦已由批次 44 收敛（§23.51），四项偏差至此全部有处置。
+- **仍未处理**：多进程真 Redis 锁集成测试及其它阶段 5 遗留项；偏差 1 已由批次 44 收敛（§23.51）。
+
+### 23.51 批次 44 范围边界（不禁用自动推进的独立 E2E）
+
+- **背景**：§23.46 偏差 1 / §21.5 第 8 条要求「端到端测试不预置流程实例、不禁用自动推进机制」。现状 `AnnuityEndToEndTest` 用 `@MockitoBean` 把 `StepAutoAdvanceListener` 替换为 noop，理由是手动控制推进节奏、避免异步跨断言点跳步。其 6 项确定性断言仍有价值，**故保留不动**；本批新增一个互补的独立 E2E，验证生产形态的自动推进链路。
+- **链路评估**（决定方案可行性）：
+  - `AnnuityApplication` 已标 `@EnableAsync`；`SpringEventDispatcher` 把领域事件发布为 Spring `ApplicationEvent`；`StepEnteredEvent` 由 `BusinessApplication.completeCurrentStep()` 注册，经 `AbstractBusinessRepository.save` → `EventBus.publish` 本地同步分发。
+  - `advanceStep` 内部用 `transactionTemplate.executeWithoutResult` 有活跃事务，故 `@TransactionalEventListener(AFTER_COMMIT)` 会在提交后触发；E2E 建单时 `applicationRepository.save` 不在事务中，`ApplicationSpawnedListener` 不会意外点火，初始步骤稳定为 `FORM_DETAIL_INGESTION`。
+  - `config/step-routes.json`：前 3 步 `SYSTEM_TASK`，`APPROVAL` 为 `USER_TASK`（挂起），`COMPLETED` 为 SYSTEM_TASK。因此自动级联的**终点确定**为 APPROVAL，可轮询等待而不依赖异步线程的具体调度顺序。
+- **隔离设计**：新类不声明 `StepAutoAdvanceListener` 的 `@MockitoBean`，并用 `properties` 覆盖 `spring.datasource.url` 为独立 H2 库 `auto_advance_e2e`；context 配置不同（少一个 mock bean + 数据源不同）→ Spring 创建独立 ApplicationContext，且两个 E2E 类的数据互不污染。其余 4 个外部 `@HttpExchange` API 仍用 `@MockitoBean` 保持与现有 E2E 一致。
+- **验收内容**：断言 `mockingDetails(autoAdvanceListener).isMock()` 为 false（真实监听器装配，非 noop）；用 `BusinessApplication.createFromForm` + `applicationRepository.save` 正常入口建单（不直接插 DB）；只手动 `advanceStep` 一次；轮询（20s 上限、50ms 间隔）等待 `currentStep()` 到 APPROVAL；断言该 `application_id` 的 `t_business_step_execution` 记录 ≥3（手动 1 + 自动至少 2）。
+- **稳定性**：异步测试最怕 flaky，故连续运行 5 次全部 `exit=0`；日志实证 `task-1`（数据核查）→ `task-2`（材料准备）→ `task-3`（APPROVAL 为 USER_TASK，引擎挂起），自动级联真实发生。轮询只等确定终点、不做精确中间态断言，避免依赖线程调度。
+- **验证**：annuity-starter 全量 7 项（新 1 + 原 6）同批运行全绿；kernel domain 174 / application 219 / infra 88 / adapter 13 / 架构 11 全绿；全仓 `test-compile`、`git diff --check` 通过。零生产代码改动。
+- **收口结论**：**§23.46 四项偏差至此全部有处置**——偏差 1 由批次 44 收敛、偏差 2 由批次 41 部分机器化、偏差 3 由批次 43 确定性并发验收、偏差 4 由批次 42 修复。§21.5 第 8 条核对表由 ❌ 更新为 ✅。
+- **仍未处理**：多进程 + 真实 Redis `DistributedLock` + 真实数据库的并发集成测试，以及既有阶段 5 遗留项（见 §23.46）。
