@@ -37,4 +37,15 @@ public class InMemoryParsedFileReferenceGateway implements ParsedFileReferenceGa
     }
     return Optional.ofNullable(references.get(applicationId));
   }
+
+  @Override
+  public Optional<ApplicationId> findByFileId(FileId jsonFileId) {
+    if (jsonFileId == null) {
+      return Optional.empty();
+    }
+    return references.entrySet().stream()
+      .filter(entry -> jsonFileId.equals(entry.getValue()))
+      .map(Map.Entry::getKey)
+      .findFirst();
+  }
 }

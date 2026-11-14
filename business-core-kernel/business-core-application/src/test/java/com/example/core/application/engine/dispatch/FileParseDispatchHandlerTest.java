@@ -1,6 +1,7 @@
 package com.example.core.application.engine.dispatch;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
@@ -41,6 +42,7 @@ class FileParseDispatchHandlerTest {
   private ApplicationRepository applicationRepository;
   private BusinessConfigGateway configGateway;
   private FileIntegrationGateway fileGateway;
+  private ParsedFileReferenceGateway parsedFileGateway;
   private FileParseDispatchHandler handler;
 
   @BeforeEach
@@ -48,7 +50,9 @@ class FileParseDispatchHandlerTest {
     applicationRepository = mock(ApplicationRepository.class);
     configGateway = mock(BusinessConfigGateway.class);
     fileGateway = mock(FileIntegrationGateway.class);
-    handler = new FileParseDispatchHandler(applicationRepository, configGateway, fileGateway);
+    parsedFileGateway = mock(ParsedFileReferenceGateway.class);
+    handler = new FileParseDispatchHandler(
+      applicationRepository, configGateway, fileGateway, parsedFileGateway);
   }
 
   @Test
@@ -63,7 +67,7 @@ class FileParseDispatchHandlerTest {
     BusinessApplication app = mock(BusinessApplication.class);
     when(app.buildConfigQueryContext()).thenReturn(mock(BusinessMetaContext.class));
     when(app.formId()).thenReturn(FORM_ID);
-    when(app.requireFileForParsing()).thenReturn(FILE_ID);
+    when(parsedFileGateway.require(any())).thenReturn(FILE_ID);
     when(applicationRepository.loadOrThrow(APP_ID)).thenReturn(app);
     when(configGateway.getFormParsingConfig(any()))
       .thenReturn(new FormParsingConfig("TPL-1", false, Map.of("by", "dept")));

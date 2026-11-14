@@ -156,7 +156,7 @@ class BusinessApplicationStateMachineTest {
     BusinessApplication app = BusinessApplication.reconstitute(
       new ApplicationId("APP-LEGACY"), "U-C", "U-C", now.minusDays(1), now, Version.initial(),
       BatchId.of("B-1"), new FormId("F-1"), context(), operator(),
-      new FileId("FILE-1"), 0, DefinitionVersion.initial(),
+      0, DefinitionVersion.initial(),
       ApplicationStatus.PROCESSING, ApplicationFlowStep.FORM_DETAIL_INGESTION,
       now, null, List.of(), null
     );
@@ -169,7 +169,7 @@ class BusinessApplicationStateMachineTest {
     return BusinessApplication.createFromForm(
       new ApplicationId("APP-1"),
       new ApplicationSource(new FormId("F-1"), BatchId.of("B-1")),
-      context(), operator(), new FileId("FILE-1"), DefinitionVersion.initial()
+      context(), operator(), DefinitionVersion.initial()
     );
   }
 

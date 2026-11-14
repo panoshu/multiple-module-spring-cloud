@@ -93,11 +93,7 @@ CREATE TABLE IF NOT EXISTS t_business_application
   1
 ) DEFAULT 0,
 
-  -- 文件与统计字段
-  parsed_json_file_id VARCHAR
-(
-  64
-),
+  -- 统计字段
   expected_detail_count INT DEFAULT 0,
 
   -- 状态机字段
@@ -137,7 +133,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
 
 CREATE INDEX idx_business_application_batch_id ON t_business_application (batch_id);
 CREATE INDEX idx_business_application_form_id ON t_business_application (form_id);
-CREATE INDEX idx_business_application_parsed_file_id ON t_business_application (parsed_json_file_id);
 CREATE INDEX idx_business_application_status ON t_business_application (status);
 CREATE INDEX idx_business_application_current_step ON t_business_application (current_step);
 CREATE INDEX idx_business_application_customer_no ON t_business_application (customer_no);

@@ -20,7 +20,6 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
-import com.example.file.types.FileId;
 import com.example.core.types.UserNo;
 import org.mapstruct.Mapper;
 
@@ -75,7 +74,6 @@ public abstract class BusinessApplicationConverter {
       aDo.setIsProxy(op.isProxy());
     }
 
-    aDo.setParsedJsonFileId(app.parsedJsonFileId() != null ? app.parsedJsonFileId().value() : null);
     aDo.setExpectedDetailCount(app.expectedDetailCount());
 
     aDo.setStatus(app.status() != null ? app.status().name() : null);
@@ -118,7 +116,6 @@ public abstract class BusinessApplicationConverter {
       aDo.getFormId() != null ? new FormId(aDo.getFormId()) : null,
       businessContext,
       operatorInfo,
-      aDo.getParsedJsonFileId() != null ? new FileId(aDo.getParsedJsonFileId()) : null,
       aDo.getExpectedDetailCount() != null ? aDo.getExpectedDetailCount() : 0,
       aDo.getDefinitionVersion() != null
         ? DefinitionVersion.of(aDo.getDefinitionVersion()) : DefinitionVersion.initial(),

@@ -143,7 +143,7 @@
 | D5 | `InteractionType` 推断 | 按 `mainProcessor` 名关键字推断 | `StepDefinition.actionType()` 显式声明（§7.1） | 31 |
 | D6 | 出站凭证来源 | `extensionFacts`（无 extractor 注入） | 应由入站 FILE_PARSE 协作的 `externalTaskId` 或定义配置提供 | 30 |
 | D7 | 申请单等待态 | 挂起时未置 `WAITING_EXTERNAL` | 外部受理后进入 `WAITING_EXTERNAL`（§9.2 阶段 B 第 4 步） | 31 |
-| D8 | 遗留字段 | 仅 `parsedJsonFileId` 仍在聚合（`planMaterials`/`packageFile` 由 37a、`businessExtension` 由 37b 迁出） | §6.2 迁移到 `ExternalInteraction` | 37c |
+| D8 | 遗留字段 | 已全部迁出（37a 材料能力 / 37b 业务扩展 / 37c 解析文件引用），核心聚合无 §6.2 点名字段 | §6.2 | 37（已完成） |
 | D9 | 领域事件数量 | 仅 6 个（`ApplicationSpawnedEvent` 等） | §13.1 列 14 个（缺 StepStarted/StepCompleted/ApplicationCompleted/ExternalInteractionCompleted 等） | 按需，阶段 4/5 |
 | D10 | 应用服务拆分 | 未按 §17 建 `StepExecutionAppService`/`ExternalInteractionAppService`/`EventCallbackAppService`/`ProcessDefinitionAppService` | 单类单变化原因 | 阶段 4 拆分 |
 | D11 | 锁释放时机 | 锁早于外层 `@Transactional` 提交释放 | §9.1 提交后释放 | 阶段 5 精修 |
@@ -265,7 +265,7 @@
   - 37b：`BusinessExtension` → annuity 业务服务自有聚合（需新增 annuity 存储、改 3 处业务读取点、移除 kernel DO 列与 5 份 DDL）。
   - 37c-1：解析文件引用写入侧（kernel SPI + annuity 自有实现 + 表单裂变保存），**已完成**（§23.41）。时序上摄入步骤早于 `ExternalInteraction` 创建，故不落到规格原建议的协作记录，改用 37b 同构的业务服务自有存储。
   - 37c-2：读取侧改从 SPI 读，移除 `parsedJsonFileId` 字段/`requireFileForParsing`/`createFromForm` 参数、DO 列与 5 份 DDL 列/索引/COMMENT，改 7 处调用点与 E2E。
-- 状态：37a、37b、37c-1 已完成（§23.39 / §23.40 / §23.41），仅 37c-2 待推进。
+- 状态：**全部完成**（§23.39 / §23.40 / §23.41 / §23.42）。核心聚合已无 `planMaterials`/`packageFile`/`businessExtension`/`parsedJsonFileId`，D8 收敛。
 
 #### 批次 38 — starter 显式接入与生产 fail-fast（§14）
 - 目标：显式接入 web/cache/logging/permission，生产配置缺失 fail-fast；MDC 统一携带。

@@ -1,6 +1,7 @@
 package com.example.core.application.engine.step.extension;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionResult;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
@@ -35,14 +36,17 @@ public abstract class AbstractJsonStreamIngestionAction<D, T> implements StepExt
   private final FileIntegrationGateway fileGateway;
   private final ObjectReader dtoReader; // 【优化】预热的 ObjectReader，极大提升循环内解析性能
   private final TransactionTemplate newTxTemplate;
+  private final ParsedFileReferenceGateway parsedFileGateway;
 
   protected AbstractJsonStreamIngestionAction(
     FileIntegrationGateway fileGateway,
     ObjectMapper objectMapper,
     PlatformTransactionManager txManager,
-    Class<D> dtoClass) {
+    Class<D> dtoClass,
+    ParsedFileReferenceGateway parsedFileGateway) {
 
     this.fileGateway = fileGateway;
+    this.parsedFileGateway = parsedFileGateway;
     this.dtoReader = objectMapper.readerFor(dtoClass);
     this.newTxTemplate = new TransactionTemplate(txManager);
     // 核心保护：强制开启新事务，避免批次写入污染外层事务
@@ -51,7 +55,7 @@ public abstract class AbstractJsonStreamIngestionAction<D, T> implements StepExt
 
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
-    FileId jsonFileId = app.parsedJsonFileId();
+    FileId jsonFileId = parsedFileGateway.load(app.id()).orElse(null);
     if (jsonFileId == null) {
       return ExtensionExecutionResult.failure("MISSING_JSON", "申请单缺少解析后的 JSON 文件凭证");
     }

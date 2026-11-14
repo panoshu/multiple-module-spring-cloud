@@ -47,8 +47,7 @@ public class BusinessApplicationDO {
   private String operatorName;
   private Boolean isProxy;
 
-  // ===== 文件与统计字段 =====
-  private String parsedJsonFileId;
+  // ===== 统计字段 =====
   private Integer expectedDetailCount;
 
   // ===== 状态机字段 =====

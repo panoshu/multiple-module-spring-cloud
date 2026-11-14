@@ -100,11 +100,7 @@ CREATE TABLE IF NOT EXISTS t_business_application
   1
 ) DEFAULT 0 COMMENT '是否代办',
 
-  -- 文件与统计字段
-  parsed_json_file_id VARCHAR
-(
-  64
-) DEFAULT NULL COMMENT '解析后 JSON 文件 ID（FileId）',
+  -- 统计字段
   expected_detail_count INT DEFAULT 0 COMMENT '预期明细数量',
 
   -- 状态机字段
@@ -147,10 +143,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
   KEY idx_business_application_form_id
 (
   form_id
-),
-  KEY idx_business_application_parsed_file_id
-(
-  parsed_json_file_id
 ),
   KEY idx_business_application_status
 (

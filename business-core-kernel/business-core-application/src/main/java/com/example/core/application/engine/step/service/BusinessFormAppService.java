@@ -116,7 +116,7 @@ public class BusinessFormAppService {
     for (ParsedPlanResult result : parsedResults) {
       BusinessApplication newApp = BusinessApplication.createFromForm(
         idService.nextId(ApplicationId.class, ""), source,
-        form.businessContext(), form.operatorInfo(), result.jsonFileId(), definition.version()
+        form.businessContext(), form.operatorInfo(), definition.version()
       );
 
       applicationRepository.save(newApp);

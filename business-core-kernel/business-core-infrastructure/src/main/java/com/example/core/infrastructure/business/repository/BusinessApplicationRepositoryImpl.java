@@ -20,8 +20,8 @@ import static com.example.core.infrastructure.business.entity.table.BusinessAppl
  * <p>
  * 继承 {@link AbstractBusinessRepository}，封装通用的 CRUD 与领域事件发布逻辑。
  * 本类<b>不标注 {@code @Repository}</b>，由具体业务服务（如 annuity-service）继承本类
- * 并标注 {@code @Repository}，覆写 {@link #findByFileTaskId} / {@link #findByBatchId}
- * 等业务专属查询方法。
+ * 并标注 {@code @Repository}，覆写 {@link #findByBatchId} 等业务专属查询方法；
+ * 按文件凭证反查申请单已迁到业务服务自有存储（§6.2，批次 37c-2），不再由本类承担。
  *
  * @author core-kernel
  * @since 2026/8/8
@@ -92,15 +92,4 @@ public class BusinessApplicationRepositoryImpl
       .toList();
   }
 
-  @Override
-  public Optional<BusinessApplication> findByFileTaskId(String fileTaskId) {
-    if (fileTaskId == null || fileTaskId.isBlank()) {
-      return Optional.empty();
-    }
-    BusinessApplicationDO aDo = mapper.selectOneByQuery(
-      com.mybatisflex.core.query.QueryWrapper.create()
-        .where(BUSINESS_APPLICATION_DO.PARSED_JSON_FILE_ID.eq(fileTaskId))
-    );
-    return Optional.ofNullable(aDo).map(converter::toDomain);
-  }
 }

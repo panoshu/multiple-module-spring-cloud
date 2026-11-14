@@ -57,7 +57,7 @@ class BusinessApplicationAccessorTest {
       now.minusDays(1), now, Version.of(3L),
       BatchId.of("B-1"), new FormId("F-1"),
       buildContext(), buildOperator(),
-      new FileId("FILE-R"), 5,
+      5,
       DefinitionVersion.of("v2"),
       ApplicationStatus.COMPLETED, ApplicationFlowStep.COMPLETED,
       now, now,
@@ -67,7 +67,6 @@ class BusinessApplicationAccessorTest {
     assertThat(app.id().value()).isEqualTo("APP-R");
     assertThat(app.batchId().value()).isEqualTo("B-1");
     assertThat(app.formId().value()).isEqualTo("F-1");
-    assertThat(app.parsedJsonFileId().value()).isEqualTo("FILE-R");
     assertThat(app.expectedDetailCount()).isEqualTo(5);
     assertThat(app.definitionVersion()).isEqualTo(DefinitionVersion.of("v2"));
     assertThat(app.status()).isEqualTo(ApplicationStatus.COMPLETED);
@@ -122,7 +121,7 @@ class BusinessApplicationAccessorTest {
     return BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      buildContext(), buildOperator(), new FileId("FILE-001"), DefinitionVersion.initial()
+      buildContext(), buildOperator(), DefinitionVersion.initial()
     );
   }
 

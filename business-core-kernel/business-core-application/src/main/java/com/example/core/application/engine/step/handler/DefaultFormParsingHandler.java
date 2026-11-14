@@ -1,9 +1,11 @@
 package com.example.core.application.engine.step.handler;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionStatus;
 import com.example.core.domain.engine.spi.StepActionHandler;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +31,10 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class DefaultFormParsingHandler implements StepActionHandler {
+
+  private final ParsedFileReferenceGateway parsedFileGateway;
 
   @Override
   public String handlerName() {
@@ -47,7 +52,7 @@ public class DefaultFormParsingHandler implements StepActionHandler {
   @Override
   public StepExecutionStatus execute(BusinessApplication app, BusinessMetaContext context) {
     log.info("登记表单解析意图, appId={}", app.id());
-    app.requireFileForParsing();
+    parsedFileGateway.require(app.id());
     return StepExecutionStatus.SUSPEND_ASYNC_WAIT;
   }
 }

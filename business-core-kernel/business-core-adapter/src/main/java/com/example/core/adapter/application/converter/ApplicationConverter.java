@@ -47,7 +47,7 @@ public interface ApplicationConverter {
   /**
    * 聚合根 → 详情响应
    */
-  default ApplicationDetailResponse toDetailResponse(BusinessApplication app) {
+  default ApplicationDetailResponse toDetailResponse(BusinessApplication app, String jsonFileId) {
     if (app == null) {
       return null;
     }
@@ -56,7 +56,7 @@ public interface ApplicationConverter {
       app.batchId() != null ? app.batchId().value() : null,
       app.status() != null ? app.status().name() : null,
       app.currentStep() != null ? app.currentStep().name() : null,
-      app.parsedJsonFileId() != null ? app.parsedJsonFileId().value() : null,
+      jsonFileId,
       app.packageFile() != null && app.packageFile().fileId() != null
         ? app.packageFile().fileId().value() : null,
       app.applyTime(),

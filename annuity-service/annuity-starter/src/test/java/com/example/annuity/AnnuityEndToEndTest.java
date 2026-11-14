@@ -78,6 +78,9 @@ class AnnuityEndToEndTest {
   private com.example.annuity.domain.repository.AnnuityApplicationExtensionStore extensionStore;
 
   @Autowired
+  private com.example.core.domain.business.gateway.ParsedFileReferenceGateway parsedFileGateway;
+
+  @Autowired
   private ApplicationRepository applicationRepository;
 
   @Autowired
@@ -183,7 +186,7 @@ class AnnuityEndToEndTest {
   void fileParsedEvent_advancesApplication() {
     ApplicationId appId = createAndSaveApplication();
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
-    FileId parsedJsonFileId = app.parsedJsonFileId();
+    FileId parsedJsonFileId = parsedFileGateway.require(appId);
 
     // 初始：FORM_DETAIL_INGESTION
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
@@ -312,7 +315,7 @@ class AnnuityEndToEndTest {
 
     BusinessApplication app = BusinessApplication.createFromForm(
       appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
-      context, operator, jsonFileId, DefinitionVersion.initial()
+      context, operator, DefinitionVersion.initial()
     );
     // 设置年金业务扩展字段（业务服务自有存储，按 applicationId 关联，§6.2）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
@@ -322,6 +325,7 @@ class AnnuityEndToEndTest {
       false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
     );
     extensionStore.save(appId, annuityExt);
+    parsedFileGateway.save(appId, jsonFileId);
     // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
     // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
     // markUpdated(null) 会抛 IllegalArgumentException

@@ -37,7 +37,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
 
-  private FileId parsedJsonFileId;
   private int expectedDetailCount;
 
   // TODO 状态与流程状态处理
@@ -62,17 +61,16 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     this.validateInvariants();
   }
 
-  protected BusinessApplication(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {
+  protected BusinessApplication(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo) {
     super(applicationId, operatorInfo.operatorId());
     this.businessContext = businessContext;
     this.operatorInfo = operatorInfo;
-    this.parsedJsonFileId = jsonFileId;
     this.validateInvariants();
   }
 
   public static BusinessApplication createFromForm(ApplicationId applicationId, ApplicationSource source,
                                                     BusinessContext businessContext, OperatorInfo operatorInfo,
-                                                    FileId jsonFileId, DefinitionVersion definitionVersion) {
+                                                    DefinitionVersion definitionVersion) {
     if (source == null) {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
         .withLogDetail("申请来源不能为空");
@@ -81,7 +79,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
       throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
         .withLogDetail("流程定义版本不能为空");
     }
-    BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo, jsonFileId);
+    BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo);
     app.formId = source.formId();
     app.batchId = source.batchId();
     app.definitionVersion = definitionVersion;
@@ -110,7 +108,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     FormId formId,
     BusinessContext businessContext,
     OperatorInfo operatorInfo,
-    FileId parsedJsonFileId,
     int expectedDetailCount,
     DefinitionVersion definitionVersion,
     ApplicationStatus status,
@@ -124,7 +121,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.formId = formId;
     app.businessContext = businessContext;
     app.operatorInfo = operatorInfo;
-    app.parsedJsonFileId = parsedJsonFileId;
     app.expectedDetailCount = expectedDetailCount;
     app.definitionVersion = definitionVersion;
     app.status = status;
@@ -137,10 +133,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   public FormId formId() {
     return this.formId;
-  }
-
-  public FileId parsedJsonFileId() {
-    return this.parsedJsonFileId;
   }
 
   /**
@@ -324,18 +316,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
     // 聚合根自己产生并注册领域事件
     this.registerDomainEvent(PipelineExecutedEvent.of(this.id(), this.currentStep(), phase, result));
-  }
-
-  /**
-   * 领域行为：获取用于底层解析的目标文件凭证。
-   * (内部封装了状态校验规则，对外不暴露简单的 getter)
-   */
-  public FileId requireFileForParsing() {
-    if (this.parsedJsonFileId == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("Application: %s 申请单尚未挂载文件，无法发起解析".formatted(this.id()));
-    }
-    return this.parsedJsonFileId;
   }
 
   public BusinessMetaContext buildConfigQueryContext() {

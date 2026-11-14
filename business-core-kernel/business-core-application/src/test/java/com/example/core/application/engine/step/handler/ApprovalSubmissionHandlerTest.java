@@ -52,7 +52,7 @@ class ApprovalSubmissionHandlerTest {
     );
     application = BusinessApplication.createFromForm(
       APPLICATION_ID, new ApplicationSource(new FormId("form-001"), BatchId.of("batch-001")),
-      businessContext, operatorInfo, PARSED_JSON_FILE_ID, DefinitionVersion.initial()
+      businessContext, operatorInfo, DefinitionVersion.initial()
     );
     context = BusinessMetaContext.of(businessContext);
     context.extensionFacts().put(BusinessMetaContext.REQUEST_NO_FACT, REQUEST_NO);

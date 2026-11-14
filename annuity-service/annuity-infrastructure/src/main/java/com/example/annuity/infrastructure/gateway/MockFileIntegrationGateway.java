@@ -69,7 +69,7 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
    * 触发异步解析（FormId + FileId 重载）
    * <p>
    * 使用 {@code sourceFileId.value()} 作为 fileTaskId，立即发布解析完成事件。
-   * 测试场景中，业务申请单的 {@code parsedJsonFileId} 与 {@code sourceFileId} 一致，
+   * 测试场景中，业务服务自有存储里的解析 JSON 文件引用与 {@code sourceFileId} 一致，
    * 从而 {@code FileParsedEventListener} 能通过 {@code findByFileTaskId} 反查到申请单。
    */
   @Override

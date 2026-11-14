@@ -84,7 +84,7 @@ class AnnuityExtensionResolverTest {
     return BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      context, operator, new FileId("FILE-001"), DefinitionVersion.initial()
+      context, operator, DefinitionVersion.initial()
     );
   }
 }

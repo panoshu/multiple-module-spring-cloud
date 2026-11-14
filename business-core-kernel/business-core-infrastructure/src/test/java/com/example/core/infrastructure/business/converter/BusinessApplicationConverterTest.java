@@ -39,7 +39,7 @@ class BusinessApplicationConverterTest {
     BusinessApplication app = BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      context(), operator(), new FileId("FILE-001"), DefinitionVersion.of("v2")
+      context(), operator(), DefinitionVersion.of("v2")
     );
 
     BusinessApplicationDO aDo = converter.toDO(app);
@@ -55,7 +55,7 @@ class BusinessApplicationConverterTest {
     BusinessApplication app = BusinessApplication.createFromForm(
       new ApplicationId("APP-001"),
       new ApplicationSource(new FormId("F-001"), BatchId.of("B-001")),
-      context(), operator(), new FileId("FILE-001"), DefinitionVersion.initial()
+      context(), operator(), DefinitionVersion.initial()
     );
     BusinessApplicationDO aDo = converter.toDO(app);
     aDo.setDefinitionVersion(null);

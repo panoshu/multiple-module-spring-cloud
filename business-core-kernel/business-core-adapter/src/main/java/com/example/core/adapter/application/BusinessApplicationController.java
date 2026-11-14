@@ -12,6 +12,7 @@ import com.example.core.api.application.response.AdvanceStepResponse;
 import com.example.core.api.application.response.ApplicationDetailResponse;
 import com.example.core.api.application.response.ApplicationSummaryResponse;
 import com.example.core.api.application.response.SubmitResponse;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.shared.security.SessionClaims;
 import com.example.core.application.business.service.BusinessApplicationAppService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
@@ -54,6 +55,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
   private final BusinessApplicationAppService applicationAppService;
   private final ApplicationConverter converter;
   private final SessionContextResolver sessionResolver;
+  private final ParsedFileReferenceGateway parsedFileGateway;
 
   @Override
   @PostMapping("/list")
@@ -77,8 +79,11 @@ public class BusinessApplicationController implements BusinessApplicationApi {
     SessionClaims session = sessionResolver.require();
     log.info("查询申请单详情: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
-    BusinessApplication app = applicationAppService.loadOrThrow(new ApplicationId(query.applicationId()));
-    return ApiResult.success(converter.toDetailResponse(app));
+    ApplicationId appId = new ApplicationId(query.applicationId());
+    BusinessApplication app = applicationAppService.loadOrThrow(appId);
+    String jsonFileId = parsedFileGateway.load(appId)
+      .map(com.example.file.types.FileId::value).orElse(null);
+    return ApiResult.success(converter.toDetailResponse(app, jsonFileId));
   }
 
   @Override

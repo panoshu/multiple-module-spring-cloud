@@ -1,6 +1,7 @@
 package com.example.core.application.engine.dispatch;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.valueobject.config.FormParsingConfig;
@@ -28,6 +29,7 @@ public class FileParseDispatchHandler implements InteractionDispatchHandler {
   private final ApplicationRepository applicationRepository;
   private final BusinessConfigGateway configGateway;
   private final FileIntegrationGateway fileIntegrationGateway;
+  private final ParsedFileReferenceGateway parsedFileGateway;
 
   @Override
   public InteractionType supportedType() {
@@ -45,7 +47,7 @@ public class FileParseDispatchHandler implements InteractionDispatchHandler {
     }
     return fileIntegrationGateway.triggerAsyncParsingAndGetTaskId(
       app.formId(),
-      app.requireFileForParsing(),
+      parsedFileGateway.require(app.id()),
       config.parseTemplateId(),
       config.splitRules(),
       interaction.requestNo()
