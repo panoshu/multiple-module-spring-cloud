@@ -253,6 +253,7 @@
 - 改动：DO/DDL/表名 + `shared-event-core` 若干 + 测试。
 - 红灯测试：重命名后读写正常；event_id 写入为 ULID 字符串。
 - 规模：6–8 文件（注意 annuity 复制脚本处置需单独确认，或只改 kernel 双库）。
+- 状态：**部分完成**（设计文档 §23.37）。已落地列宽 128 + `eventId().value()` 统一（零 annuity 改动）；表名统一因必须改 annuity 4 文件、与冻结约束冲突，暂缓待开放点 3 确认。
 
 #### 批次 37 — 遗留字段迁移（§6.2）
 - 目标：`planMaterials`/`packageFile` 迁移到可选材料能力，`BusinessExtension`/`parsedJsonFileId` 迁出核心聚合。
@@ -303,5 +304,5 @@
 
 1. 是否采纳「复用 `StepExecution.checkpoint_ref`」作为派发载荷载体（方案 B）？
 2. 阶段 B 是否按 26–31 的细分推进，还是进一步合并/调整顺序？
-3. 批次 36 的 annuity 复制脚本是否允许临时解冻同步表名/列宽，还是只改 kernel 双库并记录漂移？
+3. 批次 36 的 annuity 复制脚本是否允许临时解冻同步表名/列宽，还是只改 kernel 双库并记录漂移？（**仍待确认**：批次 36 已按零 annuity 子集推进，表名统一需改 annuity 3 份 DDL + E2E 断言共 4 文件，否则 E2E 必然失败；当前保留 `t_step_execution` 并记录漂移。）
 

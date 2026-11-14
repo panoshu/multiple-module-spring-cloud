@@ -40,7 +40,7 @@ public class JdbcEventStore implements EventStore {
       String actualIntegrationType = integrationEvent != null ? integrationType : null;
 
       jdbcClient.sql(sql)
-        .param(event.eventId().toString())
+        .param(event.eventId().value())
         .param(event.eventType())
         .param(actualIntegrationType)
         .param(event.occurredOn())

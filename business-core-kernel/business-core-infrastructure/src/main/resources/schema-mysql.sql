@@ -402,7 +402,7 @@ CREATE TABLE IF NOT EXISTS t_business_external_interaction
   application_id       VARCHAR(64)  NOT NULL,
   step_execution_id    BIGINT       NOT NULL,
   interaction_type     VARCHAR(32)  NOT NULL,
-  request_no           VARCHAR(64)  NOT NULL,
+  request_no           VARCHAR(128) NOT NULL,
   external_task_id     VARCHAR(64),
   status               VARCHAR(32)  NOT NULL,
   result_ref           VARCHAR(255),

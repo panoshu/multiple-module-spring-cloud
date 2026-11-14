@@ -18,7 +18,7 @@ public class EventDeliverer {
   public void deliver(EventDispatcher dispatcher, DomainEvent event,
                       Object integrationEvent, long logId) {
     String channel = dispatcher.getChannelName();
-    String eventId = event.eventId().toString();
+    String eventId = event.eventId().value();
     try {
       log.debug("Delivering event {} to channel {}", eventId, channel);
       dispatcher.dispatch(event, integrationEvent);
