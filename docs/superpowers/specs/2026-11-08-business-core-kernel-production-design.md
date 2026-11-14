@@ -1192,6 +1192,7 @@ Application 层按用例拆分：
 | 批次 56 | `d5c6d1af` | **approver 越权治理（BREAKING CHANGE，同步改 intranet-bff）**：`ApprovalInstanceAdapter.listMyPending` 注入 `AccountIdResolver`，从带签名的 `X-Account-Id` 会话账号覆盖请求体 `approver`，缺失/空串 fail-closed 抛 `BusinessException(CommonError.UNAUTHORIZED)`；`ListMyPendingApprovalsRequest.approver` 保留为兼容字段（避免破坏 annuity `LinkTestService`），Javadoc 标注服务端忽略；intranet-bff `trace.context.mapping` 增加 `AccountId/AccountSig` 使会话 header 经 `BizContextPropagationFilter`+`OkHttpTraceInterceptor` 透传。新增 `ApprovalInstanceAdapterTest` 3 项与 adapter 测试依赖，先编译红灯后绿 + 反向验证（不覆盖时红灯报 U-SESSION vs U-ATTACKER） | approval domain 87 / application 16 / infra 25 / adapter 3（+3）、intranet-bff 37 + starter 7、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL、零 kernel 改动 |
 | 批次 57 | `29de11cb` | **审批操作类身份越权治理**（批次 56 建议的扩展）：抽出 `requireSessionAccount()` 供 `listMyPending` 与 4 个操作共用；`approve`/`reject` 覆盖 `approver`、`transfer` 覆盖 `currentApprover` 且保留 `targetApprover`（业务参数）、`withdraw` 覆盖 `initiator`（领域层已有发起人校验）；4 个 DTO 身份字段补「服务端忽略」Javadoc。`ApprovalInstanceAdapterTest` 由 3 项扩到 8 项，先红（5 项断言失败）后绿 | approval domain 87 / application 16 / infra 25 / adapter 8（+5）、intranet-bff 37 + starter 7、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity / DDL / kernel / BFF 配置改动 |
 | 批次 58 | `17819ce8` | **用户服务「角色→用户」API 立项 · auth-api 契约**（`2026-11-14-role-user-api-design.md` 批次 58）：新增 `RoleUserQueryApi`（`/role-users/by-roles`）、`ListRoleUsersRequest`（批量 `roleCodes` + `planNo`）、`RoleUserBatchResponse`（roleCode→userNos）；scope 决策按立项 §6 推荐固定 **PLAN 精确 scope**，规避跨计划数据泄漏与 `ProductGateway` Stub 依赖，方案 §4 已同步。新增 `RoleUserQueryApiContractTest` 3 项，先编译红灯后绿 | auth-api 3 项全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增契约、零生产行为改动 |
+| 批次 59 | 本次（未提交） | **auth 供给侧按角色查用户**（立项批次 59）：`AssignmentRepository.findActiveByRoleCodesAndPlan` + Impl（`ROLE_CODE IN` + `SCOPE_DIMENSION='PLAN'` + `SCOPE_VALUE=planNo` + ACTIVE + 未删除，空集合短路）；新增 `RoleUserQueryService`（按角色分组、去重保序、只返回用户编号）与 `RoleUserQueryController`（实现 `RoleUserQueryApi`、`@RequirePermission(AUTH_ASSIGNMENT/VIEW/PLATFORM)`）。补 infra 2 + application 2 + adapter 1 共 5 项测试，先编译红灯后绿；顺带给 auth-adapter 补测试依赖 | auth domain 175 / application 46 / infra 156 / adapter 1、auth-starter 启动、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity/kernel/approval 改动、零 DDL |
 
 ### 23.3 批次 2 范围边界
 
@@ -1919,4 +1920,15 @@ Application 层按用例拆分：
 - **TDD**：`RoleUserQueryApiContractTest` 3 项（`@HttpExchange`/`@PostExchange`/`@RequestBody` 注解、CQE 校验注解、响应分组结构），先编译红灯（3 个契约类不存在）→ 实现后全绿。
 - **边界（如实标注）**：响应只返回用户编号、不携带手机号/姓名等敏感字段；未在结果中出现的角色消费侧按空列表处理；`/plan-members`（`getUsersInSamePlan`）本立项不实现（无消费方）；服务端实现与 `@RequirePermission` 保护在批次 59。
 - **验证**：auth-api 3 项全绿；全仓 `mvn test-compile`、`git diff --check` 通过；纯新增契约、零生产行为改动。
-- **仍未处理**：批次 59（auth 供给侧：按角色/PLAN 查询 + Controller）、60（approval 网关接入 auth-api）、61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）。
+- **仍未处理**：批次 59 已由本批完成（§23.66）；60（approval 网关接入 auth-api）、61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）待推进。
+
+### 23.66 批次 59 范围边界（auth 供给侧按角色查用户）
+
+- **来源**：`2026-11-14-role-user-api-design.md` 批次 59（用户确认按建议推进）。
+- **仓储**：`AssignmentRepository.findActiveByRoleCodesAndPlan(List<String>, String)`；Impl 用 `ROLE_CODE.in(roleCodes) AND SCOPE_DIMENSION='PLAN' AND SCOPE_VALUE=planNo AND STATUS='ACTIVE' AND DELETED=false`，空集合或空 planNo 短路。固定 PLAN 精确 scope，绕开 `ProductGateway` Stub 依赖。
+- **应用**：`RoleUserQueryService.listByRoles(roleCodes, planNo)` → `Map<roleCode, List<userNo>>`，`LinkedHashSet` 去重保序，不含手机号/姓名等敏感字段；零 auth-api DTO 耦合。
+- **适配**：`RoleUserQueryController implements RoleUserQueryApi`，`@RequirePermission(business = "AUTH_ASSIGNMENT", action = "VIEW", category = PLATFORM)`，包装 `RoleUserBatchResponse`。
+- **TDD**：`AssignmentRepositoryImplTest` 2 项（空短路、`QueryWrapper.toSQL()` 条件断言）+ `RoleUserQueryServiceTest` 2 项（分组去重、空结果）+ `RoleUserQueryControllerTest` 1 项（委托与包装），先编译红灯（3 个生产类/方法不存在）→ 实现后 5 项全绿。期间修正两处夹具：auth-adapter 缺 `spring-boot-starter-test`（补 test scope 依赖）、`RoleUserQueryServiceTest` 嵌套 stubbing（改为先构造 mock 列表再 `when(...)`）。
+- **边界（如实标注）**：① 权限项 `AUTH_ASSIGNMENT/VIEW` 由 `PermissionRegistrationRunner` 自注册，运行时需 auth 数据侧已有对应权限项，单测直接调 Controller 不触发 AOP；② 响应只含用户编号，未在结果中出现的角色消费侧按空列表处理；③ CUSTOMER/PRODUCT/GLOBAL 继承展开仍不支持（组织目录未接）；④ **未新增 DDL/索引**（`t_auth_assignment` 现有列足够；数据量增长后应补 `(role_code, scope_dimension, scope_value, status)` 联合索引）。
+- **验证**：auth domain 175 / application 46 / infrastructure 156 / adapter 1、auth-starter 启动、annuity E2E 10 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity / kernel / approval 改动、零 DDL。
+- **同步**：清单/计划/立项方案标注批次 59 完成。**仍未处理**：批次 60（approval 网关接入 auth-api）、61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）。

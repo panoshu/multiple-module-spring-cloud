@@ -364,7 +364,8 @@
 - 交付物：`2026-11-14-role-user-api-design.md`（立项方案，非实施）。目标解锁 approval 的 `SPECIFIED_ROLE` 节点、替掉 `RoleUserGatewayImpl` stub。
 - 状态：**推进中**（用户已确认按建议开工）。核实发现现 SPI `getUsersByRole(String)` 缺 scope、`ApprovalNodeResolver` 未接线、`getUsersInSamePlan` 无消费方、`ProductGateway` 仅 Stub；auth 侧有 `t_auth_assignment` 数据但缺按角色查询与对外 API。
   - **批次 58 已完成**（§23.65）：auth-api `RoleUserQueryApi` / `ListRoleUsersRequest`（批量 roleCodes + planNo，PLAN 精确 scope）/ `RoleUserBatchResponse`，契约测试 3 项先红后绿；方案 §4 已同步为落地形态。
-  - 59（auth 供给侧）→ 60（approval 网关）→ 61（能力 C 解锁 + 领域接线）待推进。
+  - **批次 59 已完成**（§23.66）：`findActiveByRoleCodesAndPlan` 仓储 + `RoleUserQueryService` + `RoleUserQueryController`，5 项测试先红后绿，auth 全模块与 auth-starter 启动全绿。
+  - 60（approval 网关）→ 61（能力 C 解锁 + 领域接线）待推进。
 
 ---
 

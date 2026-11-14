@@ -10,6 +10,7 @@ import com.example.auth.infrastructure.assignment.converter.AssignmentConverter;
 import com.example.auth.infrastructure.assignment.entity.AssignmentDO;
 import com.example.auth.infrastructure.assignment.mapper.AssignmentMapper;
 import com.example.auth.types.AssignmentId;
+import com.example.auth.types.AssignmentScopeDimension;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -120,6 +121,26 @@ public class AssignmentRepositoryImpl implements AssignmentRepository {
     List<AssignmentDO> doList = assignmentMapper.selectListByQuery(
       QueryWrapper.create()
         .where(ASSIGNMENT_DO.STATUS.eq(AssignmentStatus.ACTIVE.name()))
+        .and(ASSIGNMENT_DO.DELETED.eq(false))
+    );
+
+    return doList.stream()
+      .map(converter::toDomain)
+      .toList();
+  }
+
+  @Override
+  public List<AgentIdentityAssignment> findActiveByRoleCodesAndPlan(List<String> roleCodes, String planNo) {
+    if (roleCodes == null || roleCodes.isEmpty() || planNo == null || planNo.isBlank()) {
+      return List.of();
+    }
+
+    List<AssignmentDO> doList = assignmentMapper.selectListByQuery(
+      QueryWrapper.create()
+        .where(ASSIGNMENT_DO.ROLE_CODE.in(roleCodes))
+        .and(ASSIGNMENT_DO.SCOPE_DIMENSION.eq(AssignmentScopeDimension.PLAN.name()))
+        .and(ASSIGNMENT_DO.SCOPE_VALUE.eq(planNo))
+        .and(ASSIGNMENT_DO.STATUS.eq(AssignmentStatus.ACTIVE.name()))
         .and(ASSIGNMENT_DO.DELETED.eq(false))
     );
 
