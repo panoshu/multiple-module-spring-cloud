@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * createTime/updateTime 由 Converter 从领域对象映射，不使用 ORM 自动填充。
  */
 @Data
-@Table("t_step_execution")
+@Table("t_business_step_execution")
 public class StepExecutionDO {
 
   @Id(keyType = KeyType.None)

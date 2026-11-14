@@ -22,7 +22,7 @@ import static com.example.core.infrastructure.business.entity.table.StepExecutio
  * 步骤执行仓储实现。
  * <p>
  * 复用 {@link AbstractBusinessRepository} 的通用 CRUD 与乐观锁；StepExecution 不注册领域事件，
- * 故发布环节为空操作。查询语义与 t_step_execution 的唯一索引共同保证幂等与单一运行中执行。
+ * 故发布环节为空操作。查询语义与 t_business_step_execution 的唯一索引共同保证幂等与单一运行中执行。
  * <p>
  * 本类<b>不标注 {@code @Repository}</b>，由具体业务服务继承并标注，与其余 kernel 仓储一致。
  */

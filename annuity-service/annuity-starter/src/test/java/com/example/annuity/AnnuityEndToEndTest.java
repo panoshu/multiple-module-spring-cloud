@@ -167,7 +167,7 @@ class AnnuityEndToEndTest {
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
 
     // 步骤执行记录随流程推进真实落库（§9.1：与申请单状态、Outbox 同事务）
-    Long executionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_step_execution")
+    Long executionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_step_execution")
       .query(Long.class).single();
     assertThat(executionCount).isGreaterThanOrEqualTo(4L);
     Long segmentCount = jdbcClient.sql("SELECT COUNT(*) FROM t_id_generator")

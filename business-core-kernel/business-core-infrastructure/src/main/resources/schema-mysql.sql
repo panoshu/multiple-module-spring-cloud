@@ -365,7 +365,7 @@ CREATE INDEX idx_business_form_customer_no ON t_business_form (customer_no);
 CREATE INDEX idx_business_form_create_time ON t_business_form (create_time);
 
 -- ===== 步骤执行记录（spec §7.2 / §16.3） =====
-CREATE TABLE IF NOT EXISTS t_step_execution
+CREATE TABLE IF NOT EXISTS t_business_step_execution
 (
   id                  BIGINT       NOT NULL,
   application_id      VARCHAR(64)  NOT NULL,
@@ -388,12 +388,12 @@ CREATE TABLE IF NOT EXISTS t_step_execution
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='步骤执行记录';
 
-CREATE UNIQUE INDEX uk_step_execution_app_step_attempt
-  ON t_step_execution (application_id, step_code, attempt);
-CREATE UNIQUE INDEX uk_step_execution_request_no
-  ON t_step_execution (request_no);
-CREATE INDEX idx_step_execution_app_status
-  ON t_step_execution (application_id, status);
+CREATE UNIQUE INDEX uk_business_step_execution_app_step_attempt
+  ON t_business_step_execution (application_id, step_code, attempt);
+CREATE UNIQUE INDEX uk_business_step_execution_request_no
+  ON t_business_step_execution (request_no);
+CREATE INDEX idx_business_step_execution_app_status
+  ON t_business_step_execution (application_id, status);
 
 -- ===== 外部协作记录（spec §7.3 / §16.1） =====
 CREATE TABLE IF NOT EXISTS t_business_external_interaction

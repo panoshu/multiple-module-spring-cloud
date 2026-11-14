@@ -512,7 +512,7 @@ COMMENT
 ON COLUMN t_business_form.version         IS '乐观锁版本号';
 
 -- ===== 步骤执行记录（spec §7.2 / §16.3） =====
-CREATE TABLE IF NOT EXISTS t_step_execution
+CREATE TABLE IF NOT EXISTS t_business_step_execution
 (
   id                  BIGINT       NOT NULL,
   application_id     VARCHAR(64) NOT NULL,
@@ -535,12 +535,12 @@ CREATE TABLE IF NOT EXISTS t_step_execution
   PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uk_step_execution_app_step_attempt
-  ON t_step_execution (application_id, step_code, attempt);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_step_execution_request_no
-  ON t_step_execution (request_no);
-CREATE INDEX IF NOT EXISTS idx_step_execution_app_status
-  ON t_step_execution (application_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_business_step_execution_app_step_attempt
+  ON t_business_step_execution (application_id, step_code, attempt);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_business_step_execution_request_no
+  ON t_business_step_execution (request_no);
+CREATE INDEX IF NOT EXISTS idx_business_step_execution_app_status
+  ON t_business_step_execution (application_id, status);
 
 -- ===== 外部协作记录（spec §7.3 / §16.1） =====
 CREATE TABLE IF NOT EXISTS t_business_external_interaction
