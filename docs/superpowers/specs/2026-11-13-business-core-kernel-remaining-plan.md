@@ -316,6 +316,10 @@
 - 范围：P1-1（`reconcileAllActive` 改按状态索引查询替代 `loadAll` 全表扫描）+ P1-2（`ExternalInteractionRecoveryService` 按单条加事务包装，外部查询留事务外）。
 - 状态：**完成**（设计文档 §23.53）。TDD 先红后绿；kernel 全模块、架构、annuity E2E 全绿；零 annuity 改动。优先级清单 P1 项全部清空，仅剩 P0-2 待单独确认。
 
+#### 批次 47 — P0-2 annuity 生产 profile 治理（用户解冻 annuity）
+- 范围：移除 annuity `application.yml` 的 `spring.profiles.include: local`（消除 dev 配置泄漏到 prod、使 prod fail-fast 不再被 local 绕过）；`application-test.yml` 补测试专用验签密钥使 test profile 自包含；新增 `ProductionProfileIsolationTest` 契约（主配置不无条件 include 非生产 profile + prod 触发 fail-fast）。
+- 状态：**完成**（设计文档 §23.54）。TDD 先红后绿；annuity-starter 9 项、kernel 全模块、架构、全仓 test-compile 全绿。**P0/P1 全部清空**。
+
 ---
 
 ## 6. 全局约束与验收基线

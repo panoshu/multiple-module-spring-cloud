@@ -34,14 +34,14 @@
 
 ## 3. 优先级清单
 
-> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-3 ✅ 已核查并机器化（批次 45）；P1-3 ✅ 已完成（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）——**P0/P1 仅剩 P0-2 待单独确认**；P2 全部需先出专项方案；P3 仅记录。
+> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-2 ✅ 已完成（批次 47，§23.54，用户解冻 annuity）；P0-3 ✅ 已核查并机器化（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）；P1-3 ✅ 已完成（批次 45）——**P0/P1 全部清空**；P2 全部需先出专项方案；P3 仅记录。
 
 ### P0 — 上线前必做（正确性 / 安全）
 
 | # | 项 | 依据（本次核实） | 影响面 | 建议处置 |
 |---|---|---|---|---|
 | P0-1 | **【新发现·台账未记录】重复出站事件监听器** | `OutboundFileEventListener` 与 `OutboundFileGeneratedEventListener` 同为 `@Component` + `@EventListener`，监听同一 `OutboundFileGeneratedEventDTO`。旧类 `handleOutboundFileGenerated` **无 `tryConsume`、绕过 `CallbackCorrelationService`**，直接 `advanceByOutboundFile`；新类有回执 + 关联 + `completeWaitingStep`。同一事件被双份处理，重复事件必然重复推进；`grep` 确认零测试覆盖 | 2 个类 + 引用其名的注释/Mock 网关，规模小但语义重 | 拆 1–2 个小批次：① 明确唯一入口，退役或改造旧 listener（补 `tryConsume` 或改为委托新入口）；② 补契约测试断言同一事件只推进一次、重复 eventId 被短路。先红后绿 |
-| P0-2 | **annuity 生产 profile 治理** | `annuity-starter/src/main/resources/application.yml:26` 有 `spring.profiles.include: local`；`KernelProductionReadinessValidator` 的 `NON_PRODUCTION_PROFILES = {test, local, dev}`，因此 prod 环境也含 `local` → 启动跳过 fail-fast，会话验签密钥缺失/为 `dev-` 占位时静默降级 | 1 行配置；需验证不破坏 `@ActiveProfiles("test")` 的 H2 E2E | 改为按环境注入（prod 不 include local），或显式设 `core.kernel.production.fail-fast=false` 并注明仅示例服务；补一条「prod profile 触发校验」的测试 |
+| P0-2 | **annuity 生产 profile 治理** | `annuity-starter/src/main/resources/application.yml:26` 有 `spring.profiles.include: local`；`KernelProductionReadinessValidator` 的 `NON_PRODUCTION_PROFILES = {test, local, dev}`，因此 prod 环境也含 `local` → 启动跳过 fail-fast，会话验签密钥缺失/为 `dev-` 占位时静默降级 | 1 行配置；需验证不破坏 `@ActiveProfiles("test")` 的 H2 E2E | 改为按环境注入（prod 不 include local），或显式设 `core.kernel.production.fail-fast=false` 并注明仅示例服务；补一条「prod profile 触发校验」的测试 ✅ 已由批次 47 完成（§23.54） |
 | P0-3 | **RocketMQ 消费入口一致性** | 3 个 listener 的 `handleXxx` 注释写明「生产由 RocketMQ 消费者直接调用」，但仓库内未发现对应 consumer；若外部消费者直调 `handleXxx`，回执与关联的覆盖需逐一核对 | 需先定位生产消费端，可能在其它仓库 | 与 P0-1 合并核查：列出所有 `handleXxx` 入口，确认每条都经 `tryConsume`；无 consumer 则记为「待接入时强制约束」 |
 
 ### P1 — 近期做（改动小、收益明确）

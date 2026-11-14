@@ -1178,6 +1178,7 @@ Application 层按用例拆分：
 | 批次 45 | `b1b3222d` | **修复重复出站事件监听器**（`2026-11-14-remaining-work-priority.md` P0-1 + P0-3 + P1-3）：新增 `arch-tests/EventListenerUniquenessTest` 2 条契约——同一集成事件 DTO 只允许一个 `@EventListener` 入口、所有集成事件 listener 必须持有 `EventReceiptGateway`（先红：唯一性 2、旧类缺回执）；退役旧 `OutboundFileEventListener` 与死代码 `FlowOrchestrationService.advanceByOutboundFile`，唯一入口改为 `OutboundFileGeneratedEventListener`（含 `tryConsume` + 回调关联 + `NO_CORRELATION` 回退）；更新 file-api/file-domain Javadoc 指向新监听器。P0-3 核查确认所有 `handleXxx`/`onXxx` 入口均经回执；P1-3 更新 CODEBUDDY.md Known Gaps 与 §23.46 过时条目 | `mvn clean install -DskipTests` 后契约测试 2 项全绿；annuity E2E 6 / 自动推进 E2E 1、kernel 全模块、架构测试全绿；全仓 `test-compile`、`git diff --check` 通过 |
 
 | 批次 46 | `2eae267e` | **恢复链路扫描与事务边界**（优先级清单第二批 P1-1 + P1-2）：P1-1 新增 `BatchRepository.findByStatuses(Collection<BatchStatus>)` 并由 `BusinessBatchRepositoryImpl` 用 `STATUS IN` 走 `idx_business_batch_status`（逻辑删除由 MyBatis-Flex 自动过滤），`BusinessBatchAppService.reconcileAllActive()` 由 `loadAll()` 全表扫描改为按 CREATED/PROCESSING 查询；P1-2 `ExternalInteractionRecoveryService` 改显式构造注入 `PlatformTransactionManager`，每条记录的「状态变更 + save + 事件发布」包在独立 `TransactionTemplate` 事务中，`reconcileOne` 的外部审批查询保持在事务外。补应用/infra/恢复服务测试 | kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿（Spring 成功注入 `PlatformTransactionManager`）；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
+| 批次 47 | 本次（未提交） | **P0-2 annuity 生产 profile 治理**（用户解冻 annuity）：移除 `application.yml` 的 `spring.profiles.include: local`（原使 prod 也带 `local` profile、`KernelProductionReadinessValidator.isNonProduction()` 误判跳过 fail-fast、验签密钥缺失或 `dev-` 占位时静默降级）；主配置改为注释指引「本地显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key` 使 test profile 自包含、不再隐式依赖 local。新增 `ProductionProfileIsolationTest` 2 项契约：① 主配置不无条件 include 非生产 profile（`YamlPropertySourceLoader` 静态锁定，先红后绿）；② prod profile 缺密钥触发 fail-fast | annuity-starter 9 项（契约 2 + 自动推进 E2E 1 + 原 E2E 6）全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1680,7 +1681,7 @@ Application 层按用例拆分：
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
-- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）；批次扫描按状态索引与恢复任务事务边界由批次 46 完成（§23.53）。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）；批次扫描按状态索引与恢复任务事务边界由批次 46 完成（§23.53）；annuity 生产 profile 治理由批次 47 完成（§23.54），**P0/P1 全部清空**。
 - **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级，含纠偏表与批次推进记录）。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
@@ -1778,4 +1779,15 @@ Application 层按用例拆分：
 - **兼容性**：`ExternalInteractionRecoveryService` 是 `@Service` 组件扫描注册，Spring Boot 在存在 `PlatformTransactionManager` 时自动装配，annuity E2E（H2 数据源）验证 7 项全绿、无 `NoSuchBeanDefinitionException`。`ExternalInteractionRecoveryJob` 通过接口持有该服务，不受构造变化影响。批次 39-1 的 `ExternalCollaborationAcceptanceTest` 3 处构造调用同步改为 helper。
 - **验证**：kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
 - **优先级清单同步**：P1-1 / P1-2 标注完成，§23.46 遗留清单移除这两项，**剩余 P1 项全部清空**。
-- **仍未处理**：P0-2（annuity 生产 profile，触及冻结配置需单独确认）、优先级清单 P2 全部（需专项方案）、P3（仅记录），以及多进程真 Redis 锁集成测试。
+- **仍未处理**：P0-2 已由批次 47 完成（§23.54）；批次 48 配套修正 `KernelProductionReadinessValidator` 开关语义；优先级清单 P2 全部（需专项方案）、P3（仅记录），以及多进程真 Redis 锁集成测试。
+
+### 23.54 批次 47 范围边界（P0-2 annuity 生产 profile 治理）
+
+- **来源**：`2026-11-14-remaining-work-priority.md` P0-2。用户明确授权「解冻 annuity」后推进——这是针对本批次的有限解冻，仅改 annuity 的 2 份配置文件并新增 1 个测试类，不触碰 annuity 业务实现代码。
+- **缺陷**：`annuity-starter/src/main/resources/application.yml:26` 的 `spring.profiles.include: local` 无条件把 `local` 加入所有环境的 active profiles；`KernelProductionReadinessValidator.NON_PRODUCTION_PROFILES = {test, local, dev}` 只做名单包含判断，prod 也因带 `local` 被判为非生产 → 跳过 fail-fast，`application-local.yml` 的 `dev-session-signature-key-2026` 占位密钥随 include 进入 prod，会话验签静默降级。
+- **修复**：移除主配置的 `profiles.include: local`，改为注释说明「prod 不再 include 非生产 profile，本地开发显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key: test-session-signature-key-2026`，使 `@ActiveProfiles("test")` 上下文自包含、不再隐式依赖 local 的 dev 密钥。
+- **TDD**：新增 `ProductionProfileIsolationTest` 2 项——① 用 `YamlPropertySourceLoader` 加载 classpath `application.yml`，断言 `spring.profiles.include` 不含 `local/dev/test`（现状读到 `local` → 红灯，移除后转绿）；② 用 `MockEnvironment(activeProfiles=prod)` + 真实 `KernelProductionReadinessValidator`，断言缺密钥抛 `IllegalStateException`（锁定 prod 触发校验、不被非生产 profile 绕过）。
+- **E2E 影响面**：移除 include 后 test 上下文不再加载 `application-local.yml`（Nacos/本地 PG/httpexchange/日志级别等本地配置本就被 `application-test.yml` 覆盖或禁用），实测 annuity-starter 全量 9 项全绿，无 `NoSuchBeanDefinitionException`/`BeanCreationException`。
+- **范围边界**：全仓 6 个服务的 `application.yml` 都有 `include: local`，但仅 annuity 依赖 `business-core-adapter` 并装配该 validator，故 P0-2 只治理 annuity；其余服务同类隐患记为此处已知项（不影响 kernel fail-fast）。`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 语义与 Javadoc 矛盾（`=false` 实际启用、`=true` 才关闭），默认行为正确、零风险，由批次 48 单独修正。
+- **验证**：annuity-starter 9 项全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过。
+- **优先级清单同步**：P0-2 标注完成，§23.46 遗留清单移除「annuity 生产 profile 治理」。**P0/P1 至此全部清空**。
