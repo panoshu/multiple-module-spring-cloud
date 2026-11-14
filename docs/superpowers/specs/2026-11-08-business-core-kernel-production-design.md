@@ -1851,4 +1851,4 @@ Application 层按用例拆分：
 - **文档同步**：`docs/form-upload-and-outbound-flow.md` 第 12 步配置示例、`business-core-kernel/CODEBUDDY.md` 两处（Controller 启用说明与接入步骤 8）改为新键；设计文档 §23.36 历史台账保留当时键名并补注「批次 52 已统一」。`arch-tests` 新测试 Javadoc 中的 `core-kernel.` 为「被禁止的遗留前缀」说明与常量本身，属规则定义、非配置引用，保留。
 - **P3 清单重排**：P3 段改为带「核实结论 / 处置」的表格，标题标注「逐项核实后重排」；P3-1 纠偏为 3 个 stub、P3-2 标 ✅ 已修复、P3-3 维持记录并写明触发条件不变。
 - **验证**：arch-tests 17（原 16 + 新 1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；`grep` 确认生产代码与 yml 无旧前缀残留（仅规则定义与历史补注保留）。
-- **仍未处理**：P3-1（approval stub，范围外）、P3-3（MDC 常量，过早抽象）；§21.4 第 1/6 条字面张力与第 4 条部分机器化边界；多进程真 Redis 锁集成测试（P2-4 暂缓）。
+- **仍未处理**：P3-1（approval stub）**已单独立项**（`2026-11-14-p3-approval-stub-cross-service-design.md`，跨服务设计、待开放点确认）、P3-3（MDC 常量，过早抽象）；§21.4 第 1/6 条字面张力与第 4 条部分机器化边界；多进程真 Redis 锁集成测试（P2-4 暂缓）。
