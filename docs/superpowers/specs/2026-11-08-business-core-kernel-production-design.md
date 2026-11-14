@@ -1169,6 +1169,8 @@ Application 层按用例拆分：
 
 | 批次 42 | `d2b9aa09` | **修复审批驳回/撤回回调状态误判**（§23.46 偏差 4 纠正）：`CallbackCorrelationService` 原用 `outcome == FAILED ? FAILED : SUCCEEDED`，把 `REJECTED`/`WITHDRAWN`（及 null）静默当成功，导致驳回/撤回时 `ExternalInteraction`/`StepExecution` 为 SUCCEEDED 而申请单已被终止；改为 `resolveTargetStatus` 显式 switch（仅 SUCCEEDED→SUCCEEDED，FAILED/REJECTED/WITHDRAWN→FAILED，null 保守按 FAILED），switch 穷尽枚举常量迫使未来新增结果显式定义映射；同步修正 `CallbackOutcome` Javadoc（原「协作完成」注释与修复后行为矛盾）。补 `CallbackCorrelationServiceTest` 2 项（REJECTED/WITHDRAWN 循环 + null 保守），先红后绿 | 新增 2 项测试，`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
 
+| 批次 43-1 | 本次（未提交） | **并发推进只产生一次有效跃迁**（§23.46 偏差 3 首个切片）：新增 `ConcurrentAdvanceAcceptanceTest`，用真实 `FlowOrchestrationService` + 内存 `DistributedLock`（按申请单 key 互斥，等价多节点共享一把锁）+ 状态化 `StepExecutionRepository`（`findByRequestNo` 真实反映 `save`，等价唯一索引与幂等查询）+ `CountDownLatch` 两线程并发调相同 requestNo 的 `advanceApplication`，断言只保存一条步骤执行、只跃迁一次。反向禁用幂等短路验证 `save` 变 2 次红灯，连续 5 次运行全绿 | 新增验收测试 1 项；kernel domain 174 / application 219（+1）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1717,3 +1719,12 @@ Application 层按用例拆分：
 - **验证**：`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
 - **台账同步**：§23.46 偏差 4 更正为「已修复」、§21.3 核对表补该测试、§23.48 末行移除偏差 4；计划文档新增批次 42。
 - **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）及其它阶段 5 遗留项。
+
+### 23.50 批次 43 拆分与 43-1 范围边界（确定性并发验收）
+
+- **选题依据**：§23.46 偏差 3 指出「多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测」。按「不要超级计划」拆 43-1（并发推进幂等）与 43-2（乐观锁写冲突不覆盖新状态）。
+- **为何不用真 H2 集成**：评估确认 kernel 的仓储测试全部是 Mockito 单测（mock mapper），没有 H2/Spring 集成设施；从零搭建真数据库上下文需新增 DDL、数据源、MyBatis-Flex 装配与 Spring 上下文，规模大且线程调度结果不稳定。改用<b>确定性并发</b>：内存锁按 key 互斥模拟多节点共享分布式锁，状态化仓储让幂等查询真实反映写入，CAS 模拟数据库乐观锁；`CountDownLatch` 只负责同时起跑，结果不依赖调度顺序。
+- **43-1 实现**：真实 `FlowOrchestrationService`（复用编排器测试的最小 stub 集）、`InProcessDistributedLock`（`ReentrantLock` 按 `appId` key 互斥，实现 `DistributedLock.lockAndRun`）、状态化 `StepExecutionRepository`（`ConcurrentHashMap`，`findByRequestNo` 从 `save` 写入的 map 查询）、`CountDownLatch` 让 2 个线程同时用相同 requestNo 调 `advanceApplication`。锁串行化后第一个节点保存步骤执行，第二个节点在锁内查到已存在 requestNo 被幂等短路。
+- **防假绿与稳定性**：反向把 `findByRequestNo` 临时改成恒返回 empty，测试红灯并明确报出 `save` 被调用 2 次，证明测试真的在检验幂等保护、不是空转；改回后连续运行 5 次全部 exit=0，确认无调度 flaky。线程体用 `try/finally { done.countDown(); }`，保证异常能经 `Future.get()` 传播而非伪装成超时。
+- **验证**：新增验收测试 1 项；kernel domain 174 / application 219（+1）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。
+- **仍未处理**：43-2（乐观锁并发写冲突不覆盖新状态，落在 infrastructure 模块）；偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。

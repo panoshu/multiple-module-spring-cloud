@@ -297,6 +297,11 @@
 - 方案（用户确认「修缺陷」）：`correlate` 改为 `resolveTargetStatus` 显式 switch 穷尽映射（SUCCEEDED→SUCCEEDED，FAILED/REJECTED/WITHDRAWN→FAILED，null 保守按 FAILED），同步修正 `CallbackOutcome` Javadoc；补 2 项契约测试先红后绿。
 - 状态：**完成**（设计文档 §23.49）。§23.46 偏差 4 更正为已修复，§21.3 核对表补测试，§23.48 末行移除偏差 4。
 
+#### 批次 43 — 确定性并发验收（§23.46 偏差 3）
+- 背景：偏差 3「多节点真并发、乐观锁写冲突覆盖未做集成测试」。kernel 仓储测试全是 Mockito 单测、无 H2 集成设施，从零搭真 DB 上下文会变成大工程且线程调度不稳定，故采用状态化 fake + CountDownLatch 的确定性并发。
+- 拆分：**43-1**（并发推进只产生一次有效跃迁，application 模块 `ConcurrentAdvanceAcceptanceTest`）+ **43-2**（乐观锁并发写冲突不覆盖新状态，infrastructure 模块）。
+- 状态：**43-1 已完成**（设计文档 §23.50），43-2 待推进。43-1 含反向禁用幂等短路的红灯验证与连续 5 次稳定性运行。
+
 ---
 
 ## 6. 全局约束与验收基线
