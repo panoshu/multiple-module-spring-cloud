@@ -1171,7 +1171,7 @@ Application 层按用例拆分：
 
 | 批次 43-1 | `92da26a6` | **并发推进只产生一次有效跃迁**（§23.46 偏差 3 首个切片）：新增 `ConcurrentAdvanceAcceptanceTest`，用真实 `FlowOrchestrationService` + 内存 `DistributedLock`（按申请单 key 互斥，等价多节点共享一把锁）+ 状态化 `StepExecutionRepository`（`findByRequestNo` 真实反映 `save`，等价唯一索引与幂等查询）+ `CountDownLatch` 两线程并发调相同 requestNo 的 `advanceApplication`，断言只保存一条步骤执行、只跃迁一次。反向禁用幂等短路验证 `save` 变 2 次红灯，连续 5 次运行全绿 | 新增验收测试 1 项；kernel domain 174 / application 219（+1）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
-| 批次 43-2 | 本次（未提交） | **乐观锁并发写冲突不覆盖新状态**（偏差 3 收口）：新增 infrastructure 模块 `OptimisticLockConcurrencyTest`，真实 `BusinessBatchRepositoryImpl` + 状态化 fake mapper（`bothRead` 屏障保证两节点读到同一版本、`update` 用 `AtomicInteger` CAS 等价 DB 版本 WHERE 条件），两节点基于 version=3 并发 save，断言一个成功一个 `OPTIMISTIC_LOCK_FAILURE`、库版本只 +1；反向去掉 CAS 验证两个都成功红灯，连续 5 次全绿。**批次 43 全部完成，§23.46 偏差 3 收敛** | kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+| 批次 43-2 | `64422c14` | **乐观锁并发写冲突不覆盖新状态**（偏差 3 收口）：新增 infrastructure 模块 `OptimisticLockConcurrencyTest`，真实 `BusinessBatchRepositoryImpl` + 状态化 fake mapper（`bothRead` 屏障保证两节点读到同一版本、`update` 用 `AtomicInteger` CAS 等价 DB 版本 WHERE 条件），两节点基于 version=3 并发 save，断言一个成功一个 `OPTIMISTIC_LOCK_FAILURE`、库版本只 +1；反向去掉 CAS 验证两个都成功红灯，连续 5 次全绿。**批次 43 全部完成，§23.46 偏差 3 收敛** | kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
 ### 23.3 批次 2 范围边界
 
