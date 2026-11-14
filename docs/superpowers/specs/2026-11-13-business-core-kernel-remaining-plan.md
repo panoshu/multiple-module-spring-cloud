@@ -370,9 +370,9 @@
   - **批次 62 已完成**（§23.69）：聚合根接收实际审批人列表并校验身份 / 判断会签，Resolver 接入主链路，领域测试 +6 项；用户按框架视角授权推进。
   - **58–62 全部完成，立项收口**；剩余为组织目录接入、SAME_PLAN/LEVEL_UP 节点等框架外遗留。
 
-#### 追加立项 — 组织目录接入与 SAME_PLAN / LEVEL_UP 节点（批次 66–69 建议）
-- 交付物：`2026-11-14-organization-directory-design.md`（立项方案，非实施）。用户选择「立项组织目录」后，核实发现 `ProductGateway`/`PlanSnapshot.parentPlanNo`/`PlanReachabilityService` 已齐备、仓库外无真实主数据系统。
-- 状态：**待确认**。契约草案（新建 `PlanDirectoryApi` 的 `/members`+`/parent`）、分批 66（auth-api 契约）→ 67（auth 供给侧 + 可替换内存实现）→ 68（approval SAME_PLAN）→ 69（LEVEL_UP）、7 个开放点。确认后逐批开工，Stub 保留兜底、零 DDL。
+#### 追加立项 — 组织目录接入与 SAME_PLAN / LEVEL_UP 节点（批次 66–69）
+- 交付物：`2026-11-14-organization-directory-design.md`（立项方案 + 开工决策记录）。用户选择「立项组织目录」后，核实发现 `ProductGateway`/`PlanSnapshot.parentPlanNo`/`PlanReachabilityService` 已齐备、仓库外无真实主数据系统。
+- 状态：**§6 开放点已按推荐默认值决策落盘并开工**（用户既有「采纳建议 / 连续推进 / 每批自动提交推送」偏好，不再逐项确认）。契约定稿为新建 `PlanDirectoryApi` 的 `/members`+`/parent`；分批 66（auth-api 契约）→ 67（auth 供给侧 + 可替换内存实现）→ 68（approval SAME_PLAN）→ 69（LEVEL_UP）。**批次 66 已完成（§23.73）**，Stub 保留兜底、零 DDL。
 
 ---
 

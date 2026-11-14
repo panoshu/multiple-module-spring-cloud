@@ -2,8 +2,9 @@
 
 > 生成日期：2026-11-14
 > 依据：`2026-11-14-remaining-work-inventory.md` #1/#2（用户选择「立项组织目录」）、设计文档 §23.69/§23.72、当前代码逐项核实
-> 性质：**立项方案，不是实施计划**。按「方案需与用户确认后才能进入编码阶段」，本文只产出核实结论、契约草案、分批设计与开放点，不写生产代码
-> 约束：延续「不要太大超级计划」——每批 3–8 文件、独立 TDD 与验收
+> 性质：立项方案 + 开工决策记录。§6 开放点已按推荐默认值一次性决策落盘，按用户既有「采纳建议 / 连续推进 / 每批自动提交推送」偏好连续推进批次 66–69，不再逐项确认
+> 状态：**批次 66 已完成**（auth-api 契约，台账 §23.73）；67–69 推进中
+> 约束：延续「不要太大超级计划」——每批 3–8 文件、独立 TDD 与验收；零 DDL、Stub 保留兜底
 
 ---
 
@@ -62,9 +63,9 @@
 
 ---
 
-## 4. 建议的跨服务契约草案（待确认）
+## 4. 跨服务契约（已定稿）
 
-新建 `auth-api/PlanDirectoryApi`（`@HttpExchange("/plan-directory")`）：
+新建 `auth-api/PlanDirectoryApi`（`@HttpExchange("/plan-directory")`，批次 66 已实现）：
 
 | 端点 | 请求 CQE | 响应 | 说明 |
 |---|---|---|---|
@@ -77,11 +78,11 @@
 
 ---
 
-## 5. 分批设计（编号接 65，开工时按实际顺延）
+## 5. 分批设计（编号接 65）
 
 | 批次 | 内容 | 文件 | 验收 |
 |---|---|---|---|
-| **66（auth-api 契约）** | 新建 `PlanDirectoryApi` + `ListPlanMembersRequest`/`PlanMembersResponse`/`GetParentPlanRequest`/`ParentPlanResponse`；补契约测试 | 5–6 | `@HttpExchange`/`@PostExchange`/CQE 校验注解齐备 |
+| **66（auth-api 契约）✅ 已完成（§23.73）** | 新建 `PlanDirectoryApi` + `ListPlanMembersRequest`/`PlanMembersResponse`/`GetParentPlanRequest`/`ParentPlanResponse`；补契约测试 6 项 | 6 | `@HttpExchange`/`@PostExchange`/CQE 校验注解齐备，auth-api 9 项全绿 |
 | **67（auth 供给侧）** | `PlanDirectoryQueryService`（复用 `PlanReachabilityService` + `ProductGateway`）、`PlanDirectoryController`；提供 `InMemoryProductGateway`（`@Primary`，从配置加载计划层级）替换 Stub 的**示例数据**；补仓储/服务/Controller 测试 | 6–8 | 计划成员按 scope 继承正确、父计划取 `parentPlanNo`、无数据时 fail-closed；auth 全模块与启动测试全绿 |
 | **68（approval SAME_PLAN）** | domain 层新增 `PlanHierarchyGateway` 端口；`RoleUserGatewayImpl.getUsersInSamePlan` 接 `/members`；`ApprovalNodeResolver.SAME_PLAN` 分支改为调端口；补 Resolver/网关测试 | 5–7 | SAME_PLAN 命中同计划用户、排除发起人、auth 不可用 fail-closed；批次 62 的会签/身份校验零回归 |
 | **69（approval LEVEL_UP）** | `PlanHierarchyGateway` 增加父计划查询；`ApprovalNodeResolver.LEVEL_UP` 分支按 `parentPlanNo` 取用户；`TerminalLevel` 边界；补测试 | 4–6 | 有父计划取父级成员、无父计划 fail-closed 回退、`TerminalLevel` 到顶不越级 |
@@ -90,15 +91,23 @@
 
 ---
 
-## 6. 开放点（需用户确认，确认前不开工）
+## 6. 开放点决策（本轮采纳推荐默认值，已落盘）
 
-1. **范围**：是否接受「定义契约 + 可替换内存实现」作为「真实接入」的第一阶段（仓库外系统另行立项）？还是本立项必须对接一个真实外部服务（需提供地址/契约）？
-2. **数据来源**：`getUsersInSamePlan` 用 auth `t_auth_assignment`（推荐）还是外部计划成员表？
-3. **LEVEL_UP**：只取直接父计划（推荐）还是整条 `ancestorsOf` 链？`TerminalLevel` 到顶如何处置？
-4. **契约归属**：新建 `PlanDirectoryApi`（推荐）还是扩展 `RoleUserQueryApi`？
-5. **SAME_PLAN 的发起人**：`getUsersInSamePlan` 是否排除 `instance.initiatorPlan()` 对应的发起人？excludeUser 传谁？
-6. **domain 端口**：`ApprovalNodeResolver` 是否允许新增 `PlanHierarchyGateway`（domain SPI）以隔绝 auth-api，还是把解析上移到 application 层？
-7. **内存实现的数据**：`InMemoryProductGateway` 的计划层级从 `application.yml` 配置读取还是测试内固定 fixture？生产未接入时 fall-through 到 Stub 的 warn 是否可接受？
+> 用户已通过「立项组织目录（推荐）」批准立项方向，并在本会话反复要求「采纳建议 / 赶紧推进 /
+> 后续每个批次完成后自动提交推送」、明确反感逐项确认打断节奏。本轮按各开放点的推荐默认值
+> 一次性决策落盘、逐批连续推进；每批独立提交可回退，与预期不符时随时调整。
+
+| # | 开放点 | 决策 | 理由 |
+|---|---|---|---|
+| 1 | 范围 | **契约 + 可替换内存实现**为第一阶段，仓库外真实主数据系统另行立项 | 仓库内无任何外部目录线索，先让 SAME_PLAN / LEVEL_UP 在示例环境可工作 |
+| 2 | 数据来源 | `getUsersInSamePlan` 用 auth `t_auth_assignment`（PLAN 精确 + CUSTOMER / PRODUCT 继承），外部目录只提供**计划层级** | 已有数据与 `PlanReachabilityService`，零新 DDL |
+| 3 | LEVEL_UP | 只取**直接父计划** `parentPlanNo`；`ancestorsOf` 整链列为后续；`TerminalLevel` 到顶 fail-closed 回退 | 语义最小可验证，避免越级取到无关审批人 |
+| 4 | 契约归属 | **新建 `PlanDirectoryApi`**（`/members` + `/parent`） | 职责单一，避免 `RoleUserQueryApi` 膨胀 |
+| 5 | 发起人排除 | `excludeUserNo` 可选，由消费侧传发起人 `UserNo`、服务端过滤 | 排除逻辑留在消费侧，契约保持通用、只传编号 |
+| 6 | domain 端口 | 允许新增 `PlanHierarchyGateway`（approval-domain SPI），由 infrastructure 经 auth-api 实现 | 隔绝 auth-api 保 domain 纯净，不做解析上移 |
+| 7 | 内存实现数据 | `InMemoryProductGateway` 从 `application.yml` 配置加载计划层级；未配置时 fall-through 到 `StubProductGateway` 的 warn | 生产未接入真实目录时 fail-closed 不误判，Stub 保留兜底 |
+
+**开工记录**：批次 66 已按上述决策落地 `PlanDirectoryApi` + 4 个 CQE/DTO + 6 项契约测试（先红后绿，见 §23.73）。
 
 ---
 
@@ -114,7 +123,7 @@
 
 ## 8. 维护约定
 
-- 本文只做核实与决策；用户确认 §6 后按 §5 顺序逐批开工，每批独立验收、独立提交。
+- §6 决策已落盘，按 §5 顺序逐批开工，每批独立验收、独立提交、自动推送。
 - 「暂不做 / 待外部系统」项不是遗忘：结论与触发条件留在本文与 `remaining-work-inventory.md` #1/#2。
 - 跨服务契约新增遵循 01/04/05/09 规范；零 DDL 为硬约束，确需建表须单独立项。
 - 若核实发现某项已完成或描述过时，直接移入清单第 2 节纠偏表。

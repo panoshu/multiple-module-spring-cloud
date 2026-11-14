@@ -2002,3 +2002,12 @@ Application 层按用例拆分：
 - **本批为文档决策（零生产代码）**：更新清单 #6/#8/#9/#11 状态、§4 建议优先级与结论。清单由「18 项待办/暂存」收敛为「2 项已完成（63/64）+ 4 项判定不做 + 1 个需立项方向（#1/#2）+ 1 个待环境方向（#4）+ 其余已决策保留/部署检查/文档欠账」。
 - **验证**：本批不改代码，故无新增测试；沿用批次 64 的全量回归结果（kernel 174/226/90/16、架构 17、annuity E2E 10 全绿，全仓 `test-compile`、`git diff --check` 通过）。
 - **结论**：§21 验收核对表已无 ⚠️/❌，规格内无欠账；**当前没有可安全小步推进的 kernel 代码项**。**仍未处理**：#1/#2 已单独立项（`2026-11-14-organization-directory-design.md`，核实结论 + 契约草案 + 批次 66–69 + 7 个开放点，待用户确认后开工）、#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
+
+### 23.73 批次 66 范围边界（组织目录 auth-api 契约）
+
+- **来源**：`2026-11-14-organization-directory-design.md` §5 批次 66；用户选择「立项组织目录」后，§6 七项开放点按推荐默认值一次性决策落盘，连续推进 66–69。
+- **决策要点**：契约 `PlanDirectoryApi`（`/members` + `/parent`）新建而非扩展 `RoleUserQueryApi`；数据取 auth `t_auth_assignment` + 外部目录仅提供计划层级；LEVEL_UP 只取直接父计划；允许 approval-domain 新增 `PlanHierarchyGateway` 隔绝 auth-api；零 DDL、Stub 保留兜底、fail-closed。
+- **实现**：auth-api 新增 `PlanDirectoryApi`（`@HttpExchange("/plan-directory")`、两个 `@PostExchange` 方法）+ `ListPlanMembersRequest`（`@NotBlank planNo` + 可选 `excludeUserNo`）/ `GetParentPlanRequest` / `PlanMembersResponse` / `ParentPlanResponse`；响应只携编号不携敏感字段。
+- **TDD**：`PlanDirectoryApiContractTest` 6 项（注解形状、路径、CQE 校验、响应可空父计划号），先编译红灯（5 个契约类不存在）→ 实现后 auth-api 9 项全绿。
+- **验证**：auth-api 9、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零生产实现改动、零 DDL、零 annuity 改动。
+- **同步**：清单 #1/#2 与计划文档标注批次 66 完成、§6 决策落盘。**仍未处理**：批次 67（auth 供给侧）、68（approval SAME_PLAN）、69（LEVEL_UP），#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
