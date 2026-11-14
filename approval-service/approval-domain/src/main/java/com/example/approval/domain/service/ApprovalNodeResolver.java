@@ -5,10 +5,11 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.approval.types.enums.NodeType;
 import com.example.shared.domain.annotation.DomainService;
+import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 审批人解析服务
@@ -42,13 +43,17 @@ public class ApprovalNodeResolver {
     }
 
     if (node.isSpecifiedRoleApproval()) {
-      // 指定角色审批：从角色中获取用户
-      List<UserNo> approvers = new ArrayList<>();
-      for (String roleId : node.roleIds()) {
-        List<UserNo> users = roleUserGateway.getUsersByRole(roleId);
-        approvers.addAll(users);
+      // 指定角色审批：按实例当前计划（PLAN 精确 scope）批量展开角色用户
+      String plan = instance.currentPlan();
+      if (plan == null || plan.isBlank()) {
+        return List.of();
       }
-      return approvers;
+      Map<String, List<UserNo>> byRole =
+        roleUserGateway.getUsersByRoles(node.roleIds(), PlanNo.of(plan));
+      return byRole.values().stream()
+        .flatMap(List::stream)
+        .distinct()
+        .toList();
     }
 
     // 根据节点类型解析

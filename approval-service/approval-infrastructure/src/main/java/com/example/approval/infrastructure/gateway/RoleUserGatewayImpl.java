@@ -1,18 +1,26 @@
 package com.example.approval.infrastructure.gateway;
 
 import com.example.approval.domain.gateway.RoleUserGateway;
+import com.example.auth.api.RoleUserQueryApi;
+import com.example.auth.api.dto.RoleUserBatchResponse;
+import com.example.auth.api.query.ListRoleUsersRequest;
 import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
+import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 角色用户网关实现（伪实现）
+ * 角色用户网关实现（批次 60）。
  * <p>
- * TODO: 待用户服务API提供后实现
+ * 通过 {@link RoleUserQueryApi} 调用 auth-service 按角色 + PLAN 精确 scope 批量查询用户。
+ * auth 不可用、响应异常或数据缺失时一律 fail-closed 返回空 Map，不展开角色审批人，
+ * 避免误把他人任务显示到待办或让角色节点错误流转。
  *
  * @author approval-service
  */
@@ -21,19 +29,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoleUserGatewayImpl implements RoleUserGateway {
 
+  private final RoleUserQueryApi roleUserQueryApi;
+
   @Override
-  public List<UserNo> getUsersByRole(String roleId) {
-    // TODO: 待用户服务API提供后实现
-    // 实际实现应该调用用户服务API获取角色下的用户列表
-    log.warn("getUsersByRole 方法尚未完整实现, roleId={}", roleId);
-    return List.of();
+  public Map<String, List<UserNo>> getUsersByRoles(List<String> roleIds, PlanNo planNo) {
+    if (roleIds == null || roleIds.isEmpty() || planNo == null) {
+      return Map.of();
+    }
+
+    try {
+      ApiResult<RoleUserBatchResponse> result = roleUserQueryApi.listByRoles(
+        new ListRoleUsersRequest(roleIds, planNo.value()));
+      if (result == null || !result.isSuccess() || result.data() == null
+        || result.data().usersByRole() == null) {
+        return Map.of();
+      }
+
+      Map<String, List<UserNo>> converted = new LinkedHashMap<>();
+      result.data().usersByRole().forEach((role, users) ->
+        converted.put(role, users == null ? List.of() : users.stream().map(UserNo::of).toList()));
+      return converted;
+    } catch (Exception e) {
+      log.warn("角色用户查询失败，fail-closed 不展开角色: planNo={}, roleIds={}",
+        planNo.value(), roleIds, e);
+      return Map.of();
+    }
   }
 
   @Override
   public List<UserNo> getUsersInSamePlan(PlanNo planId, UserNo excludeUser) {
-    // TODO: 待用户服务API提供后实现
-    // 实际实现应该调用用户服务API获取同一计划下的用户列表（排除指定用户）
-    log.warn("getUsersInSamePlan 方法尚未完整实现, planId={}, excludeUser={}", planId, excludeUser);
+    // 全仓无消费方（SAME_PLAN / LEVEL_UP 节点解析仍是 TODO），保留为未接线 stub
+    log.warn("getUsersInSamePlan 无消费方，保留为未接线 stub, planId={}, excludeUser={}",
+      planId, excludeUser);
     return List.of();
   }
 }

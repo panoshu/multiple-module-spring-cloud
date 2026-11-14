@@ -1193,6 +1193,7 @@ Application 层按用例拆分：
 | 批次 57 | `29de11cb` | **审批操作类身份越权治理**（批次 56 建议的扩展）：抽出 `requireSessionAccount()` 供 `listMyPending` 与 4 个操作共用；`approve`/`reject` 覆盖 `approver`、`transfer` 覆盖 `currentApprover` 且保留 `targetApprover`（业务参数）、`withdraw` 覆盖 `initiator`（领域层已有发起人校验）；4 个 DTO 身份字段补「服务端忽略」Javadoc。`ApprovalInstanceAdapterTest` 由 3 项扩到 8 项，先红（5 项断言失败）后绿 | approval domain 87 / application 16 / infra 25 / adapter 8（+5）、intranet-bff 37 + starter 7、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity / DDL / kernel / BFF 配置改动 |
 | 批次 58 | `17819ce8` | **用户服务「角色→用户」API 立项 · auth-api 契约**（`2026-11-14-role-user-api-design.md` 批次 58）：新增 `RoleUserQueryApi`（`/role-users/by-roles`）、`ListRoleUsersRequest`（批量 `roleCodes` + `planNo`）、`RoleUserBatchResponse`（roleCode→userNos）；scope 决策按立项 §6 推荐固定 **PLAN 精确 scope**，规避跨计划数据泄漏与 `ProductGateway` Stub 依赖，方案 §4 已同步。新增 `RoleUserQueryApiContractTest` 3 项，先编译红灯后绿 | auth-api 3 项全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增契约、零生产行为改动 |
 | 批次 59 | `0598151b` | **auth 供给侧按角色查用户**（立项批次 59）：`AssignmentRepository.findActiveByRoleCodesAndPlan` + Impl（`ROLE_CODE IN` + `SCOPE_DIMENSION='PLAN'` + `SCOPE_VALUE=planNo` + ACTIVE + 未删除，空集合短路）；新增 `RoleUserQueryService`（按角色分组、去重保序、只返回用户编号）与 `RoleUserQueryController`（实现 `RoleUserQueryApi`、`@RequirePermission(AUTH_ASSIGNMENT/VIEW/PLATFORM)`）。补 infra 2 + application 2 + adapter 1 共 5 项测试，先编译红灯后绿；顺带给 auth-adapter 补测试依赖 | auth domain 175 / application 46 / infra 156 / adapter 1、auth-starter 启动、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity/kernel/approval 改动、零 DDL |
+| 批次 60 | 本次（未提交） | **approval 网关接入 auth-api**（立项批次 60）：`approval-infrastructure` 加 `auth-api` 依赖；SPI `getUsersByRole(String)` 替换为带 `planNo` 的批量方法 `getUsersByRoles`（PLAN 精确 scope + 规避 N+1）；`RoleUserGatewayImpl` 改为注入 `RoleUserQueryApi` 调 `/role-users/by-roles`，null/异常响应 fail-closed 返回空 Map；`ApprovalNodeResolver` 角色分支适配新 SPI；`getUsersInSamePlan` 保留未接线 stub。新增 `RoleUserGatewayImplTest` 5 项，先编译红灯后绿 | approval domain 87 / application 16 / infra 30（+5）/ adapter 8、auth 175/46/156/1、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；旧 `getUsersByRole(` 全仓无残留；零 annuity/kernel 改动、零 DDL |
 
 ### 23.3 批次 2 范围边界
 
@@ -1931,4 +1932,16 @@ Application 层按用例拆分：
 - **TDD**：`AssignmentRepositoryImplTest` 2 项（空短路、`QueryWrapper.toSQL()` 条件断言）+ `RoleUserQueryServiceTest` 2 项（分组去重、空结果）+ `RoleUserQueryControllerTest` 1 项（委托与包装），先编译红灯（3 个生产类/方法不存在）→ 实现后 5 项全绿。期间修正两处夹具：auth-adapter 缺 `spring-boot-starter-test`（补 test scope 依赖）、`RoleUserQueryServiceTest` 嵌套 stubbing（改为先构造 mock 列表再 `when(...)`）。
 - **边界（如实标注）**：① 权限项 `AUTH_ASSIGNMENT/VIEW` 由 `PermissionRegistrationRunner` 自注册，运行时需 auth 数据侧已有对应权限项，单测直接调 Controller 不触发 AOP；② 响应只含用户编号，未在结果中出现的角色消费侧按空列表处理；③ CUSTOMER/PRODUCT/GLOBAL 继承展开仍不支持（组织目录未接）；④ **未新增 DDL/索引**（`t_auth_assignment` 现有列足够；数据量增长后应补 `(role_code, scope_dimension, scope_value, status)` 联合索引）。
 - **验证**：auth domain 175 / application 46 / infrastructure 156 / adapter 1、auth-starter 启动、annuity E2E 10 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity / kernel / approval 改动、零 DDL。
-- **同步**：清单/计划/立项方案标注批次 59 完成。**仍未处理**：批次 60（approval 网关接入 auth-api）、61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）。
+- **同步**：清单/计划/立项方案标注批次 59 完成。**仍未处理**：批次 60 已由本批完成（§23.67）、61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）待推进。
+
+### 23.67 批次 60 范围边界（approval 网关接入 auth-api）
+
+- **来源**：`2026-11-14-role-user-api-design.md` 批次 60（用户确认按建议推进）。
+- **装配可行性**：`httpexchange-spring-boot-autoconfigure` 按 `approval-starter/application-local.yml` 已配置的 `com.example.auth.api → lb://auth-service` 自动创建 `@HttpExchange` 客户端 bean；approval-infrastructure 只需显式加 `auth-api` 依赖（父 pom 已管理版本），符合 01「跨服务只依赖 API 模块」。kernel 的 `FileServiceClientConfiguration` / `ApprovalServiceIntegrationGateway` 是同类先例。
+- **SPI 改造**：`RoleUserGateway.getUsersByRole(String)` 替换为 `Map<String, List<UserNo>> getUsersByRoles(List<String> roleIds, PlanNo planNo)`——带 PLAN 精确 scope（堵住跨计划数据泄漏）+ 批量（规避 N+1）；`getUsersInSamePlan` 保留为未接线 stub（全仓无消费方，如实标注）。
+- **网关实现**：`RoleUserGatewayImpl` 注入 `RoleUserQueryApi`，调用 `/role-users/by-roles`；响应 `null` / `isSuccess=false` / data 缺失 / 抛异常一律 **fail-closed** 返回空 Map，不展开角色审批人；成功响应转 `UserNo`。
+- **领域适配**：`ApprovalNodeResolver.resolveApprovers` 的角色分支改用新 SPI，从 `instance.currentPlan()` 构造 `PlanNo`；该 Resolver 仍无调用方（接线留批次 61）。
+- **TDD**：`RoleUserGatewayImplTest` 5 项（响应映射 + planNo 透传、空角色短路、null 响应 / 异常 fail-closed、`getUsersInSamePlan` stub），先编译红灯（auth-api 依赖缺失 + 新 SPI/构造不存在）→ 实现后全绿。
+- **边界（如实标注）**：① SPI 签名属破坏性变更，但仓库内唯一实现与唯一调用方均已同步，`grep` 确认旧 `getUsersByRole(` 全仓无残留；② auth 不可用时角色节点待办不显示、审批流转不展开（fail-closed），需监控告警；③ `getUsersInSamePlan` / SAME_PLAN / LEVEL_UP 节点仍未接线；④ `@HttpExchange` 客户端 bean 由 starter 运行时装配，单测不覆盖端到端 HTTP（annuity E2E 不启动 approval-service）。
+- **验证**：approval domain 87 / application 16 / infrastructure 30（+5）/ adapter 8、auth 175 / 46 / 156 / 1、annuity E2E 10 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity / kernel 改动、零 DDL。
+- **同步**：清单/计划/立项方案标注批次 60 完成。**仍未处理**：批次 61（能力 C 解锁 `SPECIFIED_ROLE` + 领域接线）。
