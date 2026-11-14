@@ -1,5 +1,6 @@
 package com.example.core.application.engine.service;
 
+import com.example.core.api.application.command.AdvanceStepCommand;
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
@@ -34,6 +35,7 @@ import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.StepExecutionId;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.lock.DistributedLock;
@@ -48,6 +50,8 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -445,6 +449,55 @@ class FlowOrchestrationServiceTest {
       StepRouteConfig.StepTaskType.SYSTEM_TASK, List.of(), "mainHandler", List.of(), List.of());
     when(stepRouteConfigAssembler.toRouteConfig(step)).thenReturn(route);
     return app;
+  }
+
+  @Test
+  @DisplayName("advanceApplication：同一 requestNo 已推进过则跳过，不重复执行管线")
+  void advanceApplication_whenDuplicateRequestNo_skipsPipeline() {
+    when(stepExecutionRepository.findByRequestNo("REQ-1"))
+      .thenReturn(Optional.of(mock(StepExecution.class)));
+
+    service.advanceApplication(new AdvanceStepCommand(
+      "APP-001", "FORM_DETAIL_INGESTION", "REQ-1", "U-1", Map.of()));
+
+    verify(pipelineExecutor, never()).executeChain(any(), any(), any());
+    verify(stepExecutionRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("advanceApplication：缺 expectedStep 拒绝")
+  void advanceApplication_whenExpectedStepMissing_rejects() {
+    assertThatThrownBy(() -> service.advanceApplication(new AdvanceStepCommand(
+      "APP-001", null, "REQ-1", "U-1", Map.of())))
+      .isInstanceOf(DomainException.class);
+  }
+
+  @Test
+  @DisplayName("advanceApplication：expectedStep 与当前步骤不符拒绝")
+  void advanceApplication_whenExpectedStepMismatch_rejects() {
+    BusinessApplication app = stubStep(StepExecutionStatus.SUCCESS);
+    when(app.currentStep()).thenReturn(ApplicationFlowStep.DATA_VERIFICATION);
+    when(stepExecutionRepository.findByRequestNo("REQ-1")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.advanceApplication(new AdvanceStepCommand(
+      "APP-001", "FORM_DETAIL_INGESTION", "REQ-1", "U-1", Map.of())))
+      .isInstanceOf(DomainException.class);
+  }
+
+  @Test
+  @DisplayName("advanceApplication：使用 Command 的 requestNo 与 operator 创建步骤执行")
+  void advanceApplication_usesCommandRequestNoAndOperator() {
+    BusinessApplication app = stubStep(StepExecutionStatus.SUCCESS);
+    when(app.currentStep()).thenReturn(ApplicationFlowStep.FORM_DETAIL_INGESTION);
+    when(stepExecutionRepository.findByRequestNo("REQ-1")).thenReturn(Optional.empty());
+
+    service.advanceApplication(new AdvanceStepCommand(
+      "APP-001", "FORM_DETAIL_INGESTION", "REQ-1", "U-1", Map.of()));
+
+    ArgumentCaptor<StepExecution> captor = ArgumentCaptor.forClass(StepExecution.class);
+    verify(stepExecutionRepository).save(captor.capture());
+    assertThat(captor.getValue().requestNo()).isEqualTo("REQ-1");
+    assertThat(captor.getValue().updatedBy()).isEqualTo("U-1");
   }
 
   private void stubLockAndRun(DistributedLock lock) {

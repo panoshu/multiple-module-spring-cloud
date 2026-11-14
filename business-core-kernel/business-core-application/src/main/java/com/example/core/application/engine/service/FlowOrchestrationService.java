@@ -1,7 +1,9 @@
 package com.example.core.application.engine.service;
 
+import com.example.core.api.application.command.AdvanceStepCommand;
 import com.example.core.application.engine.pipeline.StepPipelineExecutor;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
@@ -25,6 +27,7 @@ import com.example.core.domain.engine.spi.BusinessFactExtractor;
 import com.example.core.domain.engine.spi.StepActionHandler;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.StepExecutionId;
+import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import com.example.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +80,40 @@ public class FlowOrchestrationService {
 
   public void advanceStep(ApplicationId appId) {
     withApplicationLock(appId, () -> {
-      doAdvanceStep(appId);
+      doAdvanceStep(appId, null, null);
+      return null;
+    });
+  }
+
+  /**
+   * 按 CQE 推进申请单（spec §15.1，批次 35）。
+   * <p>
+   * 外部调用方携带 expectedStep 与 requestNo：期望步骤不符时拒绝，防止过期请求推进；
+   * 同一 requestNo 已存在步骤执行记录则直接跳过，保证重复提交只执行一次。
+   * requestNo 由 Command 提供，不再仅由编排器内部派生；operator 为空时回退到申请单上下文。
+   */
+  public void advanceApplication(AdvanceStepCommand command) {
+    if (command == null || !StringUtils.hasText(command.applicationId())
+      || !StringUtils.hasText(command.expectedStep()) || !StringUtils.hasText(command.requestNo())) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("推进申请单命令缺少 applicationId/expectedStep/requestNo");
+    }
+    ApplicationId appId = new ApplicationId(command.applicationId());
+    withApplicationLock(appId, () -> {
+      if (stepExecutionRepository.findByRequestNo(command.requestNo()).isPresent()) {
+        log.info("重复推进请求已跳过: requestNo={}", command.requestNo());
+        return null;
+      }
+      BusinessApplication app = applicationRepository.loadOrThrow(appId);
+      if (app.currentStep() == null
+        || !command.expectedStep().equals(app.currentStep().name())) {
+        throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+          .withLogDetail("期望步骤与当前步骤不符: expected=%s, current=%s, requestNo=%s"
+            .formatted(command.expectedStep(),
+              app.currentStep() == null ? null : app.currentStep().name(),
+              command.requestNo()));
+      }
+      doAdvanceStep(appId, command.requestNo(), command.operator());
       return null;
     });
   }
@@ -97,7 +133,7 @@ public class FlowOrchestrationService {
       LOCK_WAIT_SECONDS, LOCK_LEASE_SECONDS, TimeUnit.SECONDS, task);
   }
 
-  private void doAdvanceStep(ApplicationId appId) {
+  private void doAdvanceStep(ApplicationId appId, String requestNoOverride, String operatorOverride) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     BusinessMetaContext context = buildFullConfigContext(app);
     // 路由由版本化流程定义接管，不再直接查询过宽的 BusinessConfigGateway
@@ -105,8 +141,8 @@ public class FlowOrchestrationService {
     StepRouteConfig routeConfig = stepRouteConfigAssembler.toRouteConfig(stepDefinition);
 
     // 每次步骤尝试独立建记录，不把执行历史塞进 BusinessApplication（§7.2）
-    String operator = operatorOf(app);
-    StepExecution execution = newStepExecution(appId, app, stepDefinition);
+    String operator = StringUtils.hasText(operatorOverride) ? operatorOverride : operatorOf(app);
+    StepExecution execution = newStepExecution(appId, app, stepDefinition, requestNoOverride);
     execution.start(operator);
 
     // 外部协作幂等键与 ExternalInteraction.requestNo 同源（SE-<步骤执行ID>），
@@ -208,11 +244,12 @@ public class FlowOrchestrationService {
   }
 
   private StepExecution newStepExecution(ApplicationId appId, BusinessApplication app,
-                                         StepDefinition stepDefinition) {
+                                         StepDefinition stepDefinition, String requestNoOverride) {
     StepCode stepCode = stepDefinition.stepCode();
     List<StepExecution> history = stepExecutionRepository.findByApplicationAndStep(appId, stepCode);
     int attempt = (history == null ? 0 : history.size()) + 1;
-    String requestNo = "%s:%s:%d".formatted(appId.value(), stepCode.value(), attempt);
+    String requestNo = StringUtils.hasText(requestNoOverride)
+      ? requestNoOverride : "%s:%s:%d".formatted(appId.value(), stepCode.value(), attempt);
     DefinitionVersion version = app.definitionVersion() != null
       ? app.definitionVersion() : DefinitionVersion.initial();
     return StepExecution.create(

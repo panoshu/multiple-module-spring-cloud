@@ -244,6 +244,7 @@
 - 改动：`business-core-api` Command + `FlowOrchestrationService` 入口 + Adapter Converter + 测试。
 - 红灯测试：同一 requestNo 重复推进只执行一次；缺 expectedStep 拒绝。
 - 规模：6–8 文件（可能再拆两批）。
+- 状态：已完成（设计文档 §23.36）。采用新增 `advanceApplication(CQE)` 入口而非改 `advanceStep(ApplicationId)` 签名，避免改 annuity 与重载歧义；其余推进类 Command 的 CQE 化留阶段 5。
 
 ### 阶段 5：清理与生产验收（批次 36–39）
 

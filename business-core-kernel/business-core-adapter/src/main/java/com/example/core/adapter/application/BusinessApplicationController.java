@@ -89,7 +89,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
     log.info("推进申请单: applicationId={}, userNo={}", command.applicationId(), session.userNo());
 
     ApplicationId appId = new ApplicationId(command.applicationId());
-    applicationAppService.advanceStep(appId);
+    applicationAppService.advanceApplication(command);
     // 推进后重新加载聚合根以获取最新步骤
     BusinessApplication app = applicationAppService.loadOrThrow(appId);
     return ApiResult.success(converter.toAdvanceStepResponse(app));
