@@ -292,6 +292,11 @@
 - 改动：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则（domain 框架纯净、domain 不依赖上层、application 不依赖 adapter/infra、跨服务只经 api/types），含防假绿导入断言与反向违规注入验证。纯新增测试，不改生产代码、不改 annuity。
 - 状态：**完成**（设计文档 §23.48）。CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条如实标注为未机器化。
 
+#### 批次 42 — 修复审批驳回/撤回回调状态误判
+- 背景：按 §23.46 偏差 4「枚举值未被消费」推进时，发现原描述有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤为 SUCCEEDED 而申请单已终止。
+- 方案（用户确认「修缺陷」）：`correlate` 改为 `resolveTargetStatus` 显式 switch 穷尽映射（SUCCEEDED→SUCCEEDED，FAILED/REJECTED/WITHDRAWN→FAILED，null 保守按 FAILED），同步修正 `CallbackOutcome` Javadoc；补 2 项契约测试先红后绿。
+- 状态：**完成**（设计文档 §23.49）。§23.46 偏差 4 更正为已修复，§21.3 核对表补测试，§23.48 末行移除偏差 4。
+
 ---
 
 ## 6. 全局约束与验收基线

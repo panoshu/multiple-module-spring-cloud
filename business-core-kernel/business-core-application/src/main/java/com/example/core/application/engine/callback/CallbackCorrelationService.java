@@ -56,9 +56,7 @@ public class CallbackCorrelationService {
     }
 
     ExternalInteraction interaction = found.get();
-    ExternalInteractionStatus targetStatus = command.outcome() == CallbackOutcome.FAILED
-      ? ExternalInteractionStatus.FAILED
-      : ExternalInteractionStatus.SUCCEEDED;
+    ExternalInteractionStatus targetStatus = resolveTargetStatus(command.outcome());
 
     if (!interaction.matches(command.requestNo(), command.externalTaskId())
       || interaction.type() != command.expectedType()
@@ -78,6 +76,24 @@ public class CallbackCorrelationService {
     }
     ApplicationId applicationId = interaction.applicationId();
     return CorrelationResult.applied(applicationId);
+  }
+
+  /**
+   * 回调结果 → 协作目标状态的唯一映射（spec §7.3 / §21.3，批次 42）。
+   * <p>
+   * 仅 {@code SUCCEEDED} 视为成功；{@code FAILED} / {@code REJECTED} / {@code WITHDRAWN}
+   * 与结果缺失均按 {@code FAILED} 闭环。此前「非 FAILED 即 SUCCEEDED」会把审批驳回/撤回
+   * 静默写成成功，导致协作与步骤执行为 SUCCEEDED 而申请单已被终止，审计状态互相矛盾。
+   * switch 穷尽全部枚举常量，未来新增结果必须在此显式定义映射。
+   */
+  private ExternalInteractionStatus resolveTargetStatus(CallbackOutcome outcome) {
+    if (outcome == null) {
+      return ExternalInteractionStatus.FAILED;
+    }
+    return switch (outcome) {
+      case SUCCEEDED -> ExternalInteractionStatus.SUCCEEDED;
+      case FAILED, REJECTED, WITHDRAWN -> ExternalInteractionStatus.FAILED;
+    };
   }
 
   private StepExecution loadExecution(StepExecutionId stepExecutionId) {

@@ -190,4 +190,35 @@ class CallbackCorrelationServiceTest {
     assertThat(result.classification()).isEqualTo(CorrelationClassification.OUT_OF_ORDER);
     verify(externalInteractionRepository, never()).save(any());
   }
+
+  @Test
+  @DisplayName("REJECTED / WITHDRAWN：协作与步骤进入 FAILED，不误判为 SUCCEEDED（批次 42）")
+  void correlate_rejectedOrWithdrawnMapsToFailed() {
+    assertFailureMapped(CallbackOutcome.REJECTED);
+    assertFailureMapped(CallbackOutcome.WITHDRAWN);
+  }
+
+  @Test
+  @DisplayName("outcome 缺失（null）：保守按 FAILED 闭环，不静默当成功")
+  void correlate_nullOutcomeMapsToFailed() {
+    assertFailureMapped(null);
+  }
+
+  private void assertFailureMapped(CallbackOutcome outcome) {
+    ExternalInteraction interaction = interaction(ExternalInteractionStatus.WAITING_CALLBACK,
+      InteractionType.APPROVAL);
+    StepExecution execution = stepExecution(StepExecutionState.WAITING_EXTERNAL);
+    when(externalInteractionRepository.findByRequestNo(REQUEST_NO)).thenReturn(Optional.of(interaction));
+    when(stepExecutionRepository.load(STEP_EXEC_ID)).thenReturn(Optional.of(execution));
+
+    CorrelationResult result = service.correlate(new CallbackCommand(
+      REQUEST_NO, EXTERNAL_TASK_ID, InteractionType.APPROVAL, outcome, RESULT_REF, OPERATOR));
+
+    assertThat(result.classification()).isEqualTo(CorrelationClassification.APPLIED);
+    verify(interaction).fail(RESULT_REF, OPERATOR);
+    verify(interaction, never()).succeed(any(), any());
+    verify(execution).fail(any(), any(), org.mockito.ArgumentMatchers.eq(OPERATOR));
+    verify(externalInteractionRepository).save(interaction);
+    verify(stepExecutionRepository).save(execution);
+  }
 }

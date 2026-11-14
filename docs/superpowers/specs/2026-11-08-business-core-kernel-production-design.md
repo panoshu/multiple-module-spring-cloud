@@ -1167,6 +1167,8 @@ Application 层按用例拆分：
 
 | 批次 41 | `3353e4f0` | **§21.4 kernel 分层架构不变量机器化（成立子集）**：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则——domain 零框架依赖（Spring/Jackson/MyBatis/JPA）、domain 不依赖 kernel 上层、application 不依赖 adapter/infrastructure、kernel 各层只经 api/types 依赖 file/approval；`@BeforeAll` 逐层断言导入类数防止 `noClasses()` 空匹配假绿；反向注入 `com.example.shared..` 验证规则捕获 181 次违规红灯。CQE 全覆盖、types 仅 ID、事件 DTO 字面约束 3 条因与现状有张力未机器化，如实标注（§23.48） | arch-tests 11（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
+| 批次 42 | 本次（未提交） | **修复审批驳回/撤回回调状态误判**（§23.46 偏差 4 纠正）：`CallbackCorrelationService` 原用 `outcome == FAILED ? FAILED : SUCCEEDED`，把 `REJECTED`/`WITHDRAWN`（及 null）静默当成功，导致驳回/撤回时 `ExternalInteraction`/`StepExecution` 为 SUCCEEDED 而申请单已被终止；改为 `resolveTargetStatus` 显式 switch（仅 SUCCEEDED→SUCCEEDED，FAILED/REJECTED/WITHDRAWN→FAILED，null 保守按 FAILED），switch 穷尽枚举常量迫使未来新增结果显式定义映射；同步修正 `CallbackOutcome` Javadoc（原「协作完成」注释与修复后行为矛盾）。补 `CallbackCorrelationServiceTest` 2 项（REJECTED/WITHDRAWN 循环 + null 保守），先红后绿 | 新增 2 项测试，`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1636,7 +1638,7 @@ Application 层按用例拆分：
 | 请求超时进入 UNKNOWN | `ExternalCollaborationAcceptanceTest.timeout_entersUnknown_andRequiresReconciliation`、`ExternalInteractionRecoveryServiceTest.reclaimStaleDispatching_marksUnknown`、`ExternalInteractionTest.unknownRequiresReconciliationBeforeRedispatch` | ✅ |
 | 响应丢失后可按 requestNo 对账 | `ExternalCollaborationAcceptanceTest.lostResponse_reconcilesByRequestNo`、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_*`、`CallbackCorrelationServiceTest.correlate_fallbackByExternalTaskId` | ✅（口径：`requestNo` 关联协作、`externalTaskId` 查询外部） |
 | 服务重启后待派发任务可恢复 | `ExternalCollaborationAcceptanceTest.restart_recoversPendingDispatchFromPersistedState` / `restart_reclaimsStaleDispatchingForReconciliation`、`ExternalInteractionRecoveryJobTest` | ✅ |
-| 审批通过/驳回/撤回分别进入正确状态 | `ApprovalResultEventListenerTest`（三类事件委托）、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_confirmsApproved/Rejected`、`ExternalCollaborationAcceptanceTest.approvalPassRejectWithdraw_routeToCorrectState`（补撤回） | ✅ |
+| 审批通过/驳回/撤回分别进入正确状态 | `ApprovalResultEventListenerTest`（三类事件委托）、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_confirmsApproved/Rejected`、`ExternalCollaborationAcceptanceTest.approvalPassRejectWithdraw_routeToCorrectState`（补撤回）、`CallbackCorrelationServiceTest.correlate_rejectedOrWithdrawnMapsToFailed`（批次 42，协作状态与申请单终态一致） | ✅ |
 | 文件部分成功不会误判为全部成功 | file-service `ParseTaskTest`（`PARTIAL_SUCCESS` + `invalidCount` 聚合）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting` | ⚠️ kernel 侧按「解析任务完成」把 PARTIAL 与 SUCCESS 同样推进一次，失败明细留在 subTasks/invalidCount，未做端到端统计对账 |
 
 | §21.4 架构测试 | 覆盖测试 | 状态 |
@@ -1667,7 +1669,7 @@ Application 层按用例拆分：
   1. `AnnuityEndToEndTest` 禁用自动推进（§21.5 第 8 条）；annuity 为早期示例服务，若要严格满足需新增独立 E2E。
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
-  4. `CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被监听器消费（监听器统一传 `SUCCEEDED`/`FAILED`，驳回/撤回由 `advanceByApprovalResult` 终止语义处理）。
+  4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
 - **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 全部完成，见 §23.47**。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
@@ -1702,4 +1704,16 @@ Application 层按用例拆分：
   3. application 零 file/approval「DTO」依赖——现状监听器消费 `file.api.event.FileParsedEventDTO` 等 API 层事件 DTO，属允许的跨服务契约，与规格字面有张力。
   若要收敛这 3 条，需先做规格修订或专项大重构，不在本批范围。
 - **验证**：arch-tests 11 项（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。§23.46 核对表 §21.4 各行状态与偏差 2 已同步更新。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）、偏差 4（`CallbackOutcome.REJECTED/WITHDRAWN` 未消费枚举值）及其它阶段 5 遗留项。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）及其它阶段 5 遗留项。**偏差 4 已由批次 42 修复，见 §23.49**。
+
+### 23.49 批次 42 范围边界（审批驳回/撤回回调状态误判修复）
+
+- **发现过程**：按 §23.48「偏差 4：枚举值未被消费」推进清理时，核对全仓引用发现**原描述有误**——`ApprovalResultEventListener.handleRejected/handleWithdrawn` 第 109/124 行确实传入 `CallbackOutcome.REJECTED`/`WITHDRAWN` 给 `route(...)`。真正的问题在 `CallbackCorrelationService.correlate` 的目标状态计算：`outcome == FAILED ? FAILED : SUCCEEDED`，即「非 FAILED 即 SUCCEEDED」。
+- **缺陷影响**：审批驳回/撤回且带 `requestNo` 命中协作时，`applyOutcome` 走成功分支，把 `ExternalInteraction` 与 `StepExecution` 写成 `SUCCEEDED`；随后 listener 才用结果字符串调 `advanceByApprovalResult` → `rejectApplication`/`withdrawApplication` 把申请单置终态。于是审计数据出现「步骤执行成功、申请单已驳回/撤回」的自相矛盾，§21.3「审批通过、驳回、撤回分别进入正确状态」在协作层未落地。该分支未被任何测试覆盖（既有 `CallbackCorrelationServiceTest` 只用 SUCCEEDED/FAILED，listener 测试 mock 掉了 correlate）。
+- **处置（用户确认「修缺陷」而非「删枚举/仅修文档」）**：新增 `resolveTargetStatus(CallbackOutcome)` 作为唯一映射点，显式 switch 穷尽 4 个枚举常量——`SUCCEEDED → SUCCEEDED`，`FAILED/REJECTED/WITHDRAWN → FAILED`；`outcome == null` 前置返回 FAILED，不再静默当成功。switch 表达式迫使未来新增枚举值必须在此显式定义映射，避免同类缺陷复发。
+- **语义说明**：`CallbackOutcome` 描述「外部任务执行结果」，与「申请单流程终态」是两个维度；驳回/撤回时审批任务虽已返回，但对业务步骤而言是负面结果，故协作与步骤进入 FAILED，申请单终态仍由独立的结果字符串（REJECTED/WITHDRAWN）经 `advanceByApprovalResult` 决定。同步修正 `CallbackOutcome` 枚举 Javadoc 中原「协作完成、流程进入 REJECTED/WITHDRAWN」的误导性描述。
+- **TDD**：先在 `CallbackCorrelationServiceTest` 补 `correlate_rejectedOrWithdrawnMapsToFailed`（循环 REJECTED/WITHDRAWN，断言 `fail()` 被调用、`succeed()` 从未调用）与 `correlate_nullOutcomeMapsToFailed`，确认红灯（报告显示「Wanted but not invoked: externalInteraction.fail」、实际调用 `succeed`）；实现后转绿。
+- **兼容性**：现有 `ApprovalResultEventListenerTest` mock 掉 correlate，E2E 只走 APPROVED，二者均不受行为变更影响；`applyOutcome` 仍按 `targetStatus` 分支，FAILED 路径复用既有 `interaction.fail(...)` / `execution.fail(...)`，无需改状态机或 DDL。
+- **验证**：`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
+- **台账同步**：§23.46 偏差 4 更正为「已修复」、§21.3 核对表补该测试、§23.48 末行移除偏差 4；计划文档新增批次 42。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）及其它阶段 5 遗留项。
