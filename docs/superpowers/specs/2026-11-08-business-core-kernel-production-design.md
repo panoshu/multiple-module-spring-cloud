@@ -1051,7 +1051,7 @@ Application 层按用例拆分：
 
 ### 21.4 架构测试
 
-> 批次 49 修订（§23.56）：第 2/3/5 条按「规格与现状对齐 + 向前约束」调整，存量代码不回溯；机器化见 `KernelLayerArchitectureTest`（批次 41）与向前约束测试（批次 50）。
+> 批次 49 修订（§23.56）：第 2/3/5 条按「规格与现状对齐 + 向前约束」调整，存量代码不回溯；机器化见 `KernelLayerArchitectureTest`（批次 41）与向前约束测试（批次 50）。第 4 条「Adapter 不直接构造领域对象」由批次 51 机器化为成立子集（§23.58）。
 
 - domain 不依赖 Spring、Web、JSON、数据库和 file/approval 类型；
 - application 不依赖 file/approval 的**非 API 层**类型；集成事件 DTO 属允许的跨服务 API 契约；
@@ -1184,6 +1184,7 @@ Application 层按用例拆分：
 | 批次 48 | `ee85acc3` | **修正 fail-fast 开关语义**（批次 47 分析发现的配套缺陷）：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 与 Javadoc「`=false` 显式关闭」相反——`=false`/缺省反而装配（启用校验）、`=true` 才关闭；改为 `havingValue="true"`，缺省或 `=true` 启用、`=false` 关闭，缺省行为不变，Javadoc 补齐三态。新增 `KernelProductionReadinessConditionTest` 3 项 `ApplicationContextRunner` 装配契约（`=true`/`=false` 先红后绿、缺省保持绿），并在 `AutoAdvanceEnabledEndToEndTest` 补真实 E2E 上下文缺省装配断言（`isMock()==false`），排除「少一个 ApplicationRunner 反而更绿」的静默降级 | adapter 16（+3）、annuity-starter 10（+1）、kernel domain 174 / application 222 / infra 90、架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException` |
 | 批次 49 | `ae211980` | **P2-2a §21.4 规格修订**（P2 专项方案已采纳，纯文档）：修订 §21.4 第 2/3/5 条——application 禁依赖 file/approval 非 API 层类型（事件 DTO 属允许的 `*.api.event` 契约）、新增/修改的写操作入口必须 CQE（存量不回溯）、types 只放跨层共享领域原语（不得放聚合根/实体/领域服务）；§21.4 加批次修订注记；§23.46 核对表三行状态由 ⚠️ 改为「规格已修订 + 向前约束待批次 50」。P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓按方案记入台账（含触发重启条件与前置决策清单） | 纯文档零代码；`git diff --check` 通过；规格正文与核对表自洽 |
 | 批次 50 | `8d542698` | **P2-2b §21.4 向前约束机器化**（P2 专项方案，arch-tests 新增）：新增 `KernelForwardConstraintTest` 2 条 ArchUnit——① application 层新增 `*Service` public 方法参数须为 CQE 或零参（存量 37 个方法以 `类名#方法名` 基线快照豁免，不回溯改造）；② types 层不得 assignable to `Entity`（覆盖聚合根）或标 `@DomainService`。含 4 项防假绿断言（导入规模 / Service 类数 / types 类数 / 基线命中数）与两轮反向验证：故意漏 1 个基线条目红灯（捕获 `FlowOrchestrationService#advanceStep`）、把规则 2 指向聚合根包红灯（捕获 3 次违规），改回后转绿 | arch-tests 15（+2）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+| 批次 51 | 本次（未提交） | **回补 §21.4 第 4 条 Adapter 构造边界**（按建议方向，扩 `KernelForwardConstraintTest`）：新增规则 3——adapter 不得直接构造领域聚合根/实体（`isAssignableTo(Entity)`，覆盖 `AggregateRoot`）；值对象构造属 Converter 必要行为、允许。核实 adapter 现状：无 `new` 聚合根/实体，但有 5 处 `new` 值对象（`BusinessContext` 1 / `BusinessFile` 3 / `OperatorInfo` 1）。先按「domain 包任意类」判定红灯（捕获 5 次，实证规格字面与现状张力）→ 收窄到 Entity 子类转绿；再临时把检查包指向 domain 层做反向验证（捕获 10+ 次聚合根构造）→ 改回转绿。补 2 项防假绿断言（adapter 类数 > 5、adapter 构造器调用数 > 0） | arch-tests 16（+1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1663,7 +1664,7 @@ Application 层按用例拆分：
 | domain 不依赖 file/approval 类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ⚠️ 现状 domain 依赖 `file.types.FileId` 等 ID 原语；规则按「只经 api/types」机器化，字面「零 file/approval 类型」不成立 |
 | application 不依赖 file/approval 非 API 层类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 规格已修订（批次 49，§23.56）：事件 DTO 属允许的 `*.api.event` 契约；「不触及实现层」已机器化 |
 | 新增/修改的写操作入口入参必须 CQE | `KernelForwardConstraintTest.newServiceMethods_useCqeOrNoArgs`（批次 50） | ✅ 规格已修订（批次 49）+ 向前约束已机器化（批次 50）；存量约 30 个裸参方法不回溯 |
-| Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化（`CoreKernelAutoConfiguration` 构造的是 application 层 Job，非领域聚合根） |
+| Adapter 不直接构造领域对象 | `KernelForwardConstraintTest.adapterDoesNotConstructDomainEntities`（批次 51） | ✅ 部分机器化（只禁聚合根/实体 Entity 子类）⚠️ 规格字面「零领域对象」与现状仍有张力：Converter 构造值对象（`BusinessFile`/`BusinessContext`/`OperatorInfo`）属必要行为 |
 | types 只放跨层共享领域原语 | `KernelForwardConstraintTest.typesLayer_onlySharedPrimitives`（批次 50） | ✅ 规格已修订（批次 49）+ 向前约束已机器化（批次 50）：不得放聚合根/实体/领域服务 |
 | 跨服务只依赖 API 模块 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 已机器化（允许 api + types，禁止 domain/application/adapter/infrastructure） |
 
@@ -1812,7 +1813,7 @@ Application 层按用例拆分：
 - **来源**：`2026-11-14-p2-special-plan.md`（P2 专项方案），用户 2026-11-14 确认「采纳建议推进 49→50」。本批为纯文档规格决策，不改任何生产代码、不创建实施任务。
 - **为何修规格而非改代码**：批次 41（§23.48）已如实标注 §21.4 三条与现状有字面张力。本轮逐项核实：① 约 35 个 ApplicationService/Service 公开方法仅 2 个用 CQE，回溯改造无生产正确性收益；② `business-core-types` 24 类含 13 个非 ID 通用值对象，移动仅分层洁癖；③ application 依赖的 5 个事件 DTO **全部**位于 `file.api.event`/`approval.api.event`——§21.4 第 2 条「不依赖 file/approval DTO」与第 6 条「跨服务只依赖 API 模块」自相矛盾，事件 DTO 正是 API 契约（批次 41 规则 4 已机器化并绿灯）。故三条按「规格与现状对齐 + 向前约束」修订，存量不回溯。
 - **修订内容**：§21.4 第 2 条改为「不依赖非 API 层类型，事件 DTO 属允许的跨服务 API 契约」；第 3 条改为「**新增或修改的**写操作入口入参必须是 CQE（存量不回溯改造）」；第 5 条改为「types 层只放跨层共享的领域原语（ID 及通用值对象），不得放聚合根、实体或领域服务」。§21.4 标题下加批次修订注记指向本边界与批次 50。
-- **刻意不修订的条目（如实标注）**：§21.4 第 1 条「domain 不依赖 file/approval 类型」与第 6 条「跨服务只依赖 API 模块」仍与现状有字面张力（domain 依赖 `file.types.FileId` 等 ID 原语；批次 41 机器化为「允许 api + types」），核对表已标 ⚠️/✅；因不在 P2 专项方案确认的三条范围内，本批不改，留待后续规格整体复核。「Adapter 不直接构造领域对象」仍未机器化，保持 ⚠️。
+- **刻意不修订的条目（如实标注）**：§21.4 第 1 条「domain 不依赖 file/approval 类型」与第 6 条「跨服务只依赖 API 模块」仍与现状有字面张力（domain 依赖 `file.types.FileId` 等 ID 原语；批次 41 机器化为「允许 api + types」），核对表已标 ⚠️/✅；因不在 P2 专项方案确认的三条范围内，本批不改，留待后续规格整体复核。「Adapter 不直接构造领域对象」仍未机器化，保持 ⚠️。**（该条已于批次 51 部分机器化，见 §23.58；此处为批次 49 当时状态）**
 - **P2 其余三项决策落实**：P2-1 `Map<String,Object>` **降级关闭**（核实分「动态配置 / 执行上下文 facts / 解析数据行 / 补充数据」4 类语义，全量强类型化会把业务 schema 固化进 kernel、破坏通用编排引擎扩展能力；备选仅做类型安全读取包装，见方案 §2）；P2-3 annuity 自有存储 **wontfix**（冻结示例服务，重启丢失可接受，DDL 已由批次 40 解耦；触发重启条件：转为真实生产服务时按「DO+Mapper+DDL+SPI 实现」立项）；P2-4 真 Redis 并发 **暂缓**（无 testcontainers / CI Docker 待定 / 单 JVM+真 Redis 可降级为 4–6 文件小批次）。三项均在方案文档记录结论与前置条件，不遗忘、不冒充已覆盖。
 - **验证**：纯文档，`git diff --check` 通过；规格正文与 §23.46 核对表状态自洽。
 - **仍未处理**：批次 50（向前 ArchUnit 约束：新增方法 CQE + types 不放聚合根，含防假绿与反向验证）——**已由批次 50 完成，见 §23.57**。
@@ -1825,6 +1826,17 @@ Application 层按用例拆分：
 - **规则 2**：`noClasses().that().resideInAPackage("com.example.core.types..").should().beAssignableTo(Entity)`（`AggregateRoot extends Entity`，一条覆盖聚合根与实体）+ `.should().beAnnotatedWith(DomainService)`。用字符串形式 FQN 避免 arch-tests 编译期依赖业务类。
 - **TDD 与反向验证**：写测试时故意漏 `FlowOrchestrationService#advanceStep` 一个基线条目 → 红灯精确报「新增方法使用非 CQE 参数」（1 次违规）→ 补入基线转绿；再临时把规则 2 的检查包改为 `...domain.business.aggregate.root..` → 红灯捕获 3 次 `Entity` assignable 违规 → 改回正式规则转绿。两轮证明规则真在检查、非空转。
 - **防假绿**：`@BeforeAll` 断言导入总数 > 500、application `*Service` 类数 ≥ 9、types 包类数 > 10，且基线 37 项中命中导入类方法数 > 20（防止白名单写错导致规则空转）。
-- **边界（如实标注）**：只约束「新增方法名」；新增一个与存量方法**同名**但不同参数的重载，因基线按方法名命中，不会被拦截——向前约束取稳健而非穷尽。存量约 30 个裸参方法按规格修订明确不回溯。「Adapter 不直接构造领域对象」仍未机器化，§21.4 第 1/6 条字面张力仍在，均保持 §23.46 核对表原状态。
+- **边界（如实标注）**：只约束「新增方法名」；新增一个与存量方法**同名**但不同参数的重载，因基线按方法名命中，不会被拦截——向前约束取稳健而非穷尽。存量约 30 个裸参方法按规格修订明确不回溯。「Adapter 不直接构造领域对象」仍未机器化，§21.4 第 1/6 条字面张力仍在，均保持 §23.46 核对表原状态。**（前者已于批次 51 部分机器化，见 §23.58）**
 - **验证**：arch-tests 15（原 13 + 新 2）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过。纯新增测试、零生产代码与零 annuity 改动。
 - **优先级清单同步**：§23.46 核对表两行「向前约束由批次 50 机器化」改为 ✅；计划文档、优先级清单、P2 方案文档标注批次 49/50 完成。**P2 专项方案采纳后的编码工作至此收口**，P2-1/3/4 按决策保持关闭/暂缓。
+
+### 23.58 批次 51 范围边界（§21.4 第 4 条 Adapter 构造边界）
+
+- **来源**：批次 50 收尾时建议「回补 §21.4 第 4 条 Adapter 不直接构造领域对象」（§23.46 核对表当时标 ⚠️ 未机器化），用户确认按建议推进。
+- **核实**：先 grep 确认 adapter 层现状——**无** `new` 领域聚合根/实体（`BusinessApplication`/`BusinessBatch`/`BusinessForm`/`StepExecution`/`ExternalInteraction`/`MaterialItem` 均为 NONE），但**有** 5 处构造 domain 值对象（`BusinessContext` 1、`BusinessFile` 3、`OperatorInfo` 1），均为 Converter 组装请求/响应的必要行为；`CoreKernelAutoConfiguration` 构造的是 application 层 Job 与默认网关实现，非领域聚合根。故 §21.4 第 4 条字面「不构造领域对象」与现状有张力，成立子集是「不构造聚合根/实体」，与 04-代码编写约束「Adapter 禁止直接操作 Entity 或 DO」一致。
+- **规则**：并入 `KernelForwardConstraintTest` 新增第 3 条 `ArchCondition<JavaClass>`——遍历 `clazz.getConstructorCallsFromSelf()`，对 `call.getTargetOwner()` 判定 `isAssignableTo("com.example.shared.domain.aggregate.entity.Entity")`（`AggregateRoot extends Entity`，一条覆盖），命中即违规。用字符串 FQN 避免 arch-tests 编译期依赖业务类。
+- **TDD 与反向验证**：两轮先红后绿。① 故意把判定放宽为「`com.example.core.domain` 包任意类」→ 红灯捕获 5 次值对象构造（实证字面张力）→ 收窄到 Entity 子类转绿；② 临时把检查包从 `com.example.core.adapter..` 改为 `com.example.core.domain..`（domain 内部 `createFromForm`/`reconstitute` 会 `new` 聚合根）→ 红灯捕获 10+ 次聚合根构造 → 改回正式规则转绿。两轮证明「Entity 子类判定」真生效、非空转。
+- **防假绿**：`@BeforeAll` 新增 2 项断言——`com.example.core.adapter` 类数 > 5、adapter 层 `getConstructorCallsFromSelf()` 总数 > 0，确保被检查包确有构造器调用。
+- **边界（如实标注）**：只禁聚合根/实体；值对象构造允许（Converter 必要行为）。规格 §21.4 第 4 条**未修订**，字面「不构造领域对象」与现状仍有张力，核对表标「✅ 部分机器化 ⚠️ 字面张力仍在」。§21.4 第 1/6 条字面张力仍保持原状态（§23.56）。规则只检查 kernel adapter 包，业务服务 adapter（如 annuity-adapter）不在本规则范围。
+- **验证**：arch-tests 16（原 15 + 新 1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过。纯新增测试、零生产代码与零 annuity 改动。
+- **同步**：§23.46 核对表该行更新为「✅ 部分机器化」；§23.56/§23.57 中「仍未机器化」的历史表述标注为当时状态；§21.4 修订注记补批次 51 指针；计划文档新增批次 51，优先级清单推进状态补记。

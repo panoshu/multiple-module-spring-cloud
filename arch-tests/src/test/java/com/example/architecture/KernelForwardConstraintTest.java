@@ -2,6 +2,7 @@ package com.example.architecture;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaConstructorCall;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -21,17 +22,24 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * §21.4 向前约束（批次 50，对应规格修订 §23.56）。
+ * §21.4 向前约束与分层构造边界（批次 50 / 51，对应规格修订 §23.56）。
  * <p>
  * 规格修订后明确「存量不回溯」，故本类只约束<b>新增</b>：以「存量方法基线快照」豁免现有裸参方法，
  * 任何不在基线中的新 public 方法，其参数必须是 CQE（Command/Query/Event）或零参；types 层不得再
  * 放入聚合根/实体/领域服务。基线按 {@code 简单类名#方法名} 记录，参数类型重构不会误报，新增方法名
- * 则必然被检查。防假绿：断言导入规模、Service 类数、types 类数，以及基线确实命中导入类的方法。
+ * 则必然被检查。
+ * <p>
+ * 批次 51 补入 §21.4 第 4 条的成立子集：adapter 不得直接构造领域<b>聚合根/实体</b>（Entity 子类）。
+ * 值对象（{@code BusinessFile}/{@code BusinessContext} 等）是 Converter 组装请求/响应的必要行为，
+ * 与 04-代码编写约束「禁止直接操作 Entity 或 DO」一致，不在禁止范围；规格字面「不构造领域对象」
+ * 与现状仍有张力，见设计文档 §23.58。防假绿：断言导入规模、Service 类数、types/adapter 类数、
+ * 基线命中数，以及 adapter 层确有构造器调用。
  */
-@DisplayName("§21.4 向前约束（批次 50，存量不回溯）")
+@DisplayName("§21.4 向前约束与分层构造边界（批次 50/51）")
 class KernelForwardConstraintTest {
 
   private static final String KERNEL_APPLICATION = "com.example.core.application..";
+  private static final String KERNEL_ADAPTER = "com.example.core.adapter..";
   private static final String KERNEL_TYPES = "com.example.core.types..";
   private static final String ENTITY_FQN = "com.example.shared.domain.aggregate.entity.Entity";
   private static final String DOMAIN_SERVICE_FQN = "com.example.shared.domain.annotation.DomainService";
@@ -87,8 +95,11 @@ class KernelForwardConstraintTest {
     assertThat(classes.size()).isGreaterThan(500);
     assertThat(countServiceClasses()).isGreaterThanOrEqualTo(9L);
     assertThat(countIn("com.example.core.types")).isGreaterThan(10L);
+    assertThat(countIn("com.example.core.adapter")).isGreaterThan(5L);
     // 防假绿：基线必须真实命中导入类的方法，避免白名单写错导致规则空转
     assertThat(matchedLegacyMethodCount()).isGreaterThan(20L);
+    // 防假绿：adapter 层确有构造器调用，避免规则 3 因零调用而空转
+    assertThat(countConstructorCallsIn("com.example.core.adapter")).isGreaterThan(0L);
   }
 
   @Test
@@ -113,6 +124,31 @@ class KernelForwardConstraintTest {
       .because("§21.4（批次 49 修订）：types 不得放领域服务")
       .check(classes);
   }
+
+  @Test
+  @DisplayName("3. adapter 不直接构造领域聚合根/实体")
+  void adapterDoesNotConstructDomainEntities() {
+    classes().that().resideInAPackage(KERNEL_ADAPTER)
+      .should(NOT_CONSTRUCT_DOMAIN_ENTITIES)
+      .because("§21.4 第 4 条 / 04-代码编写约束：Adapter 不直接构造领域聚合根/实体"
+        + "（值对象构造属 Converter 必要行为，允许）")
+      .check(classes);
+  }
+
+  private static final ArchCondition<JavaClass> NOT_CONSTRUCT_DOMAIN_ENTITIES =
+    new ArchCondition<>("not construct domain aggregates/entities") {
+      @Override
+      public void check(JavaClass clazz, ConditionEvents events) {
+        for (JavaConstructorCall call : clazz.getConstructorCallsFromSelf()) {
+          JavaClass target = call.getTargetOwner();
+          // 只禁聚合根/实体（Entity 子类，含 AggregateRoot）；值对象是 Converter 必要行为，允许
+          if (target.isAssignableTo(ENTITY_FQN)) {
+            events.add(SimpleConditionEvent.violated(call,
+              "Adapter 直接构造领域聚合根/实体 " + target.getSimpleName() + "，应经由应用服务/领域工厂"));
+          }
+        }
+      }
+    };
 
   private static final ArchCondition<JavaClass> NEW_METHODS_USE_CQE =
     new ArchCondition<>("use CQE or no args for methods outside the legacy baseline") {
@@ -155,6 +191,16 @@ class KernelForwardConstraintTest {
     for (JavaClass clazz : classes) {
       if (clazz.getPackageName().startsWith(packagePrefix)) {
         count++;
+      }
+    }
+    return count;
+  }
+
+  private static long countConstructorCallsIn(String packagePrefix) {
+    long count = 0;
+    for (JavaClass clazz : classes) {
+      if (clazz.getPackageName().startsWith(packagePrefix)) {
+        count += clazz.getConstructorCallsFromSelf().size();
       }
     }
     return count;
