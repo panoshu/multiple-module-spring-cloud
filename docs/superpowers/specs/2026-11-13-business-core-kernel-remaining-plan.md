@@ -313,8 +313,8 @@
 - 状态：**完成**（设计文档 §23.52）。
 
 #### 批次 46 — 恢复链路扫描与事务边界（优先级清单第二批）
-- 范围：P1-1（`reconcileAllActive` 改按状态索引查询替代 `loadAll` 全表扫描）+ P1-2（`ExternalInteractionRecoveryService` 按单条加事务包装）。
-- 状态：待推进。
+- 范围：P1-1（`reconcileAllActive` 改按状态索引查询替代 `loadAll` 全表扫描）+ P1-2（`ExternalInteractionRecoveryService` 按单条加事务包装，外部查询留事务外）。
+- 状态：**完成**（设计文档 §23.53）。TDD 先红后绿；kernel 全模块、架构、annuity E2E 全绿；零 annuity 改动。优先级清单 P1 项全部清空，仅剩 P0-2 待单独确认。
 
 ---
 

@@ -1177,6 +1177,8 @@ Application 层按用例拆分：
 
 | 批次 45 | `b1b3222d` | **修复重复出站事件监听器**（`2026-11-14-remaining-work-priority.md` P0-1 + P0-3 + P1-3）：新增 `arch-tests/EventListenerUniquenessTest` 2 条契约——同一集成事件 DTO 只允许一个 `@EventListener` 入口、所有集成事件 listener 必须持有 `EventReceiptGateway`（先红：唯一性 2、旧类缺回执）；退役旧 `OutboundFileEventListener` 与死代码 `FlowOrchestrationService.advanceByOutboundFile`，唯一入口改为 `OutboundFileGeneratedEventListener`（含 `tryConsume` + 回调关联 + `NO_CORRELATION` 回退）；更新 file-api/file-domain Javadoc 指向新监听器。P0-3 核查确认所有 `handleXxx`/`onXxx` 入口均经回执；P1-3 更新 CODEBUDDY.md Known Gaps 与 §23.46 过时条目 | `mvn clean install -DskipTests` 后契约测试 2 项全绿；annuity E2E 6 / 自动推进 E2E 1、kernel 全模块、架构测试全绿；全仓 `test-compile`、`git diff --check` 通过 |
 
+| 批次 46 | 本次（未提交） | **恢复链路扫描与事务边界**（优先级清单第二批 P1-1 + P1-2）：P1-1 新增 `BatchRepository.findByStatuses(Collection<BatchStatus>)` 并由 `BusinessBatchRepositoryImpl` 用 `STATUS IN` 走 `idx_business_batch_status`（逻辑删除由 MyBatis-Flex 自动过滤），`BusinessBatchAppService.reconcileAllActive()` 由 `loadAll()` 全表扫描改为按 CREATED/PROCESSING 查询；P1-2 `ExternalInteractionRecoveryService` 改显式构造注入 `PlatformTransactionManager`，每条记录的「状态变更 + save + 事件发布」包在独立 `TransactionTemplate` 事务中，`reconcileOne` 的外部审批查询保持在事务外。补应用/infra/恢复服务测试 | kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿（Spring 成功注入 `PlatformTransactionManager`）；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1678,7 +1680,7 @@ Application 层按用例拆分：
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
-- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、恢复任务事务边界精修、批次扫描按状态索引查询。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）；批次扫描按状态索引与恢复任务事务边界由批次 46 完成（§23.53）。
 - **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级，含纠偏表与批次推进记录）。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
@@ -1766,3 +1768,14 @@ Application 层按用例拆分：
 - **P1-3 文档纠偏**：CODEBUDDY.md Known Gaps 前两条（core-api 空、adapter 无代码）与第三条（两个 Gateway 都无默认实现）均按现状改写——core-api 已有 `@HttpExchange` API/CQE/DTO、adapter 已有 Controller/Converter/自动配置、`FileIntegrationGateway` 已由 kernel `FileServiceIntegrationGateway`（`@ConditionalOnProperty`）提供默认实现，`BusinessConfigGateway` 仍无 kernel 默认实现；§23.46 遗留清单移除已完成的 `StepDefinition.actionType()`、改写事件幂等条目；优先级清单标注 P0-1/P0-3/P1-3 完成。
 - **验证**：先 `mvn clean install -DskipTests` 清除 stale class（否则 ArchUnit 仍会看到已删除的 listener），契约测试 2 项转绿；annuity E2E 6 + 自动推进 E2E 1、kernel 全模块、架构测试全绿；全仓 `test-compile`、`git diff --check` 通过。E2E 不发布 `OutboundFileGeneratedEventDTO`，故删除旧 listener 无回归风险。
 - **仍未处理**：P0-2（annuity 生产 profile，触及冻结配置需单独确认）、批次 46 的 P1-1 / P1-2，以及优先级清单 P2/P3 各项。
+
+### 23.53 批次 46 范围边界（恢复链路扫描与事务边界）
+
+- **来源**：`2026-11-14-remaining-work-priority.md` 的第二批（P1-1 + P1-2），两项同属恢复链路，按「合并验证」一起落地。
+- **P1-1 现状与修复**：`BusinessBatchAppService.reconcileAllActive()` 原调 `batchRepository.loadAll()` → `AbstractBusinessRepository.loadAll()` → `mapper.selectAll()` **全表扫描**，恢复 Job 每轮都扫全表，批次表增长后线性劣化；DDL 已有 `idx_business_batch_status` 却未利用。新增 `BatchRepository.findByStatuses(Collection<BatchStatus>)`，`BusinessBatchRepositoryImpl` 用 `QueryWrapper` 的 `STATUS.in(...)` 走索引（逻辑删除由 DO 的 `@Column(isLogicDelete=true)` 自动过滤，符合 06-数据库规范）；`reconcileAllActive()` 改为只查 `CREATED/PROCESSING`，保留 `status().isActive()` 作为防御性过滤。annuity 的 `BatchRepositoryImpl` 继承 kernel 基类自动获得新方法，**零 annuity 改动**。
+- **P1-2 现状与修复**：`ExternalInteractionRecoveryService` 四个动作均无 `@Transactional`，每条 `repository.save` 内部（`selectOneById` + `update/insert` + `publishDomainEvents` → Outbox 落库 + 本地分发）没有事务包裹，与规格 §9.1「状态、执行记录与 Outbox 在同一本地事务保存」不一致。改为显式构造注入 `PlatformTransactionManager`，内部建 `TransactionTemplate`：① `process(...)` 每条记录 `transactionTemplate.executeWithoutResult(tx -> { action.accept(...); repository.save(...); })`，单条失败只回滚该条、循环继续，与 `safeRun` 的单条隔离语义对齐；② `reconcileOne` 把外部审批状态查询留在事务外（避免远程 IO 拉长事务），只对「确认状态变更 + save」包事务。未引入跨批长事务，也未加 2 参数兼容重载（直接改 3 处测试调用点，抽 `recoveryService(...)` helper 避免重复）。
+- **TDD**：P1-1 先在 `BusinessBatchAppServiceTest` 断言 `findByStatuses(CREATED, PROCESSING)` 且 `never().loadAll()` → 编译红灯（方法不存在）→ 实现后绿灯；补 `BusinessBatchRepositoryImplTest` 断言空集合短路不查库、非空走 `selectListByQuery` 且 `never().selectAll()`。P1-2 先改测试构造为 3 参数 → 编译红灯 → 实现构造 → 新增 3 项事务断言（每条独立事务提交 2 次、单条失败 rollback 且不影响其余、UNKNOWN 对账确认在事务内）→ 红灯（`getTransaction` 未调用）→ 实现事务包装后绿灯。
+- **兼容性**：`ExternalInteractionRecoveryService` 是 `@Service` 组件扫描注册，Spring Boot 在存在 `PlatformTransactionManager` 时自动装配，annuity E2E（H2 数据源）验证 7 项全绿、无 `NoSuchBeanDefinitionException`。`ExternalInteractionRecoveryJob` 通过接口持有该服务，不受构造变化影响。批次 39-1 的 `ExternalCollaborationAcceptanceTest` 3 处构造调用同步改为 helper。
+- **验证**：kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
+- **优先级清单同步**：P1-1 / P1-2 标注完成，§23.46 遗留清单移除这两项，**剩余 P1 项全部清空**。
+- **仍未处理**：P0-2（annuity 生产 profile，触及冻结配置需单独确认）、优先级清单 P2 全部（需专项方案）、P3（仅记录），以及多进程真 Redis 锁集成测试。

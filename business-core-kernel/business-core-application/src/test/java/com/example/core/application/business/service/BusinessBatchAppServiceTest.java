@@ -213,7 +213,7 @@ class BusinessBatchAppServiceTest {
     BusinessBatch active = driftedBatch(activeId, BatchStatus.PROCESSING, 2, 0, 0);
     BusinessBatch completed = driftedBatch(new BatchId("BATCH-DONE"),
       BatchStatus.COMPLETED, 2, 2, 0);
-    when(batchRepository.loadAll()).thenReturn(List.of(active, completed));
+    when(batchRepository.findByStatuses(any())).thenReturn(List.of(active, completed));
     when(batchRepository.loadOrThrow(activeId)).thenReturn(active);
     List<BusinessApplication> activeApplications =
       List.of(appWithStatus(ApplicationStatus.RUNNING));
@@ -221,6 +221,8 @@ class BusinessBatchAppServiceTest {
 
     assertThat(appService.reconcileAllActive()).isEqualTo(1);
     verify(batchRepository, times(1)).loadOrThrow(activeId);
+    verify(batchRepository).findByStatuses(List.of(BatchStatus.CREATED, BatchStatus.PROCESSING));
+    verify(batchRepository, never()).loadAll();
   }
 
   @Test
@@ -230,7 +232,7 @@ class BusinessBatchAppServiceTest {
     BatchId second = new BatchId("BATCH-OK");
     BusinessBatch firstBatch = driftedBatch(first, BatchStatus.PROCESSING, 1, 0, 0);
     BusinessBatch secondBatch = driftedBatch(second, BatchStatus.PROCESSING, 1, 0, 0);
-    when(batchRepository.loadAll()).thenReturn(List.of(firstBatch, secondBatch));
+    when(batchRepository.findByStatuses(any())).thenReturn(List.of(firstBatch, secondBatch));
     when(batchRepository.loadOrThrow(first)).thenReturn(firstBatch);
     when(batchRepository.loadOrThrow(second)).thenReturn(secondBatch);
     when(applicationRepository.findByBatchId(first)).thenThrow(new IllegalStateException("db down"));

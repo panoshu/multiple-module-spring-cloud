@@ -24,6 +24,8 @@ import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -90,7 +92,7 @@ class ExternalCollaborationAcceptanceTest {
   void timeout_entersUnknown_andRequiresReconciliation() {
     ExternalInteractionRepository repo = mock(ExternalInteractionRepository.class);
     ApprovalIntegrationGateway gateway = mock(ApprovalIntegrationGateway.class);
-    ExternalInteractionRecoveryService service = new ExternalInteractionRecoveryService(repo, gateway);
+    ExternalInteractionRecoveryService service = recoveryService(repo, gateway);
 
     ExternalInteraction stale = interaction(2L, InteractionType.APPROVAL, REQUEST_NO,
       APPROVAL_INSTANCE_ID, ExternalInteractionStatus.DISPATCHING);
@@ -155,7 +157,7 @@ class ExternalCollaborationAcceptanceTest {
   void restart_reclaimsStaleDispatchingForReconciliation() {
     ExternalInteractionRepository repo = mock(ExternalInteractionRepository.class);
     ApprovalIntegrationGateway gateway = mock(ApprovalIntegrationGateway.class);
-    ExternalInteractionRecoveryService service = new ExternalInteractionRecoveryService(repo, gateway);
+    ExternalInteractionRecoveryService service = recoveryService(repo, gateway);
 
     ExternalInteraction stale = interaction(5L, InteractionType.APPROVAL, "SE-10",
       APPROVAL_INSTANCE_ID, ExternalInteractionStatus.DISPATCHING);
@@ -180,7 +182,7 @@ class ExternalCollaborationAcceptanceTest {
     for (Map.Entry<String, ExternalInteractionStatus> entry : expected.entrySet()) {
       ExternalInteractionRepository repo = mock(ExternalInteractionRepository.class);
       ApprovalIntegrationGateway gateway = mock(ApprovalIntegrationGateway.class);
-      ExternalInteractionRecoveryService service = new ExternalInteractionRecoveryService(repo, gateway);
+      ExternalInteractionRecoveryService service = recoveryService(repo, gateway);
       ExternalInteraction unknown = interaction(id++, InteractionType.APPROVAL, REQUEST_NO,
         APPROVAL_INSTANCE_ID, ExternalInteractionStatus.UNKNOWN);
       when(repo.findByStatus(ExternalInteractionStatus.UNKNOWN)).thenReturn(List.of(unknown));
@@ -225,4 +227,11 @@ class ExternalCollaborationAcceptanceTest {
     assertThat(commands.getAllValues().get(1).outcome()).isEqualTo(CallbackOutcome.FAILED);
   }
 
+  /** 恢复服务现按单条包事务，测试侧提供直通的事务管理器。 */
+  private ExternalInteractionRecoveryService recoveryService(
+    ExternalInteractionRepository repo, ApprovalIntegrationGateway gateway) {
+    PlatformTransactionManager txManager = mock(PlatformTransactionManager.class);
+    when(txManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    return new ExternalInteractionRecoveryService(repo, gateway, txManager);
+  }
 }

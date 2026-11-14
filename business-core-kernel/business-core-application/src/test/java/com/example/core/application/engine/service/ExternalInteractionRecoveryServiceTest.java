@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +24,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -37,12 +41,15 @@ class ExternalInteractionRecoveryServiceTest {
   private ExternalInteractionRepository repository;
   @Mock
   private ApprovalIntegrationGateway approvalGateway;
+  @Mock
+  private PlatformTransactionManager txManager;
 
   private ExternalInteractionRecoveryService service;
 
   @BeforeEach
   void setUp() {
-    service = new ExternalInteractionRecoveryService(repository, approvalGateway);
+    lenient().when(txManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    service = new ExternalInteractionRecoveryService(repository, approvalGateway, txManager);
   }
 
   @Test
@@ -170,6 +177,49 @@ class ExternalInteractionRecoveryServiceTest {
     assertThat(service.reclaimStaleDispatching(NOW)).isZero();
     assertThat(service.processDueRetries(NOW)).isZero();
     assertThat(service.reconcileUnknown()).isZero();
+  }
+
+  @Test
+  @DisplayName("每条记录的状态变更与保存都在独立事务中提交")
+  void process_wrapsEachRecordInOwnTransaction() {
+    ExternalInteraction first = reconstitute(1L, ExternalInteractionStatus.PENDING_DISPATCH, null);
+    ExternalInteraction second = reconstitute(2L, ExternalInteractionStatus.PENDING_DISPATCH, null);
+    when(repository.findByStatus(ExternalInteractionStatus.PENDING_DISPATCH))
+      .thenReturn(List.of(first, second));
+
+    assertThat(service.claimPendingDispatch()).isEqualTo(2);
+
+    verify(txManager, times(2)).getTransaction(any());
+    verify(txManager, times(2)).commit(any());
+  }
+
+  @Test
+  @DisplayName("单条失败回滚该条事务，不影响同批其他记录")
+  void process_rollsBackFailedRecordOnly() {
+    ExternalInteraction first = reconstitute(1L, ExternalInteractionStatus.PENDING_DISPATCH, null);
+    ExternalInteraction second = reconstitute(2L, ExternalInteractionStatus.PENDING_DISPATCH, null);
+    when(repository.findByStatus(ExternalInteractionStatus.PENDING_DISPATCH))
+      .thenReturn(List.of(first, second));
+    doThrow(new RuntimeException("db down")).when(repository).save(first);
+
+    assertThat(service.claimPendingDispatch()).isEqualTo(1);
+
+    verify(txManager).rollback(any());
+    verify(txManager).commit(any());
+    verify(repository).save(second);
+  }
+
+  @Test
+  @DisplayName("UNKNOWN 对账确认在事务内完成（外部查询仍在事务外）")
+  void reconcileUnknown_confirmationInTransaction() {
+    ExternalInteraction unknown = reconstitute(4L, ExternalInteractionStatus.UNKNOWN, "AI-1");
+    when(repository.findByStatus(ExternalInteractionStatus.UNKNOWN)).thenReturn(List.of(unknown));
+    when(approvalGateway.queryApprovalStatus("AI-1")).thenReturn("APPROVED");
+
+    assertThat(service.reconcileUnknown()).isEqualTo(1);
+
+    verify(txManager).getTransaction(any());
+    verify(txManager).commit(any());
   }
 
   private ExternalInteraction reconstitute(long id, ExternalInteractionStatus status, String externalTaskId) {

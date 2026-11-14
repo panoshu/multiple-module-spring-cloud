@@ -6,6 +6,7 @@ import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.shared.identifier.contract.IdService;
@@ -136,12 +137,13 @@ public class BusinessBatchAppService {
   }
 
   /**
-   * 恢复任务入口：扫描活跃批次并逐个对账（§19.2「重算批次统计」）。
-   * 单条失败隔离，避免一条异常拖垮整轮扫描；批次间不共享事务，
-   * 与既有恢复动作逐条保存的语义一致。
+   * 恢复任务入口：按状态索引扫描活跃批次并逐个对账（§19.2「重算批次统计」）。
+   * 查询收敛为 CREATED/PROCESSING 两个状态（走 idx_business_batch_status），
+   * 不再全表 loadAll；单条失败隔离，批次间不共享事务，与既有恢复动作语义一致。
    */
   public int reconcileAllActive() {
-    List<BusinessBatch> candidates = batchRepository.loadAll();
+    List<BusinessBatch> candidates = batchRepository.findByStatuses(
+      List.of(BatchStatus.CREATED, BatchStatus.PROCESSING));
     if (candidates == null || candidates.isEmpty()) {
       return 0;
     }
