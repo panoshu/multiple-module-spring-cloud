@@ -2030,3 +2030,13 @@ Application 层按用例拆分：
 - **验证**：架构 17、annuity E2E 8、全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
 - **运行时边界**：`PlanDirectoryApi` 客户端 bean 由 approval-starter 的 `@HttpExchange` 扫描装配，单测不覆盖端到端 HTTP（与 §23.66/#12 一致）；auth 未接入时 `/members` 返回空，SAME_PLAN fail-closed 不展开审批人。
 - **同步**：清单 #2 与计划文档标注批次 68 完成。**仍未处理**：批次 69（approval LEVEL_UP）、#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
+
+### 23.76 批次 69 范围边界（approval LEVEL_UP 节点解析与立项收口）
+
+- **来源**：`2026-11-14-organization-directory-design.md` §5 批次 69；组织目录立项最后一批，承接批次 67/68 供给与消费能力。
+- **方案微调（如实记录）**：立项建议「`PlanHierarchyGateway` 增加父计划查询」，实施延续批次 68 的选择——在已有 `RoleUserGateway` domain SPI 新增 `getUsersInParentPlan(PlanNo, UserNo)`，由 infrastructure 组合 `/parent` + `/members` 两次调用，**不新建独立端口、不改 `resolveApprovers` 签名、零 application 改动**。§6 决策 6 的目标（domain 端口隔绝 auth-api、不做解析上移）已由该 SPI 达成。
+- **实现**：`RoleUserGatewayImpl` 新增 `getUsersInParentPlan`（先取直接父计划号，父计划号为空即 fail-closed 返回空且不调 `/members`；再按父计划取成员并排除发起人；抽取 `toUserNos`/`excludeUserNo` 消除重复）；`ApprovalNodeResolver.LEVEL_UP` 分支改为按 `instance.currentPlan()` 查父计划成员，缺计划 fail-closed 返回空（不再回退 `node.approverIds()`）；`TerminalLevel` 多级追溯数值语义列为后续，到顶（无父计划）由网关 fail-closed 保证不越级。
+- **TDD**：`ApprovalNodeResolverTest` +3（父计划命中、缺计划、到顶不越级）、`RoleUserGatewayImplTest` +4（双请求透传、无父计划、异常、null 计划），先编译红灯（`getUsersInParentPlan` 不存在）后转绿。
+- **验证**：approval-domain 98 / approval-infrastructure 37 / approval-application 20、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL、零配置改动。
+- **立项收口**：批次 66（auth-api 契约）→ 67（auth 供给侧）→ 68（SAME_PLAN）→ 69（LEVEL_UP）全部完成；`StubProductGateway` 保留兜底、`InMemoryProductGateway` 默认不启用，生产未接入真实组织目录时 SAME_PLAN / LEVEL_UP 均 fail-closed。清单 #1/#2 清空、CODEBUDDY.md Known Gaps 同步。
+- **结论**：§21 验收核对表已无 ⚠️/❌；**当前 kernel 代码项与组织目录立项均已清空**。**仍未处理**：#4（真 Redis + 多 JVM 集成，待环境）、#12/#13 部署联调检查（`@HttpExchange` 端到端 HTTP、权限项自注册、MDC 日志 pattern）、清单 §3 文档欠账，以及 `TerminalLevel` 多级追溯 / `ancestorsOf` 整链 / 外部组织目录主数据系统对接（仓库外，均另行立项）。

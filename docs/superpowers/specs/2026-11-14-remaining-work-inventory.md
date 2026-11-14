@@ -2,7 +2,7 @@
 
 > 生成日期：2026-11-14
 > 依据：`2026-11-08-business-core-kernel-production-design.md`（§20 阶段规划、§21 验收核对表、§23 台账）、`2026-11-14-remaining-work-priority.md`、`2026-11-14-p2-special-plan.md`、`2026-11-14-role-user-api-design.md`、`2026-11-14-p3-approval-stub-cross-service-design.md`、CODEBUDDY.md Known Gaps，并逐项对照当前代码核实
-> 状态：批次 1–62 全部完成并推送；组织目录立项（批次 66–69）已开工，批次 66–68 完成、69 收尾中；本文件是**当前**剩余工作的唯一权威清单
+> 状态：批次 1–62 全部完成并推送；组织目录立项（批次 66–69）已全部完成并收口；本文件是**当前**剩余工作的唯一权威清单
 
 ---
 
@@ -10,7 +10,7 @@
 
 设计文档 §23 里共有约 60 行「**仍未处理**」，但它们是**每个批次收尾时的历史快照**（例如 §23.14 记录批次 13 时点的待办），并非当前待办；绝大多数已在后续批次被逐条结清，且每行都带有「已由批次 X 完成」的补注。
 
-判断当前状态应看三处：① 最新批次 §23.75 的「仍未处理」；② §23.46「收口结论与遗留（阶段 5）」；③ `2026-11-14-remaining-work-priority.md` 的推进状态行。**P0/P1 全部清空，P2 专项方案 49/50 + 51/52 已完成，P3-1 立项 53–62 已全部收口**。
+判断当前状态应看三处：① 最新批次 §23.76 的「仍未处理」；② §23.46「收口结论与遗留（阶段 5）」；③ `2026-11-14-remaining-work-priority.md` 的推进状态行。**P0/P1 全部清空，P2 专项方案 49/50 + 51/52 已完成，P3-1 立项 53–62 已全部收口，组织目录立项 66–69 已全部收口**。
 
 ---
 
@@ -18,8 +18,8 @@
 
 | # | 项 | 来源 | 当前代码核实（2026-11-14） | 建议 |
 |---|---|---|---|---|
-| 1 | **组织目录真实接入** | §23.59/§23.61/§23.69 | `ProductGateway` 仅 `StubProductGateway`；`PlanReachabilityService.listAssignmentsForPlan` 生产不可用；CUSTOMER/PRODUCT/GLOBAL 继承展开不支持，角色审批仅 `SPECIFIED_ROLE` + PLAN 精确 scope | **已单独立项并开工**（`2026-11-14-organization-directory-design.md`）：§6 开放点已按推荐默认值决策落盘；方案为契约 + 可替换内存实现，分批次 66–69。**批次 66–68 已完成**（§23.73–§23.75），69 收尾中 |
-| 2 | **SAME_PLAN / LEVEL_UP 节点解析** | §23.67/§23.69 | `ApprovalNodeResolver` 两个分支仍是 TODO（回退 `node.approverIds()`）；`RoleUserGatewayImpl.getUsersInSamePlan` 仍为未接线 stub（全仓无消费方） | 与 #1 合并立项（同一文档批次 68/69）；节点解析结果经批次 62 主链路直接进入身份校验与会签判断，语义敏感。**批次 68 已完成（§23.75）接线 SAME_PLAN，LEVEL_UP（69）推进中**（表中「当前代码核实」为立项时快照，已由 §23.75 更新） |
+| 1 | ~~**组织目录真实接入**~~ | §23.59/§23.61/§23.69 | ✅ **已由批次 66–69 完成（§23.73–§23.76）**：auth-api `PlanDirectoryApi` 契约、auth 供给侧条件注册 `InMemoryProductGateway`、approval 侧 `getUsersInSamePlan`/`getUsersInParentPlan` 接线；零 DDL、Stub 保留兜底 | 立项收口；真实外部主数据系统对接属仓库外另行立项 |
+| 2 | ~~**SAME_PLAN / LEVEL_UP 节点解析**~~ | §23.67/§23.69 | ✅ **已由批次 68/69 完成（§23.75/§23.76）**：`ApprovalNodeResolver` 两分支均按计划层级查成员、排除发起人、缺计划/到顶 fail-closed，不再回退 `node.approverIds()` | 立项收口；`TerminalLevel` 多级追溯 / `ancestorsOf` 整链列为后续 |
 | 3 | **`Map<String,Object>` 业务扩展字段强类型化** | P2-1 / §23.46 | kernel domain/application 约 30 处 SPI（全仓含测试/局部变量共 72 行命中）：`FormParsingConfig.splitRules`、`StepExtensionConfig.params`、`BusinessMetaContext.extensionFacts`、`ExtensionExecutionResult.mutations`、`StepExtensionAction.execute` 等 | P2 专项方案已判定**降级关闭**：动态 Map 是通用编排引擎承载业务线自定义配置/事实的正确设计，强类型化会把业务 schema 固化进 kernel。仅补设计说明，不改代码 |
 | 4 | **多进程 + 真实 Redis 分布式锁 + 真实 DB 并发集成测试** | P2-4 / §23.50 / §21.5 核对表 | 批次 43 的 `ConcurrentAdvanceAcceptanceTest`/`OptimisticLockConcurrencyTest` 是进程内状态化 fake 的确定性并发；无真实 Redis/多 JVM 集成 | **暂缓**：需集成测试环境（Docker + Redis + 多 JVM），核心不变量已有契约测试 |
 | 5 | **annuity 自有存储改持久化聚合** | P2-3 / §23.40/§23.42 | `InMemoryAnnuityApplicationExtensionStore` 与 `InMemoryParsedFileReferenceGateway` 仍是 `ConcurrentHashMap` | **wontfix**：annuity 是冻结的早期示例服务，进程内态满足 E2E；仅当转真实业务服务时再做 |
@@ -58,7 +58,7 @@
 
 | 项 | 状态 |
 |---|---|
-| CODEBUDDY.md Known Gaps 称 `listMyPendingApprovals` 抛 UOE、`getApprovalHistory` 返回空 | ✅ **本次已修正**：3 个 service stub 已由批次 53–55 清零；`getUsersInSamePlan` 已由批次 68 接线（§23.75），不再是未接线 stub |
+| CODEBUDDY.md Known Gaps 称 `listMyPendingApprovals` 抛 UOE、`getApprovalHistory` 返回空 | ✅ **本次已修正**：3 个 service stub 已由批次 53–55 清零；`getUsersInSamePlan` 与 SAME_PLAN / LEVEL_UP 解析已由批次 68/69 接线（§23.75/§23.76） |
 | §23.44 已知边界① 称 `reconcileAllActive()` 用 `loadAll()` 全表加载 | ⚠️ **过时**：批次 46 已改为 `findByStatuses` 按状态索引（§23.53）。属历史快照，建议下次触碰该章节时补注 |
 | §23.46 末行称「P2 专项方案待用户确认」 | ⚠️ **过时**：方案已采纳且 49/50/51/52 完成。属历史快照 |
 | 优先级清单 P2 表格「建议处置」列仍写「先定模型/先做规格决策」 | ⚠️ **过时**：推进状态行已更新为「降级关闭/wontfix/暂缓/部分机器化」，表格正文未同步 |
@@ -71,8 +71,8 @@
 1. ~~**#7 扩展动作 `beanName` 存在校验**~~ → ✅ 已由批次 63 完成（§23.70）
 2. ~~**#10 kernel 侧 PARTIAL 端到端统计对账**~~ → ✅ 已由批次 64 完成（§23.71，§21 核对表已无 ⚠️）
 3. ~~**#6 / #8 / #9 / #11**~~ → ✅ 批次 65 逐项代码复核后判定「设计选择 / 已决策不做」（§23.72），不再作为待办
-4. **#1 / #2 组织目录真实接入 + SAME_PLAN/LEVEL_UP 节点**：**唯一需要实质代码推进的方向**，已单独立项且 §6 开放点按推荐默认值决策落盘；批次 66–68 已完成，批次 69（LEVEL_UP）收尾中
+4. ~~**#1 / #2 组织目录真实接入 + SAME_PLAN/LEVEL_UP 节点**~~ → ✅ 批次 66–69 全部完成、立项收口（§23.73–§23.76）
 5. **#4 真 Redis + 多 JVM 集成测试**：待集成测试环境（Docker/Redis/CI）
 6. **#3 / #5 / #12 / #13 / #14 / #15 / #16 / #17 / #18**：已决策不做、部署/联调检查项、历史决策保留或文档欠账，均无需改 kernel 代码
 
-> 结论：**规格 §20 规划的全部批次（1–62）已完成**，§21 验收核对表已无 ⚠️/❌。批次 63/64 补齐发布期与对账能力，批次 65 把 4 项「看似待办」核实为设计选择。**当前 kernel 代码项已清空**；现存推进方向为 #1/#2 单独立项（批次 66–69，跨服务新契约，66–68 完成、69 收尾中）与 #4（待环境），其余为已决策不做 / 部署联调 / 文档欠账。
+> 结论：**规格 §20 规划的全部批次（1–62）已完成**，§21 验收核对表已无 ⚠️/❌。批次 63/64 补齐发布期与对账能力，批次 65 把 4 项「看似待办」核实为设计选择，批次 66–69 完成组织目录立项并收口。**当前 kernel 代码项与组织目录立项均已清空**；现存推进方向仅剩 #4（待环境）、#12/#13 部署联调检查与清单 §3 文档欠账，以及仓库外的外部组织目录主数据系统对接 / `TerminalLevel` 多级追溯等另行立项项。

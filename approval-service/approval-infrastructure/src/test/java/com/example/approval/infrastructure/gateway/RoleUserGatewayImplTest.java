@@ -2,8 +2,10 @@ package com.example.approval.infrastructure.gateway;
 
 import com.example.auth.api.PlanDirectoryApi;
 import com.example.auth.api.RoleUserQueryApi;
+import com.example.auth.api.dto.ParentPlanResponse;
 import com.example.auth.api.dto.PlanMembersResponse;
 import com.example.auth.api.dto.RoleUserBatchResponse;
+import com.example.auth.api.query.GetParentPlanRequest;
 import com.example.auth.api.query.ListPlanMembersRequest;
 import com.example.auth.api.query.ListRoleUsersRequest;
 import com.example.core.types.PlanNo;
@@ -20,15 +22,16 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * 批次 60/68：{@code RoleUserGatewayImpl} 接入 auth-api 的角色查询与计划成员查询，
- * 以及 fail-closed 降级。
+ * 批次 60/68/69：{@code RoleUserGatewayImpl} 接入 auth-api 的角色查询、同计划成员
+ * 与父计划成员查询，以及 fail-closed 降级。
  */
-@DisplayName("角色用户网关接入 auth-api（批次 60/68）")
+@DisplayName("角色用户网关接入 auth-api（批次 60/68/69）")
 class RoleUserGatewayImplTest {
 
   private RoleUserQueryApi roleUserQueryApi;
@@ -120,5 +123,53 @@ class RoleUserGatewayImplTest {
       .thenThrow(new IllegalStateException("auth down"));
 
     assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), null)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("父计划成员按 /parent 结果再调 /members，并透传父计划号与排除人")
+  void getUsersInParentPlan_mapsResponseAndPassesRequests() {
+    when(planDirectoryApi.getParentPlan(any())).thenReturn(ApiResult.success(
+      new ParentPlanResponse("P-0")));
+    when(planDirectoryApi.listMembers(any())).thenReturn(ApiResult.success(
+      new PlanMembersResponse(List.of("U-P1"))));
+
+    List<UserNo> result = gateway.getUsersInParentPlan(PlanNo.of("P-1"), UserNo.of("U-INIT"));
+
+    assertThat(result).containsExactly(UserNo.of("U-P1"));
+    ArgumentCaptor<GetParentPlanRequest> parentCaptor =
+      ArgumentCaptor.forClass(GetParentPlanRequest.class);
+    verify(planDirectoryApi).getParentPlan(parentCaptor.capture());
+    assertThat(parentCaptor.getValue().planNo()).isEqualTo("P-1");
+    ArgumentCaptor<ListPlanMembersRequest> membersCaptor =
+      ArgumentCaptor.forClass(ListPlanMembersRequest.class);
+    verify(planDirectoryApi).listMembers(membersCaptor.capture());
+    assertThat(membersCaptor.getValue().planNo()).isEqualTo("P-0");
+    assertThat(membersCaptor.getValue().excludeUserNo()).isEqualTo("U-INIT");
+  }
+
+  @Test
+  @DisplayName("无父计划时 fail-closed 返回空，不再调 /members")
+  void getUsersInParentPlan_failsClosedWhenNoParent() {
+    when(planDirectoryApi.getParentPlan(any())).thenReturn(ApiResult.success(
+      new ParentPlanResponse(null)));
+
+    assertThat(gateway.getUsersInParentPlan(PlanNo.of("P-1"), null)).isEmpty();
+    verify(planDirectoryApi, never()).listMembers(any());
+  }
+
+  @Test
+  @DisplayName("/parent 抛异常时 fail-closed 返回空")
+  void getUsersInParentPlan_failsClosedOnException() {
+    when(planDirectoryApi.getParentPlan(any()))
+      .thenThrow(new IllegalStateException("auth down"));
+
+    assertThat(gateway.getUsersInParentPlan(PlanNo.of("P-1"), null)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("计划号为 null 时短路，不发起跨服务调用")
+  void getUsersInParentPlan_nullPlanSkipsCall() {
+    assertThat(gateway.getUsersInParentPlan(null, null)).isEmpty();
+    verifyNoInteractions(planDirectoryApi);
   }
 }

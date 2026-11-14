@@ -187,7 +187,7 @@ Every use case follows: load aggregate → invoke behavior method → `repositor
 
 - `business-core-api` now contains `@HttpExchange` APIs, CQE objects and DTOs (e.g. `BusinessProgressApi`, `AdvanceStepCommand`); `business-core-adapter` provides controllers, MapStruct converters and auto-configuration.
 - `BusinessConfigGateway` still has no kernel default implementation — each business service must implement it. `FileIntegrationGateway` is provided by kernel's `FileServiceIntegrationGateway` (`@ConditionalOnProperty`, overridable by business services).
-- approval-service query methods (`listApprovalFlows`/`listMyPendingApprovals`/`getApprovalHistory`) are implemented (batches 53–55); `RoleUserGatewayImpl.getUsersInSamePlan` is now wired to auth-api `PlanDirectoryApi` (batch 68) and SAME_PLAN node resolution is implemented, while LEVEL_UP node resolution remains TODO (batch 69). See `docs/superpowers/specs/2026-11-14-remaining-work-inventory.md` for the current gap list.
+- approval-service query methods (`listApprovalFlows`/`listMyPendingApprovals`/`getApprovalHistory`) are implemented (batches 53–55); `RoleUserGatewayImpl` queries auth-api `PlanDirectoryApi` for SAME_PLAN / LEVEL_UP node resolution (batches 68–69). Organization-directory backing is an optional in-memory `ProductGateway` (disabled by default, `StubProductGateway` fallback); external master-data integration is out of repo scope. See `docs/superpowers/specs/2026-11-14-remaining-work-inventory.md` for the current gap list.
 
 ## Agent skills
 

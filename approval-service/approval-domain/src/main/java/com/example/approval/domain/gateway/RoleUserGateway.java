@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 角色用户网关接口（防腐层）
+ * 角色与计划层级用户网关接口（防腐层）
  *
  * @author <a href="mailto: hup@cj-pension.com.cn">hupan</a>
  * @version 1.0
@@ -41,4 +41,18 @@ public interface RoleUserGateway {
    * @return 用户列表
    */
   List<UserNo> getUsersInSamePlan(PlanNo planId, UserNo excludeUser);
+
+  /**
+   * 获取上一级计划（直接父计划）下的用户列表并排除指定用户（批次 69 接线）。
+   * <p>
+   * 经 auth-api {@code PlanDirectoryApi} 的 {@code /parent} 取直接父计划号，再按
+   * {@code /members} 取父计划成员。无父计划（到顶）、组织目录不可用、响应异常或
+   * 计划层级数据缺失时应 fail-closed 返回空列表，不越级、不回退节点配置的审批人。
+   * {@code TerminalLevel} 的多级追溯语义不在本立项范围（§6 决策 3）。
+   *
+   * @param planNo      当前计划号
+   * @param excludeUser 要排除的用户（发起人，可空）
+   * @return 父计划成员列表
+   */
+  List<UserNo> getUsersInParentPlan(PlanNo planNo, UserNo excludeUser);
 }

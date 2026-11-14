@@ -375,6 +375,7 @@
 - 状态：**§6 开放点已按推荐默认值决策落盘并开工**（用户既有「采纳建议 / 连续推进 / 每批自动提交推送」偏好，不再逐项确认）。契约定稿为新建 `PlanDirectoryApi` 的 `/members`+`/parent`；分批 66（auth-api 契约）→ 67（auth 供给侧 + 可替换内存实现）→ 68（approval SAME_PLAN）→ 69（LEVEL_UP）。**批次 66 已完成（§23.73）**，Stub 保留兜底、零 DDL。
 - **批次 67 已完成（§23.74）**：auth-application `PlanDirectoryQueryService`、auth-adapter `PlanDirectoryController`、auth-infrastructure 条件注册 `InMemoryProductGateway`（默认不启用、Stub 保持唯一实现）；12 项测试先红后绿，零配置改动、零 DDL。
 - **批次 68 已完成（§23.75）**：复用 `RoleUserGateway.getUsersInSamePlan` 接 `/members`，`ApprovalNodeResolver.SAME_PLAN` 接线并排除发起人、fail-closed；`PlanHierarchyGateway` 顺延至 69。
+- **批次 69 已完成、立项收口（§23.76）**：`RoleUserGateway` 新增 `getUsersInParentPlan`（`/parent` + `/members`），`ApprovalNodeResolver.LEVEL_UP` 按 `currentPlan` 接线、到顶 fail-closed；`TerminalLevel` 多级追溯列为后续。66–69 全部完成，Stub 保留兜底、零 DDL。
 
 ---
 

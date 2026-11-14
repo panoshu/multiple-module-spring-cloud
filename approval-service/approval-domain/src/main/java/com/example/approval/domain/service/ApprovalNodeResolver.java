@@ -80,9 +80,18 @@ public class ApprovalNodeResolver {
     }
 
     if (nodeType == NodeType.LEVEL_UP) {
-      // 上一级审批：需要通过计划层级网关获取上级计划的用户
-      // TODO: 实现层级审批逻辑
-      return node.approverIds();
+      // 上一级审批：取直接父计划成员；TerminalLevel 多级追溯列为后续，
+      // 到顶（无父计划）由网关 fail-closed 返回空，不越级、不回退节点配置
+      String currentPlan = instance.currentPlan();
+      if (currentPlan == null || currentPlan.isBlank()) {
+        return List.of();
+      }
+      String initiator = instance.createdBy();
+      UserNo excludeUser = (initiator == null || initiator.isBlank())
+        ? null : UserNo.of(initiator);
+      List<UserNo> users =
+        roleUserGateway.getUsersInParentPlan(PlanNo.of(currentPlan), excludeUser);
+      return users == null ? List.of() : users;
     }
 
     if (nodeType == NodeType.SPECIFIED_PLAN) {

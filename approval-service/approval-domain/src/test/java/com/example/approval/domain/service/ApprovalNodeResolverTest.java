@@ -3,6 +3,7 @@ package com.example.approval.domain.service;
 import com.example.approval.domain.aggregate.entity.ApprovalNode;
 import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
+import com.example.approval.domain.valueobject.TerminalLevel;
 import com.example.approval.types.enums.NodeType;
 import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
@@ -12,13 +13,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/** 批次 62/68：审批节点「实际审批人」解析（框架能力，当前无业务调用方）。 */
-@DisplayName("审批节点实际审批人解析（批次 62/68）")
+/** 批次 62/68/69：审批节点「实际审批人」解析（框架能力，当前无业务调用方）。 */
+@DisplayName("审批节点实际审批人解析（批次 62/68/69）")
 class ApprovalNodeResolverTest {
 
   private RoleUserGateway roleUserGateway;
@@ -49,8 +51,7 @@ class ApprovalNodeResolverTest {
     when(node.roleIds()).thenReturn(List.of("R1", "R2"));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.currentPlan()).thenReturn("P-1");
-    when(roleUserGateway.getUsersByRoles(List.of("R1", "R2"),
-      com.example.core.types.PlanNo.of("P-1")))
+    when(roleUserGateway.getUsersByRoles(List.of("R1", "R2"), PlanNo.of("P-1")))
       .thenReturn(Map.of(
         "R1", List.of(UserNo.of("U-1"), UserNo.of("U-2")),
         "R2", List.of(UserNo.of("U-2"), UserNo.of("U-3"))));
@@ -101,6 +102,49 @@ class ApprovalNodeResolverTest {
     when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.initiatorPlan()).thenReturn(null);
+
+    assertThat(resolver.resolveApprovers(node, instance, roleUserGateway)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("LEVEL_UP 节点命中直接父计划成员")
+  void resolveApprovers_levelUpHitsParentPlanUsers() {
+    ApprovalNode node = mock(ApprovalNode.class);
+    when(node.nodeType()).thenReturn(NodeType.LEVEL_UP);
+    ApprovalInstance instance = mock(ApprovalInstance.class);
+    when(instance.currentPlan()).thenReturn("P-1");
+    when(instance.createdBy()).thenReturn("U-INIT");
+    when(roleUserGateway.getUsersInParentPlan(PlanNo.of("P-1"), UserNo.of("U-INIT")))
+      .thenReturn(List.of(UserNo.of("U-P1"), UserNo.of("U-P2")));
+
+    assertThat(resolver.resolveApprovers(node, instance, roleUserGateway))
+      .containsExactly(UserNo.of("U-P1"), UserNo.of("U-P2"));
+  }
+
+  @Test
+  @DisplayName("LEVEL_UP 节点缺当前计划时 fail-closed 返回空")
+  void resolveApprovers_levelUpWithoutCurrentPlanFailsClosed() {
+    ApprovalNode node = mock(ApprovalNode.class);
+    when(node.nodeType()).thenReturn(NodeType.LEVEL_UP);
+    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
+    ApprovalInstance instance = mock(ApprovalInstance.class);
+    when(instance.currentPlan()).thenReturn(null);
+
+    assertThat(resolver.resolveApprovers(node, instance, roleUserGateway)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("LEVEL_UP 到顶（无父计划）时 fail-closed 不越级、不回退节点配置")
+  void resolveApprovers_levelUpAtTopFailsClosed() {
+    ApprovalNode node = mock(ApprovalNode.class);
+    when(node.nodeType()).thenReturn(NodeType.LEVEL_UP);
+    when(node.terminalLevel()).thenReturn(Optional.of(TerminalLevel.of(2)));
+    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
+    ApprovalInstance instance = mock(ApprovalInstance.class);
+    when(instance.currentPlan()).thenReturn("P-ROOT");
+    when(instance.createdBy()).thenReturn("U-INIT");
+    when(roleUserGateway.getUsersInParentPlan(PlanNo.of("P-ROOT"), UserNo.of("U-INIT")))
+      .thenReturn(List.of());
 
     assertThat(resolver.resolveApprovers(node, instance, roleUserGateway)).isEmpty();
   }
