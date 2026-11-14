@@ -356,6 +356,10 @@
 - 范围：`ApprovalInstanceAdapter` 注入 `AccountIdResolver`，用带签名会话账号覆盖请求体 approver、会话缺失 fail-closed；intranet-bff `trace.context.mapping` 增加 AccountId/AccountSig 透传；DTO 保留 approver 为兼容字段。
 - 状态：**完成**（设计文档 §23.63）。先编译红灯后绿 + 反向验证；approval 87/16/25/3、intranet-bff 37+7、annuity E2E 10、全仓 test-compile 全绿；零 annuity 改动、零 DDL。
 
+#### 批次 57 — 审批操作类身份越权治理
+- 范围：抽 `requireSessionAccount()`，把会话覆盖扩展到 approve/reject/transfer/withdraw；`targetApprover` 作为业务参数保留；4 个 DTO 身份字段补「服务端忽略」Javadoc。
+- 状态：**完成**（设计文档 §23.64）。测试由 3 项扩到 8 项，先红（5 项）后绿；approval 87/16/25/8、intranet-bff 37+7、annuity E2E 10、全仓 test-compile 全绿；零 annuity / DDL / kernel / BFF 配置改动。
+
 ---
 
 ## 6. 全局约束与验收基线
