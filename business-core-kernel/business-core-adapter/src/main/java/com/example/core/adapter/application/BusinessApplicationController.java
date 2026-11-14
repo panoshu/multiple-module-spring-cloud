@@ -49,7 +49,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/core/application")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "core.kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessApplicationController implements BusinessApplicationApi {
 
   private final BusinessApplicationAppService applicationAppService;

@@ -129,7 +129,7 @@ create() → UPLOADED → markAsUploaded() → UPLOADED
 | 9 | 配置中心 | 配置 `step-routes.json`，定义步骤流转路径 |
 | 10 | file-service | 配置对应的**源模板**（定义 Excel 区域识别规则、列映射），确保解析引擎能识别新表单样式 |
 | 11 | Jackson 配置 | 在业务服务的 `ObjectMapper` 中注册 `BusinessExtension` 子类型 |
-| 12 | application.yml | 配置 `core-kernel.controllers.enabled=true` |
+| 12 | application.yml | 配置 `core.kernel.controllers.enabled=true` |
 
 ### 2.2 调整已有表单
 

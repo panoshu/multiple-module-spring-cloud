@@ -34,7 +34,7 @@
 
 ## 3. 优先级清单
 
-> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-2 ✅ 已完成（批次 47，§23.54，用户解冻 annuity）；P0-3 ✅ 已核查并机器化（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）；P1-3 ✅ 已完成（批次 45）——**P0/P1 全部清空**；批次 48 修正 P0-2 评估时发现的 fail-fast 开关语义缺陷（§23.55，清单外配套项）；**P2 专项方案已采纳且 49→50 全部完成**（见 `2026-11-14-p2-special-plan.md`）：批次 49 §21.4 规格修订（§23.56）、批次 50 向前 ArchUnit 约束（§23.57）；P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓；**批次 51 回补 §21.4 第 4 条 Adapter 构造边界**（§23.58，部分机器化、字面张力如实标注）；P3 仅记录。
+> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-2 ✅ 已完成（批次 47，§23.54，用户解冻 annuity）；P0-3 ✅ 已核查并机器化（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）；P1-3 ✅ 已完成（批次 45）——**P0/P1 全部清空**；批次 48 修正 P0-2 评估时发现的 fail-fast 开关语义缺陷（§23.55，清单外配套项）；**P2 专项方案已采纳且 49→50 全部完成**（见 `2026-11-14-p2-special-plan.md`）：批次 49 §21.4 规格修订（§23.56）、批次 50 向前 ArchUnit 约束（§23.57）；P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓；**批次 51 回补 §21.4 第 4 条 Adapter 构造边界**（§23.58，部分机器化、字面张力如实标注）；**批次 52 完成 P3-2 复核（属性命名空间统一，§23.59）**；P3 仅余 P3-1 / P3-3 记录项。
 
 ### P0 — 上线前必做（正确性 / 安全）
 
@@ -63,13 +63,15 @@
 | P2-3 | **annuity 自有存储改持久化聚合** | `AnnuityApplicationExtensionStore`、`InMemoryParsedFileReferenceGateway` 均为 `ConcurrentHashMap` 进程内态，重启丢失 | annuity 是冻结的早期示例服务；用户明确不为其持续适配 | 仅当 annuity 转为真实业务服务时再做 |
 | P2-4 | **多进程 + 真实 Redis 锁 + 真实 DB 并发集成测试** | 批次 43 是进程内状态化 fake 的确定性并发（§23.50 已如实标注边界） | 需真实 Redis + 多 JVM 编排，投入大；核心不变量已有契约测试 | 有集成测试环境后再排 |
 
-### P3 — 仅记录，不排期
+### P3 — 仅记录，不排期（批次 52 逐项核实后重排）
 
-| # | 项 | 说明 |
-|---|---|---|
-| P3-1 | approval-service 的 2 个 `UnsupportedOperationException` stub | `ApprovalFlowService` 分页查询、`ApprovalInstanceService` 待审批列表；属其它服务独立待办，不在 kernel 改造范围 |
-| P3-2 | `CoreKernelAutoConfiguration` / kernel 自动配置的 `@ConditionalOnProperty` 清单复核 | 目前无实际问题，仅作为后续接入新业务服务时的检查项 |
-| P3-3 | MDC 键常量抽取为共享常量类 | §23.44 已记：当前仅编排器写入，多组件读写时再抽 |
+> 批次 52 复核结论：P3-2 原记「无实际问题」**不成立**，已发现并修复真实不一致；P3-1 / P3-3 维持记录。
+
+| # | 项 | 核实结论 | 处置 |
+|---|---|---|---|
+| P3-1 | approval-service stub | 实际 **3 个**（清单原写 2 个）：`ApprovalFlowService.listApprovalFlows`、`ApprovalInstanceService.listMyPendingApprovals` 抛 `UnsupportedOperationException`，`getApprovalHistory` 返回 `List.of()`；属其它服务独立待办（第 5 节明确排除），实现需 approval 领域/仓储/分页契约 | **保持记录，不推进**；清单描述纠偏为 3 个 |
+| P3-2 | kernel `@ConditionalOnProperty` 清单复核 | 原记「无实际问题」**不成立**：5 个 Controller 用遗留 `core-kernel.controllers.enabled`，validator（`core.kernel.production.fail-fast`）/ recovery（`core.kernel.recovery.enabled`）用点分隔前缀，同模块两套命名空间；全仓无 yml 显式配置这些键 | ✅ **已由批次 52 修复并机器化**（§23.59）：统一为 `core.kernel.controllers.enabled`，新增 ArchUnit 契约禁止遗留前缀，同步 4 处文档引用 |
+| P3-3 | MDC 键常量抽取 | kernel 4 键（`applicationId`/`stepExecutionId`/`requestNo`/`businessType`）仅编排器 + 其测试读写；shared-web-core 用 `traceId` 与配置别名，键不重叠，「多组件读写同组键」未发生 | **保持记录**（§23.44 已知边界：过早抽象），触发条件不变 |
 
 ---
 

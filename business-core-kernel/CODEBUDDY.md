@@ -174,7 +174,7 @@ business-core-infrastructure → Repository 实现、DO/Mapper、集成网关、
 5. appService.xxxCommand(...)                                    // 业务调用
 ```
 
-所有 Controller 通过 `@ConditionalOnProperty("core-kernel.controllers.enabled")` 控制启用。
+所有 Controller 通过 `@ConditionalOnProperty("core.kernel.controllers.enabled")` 控制启用。
 
 ## 数据库设计
 
@@ -273,4 +273,4 @@ Demo 环境替代 RocketMQ 消费者：将集成事件 DTO 通过 Spring `Applic
 5. 子类化 `BusinessApplicationRepositoryImpl`，标注 `@Repository`，覆写 `findByFileTaskId`/`findByBatchId`
 6. 如需覆盖默认访问控制，实现 `BusinessAccessGuard` 并注册为 Bean
 7. 在 Jackson `ObjectMapper` 中注册 BusinessExtension 子类型
-8. 配置 `core-kernel.controllers.enabled=true` 启用 kernel 提供的 Controller
+8. 配置 `core.kernel.controllers.enabled=true` 启用 kernel 提供的 Controller

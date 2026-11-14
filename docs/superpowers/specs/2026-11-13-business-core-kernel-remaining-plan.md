@@ -336,6 +336,10 @@
 - 范围：扩 `KernelForwardConstraintTest` 新增规则 3（adapter 不得构造 Entity 子类，值对象构造属 Converter 必要行为允许）；含两轮反向验证与防假绿断言。
 - 状态：**完成**（设计文档 §23.58）。先按 domain 任意类判定红灯（捕获 5 次值对象）→ 收窄到 Entity 转绿；再指向 domain 包红灯（捕获 10+ 次聚合根）→ 改回转绿。arch-tests 16、kernel 全模块、annuity E2E 10 全绿；纯新增测试、零生产代码。§21.4 第 4 条为**部分机器化**，字面张力如实标注。
 
+#### 批次 52 — P3-2 kernel 条件属性命名空间统一
+- 范围：梳理 P3 三项后推进唯一有真实问题的 P3-2——5 个 Controller 的 `core-kernel.controllers.enabled` 统一为 `core.kernel.controllers.enabled`，新增 ArchUnit 契约禁止遗留前缀，同步 4 处文档引用。
+- 状态：**完成**（设计文档 §23.59）。先红（5 次违规）后绿；反向验证捕获 7 次；arch-tests 17、kernel 全模块、annuity E2E 10 全绿。P3-1 / P3-3 维持记录。
+
 ---
 
 ## 6. 全局约束与验收基线
