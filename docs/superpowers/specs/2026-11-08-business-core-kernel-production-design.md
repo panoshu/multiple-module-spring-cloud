@@ -1187,6 +1187,7 @@ Application 层按用例拆分：
 | 批次 51 | `7fec22ad` | **回补 §21.4 第 4 条 Adapter 构造边界**（按建议方向，扩 `KernelForwardConstraintTest`）：新增规则 3——adapter 不得直接构造领域聚合根/实体（`isAssignableTo(Entity)`，覆盖 `AggregateRoot`）；值对象构造属 Converter 必要行为、允许。核实 adapter 现状：无 `new` 聚合根/实体，但有 5 处 `new` 值对象（`BusinessContext` 1 / `BusinessFile` 3 / `OperatorInfo` 1）。先按「domain 包任意类」判定红灯（捕获 5 次，实证规格字面与现状张力）→ 收窄到 Entity 子类转绿；再临时把检查包指向 domain 层做反向验证（捕获 10+ 次聚合根构造）→ 改回转绿。补 2 项防假绿断言（adapter 类数 > 5、adapter 构造器调用数 > 0） | arch-tests 16（+1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 | 批次 52 | `c3e5ed37` | **P3-2 复核：kernel 条件属性命名空间统一**（P3 梳理后推进）：核实发现 5 个 Controller 用遗留 `core-kernel.controllers.enabled`，而 validator/recovery 用 `core.kernel.*`，同模块两套命名空间；全仓无 yml 显式配置这些键。新增 `KernelConditionalPropertyNamespaceTest` ArchUnit 契约（类级+方法级 `@ConditionalOnProperty` 禁止遗留前缀），先红（捕获 5 次违规）后绿；5 个 Controller 统一改为 `core.kernel.controllers.enabled`，同步 4 处文档引用（form-upload 流程、`business-core-kernel/CODEBUDDY.md` ×2、§23.36 历史补注）。反向验证把遗留前缀常量设为规范前缀 → 红灯捕获 7 次（含方法级 recovery 注解），改回转绿 | arch-tests 17（+1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException` |
 | 批次 53 | `a2141d69` | **P3-1 能力 A：实现 getApprovalHistory**（立项方案 §5）：从 `ApprovalInstance` 聚合根的 `NodeExecution`/`ApprovalRecord` 提取全部审批记录组装 `ApprovalRecordDTO`；nodeName 沿用 `ApprovalFlowService.convertToNodeDTO` 语义（领域模型无 name 字段，以 `nodeType().name()` 占位），审批流/节点定义缺失时降级为 `NODE-<order>`；新增 `ApprovalHistoryServiceTest` 4 项（多节点多记录映射 / 空历史 / 定义缺失降级 / 实例不存在），先红（2 项记录数断言失败）后绿 | approval domain 87 / application 8 / infra 21、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；零 kernel 改动、零 DDL |
+| 批次 54 | 本次（未提交） | **P3-1 能力 B：实现 listApprovalFlows**（立项方案 §5）：新增领域查询投影 `ApprovalFlowPage`（totalCount + items）；`ApprovalFlowRepository.findByCondition(businessType, status, startPos, pageSize)` 由 Impl 在 DB 侧 `selectCountByQuery` + `limit(offset,size)` 落地（走 business_type/status/create_time 索引、逻辑删除自动过滤、count=0 短路）；`ApprovalFlowService.listApprovalFlows` 复用 `convertToDTO` 组装 `PageData`，hasMore 按 `startPos+items.size()<total` 计算。新增 `ApprovalFlowQueryServiceTest` 4 项 + `ApprovalFlowRepositoryImplTest` 2 项（含 QueryWrapper 条件/limit SQL 断言），先编译红灯后绿 | approval domain 87 / application 12（+4）/ infra 23（+2）、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 kernel 改动、零 DDL |
 
 ### 23.3 批次 2 范围边界
 
@@ -1852,7 +1853,7 @@ Application 层按用例拆分：
 - **文档同步**：`docs/form-upload-and-outbound-flow.md` 第 12 步配置示例、`business-core-kernel/CODEBUDDY.md` 两处（Controller 启用说明与接入步骤 8）改为新键；设计文档 §23.36 历史台账保留当时键名并补注「批次 52 已统一」。`arch-tests` 新测试 Javadoc 中的 `core-kernel.` 为「被禁止的遗留前缀」说明与常量本身，属规则定义、非配置引用，保留。
 - **P3 清单重排**：P3 段改为带「核实结论 / 处置」的表格，标题标注「逐项核实后重排」；P3-1 纠偏为 3 个 stub、P3-2 标 ✅ 已修复、P3-3 维持记录并写明触发条件不变。
 - **验证**：arch-tests 17（原 16 + 新 1）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；`grep` 确认生产代码与 yml 无旧前缀残留（仅规则定义与历史补注保留）。
-- **仍未处理**：P3-1（approval stub）**已单独立项**（`2026-11-14-p3-approval-stub-cross-service-design.md`），能力 A 已由批次 53 完成（§23.60），能力 B 批次 54 推进中、能力 C 待 §6 开放点确认；P3-3（MDC 常量，过早抽象）；§21.4 第 1/6 条字面张力与第 4 条部分机器化边界；多进程真 Redis 锁集成测试（P2-4 暂缓）。
+- **仍未处理**：P3-1（approval stub）**已单独立项**（`2026-11-14-p3-approval-stub-cross-service-design.md`），能力 A 已由批次 53 完成（§23.60）、能力 B 已由批次 54 完成（§23.61），能力 C 待 §6 开放点确认；P3-3（MDC 常量，过早抽象）；§21.4 第 1/6 条字面张力与第 4 条部分机器化边界；多进程真 Redis 锁集成测试（P2-4 暂缓）。
 
 ### 23.60 批次 53 范围边界（P3-1 能力 A getApprovalHistory）
 
@@ -1862,4 +1863,15 @@ Application 层按用例拆分：
 - **TDD**：新增 `ApprovalHistoryServiceTest` 4 项——① 2 个节点各 1 条记录、断言 2 条 DTO 全字段与 nodeName；② 无记录返回空；③ 审批流缺失时 nodeName 降级 `NODE-3`；④ 实例不存在抛 `DomainException`。先红（返回空列表导致 ①③ 记录数断言失败，②④ 保持绿）→ 实现后 4 项全绿。
 - **边界（如实标注）**：`ApprovalRecordDTO.actionType` Javadoc 列了 `WITHDRAW`，但 `ApprovalAction` 枚举只有 `APPROVE/REJECT/TRANSFER` 三值，撤回未产生审批记录，本批不臆造第四种映射；nodeName 为 nodeType 占位（与既有 DTO 一致），非真实业务节点名；`@Transactional(readOnly=true)` 保持原注解。
 - **验证**：approval domain 87 / application 8 / infrastructure 21、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过。零 kernel 改动、零 annuity 改动、零 DDL。
-- **同步**：优先级清单 P3-1 行与推进状态标注能力 A 完成；计划文档新增批次 53。**仍未处理**：批次 54（能力 B `listApprovalFlows`）、批次 55（能力 C，待 §6 开放点确认）、P3-3 等既有遗留。
+- **同步**：优先级清单 P3-1 行与推进状态标注能力 A 完成；计划文档新增批次 53。**仍未处理**：能力 B 已由批次 54 完成（§23.61）、批次 55（能力 C，待 §6 开放点确认）、P3-3 等既有遗留。
+
+### 23.61 批次 54 范围边界（P3-1 能力 B listApprovalFlows）
+
+- **来源**：`2026-11-14-p3-approval-stub-cross-service-design.md` §5 批次 54（用户确认「先推进 53→54」）。能力 B 不依赖 §6 开放点。
+- **领域查询投影**：新增 `ApprovalFlowPage(int totalCount, List<ApprovalFlow> items)`（`domain/valueobject`，实现 `ValueObject`），避免 domain 层依赖 `shared-api` 的 `PageData`，同时让仓储一次返回「总数 + 当前页」，符合 01/03 分层规则。
+- **仓储实现**：`ApprovalFlowRepositoryImpl.findByCondition` 用 `QueryWrapper` 拼可选条件（`businessType`/`status` 空值不过滤）→ `selectCountByQuery` 计数 → `orderBy(create_time desc).limit(startPos, pageSize)` 取一页 → `convertToFlowWithNodes` 转聚合根。`t_approval_flow` 已有 `idx_..._business_type`/`_status`/`_create_time` 索引，逻辑删除由 MyBatis-Flex 自动过滤；`count=0` 短路不查列表。未使用全表 `findByStatus` + 内存分页，符合 06 规范。
+- **应用服务**：`listApprovalFlows` 复用既有私有 `convertToDTO(ApprovalFlow)`（含 nodes/matchRules），按 `PageData(totalCount, currentStart, returnedCount, hasMore, items)` 组装；`hasMore` 用 `(long) start + items.size() < total` 避免溢出；`Pagination` 保持 offset 语义（`startPos/pageSize`，5–100 构造校验）。
+- **TDD**：新增 `ApprovalFlowQueryServiceTest` 4 项（DTO 与分页元数据 / 空条件透传 / 空结果 / 末页 hasMore=false）与 `ApprovalFlowRepositoryImplTest` 2 项（count=0 短路、条件与 limit 落到 `QueryWrapper.toSQL()`）；先编译红灯（`ApprovalFlowPage`/`findByCondition` 不存在）→ 实现后 6 项全绿。期间修正夹具：`ApprovalFlow.reconstitute` 要求节点列表非空且顺序从 1 连续，改用单节点 `createSamePlanNode` 构造。
+- **边界（如实标注）**：`status` 为可选字符串过滤，**未做枚举白名单校验**，非法值自然返回空结果（未新增错误码）；若后续要严格校验可补 `@Pattern` 或错误码。`ApprovalFlowPage` 是查询投影（非聚合内值对象），持有聚合根列表，按 03 规则实现 `ValueObject` 标记接口。`ApprovalFlowRepository` 自身声明方法数 6，未触及 ISP 上限。
+- **验证**：approval domain 87 / application 12（+4）/ infrastructure 23（+2）、annuity E2E 10 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 kernel 改动、零 annuity 改动、零 DDL。
+- **同步**：优先级清单 P3-1 行与推进状态标注能力 A/B 完成；计划文档批次 54 标记完成。**仍未处理**：批次 55（能力 C `listMyPendingApprovals`，待 §6 开放点确认）、`ApprovalInstanceRepositoryImpl.findByApproverId` / `RoleUserGatewayImpl` 隐藏 stub、P3-3 等既有遗留。

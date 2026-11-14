@@ -346,7 +346,7 @@
 
 #### 批次 54 — P3-1 能力 B 实现 listApprovalFlows
 - 范围：`ApprovalFlowRepository` 新增按条件分页查询，`ApprovalFlowService.listApprovalFlows` 复用 `convertToDTO` 组装 `PageData`；补仓储/应用测试。
-- 状态：推进中（与批次 53 连续推进）。
+- 状态：**完成**（设计文档 §23.61）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/12/23、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。能力 C（批次 55）待 §6 开放点确认。
 
 ---
 

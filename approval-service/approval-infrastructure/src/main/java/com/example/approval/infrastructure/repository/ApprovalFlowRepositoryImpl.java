@@ -3,6 +3,7 @@ package com.example.approval.infrastructure.repository;
 import com.example.approval.domain.aggregate.entity.ApprovalNode;
 import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.repository.ApprovalFlowRepository;
+import com.example.approval.domain.valueobject.ApprovalFlowPage;
 import com.example.approval.domain.valueobject.FlowVersion;
 import com.example.approval.domain.valueobject.MatchRules;
 import com.example.approval.infrastructure.converter.ApprovalFlowConverter;
@@ -17,6 +18,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -239,6 +241,29 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
     return flowDOs.stream()
       .map(this::convertToFlowWithNodes)
       .toList();
+  }
+
+  @Override
+  public ApprovalFlowPage findByCondition(String businessType, String status, int startPos, int pageSize) {
+    QueryWrapper condition = QueryWrapper.create();
+    if (StringUtils.hasText(businessType)) {
+      condition = condition.where(APPROVAL_FLOW_DO.BUSINESS_TYPE.eq(businessType));
+    }
+    if (StringUtils.hasText(status)) {
+      condition = condition.where(APPROVAL_FLOW_DO.STATUS.eq(status));
+    }
+
+    // DB 侧计数（逻辑删除由 MyBatis-Flex 自动过滤），为空直接短路
+    long total = flowMapper.selectCountByQuery(condition);
+    if (total == 0) {
+      return ApprovalFlowPage.empty();
+    }
+
+    QueryWrapper pageQuery = condition
+      .orderBy(APPROVAL_FLOW_DO.CREATE_TIME.desc())
+      .limit(startPos, pageSize);
+    List<ApprovalFlowDO> rows = flowMapper.selectListByQuery(pageQuery);
+    return new ApprovalFlowPage((int) total, rows.stream().map(this::convertToFlowWithNodes).toList());
   }
 
   /**
