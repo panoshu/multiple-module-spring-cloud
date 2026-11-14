@@ -1163,7 +1163,7 @@ Application 层按用例拆分：
 
 | 批次 40-1 | `f6aded21` | **annuity 复制 DDL 解耦 · H2 测试链路**（规格收口后的追加批次，经用户确认「完全解耦」方案）：`business-core-infrastructure` 新增唯一命名资源 `schema-kernel-h2.sql`，承接原 annuity H2 里的 7 张 kernel 表定义并修正 `t_business_external_interaction.request_no` 列宽漂移 64→128；annuity 的 `schema-h2.sql` 缩减并重命名为 `schema-annuity-h2.sql`，只保留 `sys_event_*` 与 2 张年金自有表；`application-test.yml` 的 `schema-locations` 改为组合加载两个 H2 资源 | annuity E2E 6 全绿（验证 7 张 kernel 表由新资源创建、组合加载生效）；全仓 `test-compile`、`git diff --check` 通过；annuity H2 仅剩 4 张表、kernel H2 含 7 张表 |
 
-| 批次 40-2 | 本次（未提交） | **annuity 复制 DDL 解耦 · PG/MySQL 部署脚本收口**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表，头部改为「先执行 kernel 的 schema-*.sql」部署顺序指引；kernel 双库头部清理 37b 后残留的 `businessExtension/JSONB` 过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。**批次 40 全部完成**，annuity 不再持有任何 kernel 表副本 | 全仓 `mvn clean install -DskipTests` 后 annuity E2E 6 全绿（排除旧构建产物干扰，确认组合加载真实生效）；kernel domain 174 / application 216 / infra 87 / adapter 13 / 架构 7 全绿；全仓 `test-compile`、`git diff --check` 通过；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各 7 张表 |
+| 批次 40-2 | `186fe20e` | **annuity 复制 DDL 解耦 · PG/MySQL 部署脚本收口**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表，头部改为「先执行 kernel 的 schema-*.sql」部署顺序指引；kernel 双库头部清理 37b 后残留的 `businessExtension/JSONB` 过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。**批次 40 全部完成**，annuity 不再持有任何 kernel 表副本 | 全仓 `mvn clean install -DskipTests` 后 annuity E2E 6 全绿（排除旧构建产物干扰，确认组合加载真实生效）；kernel domain 174 / application 216 / infra 87 / adapter 13 / 架构 7 全绿；全仓 `test-compile`、`git diff --check` 通过；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各 7 张表 |
 
 ### 23.3 批次 2 范围边界
 
