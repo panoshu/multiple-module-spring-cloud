@@ -1099,6 +1099,8 @@ Application 层按用例拆分：
 | 阶段 4 收敛可选能力与公共 API | 进行中 | §8.2 `StepExecutionStatus`/`StepExecutionState` 语义边界已由批次 32 以「保留两者 + 语义契约测试 + 对称文档」收敛（评估决策，不重命名跨服务公开 SPI）；批次统计对账重算已由批次 33 落地（`BusinessBatch.reconcile` 绝对赋值幂等 + `reconcileStatistics`/`reconcileAllActive` + 恢复 Job 接线）；条件表达式语法预校验已由批次 34 落地（`ConditionEvaluationGateway.validate` + 三引擎实现 + 发布期全步骤校验）；批次 35 已落地推进 Command 携带 `expectedStep`/`requestNo`/`operator` 与 `advanceApplication` CQE 入口（幂等 + 期望步骤校验 + requestNo 不再仅由编排器派生）。**阶段 4 主线完成**；`StepDefinition.actionType()` 显式声明等残留收敛项归入阶段 5 |
 | 阶段 5 清理与生产验收 | **完成** | 批次 36 已落地 `request_no` 列宽统一 128 + `eventId().value()` 统一；开放点 3 经确认后表名 `t_step_execution` → `t_business_step_execution` 由 36b 完成（§23.38），D1 收敛。批次 37 按规模拆为 37a/37b/37c-1/37c-2 并**全部完成**（§23.39–§23.42）：材料状态迁到可选材料能力、`BusinessExtension` 与 `parsedJsonFileId` 迁到业务服务自有存储，核心聚合已无 §6.2 点名的遗留字段；批次 38 拆为 38-1/38-2 并**全部完成**（§23.43–§23.44）：starter 显式依赖、生产 fail-fast、MDC 统一携带流程标识；批次 39 按「不要超级计划」拆为 39-1（§21.3 外部协作组合验收，§23.45）与 39-2（§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表，§23.46）并**全部完成**。阶段 0–5 全部收口，剩余偏差与遗留项记入 §23.46 |
 
+> **口径补注（2026-11-15 复核）**：上表阶段 1–4 状态列的「进行中」是各阶段收尾时的历史快照；阶段 0–5 已于批次 39-2（§23.46）全部收口，后续批次 40–70 均为规格收口后的追加任务。阅读当前状态以 `2026-11-14-remaining-work-inventory.md` §0 口径为准。
+
 ### 23.2 实现批次
 
 | 批次 | 提交 | 内容 | 验证 |
@@ -1518,7 +1520,7 @@ Application 层按用例拆分：
 - **幂等是绝对赋值而非增量**：`reconcile` 直接重设三个计数，重复触发（重复事件或重复调度）不会重复计数；计数完全一致时返回 false，不 `markUpdated`、不注册 `BatchStatusChangedEvent`、不写库。计划「消费端按 eventId 幂等」在本批由**全量重算的幂等性**覆盖，未引入 `EventReceiptGateway` 短路——重算不以增量事件为输入，无法也无需按单个 eventId 去重；§6.4 的增量事件消费端（`registerSuccess`/`registerFailure`）目前仍无调用方，属阶段 5 待办（见下）。
 - **状态推导与不变量**：`total==0` → CREATED、`processed<total` → PROCESSING、全部终态 → `BatchStatus.determine(failed,total)`；重算后显式 `validateInvariants()`，保证与 §6.4/批次 1 的状态-计数一致性约束不冲突。CANCELLED 为人工终态，只修正计数、不复活状态（避免对账把已取消批次重新推进）。
 - **恢复任务接入（§19.2「重算批次统计」）**：`ExternalInteractionRecoveryJob.recover()` 增加第五个 `safeRun` 动作调用 `BusinessBatchAppService.reconcileAllActive()`；后者用 `BatchRepository.loadAll()` 过滤 `isActive()` 批次逐个对账，单条异常隔离。`CoreKernelAutoConfiguration` 的 Job bean 补 `BusinessBatchAppService` 参数；`BusinessBatchAppService` 新增 `ApplicationRepository` 依赖（annuity 上下文已有该 bean，零改动）。
-- **已知边界（阶段 5 精修）**：① `reconcileAllActive()` 内部自调用 `reconcileStatistics()` 不走 Spring 代理，`@Transactional` 在恢复任务路径不生效，逐批次独立提交——与既有 `ExternalInteractionRecoveryService` 逐条保存语义一致；显式 API 调用 `reconcileStatistics` 仍在事务内。② 扫描用 `loadAll()` 全表加载，生产数据量大时可改为按状态索引查询（需给 `BatchRepository` 加查询方法，涉及 infrastructure）。③ 增量事件消费端（`registerSuccess`/`registerFailure`）与按 eventId 幂等仍未接线。
+- **已知边界（阶段 5 精修）**：① `reconcileAllActive()` 内部自调用 `reconcileStatistics()` 不走 Spring 代理，`@Transactional` 在恢复任务路径不生效，逐批次独立提交——与既有 `ExternalInteractionRecoveryService` 逐条保存语义一致；显式 API 调用 `reconcileStatistics` 仍在事务内。② 扫描用 `loadAll()` 全表加载，生产数据量大时可改为按状态索引查询（需给 `BatchRepository` 加查询方法，涉及 infrastructure）——**补注（2026-11-15 复核）：已由批次 46 完成（§23.53），改为 `findByStatuses(CREATED, PROCESSING)` 走 `idx_business_batch_status` 索引，本条为批次 33 时点的历史快照**。③ 增量事件消费端（`registerSuccess`/`registerFailure`）与按 eventId 幂等仍未接线。
 - **验证边界**：领域 4 项（偏差恢复+终态推导、幂等 no-op、CANCELLED 不复活、非法计数不留部分变更）、应用 5 项（按真实申请重算、重复对账不重复计数/不重复写库、在途保持 PROCESSING、只处理活跃批次、单条失败隔离）、Job 1 项（重算异常隔离）。domain 167、application 195、架构 7、annuity E2E 6 全绿，全仓 `test-compile`、`git diff --check` 通过；E2E 日志无「重算批次统计失败」/恢复任务异常、`Failed to save event`/异步 NPE 保持 0。
 - **仍未处理**：CQE 化与推进 Command 携带 requestNo + `StepDefinition.actionType()` 显式声明（批次 35）、表名/列宽统一与 `event.eventId().toString()`（批次 36）、遗留字段迁移（批次 37）、starter 显式接入与 fail-fast（批次 38）、§21.3 验收测试（批次 39）；增量事件消费端与按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询（阶段 5）。**条件表达式语法预校验已由批次 34 完成**。
 
@@ -1617,7 +1619,7 @@ Application 层按用例拆分：
 - **实现**：`FlowOrchestrationService.withApplicationLock`（所有推进入口的短临界区包装）在加锁前备份 `MDC.getCopyOfContextMap()` 并写入 `applicationId`，`finally` 中恢复现场（原为空则 `MDC.clear()`），保证虚拟线程/线程池复用不泄漏。`doAdvanceStep` 创建 `StepExecution` 后补充 `stepExecutionId`（`String.valueOf(execution.id().value())`）、`requestNo`（`SE-<步骤执行ID>`，与 `BusinessMetaContext.REQUEST_NO_FACT` 同源）、`businessType`（`context.businessType().name()`）。`traceId` 由 `shared-web-starter` 的 `BizContextPropagationFilter` 在 HTTP 入口注入，kernel 不覆盖、不清除（`finally` 恢复快照会保留其原值）。
 - **为何放在 withApplicationLock 而非事务块**：MDC 需覆盖前置校验、主处理器、明细/后置管道、事务保存的整段推进过程；`withApplicationLock` 是 `advanceStep`/`advanceApplication`/`completeWaitingStep` 等入口的统一包装点，改动集中且语义是「一次流程操作的上下文作用域」。
 - **验证**：`FlowOrchestrationServiceTest` 新增 2 项——用 `doAnswer` 在管道执行期间捕获 MDC 快照，断言 4 个键齐全且值正确、结束后 `applicationId` 为空；另一项预置 `traceId` 后推进，断言其未被覆盖且 kernel 键已清理。kernel domain 174 / application 205（+2）/ infra 87 / adapter 13 / 架构 7、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；E2E 无 `Failed to save event`/异步 NPE。
-- **已知边界**：MDC 键为字符串常量（定义在编排器内），若后续其它组件也要读写应抽为共享常量类；当前仅编排器写入，避免过早抽象。`shared-logging-starter` 的脱敏/异步管道在 E2E 未实际启用，MDC 值能否被日志输出依赖宿主日志 pattern，本批只保证写入与恢复。
+- **已知边界**：MDC 键为字符串常量（定义在编排器内），若后续其它组件也要读写应抽为共享常量类；当前仅编排器写入，避免过早抽象。`shared-logging-starter` 的脱敏/异步管道在 E2E 未实际启用，MDC 值能否被日志输出依赖宿主日志 pattern，本批只保证写入与恢复。**补注（2026-11-15 复核）**：静态核实确认全仓仅 `integration-service-starter/logback-spring.xml` 定义了 `%X{}` pattern 且不含 kernel 4 个流程键——MDC 写入正确但生产日志不输出，见 `2026-11-15-non-code-items-closure.md` §4；本条为批次 38-2 时点的历史快照。
 - **仍未处理**：§21.5 最终验收契约 + 逐条验收核对表（39-2）；`Map<String,Object>` 业务扩展字段清理、自有存储持久化、annuity 复制 DDL 解耦、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（阶段 5）。**§21.3 外部协作验收已完成，见 §23.45**。
 
 ### 23.45 批次 39 拆分与 39-1 范围边界（§21.3 外部协作验收）
@@ -2040,3 +2042,13 @@ Application 层按用例拆分：
 - **验证**：approval-domain 98 / approval-infrastructure 37 / approval-application 20、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL、零配置改动。
 - **立项收口**：批次 66（auth-api 契约）→ 67（auth 供给侧）→ 68（SAME_PLAN）→ 69（LEVEL_UP）全部完成；`StubProductGateway` 保留兜底、`InMemoryProductGateway` 默认不启用，生产未接入真实组织目录时 SAME_PLAN / LEVEL_UP 均 fail-closed。清单 #1/#2 清空、CODEBUDDY.md Known Gaps 同步。
 - **结论**：§21 验收核对表已无 ⚠️/❌；**当前 kernel 代码项与组织目录立项均已清空**。**仍未处理**：#4（真 Redis + 多 JVM 集成，待环境）、#12/#13 部署联调检查（`@HttpExchange` 端到端 HTTP、权限项自注册、MDC 日志 pattern）、清单 §3 文档欠账，以及 `TerminalLevel` 多级追溯 / `ancestorsOf` 整链 / 外部组织目录主数据系统对接（仓库外，均另行立项）。
+
+### 23.77 批次 70 范围边界（非代码项收口与架构复核，零生产代码）
+
+- **来源**：用户要求「完成所有非代码项，系统梳理 kernel 架构定位与最初诉求、审核/认证/文件服务与 kernel 交互、shared starter 能力使用，并落盘保存」。
+- **交付物（2 份复核文档）**：`2026-11-15-non-code-items-closure.md`（非代码项收口与部署联调静态核实）、`2026-11-15-architecture-review.md`（kernel 定位与跨服务 / starter 使用复核报告）。
+- **非代码项收口**：清单 §3 文档欠账 3 条 + 优先级清单 6 处过时描述全部纠偏（§23.34 补注「已由批次 46 完成」、§23.44 补注 MDC pattern 缺口、§23.1 补阶段快照口径注）；**#12** 权限自注册静态核实成立（`PermissionScanner` / `PermissionRegistrationRunner`），但发现 `httpexchange` 客户端映射只写在各服务 `application-local.yml`、主配置无条件 `spring.profiles.include: local`，与批次 47 对 annuity 的治理冲突；**#13** 发现 MDC 值写入正确但全仓仅 `integration-service-starter/logback-spring.xml` 定义了 `%X{}` pattern 且不含 kernel 4 个流程键——生产日志不输出；**#4** 落盘环境前置条件（Docker + Redis + 多 JVM + 真实 DB）、4 个用例设计与 `@EnabledIfEnvironmentVariable` 条件启用形态。
+- **架构复核结论**：① **kernel 满足最初诉求**——§21.5 验收 8 条全 ✅、§1 决策 9 条与 §4.1 目标 9 条基本逐条落地，偏差如实标注（分布式锁弱依赖、§21.4 部分机器化、真 Redis 集成待环境、MDC 日志 pattern）；② **approval / auth / file 与 kernel 交互方向合规**——跨服务只依赖 API 模块已由 `KernelLayerArchitectureTest` 机器化，外部 DTO 止于 infrastructure / 入站事件适配器，requestNo 幂等契约贯通，auth 属范围演进而非违约；③ **shared starter 使用矩阵**——id / event / web / logging / permission 使用正确，cache 在 kernel 引入未用、在 auth / file 正确使用，**lock 存在装配缺口**：全仓无宿主显式依赖 `shared-lock-starter`（仅父 pom `pom.xml:276` 的 dependencyManagement），生产无 `DistributedLock` Bean、kernel 走「无锁直通」仅靠乐观锁兜底。
+- **未擅自改动（需方案确认 / 目标环境）**：宿主 pom 引入 `shared-lock-starter` + Redis、迁移 `httpexchange` 配置并移除 `include: local`、统一 MDC 日志 pattern——均属多服务 BREAKING 配置 / 依赖变更，已转成部署前检查清单（收口文档 §6），不在本批执行。
+- **验证**：本批零生产代码改动；沿用批次 69 全量回归（架构 17、approval-application 20、全仓 `mvn test-compile`、annuity E2E 8 全绿）；`git diff --check` 通过。
+- **结论**：**当前 kernel 代码项、组织目录立项、仓库内非代码项均已清空**；§21 验收核对表仍无 ⚠️/❌。**仍未处理**：部署期配置与装配动作 4 项（宿主 lock starter + Redis / profile 隔离 / 日志 pattern / 真 Redis 集成与端到端 HTTP），以及仓库外另行立项项（外部组织目录主数据系统对接、`TerminalLevel` 多级追溯 / `ancestorsOf` 整链）。
