@@ -1095,7 +1095,7 @@ Application 层按用例拆分：
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`IdService` 号段生成已接入并补齐 `t_id_generator` DDL，`StepExecution` 运行时接线已完成。事件消费回执与入站幂等已落地（§7.4）。`ExternalInteraction` 运行时接线（阶段 A）已完成。外部协作重试恢复机制（四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领，§19.2）已落地。`DistributedLock` 短临界区互斥已接入（§9.3 第一层，弱依赖可选注入）。§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 进行中 | 契约形状（批次 20）、kernel requestNo 贯通（批次 21）、approval 侧（批次 22）与 file 侧（批次 23）requestNo 幂等闭环均已落地——两侧聚合/事件/Converter/DDL/用例幂等/按 requestNo 查询 API 齐备，2 个 file 与 4 个 approval 集成事件均回传真实 requestNo；阶段 C 回调按 requestNo 关联（批次 24：`CallbackCorrelationService` 关联+校验+分类+协作/步骤状态闭环，3 个监听器接入 APPLIED/回退/分类三路径）与「完成等待步骤」编排门面（批次 25：`completeWaitingStep` 不重跑 Handler 管线、WAITING_EXTERNAL→RUNNING→nextStep，3 个监听器 APPLIED 分支接入）均已落地。阶段 B 事务外派发按 `2026-11-13-...remaining-plan.md` 拆批推进：批次 26（检查点载荷写入）、27（FILE_* 网关 externalTaskId）、28（派发器骨架+SPI）、29（FILE_PARSE 派发闭环+调度入口统一）均已落地，`PENDING_DISPATCH → DISPATCHING → WAITING_CALLBACK` 对 FILE_PARSE 已接通。批次 30（FILE_OUTBOUND 派发闭环+载荷持久化）亦已落地，`PENDING_DISPATCH → DISPATCHING → WAITING_CALLBACK` 对 FILE_PARSE/FILE_OUTBOUND 两种文件协作均已接通。批次 31（申请单 WAITING_EXTERNAL 接线 + APPROVAL 派发闭环 + 三类协作全链路验收）亦已落地，阶段 B 事务外派发主线完成、4 个挂起 Handler 事务内直调清零。阶段 3 主线完成，`StepDefinition.actionType()` 显式声明等收敛项归入阶段 4 |
 | 阶段 4 收敛可选能力与公共 API | 进行中 | §8.2 `StepExecutionStatus`/`StepExecutionState` 语义边界已由批次 32 以「保留两者 + 语义契约测试 + 对称文档」收敛（评估决策，不重命名跨服务公开 SPI）；批次统计对账重算已由批次 33 落地（`BusinessBatch.reconcile` 绝对赋值幂等 + `reconcileStatistics`/`reconcileAllActive` + 恢复 Job 接线）；条件表达式语法预校验已由批次 34 落地（`ConditionEvaluationGateway.validate` + 三引擎实现 + 发布期全步骤校验）；批次 35 已落地推进 Command 携带 `expectedStep`/`requestNo`/`operator` 与 `advanceApplication` CQE 入口（幂等 + 期望步骤校验 + requestNo 不再仅由编排器派生）。**阶段 4 主线完成**；`StepDefinition.actionType()` 显式声明等残留收敛项归入阶段 5 |
-| 阶段 5 清理与生产验收 | 进行中 | 批次 36 已落地 `request_no` 列宽统一 128 + `eventId().value()` 统一；开放点 3 经确认后表名 `t_step_execution` → `t_business_step_execution` 由 36b 完成（§23.38），D1 收敛。批次 37 按规模拆为 37a/37b/37c-1/37c-2 并**全部完成**（§23.39–§23.42）：材料状态迁到可选材料能力、`BusinessExtension` 与 `parsedJsonFileId` 迁到业务服务自有存储，核心聚合已无 §6.2 点名的遗留字段；批次 38 拆为 38-1/38-2 并**全部完成**（§23.43–§23.44）：starter 显式依赖、生产 fail-fast、MDC 统一携带流程标识；批次 39 按「不要超级计划」拆为 39-1（§21.3 外部协作验收，已完成，§23.45）与 39-2（§21.5 最终验收契约 + 逐条验收核对表，待推进） |
+| 阶段 5 清理与生产验收 | **完成** | 批次 36 已落地 `request_no` 列宽统一 128 + `eventId().value()` 统一；开放点 3 经确认后表名 `t_step_execution` → `t_business_step_execution` 由 36b 完成（§23.38），D1 收敛。批次 37 按规模拆为 37a/37b/37c-1/37c-2 并**全部完成**（§23.39–§23.42）：材料状态迁到可选材料能力、`BusinessExtension` 与 `parsedJsonFileId` 迁到业务服务自有存储，核心聚合已无 §6.2 点名的遗留字段；批次 38 拆为 38-1/38-2 并**全部完成**（§23.43–§23.44）：starter 显式依赖、生产 fail-fast、MDC 统一携带流程标识；批次 39 按「不要超级计划」拆为 39-1（§21.3 外部协作组合验收，§23.45）与 39-2（§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表，§23.46）并**全部完成**。阶段 0–5 全部收口，剩余偏差与遗留项记入 §23.46 |
 
 ### 23.2 实现批次
 
@@ -1157,7 +1157,9 @@ Application 层按用例拆分：
 
 | 批次 38-2 | `9ec25cc4` | **MDC 统一携带流程标识**（§14）：`FlowOrchestrationService.withApplicationLock` 在推进临界区备份/写入/恢复 MDC，`doAdvanceStep` 创建步骤执行后补写 `applicationId`/`stepExecutionId`/`requestNo`/`businessType`；`traceId` 由 `shared-web-starter` 过滤器注入且不覆盖。新增 2 项编排器测试断言推进期间 4 键齐全、结束后恢复现场与预置 `traceId`。**批次 38 全部完成** | kernel domain 174 / application 205（+2）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
-| 批次 39-1 | 本次（未提交） | **§21.3 外部协作验收组合测试**（计划批次 39 首个切片，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationAcceptanceTest`，用真实领域聚合 + mock 仓储/网关串起 7 条故障→状态→恢复→闭环链路——明确失败进入 FAILED 且可 `RETRY_WAIT` 重派、超时滞留 DISPATCHING 回收 UNKNOWN 且禁止未对账重派、响应丢失后按 requestNo 补发回调闭环 UNKNOWN、服务重启凭持久化状态恢复派发与对账、审批通过/驳回/撤回分别落到 SUCCEEDED/FAILED/FAILED（补齐撤回缺口）、文件 PARTIAL 保留失败明细且只推进一次 FAILED 不推进 | 新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
+| 批次 39-1 | `0b90782b` | **§21.3 外部协作验收组合测试**（计划批次 39 首个切片，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationAcceptanceTest`，用真实领域聚合 + mock 仓储/网关串起 7 条故障→状态→恢复→闭环链路——明确失败进入 FAILED 且可 `RETRY_WAIT` 重派、超时滞留 DISPATCHING 回收 UNKNOWN 且禁止未对账重派、响应丢失后按 requestNo 补发回调闭环 UNKNOWN、服务重启凭持久化状态恢复派发与对账、审批通过/驳回/撤回分别落到 SUCCEEDED/FAILED/FAILED（补齐撤回缺口）、文件 PARTIAL 保留失败明细且只推进一次 FAILED 不推进 | 新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
+
+| 批次 39-2 | 本次（未提交） | **§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表**（计划批次 39 收口，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationFixtures` 共享夹具与 `FinalAcceptanceContractTest` 4 项（新业务只加定义+SPI、定义升级不影响在途 v1 实例、步骤执行历史可审计、重复回调不重复跃迁）；台账补 §23.46 最终验收核对表，把 §21.1–§21.5 共 30 条标准逐条映射到已有/新增测试并如实标注 4 类偏差；阶段 0–5 全部收口 | 新增验收测试 4 项（两验收类合计 11 项全绿）；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1594,4 +1596,69 @@ Application 层按用例拆分：
   7. PARTIAL 事件保留 `invalidRows` 失败明细、只推进一次，FAILED 不推进。
 - **契约口径**：`requestNo` 用于关联协作记录，`externalTaskId` 用于查询外部系统；上游「文件部分成功不误判为全部成功」由 file-service `ParseTaskTest`（`TaskStatus.PARTIAL_SUCCESS`、`invalidCount` 聚合）保证，kernel 侧只负责消费侧分流与不重复推进。
 - **验证**：新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。零生产代码、零 annuity 改动。
-- **仍未处理**：39-2（§21.5 最终验收契约 + 逐条验收核对表）；核对表中需如实标注的偏差——E2E 用 `@MockitoBean` 禁用 `StepAutoAdvanceListener`（§21.5 第 8 条）、§21.4 六条架构不变量未全部机器化、`CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被消费、多节点真并发未做集成测试。
+- **仍未处理**：39-2（§21.5 最终验收契约 + 逐条验收核对表）。**39-2 已完成，见 §23.46**。
+
+### 23.46 批次 39-2 范围边界与 §21 最终验收核对表
+
+- **新增 `FinalAcceptanceContractTest` 4 项**：新业务只发布全新业务类型定义 + 注册 handler 即可接入（不改 kernel）；`latest` 已是 v2 时在途 v1 实例仍按 v1 定义解析；步骤执行每次尝试独立记录、状态/起止时间/错误码/检查点/版本留痕且重试生成新 attempt 不覆盖历史；同一协作二次成功回调按 `OUT_OF_ORDER` 拒绝且不重复落库。
+- **共享夹具**：新增 `ExternalCollaborationFixtures`（public static 常量与真实聚合 reconstitute），`ExternalCollaborationAcceptanceTest` 与 `FinalAcceptanceContractTest` 共用，避免两个验收类重复构造（规则 10.3）。
+- **验证**：两验收类合计 11 项全绿；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。零生产代码、零 annuity 改动。
+
+#### §21 最终验收核对表（30 条）
+
+> 状态：✅ 已有可执行测试覆盖；⚠️ 部分覆盖/语义张力，见「偏差」列；❌ 与规格明确不符，记入遗留。
+
+| §21.1 领域测试 | 覆盖测试 | 状态 |
+|---|---|---|
+| 每个聚合合法/非法状态迁移 | `BusinessApplicationStateMachineTest`、`ApplicationStatusTest`、`ExternalInteractionTest`、`StepExecutionTest`、`BusinessBatchTest`、`StepExecutionStateTest`、`ExternalInteractionStatusTest` | ✅ |
+| 终态不可继续推进 | `BusinessApplicationStateMachineTest`、`ExternalInteractionTest.terminalStatesRejectFurtherChanges` | ✅ |
+| 重试生成新 attempt | `StepExecutionTest`、`ExternalInteractionTest.retryKeepsRequestNoStable`、`FinalAcceptanceContractTest.stepExecutionHistory_isAuditable` | ✅ |
+| 表单和批次不变量 | `BusinessFormAccessorTest`、`BusinessBatchTest`、`BusinessBatchAccessorTest` | ✅ |
+| 流程定义发布校验 | `ProcessDefinitionTest`、`ProcessDefinitionPublishServiceTest`（含批次 34 条件语法预校验） | ✅ |
+
+| §21.2 应用与并发测试 | 覆盖测试 | 状态 |
+|---|---|---|
+| 相同 requestNo 重复推进只执行一次 | `FlowOrchestrationServiceTest.advanceApplication_whenDuplicateRequestNo_skipsPipeline` | ✅ |
+| 两个节点并发推进只产生一次有效跃迁 | `FlowOrchestrationServiceTest.advanceStep_usesDistributedLockWhenAvailable`（锁接线）、`AbstractBusinessRepositoryTest`（乐观锁） | ⚠️ 无多节点真并发集成测试 |
+| 乐观锁冲突不会覆盖新状态 | `AbstractBusinessRepositoryTest`（版本递增 + 事件发布） | ⚠️ 未做并发写冲突覆盖断言 |
+| 重复事件不会重复推进 | `ApprovalResultEventListenerTest.handleApproved_whenDuplicate_shouldNotAdvance`、`FileParsedEventListenerTest.handleFileParsed_whenDuplicate_shouldNotAdvance`、`JdbcEventReceiptGatewayTest` | ✅ |
+| 乱序事件不会错误推进 | `CallbackCorrelationServiceTest`（typeMismatch / terminal / matchesFalse）、两个 listener 的 `OUT_OF_ORDER`/`UNMATCHED` 测试 | ✅ |
+
+| §21.3 外部协作测试 | 覆盖测试 | 状态 |
+|---|---|---|
+| 文件/审批明确失败进入可重试或失败状态 | `ExternalCollaborationAcceptanceTest.explicitFailure_closesToFailedAndCanRetry`、`CallbackCorrelationServiceTest.correlate_appliedOnFailure`、`ExternalInteractionRecoveryServiceTest.processDueRetries` | ✅ |
+| 请求超时进入 UNKNOWN | `ExternalCollaborationAcceptanceTest.timeout_entersUnknown_andRequiresReconciliation`、`ExternalInteractionRecoveryServiceTest.reclaimStaleDispatching_marksUnknown`、`ExternalInteractionTest.unknownRequiresReconciliationBeforeRedispatch` | ✅ |
+| 响应丢失后可按 requestNo 对账 | `ExternalCollaborationAcceptanceTest.lostResponse_reconcilesByRequestNo`、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_*`、`CallbackCorrelationServiceTest.correlate_fallbackByExternalTaskId` | ✅（口径：`requestNo` 关联协作、`externalTaskId` 查询外部） |
+| 服务重启后待派发任务可恢复 | `ExternalCollaborationAcceptanceTest.restart_recoversPendingDispatchFromPersistedState` / `restart_reclaimsStaleDispatchingForReconciliation`、`ExternalInteractionRecoveryJobTest` | ✅ |
+| 审批通过/驳回/撤回分别进入正确状态 | `ApprovalResultEventListenerTest`（三类事件委托）、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_confirmsApproved/Rejected`、`ExternalCollaborationAcceptanceTest.approvalPassRejectWithdraw_routeToCorrectState`（补撤回） | ✅ |
+| 文件部分成功不会误判为全部成功 | file-service `ParseTaskTest`（`PARTIAL_SUCCESS` + `invalidCount` 聚合）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting` | ⚠️ kernel 侧按「解析任务完成」把 PARTIAL 与 SUCCESS 同样推进一次，失败明细留在 subTasks/invalidCount，未做端到端统计对账 |
+
+| §21.4 架构测试 | 覆盖测试 | 状态 |
+|---|---|---|
+| domain 不依赖 Spring/Web/JSON/DB/file/approval 类型 | 现有 `ArchitectureInvariantTest` 8 条覆盖 demo-shared/安全/网关/BFF/共享能力门面 | ⚠️ kernel domain 纯净性未机器化 |
+| application 不依赖 file/approval DTO | 同上 | ⚠️ 现状 `FileParsedEventListener` 依赖 `file.api.event.FileParsedEventDTO`（属允许的跨服务 API 依赖，与字面「不依赖 DTO」有张力） |
+| ApplicationService 入参只有 CQE | 批次 35 `advanceApplication` 落地 CQE | ⚠️ 其余服务方法仍为裸参，无架构断言 |
+| Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化 |
+| types 只包含 ID 类型 | `CoreTypesIdentifierValidationTest` | ⚠️ 仅校验 ID 类型，未断言「只有 ID」 |
+| 跨服务只依赖 API 模块 | `ArchitectureInvariantTest` 不变量 1/3（方向相反：框架层零业务 api 依赖） | ⚠️ 未正向机器化 |
+
+| §21.5 最终验收 | 覆盖测试 | 状态 |
+|---|---|---|
+| 1. 新业务只增加流程定义和 SPI，不改 kernel | `FinalAcceptanceContractTest.newBusiness_registersDefinitionAndSpiOnly`、`ProcessDefinitionPublishServiceTest`、`CompositeProcessDefinitionGatewayTest` | ✅ |
+| 2. 服务重启后流程可恢复 | §21.3(4) 全部测试 + `ExternalInteractionRecoveryJobTest` | ✅ |
+| 3. 并发推进和重复回调不造成重复跃迁 | `FinalAcceptanceContractTest.repeatedCallback_doesNotDoubleTransition`、重复 requestNo/eventId 测试、锁接线测试 | ✅（重复/幂等）⚠️ 多节点真并发未集成 |
+| 4. 文件/审批任务可追踪、可重试、可对账 | §21.3(1)(3)(4)、`StepExecutionRepositoryImplTest`、`ExternalInteractionRepositoryImplTest`、`GatewayRequestNoContractTest`、`FileGatewayTaskIdContractTest` | ✅ |
+| 5. 流程定义升级不影响在途实例 | `FinalAcceptanceContractTest.definitionUpgrade_doesNotAffectInFlightInstance`、`CompositeProcessDefinitionGatewayTest.load_readsHistoricalVersionFromStore`、`StepDefinitionResolverTest` | ✅ |
+| 6. 状态、执行历史和事件可审计 | `FinalAcceptanceContractTest.stepExecutionHistory_isAuditable`、`StepExecutionTest`、`ExternalInteractionTest`、`AbstractBusinessRepositoryTest` | ✅ |
+| 7. 通用技术能力全部通过 shared starter 提供 | `KernelProductionReadinessValidatorTest`（38-1）、`ArchitectureInvariantTest` 不变量 8、adapter pom 显式依赖 | ✅ |
+| 8. 端到端测试不预置流程实例、不禁用自动推进机制 | `AnnuityEndToEndTest` | ❌ 用 `@MockitoBean` 禁用 `StepAutoAdvanceListener` 以手动控制推进节奏；生产环境该监听器正常，未做不禁用自动推进的独立 E2E |
+
+#### 收口结论与遗留（阶段 5）
+
+- **阶段 0–5 全部收口**：规格 §20 规划的全部批次（含 37/38/39 的拆分）已完成并逐批提交推送；核心聚合已无 §6.2 遗留字段，外部协作具备「可追踪、可重试、可对账、可恢复」能力，§21.1/§21.2/§21.3/§21.5 主要验收点均有可执行测试。
+- **如实标注的偏差**（不冒充已覆盖）：
+  1. `AnnuityEndToEndTest` 禁用自动推进（§21.5 第 8 条）；annuity 为早期示例服务，若要严格满足需新增独立 E2E。
+  2. §21.4 六条架构不变量未全部机器化；`ArchitectureInvariantTest` 覆盖的是 demo-shared/网关/BFF 方向，kernel 分层纯净性与 CQE 化未做 ArchUnit 断言。
+  3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
+  4. `CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被监听器消费（监听器统一传 `SUCCEEDED`/`FAILED`，驳回/撤回由 `advanceByApprovalResult` 终止语义处理）。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 复制 DDL 解耦（改为直接引用 kernel schema 资源）、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。

@@ -12,8 +12,6 @@ import com.example.core.application.engine.service.ExternalInteractionRecoverySe
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.root.StepExecution;
-import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
-import com.example.core.domain.engine.aggregate.valueobject.StepCode;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.ExternalInteractionStatus;
 import com.example.core.domain.engine.aggregate.valueobject.enums.status.StepExecutionState;
@@ -21,21 +19,17 @@ import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import com.example.core.domain.engine.repository.ExternalInteractionRepository;
 import com.example.core.domain.engine.repository.StepExecutionRepository;
-import com.example.core.types.ApplicationId;
-import com.example.core.types.ExternalInteractionId;
-import com.example.core.types.StepExecutionId;
 import com.example.file.api.event.FileParsedEventDTO;
-import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.example.core.application.engine.acceptance.ExternalCollaborationFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,14 +51,6 @@ import static org.mockito.Mockito.when;
  */
 @DisplayName("§21.3 外部协作验收")
 class ExternalCollaborationAcceptanceTest {
-
-  private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 14, 10, 0);
-  private static final ApplicationId APP_ID = new ApplicationId("APP-1");
-  private static final StepExecutionId STEP_EXEC_ID = StepExecutionId.of(9L);
-  private static final String REQUEST_NO = "SE-9";
-  private static final String TASK_ID = "FT-9";
-  private static final String APPROVAL_INSTANCE_ID = "AI-9";
-  private static final String OPERATOR = "SYSTEM";
 
   @Test
   @DisplayName("明确失败：协作与步骤进入 FAILED，且可转入 RETRY_WAIT 重派")
@@ -239,19 +225,4 @@ class ExternalCollaborationAcceptanceTest {
     assertThat(commands.getAllValues().get(1).outcome()).isEqualTo(CallbackOutcome.FAILED);
   }
 
-  private ExternalInteraction interaction(long id, InteractionType type, String requestNo,
-                                            String externalTaskId, ExternalInteractionStatus status) {
-    return ExternalInteraction.reconstitute(
-      ExternalInteractionId.of(id), "U-C", "U-U", NOW.minusDays(1), NOW, Version.of(1L),
-      APP_ID, STEP_EXEC_ID, type, requestNo, externalTaskId, status,
-      null, 0, null, null, null);
-  }
-
-  private StepExecution waitingExternal() {
-    return StepExecution.reconstitute(
-      STEP_EXEC_ID, "U-C", "U-U", NOW.minusMinutes(5), NOW, Version.of(1L),
-      APP_ID, DefinitionVersion.initial(), StepCode.of("FORM_DETAIL_INGESTION"),
-      1, REQUEST_NO, StepExecutionState.WAITING_EXTERNAL,
-      NOW.minusMinutes(5), null, null, null, null);
-  }
 }
