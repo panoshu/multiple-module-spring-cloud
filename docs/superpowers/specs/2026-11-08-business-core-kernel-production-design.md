@@ -1197,6 +1197,7 @@ Application 层按用例拆分：
 | 批次 61 | `0265f87f` | **能力 C 解锁 SPECIFIED_ROLE 节点**（立项批次 61）：`ApprovalInstanceService` 注入 `RoleUserGateway`，`listMyPendingApprovals` 重构为「收集候选 → 按 `planNo` 批量展开角色 → 判断命中 → 组装 DTO → 内存分页」；同计划多角色合并为一次网关调用规避 N+1；角色节点缺 `currentPlan` 或网关空结果均 fail-closed 跳过。`PendingApprovalServiceTest` 由 4 项扩到 8 项（角色命中 / 批量合并 / 网关空 / 无 plan），3 个测试类构造同步加网关 mock，先编译红灯后绿 | approval domain 87 / application 20（+4）/ infra 30 / adapter 8、auth 175/46/156/1、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity/kernel 改动、零 DDL |
 | 批次 62 | `e5061452` | **领域流转接线与角色会签修正**（立项 §6 开放点 4）：`ApprovalInstance.approve/reject/transfer` 增加 `effectiveApprovers` 参数，`validateCanApprove` 校验审批人身份、`allApproversApproved` 按展开列表判断 AND_SIGN 完成（空列表 fail-closed）；`ApprovalInstanceService` 注入 `ApprovalNodeResolver` 使 Resolver 从预留 SPI 接入主链路；Resolver 角色分支按配置顺序展开 + 去重 + 空响应防御。新增 `ApprovalNodeResolverTest` 4 项、`ApprovalInstanceTest` 2 项（角色会签完成 / 非审批人拒绝），全部调用点同步 | approval domain 93（+6）/ application 20 / infra 30 / adapter 8、auth 175/46/156/1、annuity E2E 10 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity/kernel 改动、零 DDL |
 | 批次 63 | `de72475e` | **扩展动作 beanName 发布期校验**（清单建议优先级 ①）：`ProcessDefinitionPublishService` 注入 `ExtensionActionRegistry`，`publish` 增加 `validateExtensions` 遍历全部步骤的前置/明细/后置扩展，beanName 为空或未注册即抛 `DomainException` 且不落库；此前仅主处理器与条件表达式有发布期校验，扩展动作要到运行期 `registry.get()` 才抛异常。新增 2 项发布测试，2 个既有用例与验收测试构造同步，先编译红灯后绿 | kernel domain 174 / application 224（+2）/ infra 90 / adapter 16、架构 17、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinition`；零 annuity 改动、零 DDL |
+| 批次 64 | 本次（未提交） | **PARTIAL 文件端到端统计对账**（清单建议优先级 ②）：新增 `PartialParseStatistics` 汇总子任务/行数并编码为紧凑 `resultRef`；`FileParsedEventListener` 在 PARTIAL 时把它作为 `CallbackCommand.resultRef` 传入，经协作闭环写入 `ExternalInteraction.resultRef`（现成字段、零 DDL），SUCCESS/FAILED 语义不变。补统计值对象测试 2 项 + PARTIAL 验收用例端到端断言，§21.3 核对表该行 ⚠️→✅ | kernel domain 174 / application 226（+2）/ infra 90 / adapter 16、架构 17、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL |
 
 ### 23.3 批次 2 范围边界
 
@@ -1668,7 +1669,7 @@ Application 层按用例拆分：
 | 响应丢失后可按 requestNo 对账 | `ExternalCollaborationAcceptanceTest.lostResponse_reconcilesByRequestNo`、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_*`、`CallbackCorrelationServiceTest.correlate_fallbackByExternalTaskId` | ✅（口径：`requestNo` 关联协作、`externalTaskId` 查询外部） |
 | 服务重启后待派发任务可恢复 | `ExternalCollaborationAcceptanceTest.restart_recoversPendingDispatchFromPersistedState` / `restart_reclaimsStaleDispatchingForReconciliation`、`ExternalInteractionRecoveryJobTest` | ✅ |
 | 审批通过/驳回/撤回分别进入正确状态 | `ApprovalResultEventListenerTest`（三类事件委托）、`ExternalInteractionRecoveryServiceTest.reconcileUnknown_confirmsApproved/Rejected`、`ExternalCollaborationAcceptanceTest.approvalPassRejectWithdraw_routeToCorrectState`（补撤回）、`CallbackCorrelationServiceTest.correlate_rejectedOrWithdrawnMapsToFailed`（批次 42，协作状态与申请单终态一致） | ✅ |
-| 文件部分成功不会误判为全部成功 | file-service `ParseTaskTest`（`PARTIAL_SUCCESS` + `invalidCount` 聚合）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting` | ⚠️ kernel 侧按「解析任务完成」把 PARTIAL 与 SUCCESS 同样推进一次，失败明细留在 subTasks/invalidCount，未做端到端统计对账 |
+| 文件部分成功不会误判为全部成功 | file-service `ParseTaskTest`（`PARTIAL_SUCCESS` + `invalidCount` 聚合）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting`、`PartialParseStatisticsTest`（批次 64） | ✅ 批次 64 已收敛：PARTIAL 失败明细统计经 `CallbackCommand.resultRef` 写入 `ExternalInteraction.resultRef`，端到端可审计（§23.71） |
 
 | §21.4 架构测试 | 覆盖测试 | 状态 |
 |---|---|---|
@@ -1977,4 +1978,14 @@ Application 层按用例拆分：
 - **TDD**：`ProcessDefinitionPublishServiceTest` 新增 2 项（bean 缺失拒绝且不落库、bean 齐备正常发布），2 个既有条件表达式用例补 `extensionRegistry` stub；`FinalAcceptanceContractTest` 构造同步。先编译红灯（构造签名）→ 实现后 12 项全绿。
 - **边界（如实标注）**：校验的是 `beanName` 与 `ExtensionActionRegistry` 中 `StepExtensionAction.actionName()` 的一致性（配置里的 `beanName` 即动作名，与 `StepPipelineExecutor.executeChain` 一致）；空 beanName 按配置错误拒绝。条件表达式的**变量/返回类型**校验仍属清单 #8，本批未做。
 - **验证**：kernel domain 174 / application 224（+2）/ infrastructure 90 / adapter 16、架构 17、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException`/`BeanCreationException`；零 annuity 改动、零 DDL。
-- **同步**：`remaining-work-inventory.md` #7 标注完成。**仍未处理**：清单 #1–#6、#8–#18。
+- **同步**：`remaining-work-inventory.md` #7 标注完成。**仍未处理**：清单 #1–#6、#8–#18。**建议优先级 ② 已由批次 64 完成（§23.71）**。
+
+### 23.71 批次 64 范围边界（PARTIAL 文件端到端统计对账）
+
+- **来源**：`2026-11-14-remaining-work-inventory.md` 建议优先级 ②（§21.3 核对表唯一 ⚠️）。
+- **决策**：PARTIAL 与 SUCCESS 同样推进一次是**正确设计**（解析任务整体完成、流程可继续），但失败明细此前只留在 file-service 的 `subTasks`/`invalidCount`，kernel 侧没有可审计载体，故标 ⚠️「未做端到端统计对账」。
+- **实现**：新增 `PartialParseStatistics`（application 层值对象），汇总 `totalSubTasks/failedSubTasks/totalRows/validRows/invalidRows`，`toResultRef()` 编码为紧凑可读字符串；`FileParsedEventListener` 在 PARTIAL 时把它作为 `CallbackCommand.resultRef` 传入，经 `CallbackCorrelationService` 写入 `ExternalInteraction.resultRef`（**现成字段、零 DDL**）。SUCCESS/FAILED 的 `resultRef` 语义不变（仍为 `failureReason`）。
+- **TDD**：`PartialParseStatisticsTest` 2 项（汇总+编码、`subTasks` 为 null 的防御）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting` 补 `resultRef` 端到端断言，先编译红灯（`PartialParseStatistics` 不存在）→ 实现后 16 项全绿。
+- **边界（如实标注）**：统计是**事件快照**而非实时查询；业务侧需要逐行明细仍需查 file-service `subTasks`（跨服务契约，不在 kernel 内持久化）。结果引用长度远小于列宽，未做解析 API（当前仅供审计/排障）。§21.3 核对表该行由 ⚠️ 更新为 ✅。
+- **验证**：kernel domain 174 / application 226（+2）/ infrastructure 90 / adapter 16、架构 17、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
+- **同步**：清单 #10 标注完成、§21.3 核对表更新。**仍未处理**：清单 #1–#6、#8、#9、#11–#18。

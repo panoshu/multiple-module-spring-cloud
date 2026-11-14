@@ -27,7 +27,7 @@
 | 7 | ~~扩展动作 `beanName` 存在校验~~ | §23.35 已知边界 | ✅ **已由批次 63 完成（§23.70）**：`ProcessDefinitionPublishService` 注入 `ExtensionActionRegistry` 并在发布期校验全部扩展动作 beanName，缺失即拒绝且不落库 | — |
 | 8 | **条件表达式变量/返回类型校验** | §23.35 已知边界 | `ConditionEvaluationGateway.validate` 只保证语法可解析，不校验变量/函数存在、不校验返回类型布尔；三引擎语法不兼容，未做跨引擎归一化 | 小批次，收益有限；切换引擎时需重写 |
 | 9 | **`BusinessConfigGateway` 无 kernel 默认实现** | CODEBUDDY.md Known Gaps | 全仓唯一实现是 annuity 的 `JsonBusinessConfigGateway`；kernel 未提供默认（`FileIntegrationGateway` 已有 `FileServiceIntegrationGateway`） | 接入新业务服务时的检查项；目前每个业务服务自行实现，符合 CODEBUDDY.md 定位 |
-| 10 | **kernel 侧 PARTIAL 文件端到端统计对账** | §21.3 核对表 ⚠️ | kernel 按「解析任务完成」把 PARTIAL 与 SUCCESS 同样推进一次，失败明细留在 subTasks/invalidCount，未做端到端统计对账 | 阶段 5：需与 file-service PARTIAL 语义对齐后补验收 |
+| 10 | ~~kernel 侧 PARTIAL 文件端到端统计对账~~ | §21.3 核对表 ⚠️ | ✅ **已由批次 64 完成（§23.71）**：`PartialParseStatistics` 汇总失败明细统计，PARTIAL 时经 `CallbackCommand.resultRef` 写入 `ExternalInteraction.resultRef`，零 DDL、端到端可审计；§21.3 核对表该行 ⚠️→✅ | — |
 | 11 | **`startApproval` 发起人身份** | §23.64 边界③ | 4 个审批操作已用会话账号覆盖（批次 57），但 `startApproval`（由业务服务/系统发起）未纳入会话身份治理 | 视业务接入方式决定；当前非人工会话操作，列为遗留 |
 | 12 | **权限项运行时自注册与端到端 HTTP 验证** | §23.66/§23.67 | `AUTH_ASSIGNMENT/VIEW` 依赖 `PermissionRegistrationRunner` 自注册；`@HttpExchange` 客户端 bean 由 starter 运行时装配，单测不覆盖端到端 HTTP（annuity E2E 不启动 approval-service） | 生产部署前需确认 auth 数据侧已有对应权限项 + 会话 header 透传链路 |
 | 13 | **`shared-logging-starter` 脱敏/异步管道 E2E 未启用** | §23.44 已知边界 | MDC 值能否被日志输出依赖宿主日志 pattern，E2E 只保证写入与恢复 | 宿主日志配置联调项 |
@@ -69,7 +69,7 @@
 ## 4. 建议下一步优先级
 
 1. ~~**#7 扩展动作 `beanName` 存在校验**~~ → ✅ 已由批次 63 完成（§23.70）
-2. **#10 kernel 侧 PARTIAL 端到端统计对账**（§21 核对表唯一 ⚠️，验收完整性）
+2. ~~**#10 kernel 侧 PARTIAL 端到端统计对账**~~ → ✅ 已由批次 64 完成（§23.71，§21 核对表已无 ⚠️）
 3. **#6 增量事件消费端接线**（恢复链路语义统一）
 4. **#1 / #2 组织目录 + SAME_PLAN/LEVEL_UP**（跨服务新契约，需单独立项与用户确认）
 5. **#4 真 Redis 集成测试**（待集成测试环境）

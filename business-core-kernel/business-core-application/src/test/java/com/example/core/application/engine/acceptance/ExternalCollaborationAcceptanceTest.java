@@ -225,6 +225,9 @@ class ExternalCollaborationAcceptanceTest {
     verify(correlation, times(2)).correlate(commands.capture());
     assertThat(commands.getAllValues().get(0).outcome()).isEqualTo(CallbackOutcome.SUCCEEDED);
     assertThat(commands.getAllValues().get(1).outcome()).isEqualTo(CallbackOutcome.FAILED);
+    // 端到端对账：PARTIAL 的失败明细统计随 resultRef 写入协作记录，不折叠成「全部成功」
+    assertThat(commands.getAllValues().get(0).resultRef())
+      .isEqualTo("PARTIAL:subTasks=2,failed=1,rows=20,valid=17,invalid=3");
   }
 
   /** 恢复服务现按单条包事务，测试侧提供直通的事务管理器。 */
