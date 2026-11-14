@@ -100,9 +100,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
 ),
   expected_detail_count INT DEFAULT 0,
 
-  -- 业务扩展字段（多态 JSON）
-  business_extension JSON,
-
   -- 状态机字段
   status VARCHAR
 (

@@ -102,9 +102,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
 ),
   expected_detail_count INT DEFAULT 0,
 
-  -- 业务扩展字段（H2: TEXT 替代 PostgreSQL JSONB）
-  business_extension TEXT,
-
   -- 状态机字段
   status VARCHAR
 (

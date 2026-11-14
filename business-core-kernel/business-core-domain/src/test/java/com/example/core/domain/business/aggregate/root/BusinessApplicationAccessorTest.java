@@ -31,13 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BusinessApplicationAccessorTest {
 
   @Test
-  @DisplayName("businessExtension() 返回扩展字段实例")
-  void businessExtension_returnsExtensionInstance() {
-    BusinessApplication app = buildTestApp();
-    assertThat(app.businessExtension()).isNull();
-  }
-
-  @Test
   @DisplayName("operatorInfo() 返回操作人信息")
   void operatorInfo_returnsOperatorInfo() {
     BusinessApplication app = buildTestApp();
@@ -54,20 +47,6 @@ class BusinessApplicationAccessorTest {
   }
 
   @Test
-  @DisplayName("attachExtension() 挂载业务扩展字段")
-  void attachExtension_setsExtension() {
-    BusinessApplication app = buildTestApp();
-    BusinessExtension stub = new BusinessExtension() {
-      @Override
-      public BusinessType businessType() {
-        return BusinessType.ACC_PLAN_CREATE;
-      }
-    };
-    app.attachExtension(stub);
-    assertThat(app.businessExtension()).isSameAs(stub);
-  }
-
-  @Test
   @DisplayName("reconstitute() 装配所有字段且不触发业务事件")
   void reconstitute_assemblesAllFields() {
     LocalDateTime now = LocalDateTime.now();
@@ -77,7 +56,7 @@ class BusinessApplicationAccessorTest {
       new ApplicationId("APP-R"), "U-C", "U-U",
       now.minusDays(1), now, Version.of(3L),
       BatchId.of("B-1"), new FormId("F-1"),
-      buildContext(), buildOperator(), null,
+      buildContext(), buildOperator(),
       new FileId("FILE-R"), 5,
       DefinitionVersion.of("v2"),
       ApplicationStatus.COMPLETED, ApplicationFlowStep.COMPLETED,
@@ -108,6 +87,15 @@ class BusinessApplicationAccessorTest {
       .map(java.lang.reflect.Field::getName)
       .toList())
       .doesNotContain("planMaterials", "packageFile");
+  }
+
+  @Test
+  @DisplayName("核心聚合不再直接持有 businessExtension 字段（§6.2，批次 37b）")
+  void coreAggregate_doesNotDeclareBusinessExtensionField() {
+    assertThat(java.util.Arrays.stream(BusinessApplication.class.getDeclaredFields())
+      .map(java.lang.reflect.Field::getName)
+      .toList())
+      .doesNotContain("businessExtension");
   }
 
   @Test

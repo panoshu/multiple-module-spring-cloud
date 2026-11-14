@@ -2,7 +2,6 @@ package com.example.core.infrastructure.business.converter;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
 import com.example.core.types.Channel;
@@ -14,9 +13,7 @@ import com.example.core.domain.business.aggregate.valueobject.reference.PlanBizA
 import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.infrastructure.business.entity.BusinessApplicationDO;
-import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.shared.exception.SystemException;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
@@ -25,10 +22,7 @@ import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;
 import com.example.core.types.UserNo;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -36,7 +30,8 @@ import java.util.List;
  * 业务申请单 DO ↔ 领域对象转换器
  * <p>
  * 使用 kernel 聚合根的公开访问器与 {@link BusinessApplication#reconstitute} 工厂方法，
- * 彻底消除反射访问。{@link BusinessExtension} 通过注入的 {@link ObjectMapper} 多态序列化持久化为 JSON。
+ * 彻底消除反射访问。业务扩展大对象已迁出核心聚合（§6.2），由业务服务自有存储承载，
+ * 本转换器不再负责多态 JSON 序列化。
  * <p>
  * {@code planMaterials}/{@code packageFile} 为流程内内存态字段，不持久化到 DO。
  *
@@ -45,9 +40,6 @@ import java.util.List;
  */
 @Mapper(componentModel = "spring")
 public abstract class BusinessApplicationConverter {
-
-  @Autowired
-  protected ObjectMapper objectMapper;
 
   /**
    * 领域对象 → DO
@@ -86,8 +78,6 @@ public abstract class BusinessApplicationConverter {
     aDo.setParsedJsonFileId(app.parsedJsonFileId() != null ? app.parsedJsonFileId().value() : null);
     aDo.setExpectedDetailCount(app.expectedDetailCount());
 
-    aDo.setBusinessExtension(extensionToJson(app.businessExtension()));
-
     aDo.setStatus(app.status() != null ? app.status().name() : null);
     aDo.setCurrentStep(app.currentStep() != null ? app.currentStep().name() : null);
     aDo.setDefinitionVersion(app.definitionVersion() != null ? app.definitionVersion().value() : null);
@@ -116,7 +106,6 @@ public abstract class BusinessApplicationConverter {
 
     BusinessContext businessContext = buildBusinessContext(aDo);
     OperatorInfo operatorInfo = buildOperatorInfo(aDo);
-    BusinessExtension extension = jsonToExtension(aDo.getBusinessExtension());
 
     return BusinessApplication.reconstitute(
       new ApplicationId(aDo.getId()),
@@ -129,7 +118,6 @@ public abstract class BusinessApplicationConverter {
       aDo.getFormId() != null ? new FormId(aDo.getFormId()) : null,
       businessContext,
       operatorInfo,
-      extension,
       aDo.getParsedJsonFileId() != null ? new FileId(aDo.getParsedJsonFileId()) : null,
       aDo.getExpectedDetailCount() != null ? aDo.getExpectedDetailCount() : 0,
       aDo.getDefinitionVersion() != null
@@ -168,30 +156,6 @@ public abstract class BusinessApplicationConverter {
       aDo.getOperatorName(),
       aDo.getIsProxy() != null && aDo.getIsProxy()
     );
-  }
-
-  private String extensionToJson(BusinessExtension extension) {
-    if (extension == null) {
-      return null;
-    }
-    try {
-      return objectMapper.writeValueAsString(extension);
-    } catch (JsonProcessingException e) {
-      throw new SystemException(CoreInfraErrorCode.EXTENSION_SERIALIZATION_FAILED)
-        .withLogDetail("序列化 BusinessExtension 失败: " + e.getMessage());
-    }
-  }
-
-  private BusinessExtension jsonToExtension(String json) {
-    if (json == null || json.isBlank()) {
-      return null;
-    }
-    try {
-      return objectMapper.readValue(json, BusinessExtension.class);
-    } catch (JsonProcessingException e) {
-      throw new SystemException(CoreInfraErrorCode.EXTENSION_DESERIALIZATION_FAILED)
-        .withLogDetail("反序列化 BusinessExtension 失败: " + e.getMessage());
-    }
   }
 
   private AccountManager parseAccountManager(String value) {

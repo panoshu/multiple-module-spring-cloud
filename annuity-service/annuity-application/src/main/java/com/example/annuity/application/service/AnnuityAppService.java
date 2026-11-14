@@ -6,12 +6,12 @@ import com.example.annuity.application.result.BatchQueryResult;
 import com.example.annuity.application.result.UploadFormResult;
 import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
+import com.example.annuity.domain.repository.AnnuityApplicationExtensionStore;
 import com.example.core.application.business.service.BusinessBatchAppService;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
@@ -51,6 +51,7 @@ public class AnnuityAppService {
   private final BatchRepository batchRepository;
   private final FormRepository formRepository;
   private final IdService idService;
+  private final AnnuityApplicationExtensionStore extensionStore;
 
   /**
    * 上传年金表单
@@ -211,13 +212,9 @@ public class AnnuityAppService {
     );
   }
 
-  /**
-   * 通过 kernel 公开的 {@link BusinessApplication#businessExtension()} 读取扩展字段，
-   * 类型安全地转换为 {@link AnnuityApplicationExtension}。
-   */
+  /** 从业务服务自有存储按 applicationId 读取年金扩展字段（§6.2）。 */
   private AnnuityApplicationExtension readAnnuityExtension(BusinessApplication app) {
-    BusinessExtension ext = app.businessExtension();
-    return ext instanceof AnnuityApplicationExtension annuityExt ? annuityExt : null;
+    return extensionStore.load(app.id()).orElse(null);
   }
 
   private List<BatchQueryResult.ApplicationSummary> findApplicationsByBatch(BatchId batchId) {

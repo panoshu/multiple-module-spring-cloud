@@ -17,7 +17,6 @@ import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.file.types.FileId;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ class BusinessApplicationConverterTest {
   @BeforeEach
   void setUp() {
     converter = new BusinessApplicationConverterImpl();
-    converter.objectMapper = new ObjectMapper();
   }
 
   @Test

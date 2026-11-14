@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 业务申请单 DO
  * <p>
  * 对应聚合根 {@code BusinessApplication}，将 {@code BusinessContext} 和 {@code OperatorInfo}
- * 拍平为独立列；{@code businessExtension} 通过 Jackson 多态序列化持久化为 JSON。
+ * 拍平为独立列。业务扩展大对象已迁出核心聚合（§6.2），由业务服务自有存储承载。
  * <p>
  * {@code planMaterials}/{@code packageFile} 为流程内内存态字段，不持久化到本表。
  *
@@ -50,10 +50,6 @@ public class BusinessApplicationDO {
   // ===== 文件与统计字段 =====
   private String parsedJsonFileId;
   private Integer expectedDetailCount;
-
-  // ===== 业务扩展字段（多态 JSON） =====
-  // PostgreSQL 使用 JSONB，MySQL 使用 JSON 或 TEXT
-  private String businessExtension;
 
   // ===== 状态机字段 =====
   private String status;

@@ -15,7 +15,7 @@
 --
 -- 设计要点：
 --   1. BusinessContext / OperatorInfo 拍平为独立列，便于 SQL 查询和索引
---   2. business_extension 使用 JSON（MySQL 5.7+ 支持）
+--   2. 业务扩展大对象由业务服务自有存储承载，不在核心表持久化
 --   3. 主键 id 由应用层通过 shared-id-starter 生成（ULID），禁用自增
 --   4. 通用字段 created_by/create_time/updated_by/update_time/deleted/version 齐备
 --   5. createTime/updateTime 由应用层管理，不使用 ORM 自动填充
@@ -106,9 +106,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
   64
 ) DEFAULT NULL COMMENT '解析后 JSON 文件 ID（FileId）',
   expected_detail_count INT DEFAULT 0 COMMENT '预期明细数量',
-
-  -- 业务扩展字段（多态 JSON）
-  business_extension JSON DEFAULT NULL COMMENT '业务扩展字段（JSON 多态）',
 
   -- 状态机字段
   status VARCHAR

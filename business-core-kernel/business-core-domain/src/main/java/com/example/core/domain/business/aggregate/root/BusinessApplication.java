@@ -37,8 +37,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
 
-  private BusinessExtension businessExtension;
-
   private FileId parsedJsonFileId;
   private int expectedDetailCount;
 
@@ -112,7 +110,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     FormId formId,
     BusinessContext businessContext,
     OperatorInfo operatorInfo,
-    BusinessExtension businessExtension,
     FileId parsedJsonFileId,
     int expectedDetailCount,
     DefinitionVersion definitionVersion,
@@ -127,7 +124,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.formId = formId;
     app.businessContext = businessContext;
     app.operatorInfo = operatorInfo;
-    app.businessExtension = businessExtension;
     app.parsedJsonFileId = parsedJsonFileId;
     app.expectedDetailCount = expectedDetailCount;
     app.definitionVersion = definitionVersion;
@@ -137,18 +133,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.completeTime = completeTime;
     app.materialState = ApplicationMaterialState.of(planMaterials, packageFile);
     return app;
-  }
-
-  /**
-   * 业务行为：挂载业务扩展字段。
-   * <p>
-   * 由业务服务在创建申请单后，注入业务专属的 {@link BusinessExtension} 实现（如年金扩展字段）。
-   * 重复挂载将覆盖既有值。
-   *
-   * @param extension 业务扩展字段实例
-   */
-  public void attachExtension(BusinessExtension extension) {
-    this.businessExtension = extension;
   }
 
   public FormId formId() {
@@ -361,18 +345,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   @Override
   protected void validateInvariants() {
 
-  }
-
-  /**
-   * 公开业务扩展字段（只读）。
-   * <p>
-   * 供业务服务的 {@code AnnuityExtensionResolver} 等组件类型安全地读取扩展字段，
-   * 避免在业务服务中使用反射访问私有字段。
-   *
-   * @return 扩展字段实例，若未设置则返回 null
-   */
-  public BusinessExtension businessExtension() {
-    return this.businessExtension;
   }
 
   /**

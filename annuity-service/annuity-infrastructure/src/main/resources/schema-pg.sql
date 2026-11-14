@@ -104,9 +104,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
 ),
   expected_detail_count INT DEFAULT 0,
 
-  -- 业务扩展字段（多态 JSON）
-  business_extension JSONB,
-
   -- 状态机字段
   status VARCHAR
 (
@@ -185,8 +182,6 @@ COMMENT
 ON COLUMN t_business_application.parsed_json_file_id   IS '解析后 JSON 文件 ID（FileId）';
 COMMENT
 ON COLUMN t_business_application.expected_detail_count IS '预期明细数量';
-COMMENT
-ON COLUMN t_business_application.business_extension    IS '业务扩展字段（JSONB 多态）';
 COMMENT
 ON COLUMN t_business_application.status                IS '申请单状态';
 COMMENT

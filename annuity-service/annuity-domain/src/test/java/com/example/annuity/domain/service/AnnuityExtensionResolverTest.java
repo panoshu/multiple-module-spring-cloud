@@ -1,6 +1,7 @@
 package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
+import com.example.annuity.domain.repository.AnnuityApplicationExtensionStore;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
@@ -21,36 +22,52 @@ import com.example.file.types.FileId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("AnnuityExtensionResolver 扩展字段解析器")
 class AnnuityExtensionResolverTest {
 
-  private final AnnuityExtensionResolver resolver = new AnnuityExtensionResolver();
+  private final StubExtensionStore store = new StubExtensionStore();
+  private final AnnuityExtensionResolver resolver = new AnnuityExtensionResolver(store);
 
   @Test
-  @DisplayName("扩展字段为 null 时抛出 DomainException")
+  @DisplayName("扩展字段缺失时抛出 DomainException")
   void resolve_nullExtensionThrows() {
     BusinessApplication app = createApp();
+
     assertThatThrownBy(() -> resolver.resolve(app))
       .isInstanceOf(DomainException.class);
   }
 
   @Test
-  @DisplayName("扩展字段类型匹配时返回强类型实例")
-  void resolve_correctTypeReturns() throws Exception {
+  @DisplayName("扩展字段存在时返回强类型实例")
+  void resolve_correctTypeReturns() {
     BusinessApplication app = createApp();
-    // 通过反射设置扩展字段(模拟 Jackson 反序列化后的状态)
-    var field = BusinessApplication.class.getDeclaredField("businessExtension");
-    field.setAccessible(true);
-    field.set(app, new AnnuityApplicationExtension(
-      BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false
-    ));
+    store.value = new AnnuityApplicationExtension(
+      BusinessType.ACC_PLAN_CREATE, "NEW", 20000L, false);
 
     AnnuityApplicationExtension ext = resolver.resolve(app);
+
     assertThat(ext).isNotNull();
     assertThat(ext.planType()).isEqualTo("NEW");
+  }
+
+  /** 测试替身：按 applicationId 关联的业务服务自有存储（§6.2）。 */
+  private static final class StubExtensionStore implements AnnuityApplicationExtensionStore {
+    private AnnuityApplicationExtension value;
+
+    @Override
+    public void save(ApplicationId applicationId, AnnuityApplicationExtension extension) {
+      this.value = extension;
+    }
+
+    @Override
+    public Optional<AnnuityApplicationExtension> load(ApplicationId applicationId) {
+      return Optional.ofNullable(value);
+    }
   }
 
   private BusinessApplication createApp() {

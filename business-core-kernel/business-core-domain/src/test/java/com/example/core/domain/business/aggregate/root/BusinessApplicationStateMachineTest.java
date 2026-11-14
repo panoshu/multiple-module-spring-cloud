@@ -155,7 +155,7 @@ class BusinessApplicationStateMachineTest {
     LocalDateTime now = LocalDateTime.now();
     BusinessApplication app = BusinessApplication.reconstitute(
       new ApplicationId("APP-LEGACY"), "U-C", "U-C", now.minusDays(1), now, Version.initial(),
-      BatchId.of("B-1"), new FormId("F-1"), context(), operator(), null,
+      BatchId.of("B-1"), new FormId("F-1"), context(), operator(),
       new FileId("FILE-1"), 0, DefinitionVersion.initial(),
       ApplicationStatus.PROCESSING, ApplicationFlowStep.FORM_DETAIL_INGESTION,
       now, null, List.of(), null

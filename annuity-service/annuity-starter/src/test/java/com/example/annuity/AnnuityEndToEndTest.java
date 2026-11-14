@@ -75,6 +75,9 @@ class AnnuityEndToEndTest {
   private FlowOrchestrationService orchestrationService;
 
   @Autowired
+  private com.example.annuity.domain.repository.AnnuityApplicationExtensionStore extensionStore;
+
+  @Autowired
   private ApplicationRepository applicationRepository;
 
   @Autowired
@@ -311,14 +314,14 @@ class AnnuityEndToEndTest {
       appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
       context, operator, jsonFileId, DefinitionVersion.initial()
     );
-    // 设置年金业务扩展字段（通过 kernel 公开的 attachExtension 方法）
+    // 设置年金业务扩展字段（业务服务自有存储，按 applicationId 关联，§6.2）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
       BusinessType.ACC_PLAN_CREATE,
       AnnuityApplicationExtension.PLAN_TYPE_NEW,
       20000L,  // 200 元（单位:分），大于 MIN_INITIAL_CONTRIBUTION_FOR_NEW=10000
       false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
     );
-    app.attachExtension(annuityExt);
+    extensionStore.save(appId, annuityExt);
     // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
     // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
     // markUpdated(null) 会抛 IllegalArgumentException
