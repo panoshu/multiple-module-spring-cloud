@@ -56,7 +56,8 @@ class ApprovalHistoryServiceTest {
     flowRepository = mock(ApprovalFlowRepository.class);
     service = new ApprovalInstanceService(
       instanceRepository, flowRepository, mock(EventBus.class),
-      mock(IdService.class), mock(ApprovalIdGenerator.class));
+      mock(IdService.class), mock(ApprovalIdGenerator.class),
+      mock(com.example.approval.domain.gateway.RoleUserGateway.class));
   }
 
   @Test

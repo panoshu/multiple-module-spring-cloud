@@ -43,7 +43,8 @@ class ApprovalInstanceServiceTest {
     idService = mock(IdService.class);
     idGenerator = mock(ApprovalIdGenerator.class);
     service = new ApprovalInstanceService(
-      instanceRepository, flowRepository, eventBus, idService, idGenerator);
+      instanceRepository, flowRepository, eventBus, idService, idGenerator,
+      mock(com.example.approval.domain.gateway.RoleUserGateway.class));
   }
 
   @Test

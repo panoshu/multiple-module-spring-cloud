@@ -366,7 +366,8 @@
   - **批次 58 已完成**（§23.65）：auth-api `RoleUserQueryApi` / `ListRoleUsersRequest`（批量 roleCodes + planNo，PLAN 精确 scope）/ `RoleUserBatchResponse`，契约测试 3 项先红后绿；方案 §4 已同步为落地形态。
   - **批次 59 已完成**（§23.66）：`findActiveByRoleCodesAndPlan` 仓储 + `RoleUserQueryService` + `RoleUserQueryController`，5 项测试先红后绿，auth 全模块与 auth-starter 启动全绿。
   - **批次 60 已完成**（§23.67）：SPI 改为带 `planNo` 的批量方法、`RoleUserGatewayImpl` 接入 auth-api 且 fail-closed、`ApprovalNodeResolver` 适配，5 项测试先红后绿。
-  - 61（能力 C 解锁 + 领域接线）待推进。
+  - **批次 61 已完成**（§23.68）：能力 C 解锁 `SPECIFIED_ROLE`，按 planNo 批量展开规避 N+1，测试 4→8 项；领域流转接线 / 角色会签修正因涉及聚合根签名改造，拆为批次 62 待评估。
+  - **58–61 全部完成**；62（`ApprovalNodeResolver` 接线 + `allApproversApproved` 角色会签修正）待用户确认后评估规模。
 
 ---
 

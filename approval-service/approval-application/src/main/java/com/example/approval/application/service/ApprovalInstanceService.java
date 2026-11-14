@@ -9,6 +9,7 @@ import com.example.approval.domain.aggregate.entity.ApprovalRecord;
 import com.example.approval.domain.aggregate.entity.NodeExecution;
 import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.aggregate.root.ApprovalInstance;
+import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.approval.domain.repository.ApprovalFlowRepository;
 import com.example.approval.domain.repository.ApprovalInstanceRepository;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
@@ -20,6 +21,7 @@ import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 审批实例应用服务
@@ -48,6 +54,7 @@ public class ApprovalInstanceService {
   private final EventBus eventBus;
   private final com.example.shared.identifier.contract.IdService idService;
   private final com.example.approval.domain.aggregate.root.ApprovalIdGenerator idGenerator;
+  private final RoleUserGateway roleUserGateway;
 
   /**
    * 启动审批
@@ -260,30 +267,13 @@ public class ApprovalInstanceService {
   @Transactional(readOnly = true)
   public PageData<PendingApprovalDTO> listMyPendingApprovals(ListMyPendingApprovalsRequest request) {
     UserNo approver = UserNo.of(request.approver());
-    List<ApprovalInstance> candidates = instanceRepository.findByStatuses(
-      List.of(InstanceStatus.PENDING, InstanceStatus.APPROVING));
+    List<PendingCandidate> candidates = collectCandidates();
+    Map<PlanNo, Map<String, List<UserNo>>> roleUsers = expandRoleUsers(candidates);
 
-    List<PendingApprovalDTO> matched = new ArrayList<>();
-    for (ApprovalInstance instance : candidates) {
-      Optional<ApprovalFlow> flow = flowRepository.load(instance.flowId());
-      if (flow.isEmpty()) {
-        continue;
-      }
-      Optional<ApprovalNode> node = flow.get().getNode(instance.currentNodeOrder());
-      // 节点审批人配置在静态 flow 定义中；角色审批需 RoleUserGateway（暂无提供方），本版只认指定用户
-      if (node.isEmpty() || !node.get().isSpecifiedUserApproval()
-        || !node.get().approverIds().contains(approver)) {
-        continue;
-      }
-      matched.add(new PendingApprovalDTO(
-        instance.id(),
-        instance.businessApplicationId().value(),
-        instance.businessType(),
-        flow.get().flowName().value(),
-        node.get().nodeType().name(),
-        instance.createdBy(),
-        instance.createdAt()));
-    }
+    List<PendingApprovalDTO> matched = candidates.stream()
+      .filter(candidate -> matches(candidate, approver, roleUsers))
+      .map(this::toPendingApprovalDTO)
+      .toList();
 
     int total = matched.size();
     int start = request.pagination().startPos();
@@ -291,6 +281,72 @@ public class ApprovalInstanceService {
     List<PendingApprovalDTO> items = start >= total ? List.of() : matched.subList(start, end);
     boolean hasMore = end < total;
     return new PageData<>(total, start, items.size(), hasMore, items);
+  }
+
+  /** 收集活跃实例当前节点；角色节点必须带 currentPlan 才能按 PLAN 精确 scope 展开。 */
+  private List<PendingCandidate> collectCandidates() {
+    List<PendingCandidate> candidates = new ArrayList<>();
+    for (ApprovalInstance instance : instanceRepository.findByStatuses(
+      List.of(InstanceStatus.PENDING, InstanceStatus.APPROVING))) {
+      Optional<ApprovalFlow> flow = flowRepository.load(instance.flowId());
+      if (flow.isEmpty()) {
+        continue;
+      }
+      Optional<ApprovalNode> node = flow.get().getNode(instance.currentNodeOrder());
+      if (node.isEmpty()) {
+        continue;
+      }
+      if (node.get().isSpecifiedUserApproval()) {
+        candidates.add(new PendingCandidate(instance, flow.get(), node.get(), null));
+      } else if (node.get().isSpecifiedRoleApproval()
+        && instance.currentPlan() != null && !instance.currentPlan().isBlank()) {
+        candidates.add(new PendingCandidate(instance, flow.get(), node.get(),
+          PlanNo.of(instance.currentPlan())));
+      }
+    }
+    return candidates;
+  }
+
+  /** 按计划聚合角色编码，每个 planNo 只调用一次网关，规避逐实例展开的 N+1。 */
+  private Map<PlanNo, Map<String, List<UserNo>>> expandRoleUsers(List<PendingCandidate> candidates) {
+    Map<PlanNo, Set<String>> roleIdsByPlan = new LinkedHashMap<>();
+    for (PendingCandidate candidate : candidates) {
+      if (candidate.planNo() != null && !candidate.node().roleIds().isEmpty()) {
+        roleIdsByPlan.computeIfAbsent(candidate.planNo(), key -> new LinkedHashSet<>())
+          .addAll(candidate.node().roleIds());
+      }
+    }
+    Map<PlanNo, Map<String, List<UserNo>>> expanded = new LinkedHashMap<>();
+    roleIdsByPlan.forEach((plan, roleIds) ->
+      expanded.put(plan, roleUserGateway.getUsersByRoles(List.copyOf(roleIds), plan)));
+    return expanded;
+  }
+
+  private boolean matches(PendingCandidate candidate, UserNo approver,
+                          Map<PlanNo, Map<String, List<UserNo>>> roleUsers) {
+    if (candidate.planNo() == null) {
+      return candidate.node().approverIds().contains(approver);
+    }
+    Map<String, List<UserNo>> byRole = roleUsers.getOrDefault(candidate.planNo(), Map.of());
+    return candidate.node().roleIds().stream()
+      .anyMatch(role -> byRole.getOrDefault(role, List.of()).contains(approver));
+  }
+
+  private PendingApprovalDTO toPendingApprovalDTO(PendingCandidate candidate) {
+    ApprovalInstance instance = candidate.instance();
+    return new PendingApprovalDTO(
+      instance.id(),
+      instance.businessApplicationId().value(),
+      instance.businessType(),
+      candidate.flow().flowName().value(),
+      candidate.node().nodeType().name(),
+      instance.createdBy(),
+      instance.createdAt());
+  }
+
+  /** 待审批候选：planNo 为空表示指定用户节点，非空表示需按 PLAN 展开的角色节点。 */
+  private record PendingCandidate(ApprovalInstance instance, ApprovalFlow flow,
+                                  ApprovalNode node, PlanNo planNo) {
   }
 
   /**
