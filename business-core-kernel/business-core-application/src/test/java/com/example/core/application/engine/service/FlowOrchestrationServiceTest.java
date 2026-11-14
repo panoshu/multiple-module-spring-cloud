@@ -44,6 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -498,6 +500,42 @@ class FlowOrchestrationServiceTest {
     verify(stepExecutionRepository).save(captor.capture());
     assertThat(captor.getValue().requestNo()).isEqualTo("REQ-1");
     assertThat(captor.getValue().updatedBy()).isEqualTo("U-1");
+  }
+
+  @Test
+  @DisplayName("推进期间 MDC 携带流程标识，临界区结束后恢复现场（§14，批次 38-2）")
+  void advanceStep_populatesMdcDuringExecutionAndRestores() {
+    MDC.clear();
+    stubStep(StepExecutionStatus.SUCCESS);
+    AtomicReference<Map<String, String>> during = new AtomicReference<>();
+    doAnswer(invocation -> {
+      during.set(MDC.getCopyOfContextMap());
+      return mock(PipelineExecutionResult.class);
+    }).when(pipelineExecutor).executeChain(any(), any(), any());
+
+    service.advanceStep(APP_ID);
+
+    assertThat(during.get()).isNotNull();
+    assertThat(during.get().get("applicationId")).isEqualTo("APP-001");
+    assertThat(during.get().get("stepExecutionId")).isEqualTo("1");
+    assertThat(during.get().get("requestNo")).isEqualTo("SE-1");
+    assertThat(during.get().get("businessType")).isEqualTo("ACC_PLAN_CREATE");
+    assertThat(MDC.get("applicationId")).isNull();
+  }
+
+  @Test
+  @DisplayName("推进前已有的 MDC 上下文在结束后完整恢复，traceId 不被覆盖")
+  void advanceStep_restoresPreExistingMdc() {
+    stubStep(StepExecutionStatus.SUCCESS);
+    MDC.put("traceId", "TRACE-1");
+    try {
+      service.advanceStep(APP_ID);
+
+      assertThat(MDC.get("traceId")).isEqualTo("TRACE-1");
+      assertThat(MDC.get("applicationId")).isNull();
+    } finally {
+      MDC.clear();
+    }
   }
 
   private void stubLockAndRun(DistributedLock lock) {

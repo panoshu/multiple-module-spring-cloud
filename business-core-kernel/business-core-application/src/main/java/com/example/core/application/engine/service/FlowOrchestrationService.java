@@ -32,6 +32,7 @@ import com.example.shared.identifier.contract.IdService;
 import com.example.shared.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,12 @@ public class FlowOrchestrationService {
   private static final String LOCK_KEY_PREFIX = "kernel:application:";
   private static final long LOCK_WAIT_SECONDS = 3L;
   private static final long LOCK_LEASE_SECONDS = 10L;
+
+  /** §14 建议统一携带的 MDC 键；traceId 由 shared-web-starter 的链路过滤器注入。 */
+  private static final String MDC_APPLICATION_ID = "applicationId";
+  private static final String MDC_STEP_EXECUTION_ID = "stepExecutionId";
+  private static final String MDC_REQUEST_NO = "requestNo";
+  private static final String MDC_BUSINESS_TYPE = "businessType";
 
   private final StepActionHandlerRegistry handlerRegistry;
   private final BusinessFactExtractorRegistry factExtractorRegistry;
@@ -125,12 +132,22 @@ public class FlowOrchestrationService {
    * 锁等待 3s、租期 10s 且无看门狗，绝不覆盖远程 IO 或长批量处理。
    */
   private <T> T withApplicationLock(ApplicationId appId, Supplier<T> task) {
-    DistributedLock lock = lockProvider.getIfAvailable();
-    if (lock == null) {
-      return task.get();
+    Map<String, String> previousMdc = MDC.getCopyOfContextMap();
+    MDC.put(MDC_APPLICATION_ID, appId.value());
+    try {
+      DistributedLock lock = lockProvider.getIfAvailable();
+      if (lock == null) {
+        return task.get();
+      }
+      return lock.lockAndRun(LOCK_KEY_PREFIX + appId.value(),
+        LOCK_WAIT_SECONDS, LOCK_LEASE_SECONDS, TimeUnit.SECONDS, task);
+    } finally {
+      if (previousMdc == null) {
+        MDC.clear();
+      } else {
+        MDC.setContextMap(previousMdc);
+      }
     }
-    return lock.lockAndRun(LOCK_KEY_PREFIX + appId.value(),
-      LOCK_WAIT_SECONDS, LOCK_LEASE_SECONDS, TimeUnit.SECONDS, task);
   }
 
   private void doAdvanceStep(ApplicationId appId, String requestNoOverride, String operatorOverride) {
@@ -144,6 +161,13 @@ public class FlowOrchestrationService {
     String operator = StringUtils.hasText(operatorOverride) ? operatorOverride : operatorOf(app);
     StepExecution execution = newStepExecution(appId, app, stepDefinition, requestNoOverride);
     execution.start(operator);
+
+    // §14：推进期间统一携带流程标识，供日志/链路追踪串联；临界区结束后恢复现场
+    MDC.put(MDC_STEP_EXECUTION_ID, String.valueOf(execution.id().value()));
+    MDC.put(MDC_REQUEST_NO, "SE-" + execution.id().value());
+    if (context.businessType() != null) {
+      MDC.put(MDC_BUSINESS_TYPE, context.businessType().name());
+    }
 
     // 外部协作幂等键与 ExternalInteraction.requestNo 同源（SE-<步骤执行ID>），
     // 经上下文传给挂起 Handler 透传到 file/approval（§7.3 / §11.4 / §12.3）
