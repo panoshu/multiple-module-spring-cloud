@@ -65,7 +65,8 @@ class FinalAcceptanceContractTest {
     when(registry.contains("newLineHandler")).thenReturn(true);
     ConditionEvaluationGateway evaluator = mock(ConditionEvaluationGateway.class);
     ProcessDefinitionPublishService publish =
-      new ProcessDefinitionPublishService(store, registry, evaluator);
+      new ProcessDefinitionPublishService(store, registry, evaluator,
+        mock(com.example.core.domain.engine.service.registry.ExtensionActionRegistry.class));
 
     BusinessTypeCode type = BusinessTypeCode.of("NEW_BUSINESS_LINE");
     ProcessDefinition definition = definition(type, "v1", "newLineHandler", TaskType.SYSTEM_TASK);

@@ -7,12 +7,15 @@ import com.example.core.domain.engine.aggregate.valueobject.StepTransition;
 import com.example.core.domain.engine.aggregate.valueobject.config.StepExtensionConfig;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.engine.gateway.ProcessDefinitionStore;
+import com.example.core.domain.engine.service.registry.ExtensionActionRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * 流程定义发布服务（spec §7.1 发布约束）。
@@ -31,6 +34,7 @@ public class ProcessDefinitionPublishService {
   private final ProcessDefinitionStore store;
   private final StepActionHandlerRegistry handlerRegistry;
   private final ConditionEvaluationGateway conditionEvaluator;
+  private final ExtensionActionRegistry extensionRegistry;
 
   public void publish(ProcessDefinition definition) {
     if (definition == null) {
@@ -38,6 +42,7 @@ public class ProcessDefinitionPublishService {
         .withLogDetail("待发布流程定义不能为空");
     }
     validateHandlers(definition);
+    validateExtensions(definition);
     validateConditions(definition);
     store.publish(definition);
     log.info("流程定义发布完成: businessType={}, version={}",
@@ -50,6 +55,27 @@ public class ProcessDefinitionPublishService {
       if (StringUtils.hasText(processor) && !handlerRegistry.contains(processor)) {
         throw new DomainException(CoreDomainErrorCode.PROCESS_DEFINITION_INVALID)
           .withLogDetail("流程定义引用了未注册的主处理器: " + processor);
+      }
+    }
+  }
+
+  /** 发布期校验全部扩展动作的 beanName 已注册（批次 63），避免运行期 registry.get 抛异常。 */
+  private void validateExtensions(ProcessDefinition definition) {
+    for (StepDefinition step : definition.steps()) {
+      validateExtensionGroup(step, "前置校验", step.preValidations());
+      validateExtensionGroup(step, "明细处理", step.detailProcessors());
+      validateExtensionGroup(step, "后置动作", step.sideEffects());
+    }
+  }
+
+  private void validateExtensionGroup(StepDefinition step, String group,
+                                     List<StepExtensionConfig> extensions) {
+    for (StepExtensionConfig extension : extensions) {
+      String beanName = extension.beanName();
+      if (!StringUtils.hasText(beanName) || !extensionRegistry.contains(beanName)) {
+        throw new DomainException(CoreDomainErrorCode.PROCESS_DEFINITION_INVALID)
+          .withLogDetail("流程定义引用了未注册或空的扩展动作: step=%s, %s, beanName=%s"
+            .formatted(step.stepCode().value(), group, beanName));
       }
     }
   }

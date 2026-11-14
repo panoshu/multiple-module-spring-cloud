@@ -2,6 +2,7 @@ package com.example.core.application.engine.service;
 
 import com.example.core.domain.engine.aggregate.valueobject.ProcessDefinition;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
+import com.example.core.domain.engine.service.registry.ExtensionActionRegistry;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,8 @@ class ProcessDefinitionPublishServiceTest {
   private StepActionHandlerRegistry handlerRegistry;
   @Mock
   private ConditionEvaluationGateway conditionEvaluator;
+  @Mock
+  private ExtensionActionRegistry extensionRegistry;
 
   private InMemoryProcessDefinitionStore store;
   private ProcessDefinitionPublishService service;
@@ -37,7 +40,8 @@ class ProcessDefinitionPublishServiceTest {
   @BeforeEach
   void setUp() {
     store = new InMemoryProcessDefinitionStore();
-    service = new ProcessDefinitionPublishService(store, handlerRegistry, conditionEvaluator);
+    service = new ProcessDefinitionPublishService(
+      store, handlerRegistry, conditionEvaluator, extensionRegistry);
   }
 
   @Test
@@ -82,6 +86,7 @@ class ProcessDefinitionPublishServiceTest {
   @DisplayName("条件表达式语法非法时拒绝发布且不落库")
   void publish_rejectsInvalidConditionExpression() {
     when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    when(extensionRegistry.contains("validationAction")).thenReturn(true);
     doThrow(new IllegalStateException("bad syntax"))
       .when(conditionEvaluator).validate(anyString());
 
@@ -94,11 +99,35 @@ class ProcessDefinitionPublishServiceTest {
   @DisplayName("条件表达式校验通过时正常发布")
   void publish_acceptsValidConditionExpression() {
     when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    when(extensionRegistry.contains("validationAction")).thenReturn(true);
     ProcessDefinition def = definitionWithCondition("v1", "#facts['x'] > 1");
 
     service.publish(def);
 
     verify(conditionEvaluator).validate("#facts['x'] > 1");
+    assertThat(store.loadLatest(TYPE)).contains(def);
+  }
+
+  @Test
+  @DisplayName("扩展动作 beanName 未注册时拒绝发布且不落库")
+  void publish_rejectsWhenExtensionBeanMissing() {
+    when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    when(extensionRegistry.contains("validationAction")).thenReturn(false);
+
+    assertThatThrownBy(() -> service.publish(definitionWithCondition("v1", "#facts['x'] > 1")))
+      .isInstanceOf(DomainException.class);
+    assertThat(store.loadLatest(TYPE)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("扩展动作 beanName 齐备时正常发布")
+  void publish_acceptsWhenExtensionBeansRegistered() {
+    when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    when(extensionRegistry.contains("validationAction")).thenReturn(true);
+    ProcessDefinition def = definitionWithCondition("v1", "#facts['x'] > 1");
+
+    service.publish(def);
+
     assertThat(store.loadLatest(TYPE)).contains(def);
   }
 }
