@@ -4,6 +4,7 @@
 > 依据：`2026-11-14-remaining-work-priority.md` P3-1 遗留、`2026-11-14-p3-approval-stub-cross-service-design.md` §6 开放点 ①、设计文档 §23.62/§23.64、当前代码逐项核实
 > 性质：**立项方案，不是实施计划**。按「方案需与用户确认后才能进入编码阶段」，本文只产出核实结论、契约草案、分批设计与开放点，不写任何生产代码、不改现有契约
 > 约束：延续「不要太大超级计划」——每个批次 3–8 文件、独立 TDD 与验收
+> **推进状态（2026-11-14）**：用户确认「按建议开始推进」，按 §5 的 58→61 连续推进。批次 58 已完成（auth-api 契约，§4 已同步为 PLAN 精确 scope）；59/60/61 待推进。
 
 ---
 
@@ -68,22 +69,24 @@
 
 ---
 
-## 4. 建议的 API 契约（草案，待确认）
+## 4. API 契约（批次 58 已落地）
 
-新增 `auth-api/RoleUserQueryApi`（`@HttpExchange("/role-users")`，仅 GET/POST 交换）：
+新增 `auth-api/RoleUserQueryApi`（`@HttpExchange("/role-users")`）：
 
 | 端点 | 请求 CQE | 响应 | 说明 |
 |---|---|---|---|
-| `/by-roles` | `ListRoleUsersRequest`（`List<String> roleCodes`、`AssignmentScopeDimension scopeDimension`、`String scopeValue`、可选分页） | `ApiResult<RoleUserBatchResponse>`（`Map<String, List<String>>` roleCode→userNos） | 批量，规避 N+1 |
-| `/plan-members` | `ListPlanMembersRequest`（`PlanNo planNo`、`UserNo excludeUserNo`） | `ApiResult<List<String>>` | 可选，对应 `getUsersInSamePlan`；推荐**暂不实现** |
+| `/by-roles` | `ListRoleUsersRequest`（`@NotEmpty List<String> roleCodes`、`@NotBlank String planNo`） | `ApiResult<RoleUserBatchResponse>`（`Map<String, List<String>>` roleCode→userNos） | 批量，规避 N+1 |
+| ~~`/plan-members`~~ | — | — | **本立项不实现**（`getUsersInSamePlan` 无消费方，见 §6 开放点 2） |
+
+**scope 决策已落地**：按 §6 开放点 1/6 的推荐，契约固定为 **PLAN 精确 scope**（`planNo`），不带 `scopeDimension`。理由：现 SPI 缺 scope 是最大风险，但 CUSTOMER/PRODUCT 继承展开依赖 `ProductGateway`（仅 Stub），GLOBAL 又无业务语义；先以 PLAN 精确查询堵住跨计划数据泄漏，其余维度列为后续。服务端按 `scope_dimension='PLAN' AND scope_value=planNo` 过滤。
 
 约束：
-- 响应只返回 `UserNo` 字符串列表，**不返回手机号/姓名等敏感字段**
-- 服务端按 `@RequirePermission(business = "AUTH_ASSIGNMENT", action = "VIEW", category = PLATFORM)` 保护；跨服务调用需带会话 header（沿用批次 56 的 `AccountId/AccountSig` 透传）
+- 响应只返回 `UserNo` 字符串列表，**不返回手机号/姓名等敏感字段**；未在条件中出现的角色不保证出现在 Map 中，消费侧按空列表处理
+- 服务端按 `@RequirePermission` 保护；跨服务调用需带会话 header（沿用批次 56 的 `AccountId/AccountSig` 透传）
 - 只查 `status=ACTIVE` 且 `deleted=0` 的分配（逻辑删除由 MyBatis-Flex 自动过滤）
-- `scopeValue` 与 `roleCode` 均参数化查询（QueryWrapper），禁字符串拼接（06 规范）
+- `planNo` 与 `roleCode` 均参数化查询（QueryWrapper），禁字符串拼接（06 规范）
 
-**approval 侧**：`RoleUserGatewayImpl` 改为注入 `RoleUserQueryApi`（`@HttpExchange` 客户端），把 `getUsersByRole(roleId)` 的单角色调用适配为批量请求的单元素入参；同时需给 SPI 补 scope（领域层签名变更，见开放点 1）。
+**approval 侧**：`RoleUserGatewayImpl` 改为注入 `RoleUserQueryApi`（`@HttpExchange` 客户端）；SPI 由 `getUsersByRole(String)` 改为带 `planNo` 的批量方法（批次 60，见开放点 1）。
 
 ---
 
