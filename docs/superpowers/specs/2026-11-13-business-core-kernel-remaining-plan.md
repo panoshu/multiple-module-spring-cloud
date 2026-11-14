@@ -324,6 +324,14 @@
 - 范围：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty` 由 `havingValue="false"` 改为 `"true"`，缺省或 `=true` 启用、`=false` 关闭；补 `ApplicationContextRunner` 装配契约测试与真实 E2E 上下文缺省装配断言。
 - 状态：**完成**（设计文档 §23.55）。`=true`/`=false` 装配契约先红后绿；缺省行为不变、E2E 零回归（annuity-starter 10 项）。
 
+#### 批次 49 — P2-2a §21.4 规格修订（P2 专项方案，纯文档）
+- 范围：修订 §21.4 第 2/3/5 条（事件 DTO 属允许 API 契约 / 新增写操作入口必须 CQE 存量不回溯 / types 只放跨层共享领域原语），同步 §23.46 核对表三行；落实 P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓的台账记录。
+- 状态：**完成**（设计文档 §23.56）。纯文档零代码；用户 2026-11-14 采纳 P2 专项方案建议。
+
+#### 批次 50 — P2-2b 向前 ArchUnit 约束
+- 范围：新增 2 条 ArchUnit（新增方法参数须 CQE 或零参、types 层不得放聚合根/实体/领域服务），存量白名单快照豁免；含防假绿与反向违规验证。
+- 状态：待推进（与批次 49 连续推进）。
+
 ---
 
 ## 6. 全局约束与验收基线

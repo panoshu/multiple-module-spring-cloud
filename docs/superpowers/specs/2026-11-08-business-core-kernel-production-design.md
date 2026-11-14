@@ -1051,11 +1051,13 @@ Application 层按用例拆分：
 
 ### 21.4 架构测试
 
+> 批次 49 修订（§23.56）：第 2/3/5 条按「规格与现状对齐 + 向前约束」调整，存量代码不回溯；机器化见 `KernelLayerArchitectureTest`（批次 41）与向前约束测试（批次 50）。
+
 - domain 不依赖 Spring、Web、JSON、数据库和 file/approval 类型；
-- application 不依赖 file/approval DTO；
-- ApplicationService 入参只有 CQE；
+- application 不依赖 file/approval 的**非 API 层**类型；集成事件 DTO 属允许的跨服务 API 契约；
+- 新增或修改的 ApplicationService 写操作入口入参必须是 CQE（存量方法不回溯改造）；
 - Adapter 不直接构造领域对象；
-- types 只包含 ID 类型；
+- types 层只放跨层共享的领域原语（ID 及通用值对象），不得放聚合根、实体或领域服务；
 - 跨服务只依赖 API 模块。
 
 ### 21.5 最终验收
@@ -1180,6 +1182,7 @@ Application 层按用例拆分：
 | 批次 46 | `2eae267e` | **恢复链路扫描与事务边界**（优先级清单第二批 P1-1 + P1-2）：P1-1 新增 `BatchRepository.findByStatuses(Collection<BatchStatus>)` 并由 `BusinessBatchRepositoryImpl` 用 `STATUS IN` 走 `idx_business_batch_status`（逻辑删除由 MyBatis-Flex 自动过滤），`BusinessBatchAppService.reconcileAllActive()` 由 `loadAll()` 全表扫描改为按 CREATED/PROCESSING 查询；P1-2 `ExternalInteractionRecoveryService` 改显式构造注入 `PlatformTransactionManager`，每条记录的「状态变更 + save + 事件发布」包在独立 `TransactionTemplate` 事务中，`reconcileOne` 的外部审批查询保持在事务外。补应用/infra/恢复服务测试 | kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿（Spring 成功注入 `PlatformTransactionManager`）；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
 | 批次 47 | `ed069f44` | **P0-2 annuity 生产 profile 治理**（用户解冻 annuity）：移除 `application.yml` 的 `spring.profiles.include: local`（原使 prod 也带 `local` profile、`KernelProductionReadinessValidator.isNonProduction()` 误判跳过 fail-fast、验签密钥缺失或 `dev-` 占位时静默降级）；主配置改为注释指引「本地显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key` 使 test profile 自包含、不再隐式依赖 local。新增 `ProductionProfileIsolationTest` 2 项契约：① 主配置不无条件 include 非生产 profile（`YamlPropertySourceLoader` 静态锁定，先红后绿）；② prod profile 缺密钥触发 fail-fast | annuity-starter 9 项（契约 2 + 自动推进 E2E 1 + 原 E2E 6）全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过 |
 | 批次 48 | `ee85acc3` | **修正 fail-fast 开关语义**（批次 47 分析发现的配套缺陷）：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 与 Javadoc「`=false` 显式关闭」相反——`=false`/缺省反而装配（启用校验）、`=true` 才关闭；改为 `havingValue="true"`，缺省或 `=true` 启用、`=false` 关闭，缺省行为不变，Javadoc 补齐三态。新增 `KernelProductionReadinessConditionTest` 3 项 `ApplicationContextRunner` 装配契约（`=true`/`=false` 先红后绿、缺省保持绿），并在 `AutoAdvanceEnabledEndToEndTest` 补真实 E2E 上下文缺省装配断言（`isMock()==false`），排除「少一个 ApplicationRunner 反而更绿」的静默降级 | adapter 16（+3）、annuity-starter 10（+1）、kernel domain 174 / application 222 / infra 90、架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException` |
+| 批次 49 | 本次（未提交） | **P2-2a §21.4 规格修订**（P2 专项方案已采纳，纯文档）：修订 §21.4 第 2/3/5 条——application 禁依赖 file/approval 非 API 层类型（事件 DTO 属允许的 `*.api.event` 契约）、新增/修改的写操作入口必须 CQE（存量不回溯）、types 只放跨层共享领域原语（不得放聚合根/实体/领域服务）；§21.4 加批次修订注记；§23.46 核对表三行状态由 ⚠️ 改为「规格已修订 + 向前约束待批次 50」。P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓按方案记入台账（含触发重启条件与前置决策清单） | 纯文档零代码；`git diff --check` 通过；规格正文与核对表自洽 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1657,10 +1660,10 @@ Application 层按用例拆分：
 |---|---|---|
 | domain 不依赖 Spring/Web/JSON/DB | `KernelLayerArchitectureTest.domainIsFrameworkFree`（批次 41） | ✅ 已机器化 |
 | domain 不依赖 file/approval 类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ⚠️ 现状 domain 依赖 `file.types.FileId` 等 ID 原语；规则按「只经 api/types」机器化，字面「零 file/approval 类型」不成立 |
-| application 不依赖 file/approval DTO | 同上（批次 41 规则 4） | ⚠️ 现状 `FileParsedEventListener` 依赖 `file.api.event.FileParsedEventDTO`（属允许的跨服务 API 依赖，与字面「不依赖 DTO」有张力）；已机器化「不触及实现层」 |
-| ApplicationService 入参只有 CQE | 批次 35 `advanceApplication` 落地 CQE | ⚠️ 其余服务方法仍为裸参，无架构断言 |
+| application 不依赖 file/approval 非 API 层类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 规格已修订（批次 49，§23.56）：事件 DTO 属允许的 `*.api.event` 契约；「不触及实现层」已机器化 |
+| 新增/修改的写操作入口入参必须 CQE | 批次 35 `advanceApplication` 落地 CQE | ✅ 规格已修订（批次 49）；向前约束由批次 50 机器化，存量约 30 个裸参方法不回溯 |
 | Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化（`CoreKernelAutoConfiguration` 构造的是 application 层 Job，非领域聚合根） |
-| types 只包含 ID 类型 | `CoreTypesIdentifierValidationTest` | ⚠️ 现状 types 层含 `BankAccount`/`Address`/`ValidityPeriod` 等值对象，字面不成立 |
+| types 只放跨层共享领域原语 | `CoreTypesIdentifierValidationTest` | ✅ 规格已修订（批次 49）；向前约束（不得放聚合根/实体/领域服务）由批次 50 机器化 |
 | 跨服务只依赖 API 模块 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 已机器化（允许 api + types，禁止 domain/application/adapter/infrastructure） |
 
 | §21.5 最终验收 | 覆盖测试 | 状态 |
@@ -1802,3 +1805,13 @@ Application 层按用例拆分：
 - **验证**：adapter 16（+3）/ annuity-starter 10（+1）/ kernel domain 174 / application 222 / infra 90 / 架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException`/`BeanCreationException`。
 - **全仓 `mvn test` 字面全量回归**：另跑 `mvn test`（fail-fast）与 `mvn test -fae`（fail at end）两次，退出码均为 1，**唯一失败**是 `file-infrastructure` 13 项 Excel 集成测试因缺 `docs/excel/示例表单.xlsx` 报 `FileNotFoundException`——既有基线、与本次改动无关。`-fae` 下本次改动相关模块全部真实执行且 SUCCESS（business-core-domain/application/infrastructure/adapter、annuity-starter 10 项含新增装配断言）；`arch-tests` 因依赖失败模块被 reactor 跳过，已由定向全量单独验证 13 全绿。首次 `mvn test` 因 fail-fast 把下游模块 SKIPPED，故补 `-fae` 让它们真实跑完。
 - **优先级清单同步**：P0/P1 全部清空后，本批次清掉 fail-fast 组件内最后一个语义隐患。剩余均为 P2（需专项方案）/P3（仅记录）及多进程真 Redis 锁集成测试。
+
+### 23.56 批次 49 范围边界（P2-2a §21.4 规格修订）
+
+- **来源**：`2026-11-14-p2-special-plan.md`（P2 专项方案），用户 2026-11-14 确认「采纳建议推进 49→50」。本批为纯文档规格决策，不改任何生产代码、不创建实施任务。
+- **为何修规格而非改代码**：批次 41（§23.48）已如实标注 §21.4 三条与现状有字面张力。本轮逐项核实：① 约 35 个 ApplicationService/Service 公开方法仅 2 个用 CQE，回溯改造无生产正确性收益；② `business-core-types` 24 类含 13 个非 ID 通用值对象，移动仅分层洁癖；③ application 依赖的 5 个事件 DTO **全部**位于 `file.api.event`/`approval.api.event`——§21.4 第 2 条「不依赖 file/approval DTO」与第 6 条「跨服务只依赖 API 模块」自相矛盾，事件 DTO 正是 API 契约（批次 41 规则 4 已机器化并绿灯）。故三条按「规格与现状对齐 + 向前约束」修订，存量不回溯。
+- **修订内容**：§21.4 第 2 条改为「不依赖非 API 层类型，事件 DTO 属允许的跨服务 API 契约」；第 3 条改为「**新增或修改的**写操作入口入参必须是 CQE（存量不回溯改造）」；第 5 条改为「types 层只放跨层共享的领域原语（ID 及通用值对象），不得放聚合根、实体或领域服务」。§21.4 标题下加批次修订注记指向本边界与批次 50。
+- **刻意不修订的条目（如实标注）**：§21.4 第 1 条「domain 不依赖 file/approval 类型」与第 6 条「跨服务只依赖 API 模块」仍与现状有字面张力（domain 依赖 `file.types.FileId` 等 ID 原语；批次 41 机器化为「允许 api + types」），核对表已标 ⚠️/✅；因不在 P2 专项方案确认的三条范围内，本批不改，留待后续规格整体复核。「Adapter 不直接构造领域对象」仍未机器化，保持 ⚠️。
+- **P2 其余三项决策落实**：P2-1 `Map<String,Object>` **降级关闭**（核实分「动态配置 / 执行上下文 facts / 解析数据行 / 补充数据」4 类语义，全量强类型化会把业务 schema 固化进 kernel、破坏通用编排引擎扩展能力；备选仅做类型安全读取包装，见方案 §2）；P2-3 annuity 自有存储 **wontfix**（冻结示例服务，重启丢失可接受，DDL 已由批次 40 解耦；触发重启条件：转为真实生产服务时按「DO+Mapper+DDL+SPI 实现」立项）；P2-4 真 Redis 并发 **暂缓**（无 testcontainers / CI Docker 待定 / 单 JVM+真 Redis 可降级为 4–6 文件小批次）。三项均在方案文档记录结论与前置条件，不遗忘、不冒充已覆盖。
+- **验证**：纯文档，`git diff --check` 通过；规格正文与 §23.46 核对表状态自洽。
+- **仍未处理**：批次 50（向前 ArchUnit 约束：新增方法 CQE + types 不放聚合根，含防假绿与反向验证）。
