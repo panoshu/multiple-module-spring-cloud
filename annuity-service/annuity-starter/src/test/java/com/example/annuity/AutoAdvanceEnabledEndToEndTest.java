@@ -3,6 +3,7 @@ package com.example.annuity;
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
 import com.example.approval.api.ApprovalFlowApi;
 import com.example.approval.api.ApprovalInstanceApi;
+import com.example.core.adapter.configuration.KernelProductionReadinessValidator;
 import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
@@ -83,6 +84,9 @@ class AutoAdvanceEnabledEndToEndTest {
   @Autowired
   private ParsedFileReferenceGateway parsedFileGateway;
 
+  @Autowired
+  private KernelProductionReadinessValidator readinessValidator;
+
   @MockitoBean
   private FileTaskApi fileTaskApi;
 
@@ -160,6 +164,13 @@ class AutoAdvanceEnabledEndToEndTest {
     setUpdatedBy(app, operator.operatorId());
     applicationRepository.save(app);
     return appId;
+  }
+
+  @Test
+  @DisplayName("缺省配置下 fail-fast 校验器仍按生产形态装配（批次 48 未静默降级）")
+  void failFastValidator_isAssembledByDefaultInE2eContext() {
+    assertThat(readinessValidator).isNotNull();
+    assertThat(mockingDetails(readinessValidator).isMock()).isFalse();
   }
 
   /** 与现有 E2E 一致：Entity.markUpdated 为 protected，明细核查 Handler 需要 updatedBy 非空。 */

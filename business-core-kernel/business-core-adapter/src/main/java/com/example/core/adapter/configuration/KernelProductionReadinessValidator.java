@@ -19,14 +19,15 @@ import java.util.Set;
  * <p>
  * 生产环境启动时必须已配置会话验签密钥且验签器可用，否则拒绝启动（fail-fast），
  * 避免功能权限与会话验签在运行时静默降级。test/local/dev 等开发环境跳过，
- * 保证 E2E 零回归；亦可通过 {@code core.kernel.production.fail-fast=false} 显式关闭。
+ * 保证 E2E 零回归。开关 {@code core.kernel.production.fail-fast}：缺省或 {@code =true}
+ * 启用校验，{@code =false} 关闭校验（仅建议在受控环境临时关闭）。
  *
  * @author core-kernel
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core.kernel.production.fail-fast", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(name = "core.kernel.production.fail-fast", havingValue = "true", matchIfMissing = true)
 public class KernelProductionReadinessValidator implements ApplicationRunner {
 
   private static final String SIGNATURE_KEY_PROPERTY = "permission.session.signature-key";

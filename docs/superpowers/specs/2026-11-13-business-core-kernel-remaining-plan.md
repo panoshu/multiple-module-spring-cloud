@@ -320,6 +320,10 @@
 - 范围：移除 annuity `application.yml` 的 `spring.profiles.include: local`（消除 dev 配置泄漏到 prod、使 prod fail-fast 不再被 local 绕过）；`application-test.yml` 补测试专用验签密钥使 test profile 自包含；新增 `ProductionProfileIsolationTest` 契约（主配置不无条件 include 非生产 profile + prod 触发 fail-fast）。
 - 状态：**完成**（设计文档 §23.54）。TDD 先红后绿；annuity-starter 9 项、kernel 全模块、架构、全仓 test-compile 全绿。**P0/P1 全部清空**。
 
+#### 批次 48 — 修正 fail-fast 开关语义（P0-2 配套）
+- 范围：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty` 由 `havingValue="false"` 改为 `"true"`，缺省或 `=true` 启用、`=false` 关闭；补 `ApplicationContextRunner` 装配契约测试与真实 E2E 上下文缺省装配断言。
+- 状态：**完成**（设计文档 §23.55）。`=true`/`=false` 装配契约先红后绿；缺省行为不变、E2E 零回归（annuity-starter 10 项）。
+
 ---
 
 ## 6. 全局约束与验收基线

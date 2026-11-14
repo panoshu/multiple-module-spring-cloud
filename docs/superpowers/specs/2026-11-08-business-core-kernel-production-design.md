@@ -1179,6 +1179,7 @@ Application 层按用例拆分：
 
 | 批次 46 | `2eae267e` | **恢复链路扫描与事务边界**（优先级清单第二批 P1-1 + P1-2）：P1-1 新增 `BatchRepository.findByStatuses(Collection<BatchStatus>)` 并由 `BusinessBatchRepositoryImpl` 用 `STATUS IN` 走 `idx_business_batch_status`（逻辑删除由 MyBatis-Flex 自动过滤），`BusinessBatchAppService.reconcileAllActive()` 由 `loadAll()` 全表扫描改为按 CREATED/PROCESSING 查询；P1-2 `ExternalInteractionRecoveryService` 改显式构造注入 `PlatformTransactionManager`，每条记录的「状态变更 + save + 事件发布」包在独立 `TransactionTemplate` 事务中，`reconcileOne` 的外部审批查询保持在事务外。补应用/infra/恢复服务测试 | kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿（Spring 成功注入 `PlatformTransactionManager`）；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动 |
 | 批次 47 | `ed069f44` | **P0-2 annuity 生产 profile 治理**（用户解冻 annuity）：移除 `application.yml` 的 `spring.profiles.include: local`（原使 prod 也带 `local` profile、`KernelProductionReadinessValidator.isNonProduction()` 误判跳过 fail-fast、验签密钥缺失或 `dev-` 占位时静默降级）；主配置改为注释指引「本地显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key` 使 test profile 自包含、不再隐式依赖 local。新增 `ProductionProfileIsolationTest` 2 项契约：① 主配置不无条件 include 非生产 profile（`YamlPropertySourceLoader` 静态锁定，先红后绿）；② prod profile 缺密钥触发 fail-fast | annuity-starter 9 项（契约 2 + 自动推进 E2E 1 + 原 E2E 6）全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过 |
+| 批次 48 | 本次（未提交） | **修正 fail-fast 开关语义**（批次 47 分析发现的配套缺陷）：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 与 Javadoc「`=false` 显式关闭」相反——`=false`/缺省反而装配（启用校验）、`=true` 才关闭；改为 `havingValue="true"`，缺省或 `=true` 启用、`=false` 关闭，缺省行为不变，Javadoc 补齐三态。新增 `KernelProductionReadinessConditionTest` 3 项 `ApplicationContextRunner` 装配契约（`=true`/`=false` 先红后绿、缺省保持绿），并在 `AutoAdvanceEnabledEndToEndTest` 补真实 E2E 上下文缺省装配断言（`isMock()==false`），排除「少一个 ApplicationRunner 反而更绿」的静默降级 | adapter 16（+3）、annuity-starter 10（+1）、kernel domain 174 / application 222 / infra 90、架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException` |
 
 ### 23.3 批次 2 范围边界
 
@@ -1779,7 +1780,7 @@ Application 层按用例拆分：
 - **兼容性**：`ExternalInteractionRecoveryService` 是 `@Service` 组件扫描注册，Spring Boot 在存在 `PlatformTransactionManager` 时自动装配，annuity E2E（H2 数据源）验证 7 项全绿、无 `NoSuchBeanDefinitionException`。`ExternalInteractionRecoveryJob` 通过接口持有该服务，不受构造变化影响。批次 39-1 的 `ExternalCollaborationAcceptanceTest` 3 处构造调用同步改为 helper。
 - **验证**：kernel domain 174 / application 222（+3）/ infra 90（+2）/ adapter 13 / 架构 13、annuity E2E 7 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
 - **优先级清单同步**：P1-1 / P1-2 标注完成，§23.46 遗留清单移除这两项，**剩余 P1 项全部清空**。
-- **仍未处理**：P0-2 已由批次 47 完成（§23.54）；批次 48 配套修正 `KernelProductionReadinessValidator` 开关语义；优先级清单 P2 全部（需专项方案）、P3（仅记录），以及多进程真 Redis 锁集成测试。
+- **仍未处理**：P0-2 已由批次 47 完成（§23.54）、fail-fast 开关语义已由批次 48 修正（§23.55）；优先级清单 P2 全部（需专项方案）、P3（仅记录），以及多进程真 Redis 锁集成测试。
 
 ### 23.54 批次 47 范围边界（P0-2 annuity 生产 profile 治理）
 
@@ -1788,6 +1789,16 @@ Application 层按用例拆分：
 - **修复**：移除主配置的 `profiles.include: local`，改为注释说明「prod 不再 include 非生产 profile，本地开发显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key: test-session-signature-key-2026`，使 `@ActiveProfiles("test")` 上下文自包含、不再隐式依赖 local 的 dev 密钥。
 - **TDD**：新增 `ProductionProfileIsolationTest` 2 项——① 用 `YamlPropertySourceLoader` 加载 classpath `application.yml`，断言 `spring.profiles.include` 不含 `local/dev/test`（现状读到 `local` → 红灯，移除后转绿）；② 用 `MockEnvironment(activeProfiles=prod)` + 真实 `KernelProductionReadinessValidator`，断言缺密钥抛 `IllegalStateException`（锁定 prod 触发校验、不被非生产 profile 绕过）。
 - **E2E 影响面**：移除 include 后 test 上下文不再加载 `application-local.yml`（Nacos/本地 PG/httpexchange/日志级别等本地配置本就被 `application-test.yml` 覆盖或禁用），实测 annuity-starter 全量 9 项全绿，无 `NoSuchBeanDefinitionException`/`BeanCreationException`。
-- **范围边界**：全仓 6 个服务的 `application.yml` 都有 `include: local`，但仅 annuity 依赖 `business-core-adapter` 并装配该 validator，故 P0-2 只治理 annuity；其余服务同类隐患记为此处已知项（不影响 kernel fail-fast）。`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 语义与 Javadoc 矛盾（`=false` 实际启用、`=true` 才关闭），默认行为正确、零风险，由批次 48 单独修正。
+- **范围边界**：全仓 6 个服务的 `application.yml` 都有 `include: local`，但仅 annuity 依赖 `business-core-adapter` 并装配该 validator，故 P0-2 只治理 annuity；其余服务同类隐患记为此处已知项（不影响 kernel fail-fast）。`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 语义与 Javadoc 矛盾（`=false` 实际启用、`=true` 才关闭），默认行为正确、零风险，已由批次 48 修正（§23.55）。
 - **验证**：annuity-starter 9 项全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过。
 - **优先级清单同步**：P0-2 标注完成，§23.46 遗留清单移除「annuity 生产 profile 治理」。**P0/P1 至此全部清空**。
+
+### 23.55 批次 48 范围边界（fail-fast 开关语义修正）
+
+- **来源**：批次 47（§23.54）评估 P0-2 时发现的配套缺陷，非优先级清单原始条目。`KernelProductionReadinessValidator` 自批次 38-1 起用 `@ConditionalOnProperty(name="core.kernel.production.fail-fast", havingValue="false", matchIfMissing=true)`，Javadoc 却写「`=false` 显式关闭」——两者相反：实际 `=false`（或缺省）装配并启用校验、`=true` 才关闭。运维若按注释设 `=false` 想临时关闭，反而启用。
+- **修复**：`havingValue` 改为 `"true"`，使缺省或 `=true` 启用、`=false` 关闭，与属性名和 Javadoc 一致；Javadoc 明确列出三态。全仓 grep 确认无任何配置显式设置该属性，故**缺省行为不变**（`matchIfMissing=true` → 仍装配 → 仍执行校验），E2E 零回归。
+- **TDD**：新增 `KernelProductionReadinessConditionTest` 3 项 `ApplicationContextRunner` 装配契约——缺省/`=true` 断言 `hasSingleBean`、`=false` 断言 `doesNotHaveBean`。修正前 `=true`（应装配却不装配）与 `=false`（应不装配却装配）两条精确红灯、缺省保持绿；改 `havingValue` 后 3 项全绿。
+- **「缺省装配不变」的 E2E 证据**：仅凭「E2E 全绿」不足以证明该点——若改动误使 validator 少装配一个 `ApplicationRunner`，E2E 反而更绿，却是静默降级。故在 `AutoAdvanceEnabledEndToEndTest`（真实 `@SpringBootTest` + `@ActiveProfiles("test")` 上下文）补一项断言：`@Autowired` 注入 `KernelProductionReadinessValidator` 且 `mockingDetails(...).isMock()==false`。字段注入 required=true 本身即强断言，单独跑该断言方法 1 项绿、annuity-starter 全量 10 项绿。
+- **验证**：adapter 16（+3）/ annuity-starter 10（+1）/ kernel domain 174 / application 222 / infra 90 / 架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException`/`BeanCreationException`。
+- **全仓 `mvn test` 字面全量回归**：另跑 `mvn test`（fail-fast）与 `mvn test -fae`（fail at end）两次，退出码均为 1，**唯一失败**是 `file-infrastructure` 13 项 Excel 集成测试因缺 `docs/excel/示例表单.xlsx` 报 `FileNotFoundException`——既有基线、与本次改动无关。`-fae` 下本次改动相关模块全部真实执行且 SUCCESS（business-core-domain/application/infrastructure/adapter、annuity-starter 10 项含新增装配断言）；`arch-tests` 因依赖失败模块被 reactor 跳过，已由定向全量单独验证 13 全绿。首次 `mvn test` 因 fail-fast 把下游模块 SKIPPED，故补 `-fae` 让它们真实跑完。
+- **优先级清单同步**：P0/P1 全部清空后，本批次清掉 fail-fast 组件内最后一个语义隐患。剩余均为 P2（需专项方案）/P3（仅记录）及多进程真 Redis 锁集成测试。
