@@ -1,6 +1,7 @@
 package com.example.core.application.engine.service;
 
 import com.example.core.domain.engine.aggregate.valueobject.ProcessDefinition;
+import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
 import com.example.core.domain.engine.service.registry.StepActionHandlerRegistry;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +14,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static com.example.core.application.engine.service.ProcessDefinitionFixtures.HANDLER;
 import static com.example.core.application.engine.service.ProcessDefinitionFixtures.TYPE;
 import static com.example.core.application.engine.service.ProcessDefinitionFixtures.definition;
+import static com.example.core.application.engine.service.ProcessDefinitionFixtures.definitionWithCondition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,6 +28,8 @@ class ProcessDefinitionPublishServiceTest {
 
   @Mock
   private StepActionHandlerRegistry handlerRegistry;
+  @Mock
+  private ConditionEvaluationGateway conditionEvaluator;
 
   private InMemoryProcessDefinitionStore store;
   private ProcessDefinitionPublishService service;
@@ -30,7 +37,7 @@ class ProcessDefinitionPublishServiceTest {
   @BeforeEach
   void setUp() {
     store = new InMemoryProcessDefinitionStore();
-    service = new ProcessDefinitionPublishService(store, handlerRegistry);
+    service = new ProcessDefinitionPublishService(store, handlerRegistry, conditionEvaluator);
   }
 
   @Test
@@ -69,5 +76,29 @@ class ProcessDefinitionPublishServiceTest {
   void publish_rejectsNullDefinition() {
     assertThatThrownBy(() -> service.publish(null))
       .isInstanceOf(DomainException.class);
+  }
+
+  @Test
+  @DisplayName("条件表达式语法非法时拒绝发布且不落库")
+  void publish_rejectsInvalidConditionExpression() {
+    when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    doThrow(new IllegalStateException("bad syntax"))
+      .when(conditionEvaluator).validate(anyString());
+
+    assertThatThrownBy(() -> service.publish(definitionWithCondition("v1", "#facts['x'] > &&")))
+      .isInstanceOf(DomainException.class);
+    assertThat(store.loadLatest(TYPE)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("条件表达式校验通过时正常发布")
+  void publish_acceptsValidConditionExpression() {
+    when(handlerRegistry.contains(HANDLER)).thenReturn(true);
+    ProcessDefinition def = definitionWithCondition("v1", "#facts['x'] > 1");
+
+    service.publish(def);
+
+    verify(conditionEvaluator).validate("#facts['x'] > 1");
+    assertThat(store.loadLatest(TYPE)).contains(def);
   }
 }

@@ -65,6 +65,20 @@ public class AviatorConditionEvaluationGateway implements ConditionEvaluationGat
     return doEvaluate(conditionExpression, env);
   }
 
+  @Override
+  public void validate(String expression) {
+    if (!StringUtils.hasText(expression)) {
+      return;
+    }
+    try {
+      engine.compile(expression, false);
+    } catch (Exception e) {
+      log.error("Aviator 条件表达式语法非法: expression={}", expression, e);
+      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
+        .withLogDetail("条件表达式: " + expression);
+    }
+  }
+
   private boolean doEvaluate(String expressionStr, Map<String, Object> env) {
     try {
       // isCache=false:不使用 Aviator 内部缓存,由 expressionCache 统一管理,避免双层缓存

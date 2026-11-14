@@ -237,6 +237,7 @@
 - 改动：`ConditionEvaluationGateway` + 3 实现 + `ProcessDefinitionPublishService` + 测试。
 - 红灯测试：非法表达式发布被拒绝；合法表达式通过。
 - 规模：5–6 文件。
+- 状态：已完成（设计文档 §23.35）。`validate` 只做语法检查，不求值；跨引擎表达式语法不归一化。
 
 #### 批次 35 — CQE 化与推进 Command 携带 requestNo（§15.1/§17）
 - 目标：推进类 Command 统一携带 `applicationId/expectedStep/requestNo/operator`，`requestNo` 不再仅由编排器内部派生。

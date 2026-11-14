@@ -69,6 +69,20 @@ public class SpelConditionEvaluationGateway implements ConditionEvaluationGatewa
     return doEvaluate(conditionExpression, spelContext);
   }
 
+  @Override
+  public void validate(String expression) {
+    if (!StringUtils.hasText(expression)) {
+      return;
+    }
+    try {
+      parser.parseExpression(expression);
+    } catch (Exception e) {
+      log.error("SpEL 条件表达式语法非法: expression={}", expression, e);
+      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
+        .withLogDetail("条件表达式: " + expression);
+    }
+  }
+
   private boolean doEvaluate(String expressionStr, StandardEvaluationContext context) {
     try {
       Expression expression = expressionCache.computeIfAbsent(expressionStr, parser::parseExpression);

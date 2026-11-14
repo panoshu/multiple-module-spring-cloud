@@ -74,6 +74,20 @@ public class QLExpressConditionEvaluationGateway implements ConditionEvaluationG
     return doEvaluate(conditionExpression, params);
   }
 
+  @Override
+  public void validate(String expression) {
+    if (!StringUtils.hasText(expression)) {
+      return;
+    }
+    try {
+      runner.check(expression);
+    } catch (Exception e) {
+      log.error("QLExpress 条件表达式语法非法: expression={}", expression, e);
+      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
+        .withLogDetail("条件表达式: " + expression);
+    }
+  }
+
   private boolean doEvaluate(String expressionStr, Map<String, Object> context) {
     try {
       // 【核心改动】：直接传入 String 表达式和 Map，并开启 cache(true)
