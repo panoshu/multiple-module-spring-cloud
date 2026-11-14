@@ -18,7 +18,7 @@
 
 | # | 项 | 来源 | 当前代码核实（2026-11-14） | 建议 |
 |---|---|---|---|---|
-| 1 | **组织目录真实接入** | §23.59/§23.61/§23.69 | `ProductGateway` 仅 `StubProductGateway`；`PlanReachabilityService.listAssignmentsForPlan` 生产不可用；CUSTOMER/PRODUCT/GLOBAL 继承展开不支持，角色审批仅 `SPECIFIED_ROLE` + PLAN 精确 scope | **已单独立项并开工**（`2026-11-14-organization-directory-design.md`）：§6 开放点已按推荐默认值决策落盘；方案为契约 + 可替换内存实现，分批次 66–69。**批次 66 已完成**（auth-api `PlanDirectoryApi` 契约，§23.73），67–69 推进中 |
+| 1 | **组织目录真实接入** | §23.59/§23.61/§23.69 | `ProductGateway` 仅 `StubProductGateway`；`PlanReachabilityService.listAssignmentsForPlan` 生产不可用；CUSTOMER/PRODUCT/GLOBAL 继承展开不支持，角色审批仅 `SPECIFIED_ROLE` + PLAN 精确 scope | **已单独立项并开工**（`2026-11-14-organization-directory-design.md`）：§6 开放点已按推荐默认值决策落盘；方案为契约 + 可替换内存实现，分批次 66–69。**批次 66/67 已完成**（auth-api 契约 + auth 供给侧，§23.73/§23.74），68–69 推进中 |
 | 2 | **SAME_PLAN / LEVEL_UP 节点解析** | §23.67/§23.69 | `ApprovalNodeResolver` 两个分支仍是 TODO（回退 `node.approverIds()`）；`RoleUserGatewayImpl.getUsersInSamePlan` 仍为未接线 stub（全仓无消费方） | 与 #1 合并立项（同一文档批次 68/69）；节点解析结果经批次 62 主链路直接进入身份校验与会签判断，语义敏感。**批次 68/69 待推进** |
 | 3 | **`Map<String,Object>` 业务扩展字段强类型化** | P2-1 / §23.46 | kernel domain/application 约 30 处 SPI（全仓含测试/局部变量共 72 行命中）：`FormParsingConfig.splitRules`、`StepExtensionConfig.params`、`BusinessMetaContext.extensionFacts`、`ExtensionExecutionResult.mutations`、`StepExtensionAction.execute` 等 | P2 专项方案已判定**降级关闭**：动态 Map 是通用编排引擎承载业务线自定义配置/事实的正确设计，强类型化会把业务 schema 固化进 kernel。仅补设计说明，不改代码 |
 | 4 | **多进程 + 真实 Redis 分布式锁 + 真实 DB 并发集成测试** | P2-4 / §23.50 / §21.5 核对表 | 批次 43 的 `ConcurrentAdvanceAcceptanceTest`/`OptimisticLockConcurrencyTest` 是进程内状态化 fake 的确定性并发；无真实 Redis/多 JVM 集成 | **暂缓**：需集成测试环境（Docker + Redis + 多 JVM），核心不变量已有契约测试 |
@@ -71,7 +71,7 @@
 1. ~~**#7 扩展动作 `beanName` 存在校验**~~ → ✅ 已由批次 63 完成（§23.70）
 2. ~~**#10 kernel 侧 PARTIAL 端到端统计对账**~~ → ✅ 已由批次 64 完成（§23.71，§21 核对表已无 ⚠️）
 3. ~~**#6 / #8 / #9 / #11**~~ → ✅ 批次 65 逐项代码复核后判定「设计选择 / 已决策不做」（§23.72），不再作为待办
-4. **#1 / #2 组织目录真实接入 + SAME_PLAN/LEVEL_UP 节点**：**唯一需要实质代码推进的方向**，已单独立项且 §6 开放点按推荐默认值决策落盘；批次 66 完成，按 66→67→68→69 连续推进
+4. **#1 / #2 组织目录真实接入 + SAME_PLAN/LEVEL_UP 节点**：**唯一需要实质代码推进的方向**，已单独立项且 §6 开放点按推荐默认值决策落盘；批次 66/67 已完成，按 68→69 连续推进
 5. **#4 真 Redis + 多 JVM 集成测试**：待集成测试环境（Docker/Redis/CI）
 6. **#3 / #5 / #12 / #13 / #14 / #15 / #16 / #17 / #18**：已决策不做、部署/联调检查项、历史决策保留或文档欠账，均无需改 kernel 代码
 

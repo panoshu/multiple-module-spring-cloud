@@ -2011,3 +2011,12 @@ Application 层按用例拆分：
 - **TDD**：`PlanDirectoryApiContractTest` 6 项（注解形状、路径、CQE 校验、响应可空父计划号），先编译红灯（5 个契约类不存在）→ 实现后 auth-api 9 项全绿。
 - **验证**：auth-api 9、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零生产实现改动、零 DDL、零 annuity 改动。
 - **同步**：清单 #1/#2 与计划文档标注批次 66 完成、§6 决策落盘。**仍未处理**：批次 67（auth 供给侧）、68（approval SAME_PLAN）、69（LEVEL_UP），#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
+
+### 23.74 批次 67 范围边界（auth 供给侧组织目录查询能力）
+
+- **来源**：`2026-11-14-organization-directory-design.md` §5 批次 67；承接批次 66 契约，补供给侧查询能力与可替换内存实现。
+- **实现**：auth-application 新增 `PlanDirectoryQueryService`（复用 `PlanReachabilityService` 的 PLAN/PRODUCT/CUSTOMER 继承匹配 + `ProductGateway`）；auth-adapter 新增 `PlanDirectoryController`（实现 `PlanDirectoryApi`、`@RequirePermission(AUTH_ASSIGNMENT/VIEW/PLATFORM)`）；auth-infrastructure 新增 `InMemoryProductGateway` + `PlanDirectoryProperties` + `OrgDirectoryConfig`。
+- **关键决策**：`InMemoryProductGateway` 经 `@ConditionalOnProperty(auth.org-directory.enabled=true)` + `@Primary` **条件注册**，默认不启用 → `StubProductGateway` 保持唯一实现、零行为改变；组织目录无计划数据时 `listMembers` 返回空、`getParentPlan` 返回 `null`（fail-closed）。零 DDL、零配置改动。
+- **TDD**：`PlanDirectoryQueryServiceTest` 5 项、`PlanDirectoryControllerTest` 2 项、`InMemoryProductGatewayTest` 5 项，先编译红灯后转绿；修复 Mockito 嵌套 stubbing 与接口 default 方法 mock 返回 null 两处测试陷阱。
+- **验证**：auth-application 51 / auth-infrastructure 161 / auth-adapter 3、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
+- **同步**：清单 #1 与计划文档标注批次 67 完成。**仍未处理**：批次 68（approval SAME_PLAN）、69（LEVEL_UP），#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
