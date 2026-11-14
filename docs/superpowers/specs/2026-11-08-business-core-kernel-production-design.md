@@ -1165,7 +1165,7 @@ Application 层按用例拆分：
 
 | 批次 40-2 | `186fe20e` | **annuity 复制 DDL 解耦 · PG/MySQL 部署脚本收口**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表，头部改为「先执行 kernel 的 schema-*.sql」部署顺序指引；kernel 双库头部清理 37b 后残留的 `businessExtension/JSONB` 过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。**批次 40 全部完成**，annuity 不再持有任何 kernel 表副本 | 全仓 `mvn clean install -DskipTests` 后 annuity E2E 6 全绿（排除旧构建产物干扰，确认组合加载真实生效）；kernel domain 174 / application 216 / infra 87 / adapter 13 / 架构 7 全绿；全仓 `test-compile`、`git diff --check` 通过；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各 7 张表 |
 
-| 批次 41 | 本次（未提交） | **§21.4 kernel 分层架构不变量机器化（成立子集）**：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则——domain 零框架依赖（Spring/Jackson/MyBatis/JPA）、domain 不依赖 kernel 上层、application 不依赖 adapter/infrastructure、kernel 各层只经 api/types 依赖 file/approval；`@BeforeAll` 逐层断言导入类数防止 `noClasses()` 空匹配假绿；反向注入 `com.example.shared..` 验证规则捕获 181 次违规红灯。CQE 全覆盖、types 仅 ID、事件 DTO 字面约束 3 条因与现状有张力未机器化，如实标注（§23.48） | arch-tests 11（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+| 批次 41 | `3353e4f0` | **§21.4 kernel 分层架构不变量机器化（成立子集）**：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则——domain 零框架依赖（Spring/Jackson/MyBatis/JPA）、domain 不依赖 kernel 上层、application 不依赖 adapter/infrastructure、kernel 各层只经 api/types 依赖 file/approval；`@BeforeAll` 逐层断言导入类数防止 `noClasses()` 空匹配假绿；反向注入 `com.example.shared..` 验证规则捕获 181 次违规红灯。CQE 全覆盖、types 仅 ID、事件 DTO 字面约束 3 条因与现状有张力未机器化，如实标注（§23.48） | arch-tests 11（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
 ### 23.3 批次 2 范围边界
 
