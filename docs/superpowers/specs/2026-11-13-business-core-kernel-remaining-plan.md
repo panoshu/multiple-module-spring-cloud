@@ -287,6 +287,11 @@
 - 拆分：**40-1**（H2 测试链路：kernel 新增唯一命名 `schema-kernel-h2.sql`、annuity H2 缩减重命名、配置组合加载）+ **40-2**（PG/MySQL 部署脚本删除 kernel 表段落改为指引注释、清理过时注释、台账收口）。
 - 状态：**全部完成**（设计文档 §23.47）。40-1 完成 H2 测试链路解耦（kernel H2 唯一定义 + annuity 组合加载 + 修正 request_no 列宽漂移）；40-2 完成 PG/MySQL 部署脚本解耦并清理 kernel 双库过时注释。annuity 不再持有任何 kernel 表副本，反复解冻的根因消除；部署流程改为「先执行 kernel 的 schema-*.sql，再执行 annuity 自有表脚本」，需 DBA 知悉。
 
+#### 批次 41 — §21.4 分层架构不变量机器化（成立子集）
+- 背景：§23.46 偏差 2 指出 §21.4 六条架构不变量未全部机器化；评估后 3 条与现状有字面张力，强行落地会变成超级计划，故只机器化现状成立的分层边界。
+- 改动：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则（domain 框架纯净、domain 不依赖上层、application 不依赖 adapter/infra、跨服务只经 api/types），含防假绿导入断言与反向违规注入验证。纯新增测试，不改生产代码、不改 annuity。
+- 状态：**完成**（设计文档 §23.48）。CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条如实标注为未机器化。
+
 ---
 
 ## 6. 全局约束与验收基线

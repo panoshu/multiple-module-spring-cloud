@@ -1165,6 +1165,8 @@ Application 层按用例拆分：
 
 | 批次 40-2 | `186fe20e` | **annuity 复制 DDL 解耦 · PG/MySQL 部署脚本收口**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表，头部改为「先执行 kernel 的 schema-*.sql」部署顺序指引；kernel 双库头部清理 37b 后残留的 `businessExtension/JSONB` 过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。**批次 40 全部完成**，annuity 不再持有任何 kernel 表副本 | 全仓 `mvn clean install -DskipTests` 后 annuity E2E 6 全绿（排除旧构建产物干扰，确认组合加载真实生效）；kernel domain 174 / application 216 / infra 87 / adapter 13 / 架构 7 全绿；全仓 `test-compile`、`git diff --check` 通过；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各 7 张表 |
 
+| 批次 41 | 本次（未提交） | **§21.4 kernel 分层架构不变量机器化（成立子集）**：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则——domain 零框架依赖（Spring/Jackson/MyBatis/JPA）、domain 不依赖 kernel 上层、application 不依赖 adapter/infrastructure、kernel 各层只经 api/types 依赖 file/approval；`@BeforeAll` 逐层断言导入类数防止 `noClasses()` 空匹配假绿；反向注入 `com.example.shared..` 验证规则捕获 181 次违规红灯。CQE 全覆盖、types 仅 ID、事件 DTO 字面约束 3 条因与现状有张力未机器化，如实标注（§23.48） | arch-tests 11（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1639,12 +1641,13 @@ Application 层按用例拆分：
 
 | §21.4 架构测试 | 覆盖测试 | 状态 |
 |---|---|---|
-| domain 不依赖 Spring/Web/JSON/DB/file/approval 类型 | 现有 `ArchitectureInvariantTest` 8 条覆盖 demo-shared/安全/网关/BFF/共享能力门面 | ⚠️ kernel domain 纯净性未机器化 |
-| application 不依赖 file/approval DTO | 同上 | ⚠️ 现状 `FileParsedEventListener` 依赖 `file.api.event.FileParsedEventDTO`（属允许的跨服务 API 依赖，与字面「不依赖 DTO」有张力） |
+| domain 不依赖 Spring/Web/JSON/DB | `KernelLayerArchitectureTest.domainIsFrameworkFree`（批次 41） | ✅ 已机器化 |
+| domain 不依赖 file/approval 类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ⚠️ 现状 domain 依赖 `file.types.FileId` 等 ID 原语；规则按「只经 api/types」机器化，字面「零 file/approval 类型」不成立 |
+| application 不依赖 file/approval DTO | 同上（批次 41 规则 4） | ⚠️ 现状 `FileParsedEventListener` 依赖 `file.api.event.FileParsedEventDTO`（属允许的跨服务 API 依赖，与字面「不依赖 DTO」有张力）；已机器化「不触及实现层」 |
 | ApplicationService 入参只有 CQE | 批次 35 `advanceApplication` 落地 CQE | ⚠️ 其余服务方法仍为裸参，无架构断言 |
-| Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化 |
-| types 只包含 ID 类型 | `CoreTypesIdentifierValidationTest` | ⚠️ 仅校验 ID 类型，未断言「只有 ID」 |
-| 跨服务只依赖 API 模块 | `ArchitectureInvariantTest` 不变量 1/3（方向相反：框架层零业务 api 依赖） | ⚠️ 未正向机器化 |
+| Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化（`CoreKernelAutoConfiguration` 构造的是 application 层 Job，非领域聚合根） |
+| types 只包含 ID 类型 | `CoreTypesIdentifierValidationTest` | ⚠️ 现状 types 层含 `BankAccount`/`Address`/`ValidityPeriod` 等值对象，字面不成立 |
+| 跨服务只依赖 API 模块 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 已机器化（允许 api + types，禁止 domain/application/adapter/infrastructure） |
 
 | §21.5 最终验收 | 覆盖测试 | 状态 |
 |---|---|---|
@@ -1662,7 +1665,7 @@ Application 层按用例拆分：
 - **阶段 0–5 全部收口**：规格 §20 规划的全部批次（含 37/38/39 的拆分）已完成并逐批提交推送；核心聚合已无 §6.2 遗留字段，外部协作具备「可追踪、可重试、可对账、可恢复」能力，§21.1/§21.2/§21.3/§21.5 主要验收点均有可执行测试。
 - **如实标注的偏差**（不冒充已覆盖）：
   1. `AnnuityEndToEndTest` 禁用自动推进（§21.5 第 8 条）；annuity 为早期示例服务，若要严格满足需新增独立 E2E。
-  2. §21.4 六条架构不变量未全部机器化；`ArchitectureInvariantTest` 覆盖的是 demo-shared/网关/BFF 方向，kernel 分层纯净性与 CQE 化未做 ArchUnit 断言。
+  2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
   4. `CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被监听器消费（监听器统一传 `SUCCEEDED`/`FAILED`，驳回/撤回由 `advanceByApprovalResult` 终止语义处理）。
 - **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 全部完成，见 §23.47**。
@@ -1681,3 +1684,22 @@ Application 层按用例拆分：
 - **验证**：先 `mvn clean install -DskipTests` 清除 `target/` 里残留的旧 DDL 产物，再跑 annuity E2E 6 全绿，确认组合加载真实生效、无旧文件兜底；kernel 全模块与架构测试全绿；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各含 7 张表定义。
 - **收口结论**：**批次 40 全部完成**——kernel 表定义只存在于 `business-core-infrastructure`（PG / MySQL / H2 三份同模块），annuity 3 份 DDL 只含年金自有表与事件存储表，不再持有任何 kernel 表副本。此前批次 36b/37b/37c 反复「临时解冻 annuity 同步 DDL」的根因消除；后续 kernel 改表只需改 kernel 模块内三处，annuity 无需解冻。
 - **仍未处理**：无（本批次为规格收口后的追加解耦任务）。其余阶段 5 遗留项见 §23.46。
+
+### 23.48 批次 41 范围边界（§21.4 分层架构不变量机器化·成立子集）
+
+- **选题依据**：规格收口后 §23.46 偏差 2 指出 §21.4 六条架构不变量未全部机器化。评估后确认其中 3 条与现状存在字面张力，若强行机器化需大范围生产代码改动（跨服务事件 DTO 解耦、types 层拆分、全量 CQE 化），会变成「超级计划」；故本批只把**现状确实成立**的分层边界固化为机器强制层，纯新增测试、零生产代码、零 annuity 改动。
+- **先验证后写规则**：落笔前逐条 grep 确认 6 条约束在 kernel 各层的成立情况——domain 无 Spring/Jackson/MyBatis/JPA 依赖、不依赖 kernel 上层；application 不依赖 adapter/infrastructure；adapter/infrastructure 只依赖 `file.api`/`approval.api`/`*.types`；故 4 条规则可绿灯落地。
+- **新增 `KernelLayerArchitectureTest` 4 条**：
+  1. `domainIsFrameworkFree` — domain 不依赖 `org.springframework..` / `com.fasterxml.jackson..` / `com.mybatisflex..` / `org.apache.ibatis..` / `jakarta.persistence..`；
+  2. `domainDoesNotDependOnUpperKernelLayers` — domain 不依赖 kernel 的 api/application/adapter/infrastructure；
+  3. `applicationDoesNotDependOnAdapterOrInfrastructure` — application 不依赖 adapter/infrastructure（依赖倒置）；
+  4. `kernelDependsOnBusinessServicesOnlyThroughApiAndTypes` — kernel 全 5 层只经 `*.api..` / `*.types..` 依赖 file/approval，禁止触及两者的 domain/application/infrastructure/adapter 实现层。
+- **防假绿**：`ClassFileImporter.importPackages` 后先断言导入总数 > 500，并逐层断言 `com.example.core.domain/application/adapter/infrastructure` 与 file/approval 实现层各自确有类被导入，避免 `noClasses()` 空匹配导致「假绿」；测试期间曾因 `approval.application` 阈值定高触发红灯，校正为存在性断言。
+- **反向验证规则生效**：临时把 `com.example.shared..` 注入规则 1 的禁止包，规则捕获 181 次违规并红灯，随即改回正式规则转绿——证明规则不是空转，而是真实检查字节码依赖。
+- **刻意不机器化的 3 条（如实标注，不冒充覆盖）**：
+  1. ApplicationService 入参全部 CQE 化——仅批次 35 `advanceApplication` 落地，其余服务方法仍为裸参；
+  2. types 层只含 ID 类型——现状 `business-core-types` 含 `BankAccount`/`Address`/`ValidityPeriod` 等值对象；
+  3. application 零 file/approval「DTO」依赖——现状监听器消费 `file.api.event.FileParsedEventDTO` 等 API 层事件 DTO，属允许的跨服务契约，与规格字面有张力。
+  若要收敛这 3 条，需先做规格修订或专项大重构，不在本批范围。
+- **验证**：arch-tests 11 项（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。§23.46 核对表 §21.4 各行状态与偏差 2 已同步更新。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）、偏差 4（`CallbackOutcome.REJECTED/WITHDRAWN` 未消费枚举值）及其它阶段 5 遗留项。
