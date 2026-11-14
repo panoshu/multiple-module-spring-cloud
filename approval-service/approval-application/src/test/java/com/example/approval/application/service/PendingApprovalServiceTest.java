@@ -62,7 +62,8 @@ class PendingApprovalServiceTest {
     roleUserGateway = mock(RoleUserGateway.class);
     service = new ApprovalInstanceService(
       instanceRepository, flowRepository, mock(EventBus.class),
-      mock(IdService.class), mock(ApprovalIdGenerator.class), roleUserGateway);
+      mock(IdService.class), mock(ApprovalIdGenerator.class), roleUserGateway,
+      mock(com.example.approval.domain.service.ApprovalNodeResolver.class));
     when(instanceRepository.findByStatuses(any())).thenAnswer(inv -> List.copyOf(candidates));
   }
 

@@ -4,7 +4,7 @@
 > 依据：`2026-11-14-remaining-work-priority.md` P3-1 遗留、`2026-11-14-p3-approval-stub-cross-service-design.md` §6 开放点 ①、设计文档 §23.62/§23.64、当前代码逐项核实
 > 性质：**立项方案，不是实施计划**。按「方案需与用户确认后才能进入编码阶段」，本文只产出核实结论、契约草案、分批设计与开放点，不写任何生产代码、不改现有契约
 > 约束：延续「不要太大超级计划」——每个批次 3–8 文件、独立 TDD 与验收
-> **推进状态（2026-11-14）**：用户确认「按建议开始推进」，按 §5 的 58→61 连续推进。批次 58–61 已全部完成（auth-api 契约 + auth 供给侧 + approval 网关接入 + 能力 C 解锁，§23.65–§23.68，§4 已同步为 PLAN 精确 scope）；§5 批次 61 里的「领域流转接线 + 角色会签修正」因涉及聚合根签名改造拆为批次 62，待用户确认后评估规模。
+> **推进状态（2026-11-14）**：用户确认「按建议开始推进」，按 §5 的 58→61 连续推进。批次 58–62 已全部完成、立项收口（auth-api 契约 + auth 供给侧 + approval 网关接入 + 能力 C 解锁 + 领域流转接线与角色会签修正，§23.65–§23.69，§4 已同步为 PLAN 精确 scope；§6 开放点 4 已处置）。
 
 ---
 
@@ -97,7 +97,7 @@
 | **58（auth-api 契约）** | 新增 `RoleUserQueryApi` + `ListRoleUsersRequest` / `RoleUserBatchResponse`；父 pom 无需改（已管理 auth-api） | 3–4 | `@HttpExchange` 风格与现有 8 接口一致；CQE 校验注解齐备 |
 | **59（auth 供给侧）** | `AssignmentRepository.findActiveByRoleCodesAndScope(...)` + Impl（`role_code IN` + scope 条件 + 索引）；auth-application 查询服务；auth-adapter Controller（含权限） | 5–7 | 仓储按角色/scope 过滤、ACTIVE、逻辑删除；应用服务去重；Controller 权限校验；单元 + 契约测试 |
 | **60（approval 网关）** | `approval-infrastructure/pom.xml` 加 auth-api；`RoleUserGatewayImpl` 改为 `@HttpExchange` 客户端（含超时/降级）；SPI 补 scope 参数 | 4–6 | 契约测试：批量展开、空结果、auth 不可用降级；零 annuity 改动 |
-| **61（能力 C 解锁 + 领域接线）** | `listMyPendingApprovals` 支持 `SPECIFIED_ROLE`（批量展开 + 缓存）；`ApprovalNodeResolver` 接线；`allApproversApproved` 修正角色节点会签判断 | 6–8 | 角色节点待办命中、会签完成判断、非角色节点零回归；若超 8 文件再拆 61/62 |
+| **61（能力 C 解锁 + 领域接线）** | `listMyPendingApprovals` 支持 `SPECIFIED_ROLE`（批量展开 + 缓存）；`ApprovalNodeResolver` 接线；`allApproversApproved` 修正角色节点会签判断 | 6–8 | ✅ **已完成**：61 落地能力 C 解锁（§23.68），领域接线与会签修正按「超 8 文件再拆」落 62（§23.69） |
 
 **顺序**：58 → 59 → 60 串行（契约→供给→消费）；61 依赖 60。每批独立 TDD、全仓验证、台账、自动提交推送。
 
@@ -108,7 +108,7 @@
 1. **scope 契约**：`getUsersByRole` 是否改为带 `scopeDimension + scopeValue` 的领域签名？（推荐：是。不带 scope 会造成跨计划数据泄漏，是本立项最关键的决策。可能需同步改 `ApprovalNodeResolver` 与流程定义模型）
 2. **纳入范围**：是否只做 `SPECIFIED_ROLE`（推荐），还是连 `getUsersInSamePlan` / SAME_PLAN / LEVEL_UP 节点一并实现？后者需组织目录真实接入，规模显著扩大。
 3. **批量 vs 单角色 + 缓存**：推荐批量接口（`/by-roles`）。若采用单角色接口，需明确缓存策略与 TTL。
-4. **`ApprovalNodeResolver` 接线与 `allApproversApproved` 修正是否纳入**：推荐纳入（否则角色审批流转仍不正确），但会触及领域层，建议独立批次 61。
+4. **`ApprovalNodeResolver` 接线与 `allApproversApproved` 修正是否纳入**：推荐纳入（否则角色审批流转仍不正确），但会触及领域层，建议独立批次 61。✅ **已由批次 62 处置**（§23.69）：用户按框架视角确认「无调用方不影响」，聚合根接收实际审批人列表、Resolver 接入主链路、AND_SIGN 角色节点会签正确完成。
 5. **auth 不可用时的降级**：fail-closed（拒绝角色节点审批 / 待办列表不显示角色节点）还是 fail-open（回退到指定用户）？推荐 fail-closed + 明确告警，避免静默降级。
 6. **`ProductGateway` 组织目录**：推荐本立项**不接入**，按 `scope_dimension=PLAN` 精确查询绕开；CUSTOMER/PRODUCT 继承展开列为后续。
 7. **权限与数据范围**：跨服务「角色→用户」属敏感数据，是否需额外的调用方白名单 / 数据范围（`@DataScope`）校验，还是仅靠 `@RequirePermission`？

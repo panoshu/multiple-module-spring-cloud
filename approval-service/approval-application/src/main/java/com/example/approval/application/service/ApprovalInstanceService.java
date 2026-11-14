@@ -10,6 +10,7 @@ import com.example.approval.domain.aggregate.entity.NodeExecution;
 import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
+import com.example.approval.domain.service.ApprovalNodeResolver;
 import com.example.approval.domain.repository.ApprovalFlowRepository;
 import com.example.approval.domain.repository.ApprovalInstanceRepository;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
@@ -55,6 +56,7 @@ public class ApprovalInstanceService {
   private final com.example.shared.identifier.contract.IdService idService;
   private final com.example.approval.domain.aggregate.root.ApprovalIdGenerator idGenerator;
   private final RoleUserGateway roleUserGateway;
+  private final ApprovalNodeResolver approvalNodeResolver;
 
   /**
    * 启动审批
@@ -128,13 +130,18 @@ public class ApprovalInstanceService {
         com.example.approval.domain.errorcode.ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID
       ).withLogDetail("当前节点不存在"));
 
+    // 解析当前节点实际审批人（指定用户取配置，角色节点按 PLAN 展开）
+    List<UserNo> effectiveApprovers =
+      approvalNodeResolver.resolveApprovers(currentNode, instance, roleUserGateway);
+
     // 执行审批通过
     instance.approve(
       currentNode,
       UserNo.of(request.approver()),
       ApprovalOpinion.of(request.comment()),
       request.approver(),
-      idGenerator
+      idGenerator,
+      effectiveApprovers
     );
 
     // 保存审批实例
@@ -164,6 +171,10 @@ public class ApprovalInstanceService {
         com.example.approval.domain.errorcode.ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID
       ).withLogDetail("当前节点不存在"));
 
+    // 解析当前节点实际审批人
+    List<UserNo> effectiveApprovers =
+      approvalNodeResolver.resolveApprovers(currentNode, instance, roleUserGateway);
+
     // 执行审批驳回（默认驳回终止流程）
     instance.reject(
       currentNode,
@@ -171,7 +182,8 @@ public class ApprovalInstanceService {
       ApprovalOpinion.of(request.reason()),
       RejectTarget.terminate(),
       request.approver(),
-      idGenerator
+      idGenerator,
+      effectiveApprovers
     );
 
     // 保存审批实例
@@ -202,6 +214,10 @@ public class ApprovalInstanceService {
         com.example.approval.domain.errorcode.ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID
       ).withLogDetail("当前节点不存在"));
 
+    // 解析当前节点实际审批人
+    List<UserNo> effectiveApprovers =
+      approvalNodeResolver.resolveApprovers(currentNode, instance, roleUserGateway);
+
     // 执行审批转交
     instance.transfer(
       currentNode,
@@ -209,7 +225,8 @@ public class ApprovalInstanceService {
       ApprovalOpinion.of(request.reason()),
       UserNo.of(request.targetApprover()),
       request.currentApprover(),
-      idGenerator
+      idGenerator,
+      effectiveApprovers
     );
 
     // 保存审批实例

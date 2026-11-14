@@ -8,6 +8,7 @@ import com.example.shared.domain.annotation.DomainService;
 import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,10 +51,15 @@ public class ApprovalNodeResolver {
       }
       Map<String, List<UserNo>> byRole =
         roleUserGateway.getUsersByRoles(node.roleIds(), PlanNo.of(plan));
-      return byRole.values().stream()
-        .flatMap(List::stream)
-        .distinct()
-        .toList();
+      if (byRole == null || byRole.isEmpty()) {
+        return List.of();
+      }
+      // 按节点配置的角色顺序展开，保证结果确定；跨角色重复用户去重
+      List<UserNo> approvers = new ArrayList<>();
+      for (String roleId : node.roleIds()) {
+        approvers.addAll(byRole.getOrDefault(roleId, List.of()));
+      }
+      return approvers.stream().distinct().toList();
     }
 
     // 根据节点类型解析
