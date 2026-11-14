@@ -350,7 +350,11 @@
 
 #### 批次 55 — P3-1 能力 C 实现 listMyPendingApprovals（最小可用版本）
 - 范围：评估后按立项方案 §4 推荐落地——删除死接口 `findByApproverId`，新增 `findByStatuses`（DB STATUS IN 走索引），应用层按节点 `approverIds` 过滤 + 内存分页 + 组装 DTO；只支持 `SPECIFIED_USER` 节点。
-- 状态：**完成**（设计文档 §23.62）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/16/25、annuity E2E 10、全仓 test-compile 全绿；零 DDL、零契约变更。开放点 ④（approver 越权，BREAKING CHANGE 需同步 BFF）与角色审批仍为遗留。
+- 状态：**完成**（设计文档 §23.62）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/16/25、annuity E2E 10、全仓 test-compile 全绿；零 DDL、零契约变更。开放点 ④ 已由批次 56 处置，角色审批仍为遗留。
+
+#### 批次 56 — approver 越权治理（BREAKING CHANGE，同步改 intranet-bff）
+- 范围：`ApprovalInstanceAdapter` 注入 `AccountIdResolver`，用带签名会话账号覆盖请求体 approver、会话缺失 fail-closed；intranet-bff `trace.context.mapping` 增加 AccountId/AccountSig 透传；DTO 保留 approver 为兼容字段。
+- 状态：**完成**（设计文档 §23.63）。先编译红灯后绿 + 反向验证；approval 87/16/25/3、intranet-bff 37+7、annuity E2E 10、全仓 test-compile 全绿；零 annuity 改动、零 DDL。
 
 ---
 

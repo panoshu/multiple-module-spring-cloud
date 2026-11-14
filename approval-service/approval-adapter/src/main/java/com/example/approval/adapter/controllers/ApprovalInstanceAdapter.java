@@ -7,6 +7,9 @@ import com.example.approval.api.dto.PendingApprovalDTO;
 import com.example.approval.api.request.*;
 import com.example.approval.api.response.ApprovalInstanceIdResponse;
 import com.example.approval.application.service.ApprovalInstanceService;
+import com.example.shared.exception.BusinessException;
+import com.example.shared.exception.CommonError;
+import com.example.shared.permission.AccountIdResolver;
 import com.example.shared.security.annotation.PermissionCategory;
 import com.example.shared.security.annotation.RequirePermission;
 import com.example.shared.web.core.api.ApiResult;
@@ -34,6 +37,7 @@ import java.util.Optional;
 public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
 
   private final ApprovalInstanceService approvalInstanceService;
+  private final AccountIdResolver accountIdResolver;
 
   @Override
   @RequirePermission(business = "APPROVAL_INSTANCE", action = "START", category = PermissionCategory.PLATFORM)
@@ -97,9 +101,17 @@ public class ApprovalInstanceAdapter implements ApprovalInstanceApi {
   @Override
   @RequirePermission(business = "APPROVAL_INSTANCE", action = "VIEW", category = PermissionCategory.PLATFORM)
   public ApiResult<PageData<PendingApprovalDTO>> listMyPending(ListMyPendingApprovalsRequest request) {
-    log.info("查询待审批列表: approver={}", request.approver());
-    PageData<PendingApprovalDTO> pageResult = approvalInstanceService.listMyPendingApprovals(request);
-    return ApiResult.success(pageResult);
+    // 越权治理（批次 56）：审批人只认带签名的会话账号，请求体 approver 一律忽略。
+    // AccountIdResolver 的默认实现不使用 JoinPoint，传 null 取当前请求头；解析失败返回 null。
+    String approver = accountIdResolver.resolve(null);
+    if (approver == null || approver.isBlank()) {
+      throw new BusinessException(CommonError.UNAUTHORIZED)
+        .withLogDetail("待审批列表缺少可信会话账号，拒绝按请求体 approver 查询");
+    }
+    log.info("查询待审批列表: approver={}（取自会话）", approver);
+    ListMyPendingApprovalsRequest trusted =
+      new ListMyPendingApprovalsRequest(approver, request.pagination());
+    return ApiResult.success(approvalInstanceService.listMyPendingApprovals(trusted));
   }
 
   @Override
