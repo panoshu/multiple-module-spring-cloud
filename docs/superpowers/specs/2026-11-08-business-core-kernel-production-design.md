@@ -1683,7 +1683,7 @@ Application 层按用例拆分：
   3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
 - **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）；批次扫描按状态索引与恢复任务事务边界由批次 46 完成（§23.53）；annuity 生产 profile 治理由批次 47 完成（§23.54），**P0/P1 全部清空**。
-- **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级，含纠偏表与批次推进记录）。
+- **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级，含纠偏表与批次推进记录）；**P2 专项方案**：见 `2026-11-14-p2-special-plan.md`（P2 四项逐项核实的决策建议与小批次拆分，待用户确认后逐批开工）。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
 
