@@ -5,12 +5,15 @@ import com.example.approval.api.dto.ApprovalRecordDTO;
 import com.example.approval.api.dto.PendingApprovalDTO;
 import com.example.approval.api.request.*;
 import com.example.approval.domain.aggregate.entity.ApprovalNode;
+import com.example.approval.domain.aggregate.entity.ApprovalRecord;
+import com.example.approval.domain.aggregate.entity.NodeExecution;
 import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.repository.ApprovalFlowRepository;
 import com.example.approval.domain.repository.ApprovalInstanceRepository;
 import com.example.approval.domain.valueobject.ApprovalOpinion;
 import com.example.approval.domain.valueobject.FlowVersion;
+import com.example.approval.domain.valueobject.NodeOrder;
 import com.example.approval.domain.valueobject.RejectTarget;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.shared.domain.event.EventBus;
@@ -23,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -268,8 +272,38 @@ public class ApprovalInstanceService {
   @Transactional(readOnly = true)
   public List<ApprovalRecordDTO> getApprovalHistory(GetApprovalHistoryRequest request) {
     ApprovalInstance instance = loadInstanceOrThrow(request.instanceId());
-    // TODO: 转换审批记录
-    return List.of();
+    // 节点名来自静态审批流定义；定义可能被改版或删除，取不到时降级而非中断查询
+    ApprovalFlow flow = flowRepository.load(instance.flowId()).orElse(null);
+
+    List<ApprovalRecordDTO> records = new ArrayList<>();
+    for (NodeExecution execution : instance.getNodeExecutions()) {
+      String nodeName = resolveNodeName(flow, execution.nodeOrder());
+      for (ApprovalRecord record : execution.getApprovalRecords()) {
+        records.add(new ApprovalRecordDTO(
+          record.id(),
+          request.instanceId(),
+          nodeName,
+          record.action().name(),
+          record.approverId().value(),
+          record.opinion() != null ? record.opinion().value() : null,
+          record.operatedAt()));
+      }
+    }
+    return records;
+  }
+
+  /**
+   * 节点名沿用 {@code ApprovalFlowService.convertToNodeDTO} 的语义（领域模型无 name 字段，
+   * 以 nodeType 占位）；审批流或节点定义缺失时降级为 {@code NODE-<order>}。
+   */
+  private String resolveNodeName(ApprovalFlow flow, NodeOrder nodeOrder) {
+    if (flow != null) {
+      Optional<ApprovalNode> node = flow.getNode(nodeOrder);
+      if (node.isPresent()) {
+        return node.get().nodeType().name();
+      }
+    }
+    return "NODE-" + (nodeOrder != null ? nodeOrder.value() : "?");
   }
 
   /**

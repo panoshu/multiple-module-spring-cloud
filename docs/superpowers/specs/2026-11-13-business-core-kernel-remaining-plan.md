@@ -340,6 +340,14 @@
 - 范围：梳理 P3 三项后推进唯一有真实问题的 P3-2——5 个 Controller 的 `core-kernel.controllers.enabled` 统一为 `core.kernel.controllers.enabled`，新增 ArchUnit 契约禁止遗留前缀，同步 4 处文档引用。
 - 状态：**完成**（设计文档 §23.59）。先红（5 次违规）后绿；反向验证捕获 7 次；arch-tests 17、kernel 全模块、annuity E2E 10 全绿。P3-1 / P3-3 维持记录。
 
+#### 批次 53 — P3-1 能力 A 实现 getApprovalHistory
+- 范围：按 `2026-11-14-p3-approval-stub-cross-service-design.md` §5，从聚合根提取审批记录组装 DTO，nodeName 沿用 nodeType 占位、定义缺失降级；新增 `ApprovalHistoryServiceTest` 4 项。
+- 状态：**完成**（设计文档 §23.60）。TDD 先红后绿；approval 87/8/21、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。
+
+#### 批次 54 — P3-1 能力 B 实现 listApprovalFlows
+- 范围：`ApprovalFlowRepository` 新增按条件分页查询，`ApprovalFlowService.listApprovalFlows` 复用 `convertToDTO` 组装 `PageData`；补仓储/应用测试。
+- 状态：推进中（与批次 53 连续推进）。
+
 ---
 
 ## 6. 全局约束与验收基线
