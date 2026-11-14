@@ -1171,6 +1171,8 @@ Application 层按用例拆分：
 
 | 批次 43-1 | `92da26a6` | **并发推进只产生一次有效跃迁**（§23.46 偏差 3 首个切片）：新增 `ConcurrentAdvanceAcceptanceTest`，用真实 `FlowOrchestrationService` + 内存 `DistributedLock`（按申请单 key 互斥，等价多节点共享一把锁）+ 状态化 `StepExecutionRepository`（`findByRequestNo` 真实反映 `save`，等价唯一索引与幂等查询）+ `CountDownLatch` 两线程并发调相同 requestNo 的 `advanceApplication`，断言只保存一条步骤执行、只跃迁一次。反向禁用幂等短路验证 `save` 变 2 次红灯，连续 5 次运行全绿 | 新增验收测试 1 项；kernel domain 174 / application 219（+1）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
+| 批次 43-2 | 本次（未提交） | **乐观锁并发写冲突不覆盖新状态**（偏差 3 收口）：新增 infrastructure 模块 `OptimisticLockConcurrencyTest`，真实 `BusinessBatchRepositoryImpl` + 状态化 fake mapper（`bothRead` 屏障保证两节点读到同一版本、`update` 用 `AtomicInteger` CAS 等价 DB 版本 WHERE 条件），两节点基于 version=3 并发 save，断言一个成功一个 `OPTIMISTIC_LOCK_FAILURE`、库版本只 +1；反向去掉 CAS 验证两个都成功红灯，连续 5 次全绿。**批次 43 全部完成，§23.46 偏差 3 收敛** | kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1629,8 +1631,8 @@ Application 层按用例拆分：
 | §21.2 应用与并发测试 | 覆盖测试 | 状态 |
 |---|---|---|
 | 相同 requestNo 重复推进只执行一次 | `FlowOrchestrationServiceTest.advanceApplication_whenDuplicateRequestNo_skipsPipeline` | ✅ |
-| 两个节点并发推进只产生一次有效跃迁 | `FlowOrchestrationServiceTest.advanceStep_usesDistributedLockWhenAvailable`（锁接线）、`AbstractBusinessRepositoryTest`（乐观锁） | ⚠️ 无多节点真并发集成测试 |
-| 乐观锁冲突不会覆盖新状态 | `AbstractBusinessRepositoryTest`（版本递增 + 事件发布） | ⚠️ 未做并发写冲突覆盖断言 |
+| 两个节点并发推进只产生一次有效跃迁 | `ConcurrentAdvanceAcceptanceTest`（批次 43-1，内存锁 + 状态化仓储 + 两线程并发，含反向红灯验证）、`FlowOrchestrationServiceTest.advanceStep_usesDistributedLockWhenAvailable`（锁接线） | ✅ 确定性并发验收（非真 H2 多进程，见 §23.50） |
+| 乐观锁冲突不会覆盖新状态 | `OptimisticLockConcurrencyTest`（批次 43-2，两节点基于同一版本并发 save，CAS 保证只 +1、一个抛 OPTIMISTIC_LOCK_FAILURE，含反向无 CAS 红灯验证）、`AbstractBusinessRepositoryTest`（版本递增） | ✅ 确定性并发验收（状态化 fake mapper 模拟 DB 乐观锁，见 §23.50） |
 | 重复事件不会重复推进 | `ApprovalResultEventListenerTest.handleApproved_whenDuplicate_shouldNotAdvance`、`FileParsedEventListenerTest.handleFileParsed_whenDuplicate_shouldNotAdvance`、`JdbcEventReceiptGatewayTest` | ✅ |
 | 乱序事件不会错误推进 | `CallbackCorrelationServiceTest`（typeMismatch / terminal / matchesFalse）、两个 listener 的 `OUT_OF_ORDER`/`UNMATCHED` 测试 | ✅ |
 
@@ -1657,7 +1659,7 @@ Application 层按用例拆分：
 |---|---|---|
 | 1. 新业务只增加流程定义和 SPI，不改 kernel | `FinalAcceptanceContractTest.newBusiness_registersDefinitionAndSpiOnly`、`ProcessDefinitionPublishServiceTest`、`CompositeProcessDefinitionGatewayTest` | ✅ |
 | 2. 服务重启后流程可恢复 | §21.3(4) 全部测试 + `ExternalInteractionRecoveryJobTest` | ✅ |
-| 3. 并发推进和重复回调不造成重复跃迁 | `FinalAcceptanceContractTest.repeatedCallback_doesNotDoubleTransition`、重复 requestNo/eventId 测试、锁接线测试 | ✅（重复/幂等）⚠️ 多节点真并发未集成 |
+| 3. 并发推进和重复回调不造成重复跃迁 | `FinalAcceptanceContractTest.repeatedCallback_doesNotDoubleTransition`、重复 requestNo/eventId 测试、`ConcurrentAdvanceAcceptanceTest`（批次 43-1）、`OptimisticLockConcurrencyTest`（批次 43-2） | ✅ 重复/幂等与确定性并发均已覆盖（真多进程 Redis 锁集成仍属阶段 5 遗留） |
 | 4. 文件/审批任务可追踪、可重试、可对账 | §21.3(1)(3)(4)、`StepExecutionRepositoryImplTest`、`ExternalInteractionRepositoryImplTest`、`GatewayRequestNoContractTest`、`FileGatewayTaskIdContractTest` | ✅ |
 | 5. 流程定义升级不影响在途实例 | `FinalAcceptanceContractTest.definitionUpgrade_doesNotAffectInFlightInstance`、`CompositeProcessDefinitionGatewayTest.load_readsHistoricalVersionFromStore`、`StepDefinitionResolverTest` | ✅ |
 | 6. 状态、执行历史和事件可审计 | `FinalAcceptanceContractTest.stepExecutionHistory_isAuditable`、`StepExecutionTest`、`ExternalInteractionTest`、`AbstractBusinessRepositoryTest` | ✅ |
@@ -1670,7 +1672,7 @@ Application 层按用例拆分：
 - **如实标注的偏差**（不冒充已覆盖）：
   1. `AnnuityEndToEndTest` 禁用自动推进（§21.5 第 8 条）；annuity 为早期示例服务，若要严格满足需新增独立 E2E。
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
-  3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
+  3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
 - **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 全部完成，见 §23.47**。
 
@@ -1706,7 +1708,7 @@ Application 层按用例拆分：
   3. application 零 file/approval「DTO」依赖——现状监听器消费 `file.api.event.FileParsedEventDTO` 等 API 层事件 DTO，属允许的跨服务契约，与规格字面有张力。
   若要收敛这 3 条，需先做规格修订或专项大重构，不在本批范围。
 - **验证**：arch-tests 11 项（原 7 + 新 4）全绿、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。§23.46 核对表 §21.4 各行状态与偏差 2 已同步更新。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）及其它阶段 5 遗留项。**偏差 4 已由批次 42 修复，见 §23.49**。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。**偏差 3 已由批次 43 收敛（§23.50）、偏差 4 已由批次 42 修复（§23.49）**。
 
 ### 23.49 批次 42 范围边界（审批驳回/撤回回调状态误判修复）
 
@@ -1718,7 +1720,7 @@ Application 层按用例拆分：
 - **兼容性**：现有 `ApprovalResultEventListenerTest` mock 掉 correlate，E2E 只走 APPROVED，二者均不受行为变更影响；`applyOutcome` 仍按 `targetStatus` 分支，FAILED 路径复用既有 `interaction.fail(...)` / `execution.fail(...)`，无需改状态机或 DDL。
 - **验证**：`CallbackCorrelationServiceTest` 10 全绿；kernel domain 174 / application 218（+2）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `mvn install -DskipTests`、`test-compile`、`git diff --check` 通过；零 annuity 改动。
 - **台账同步**：§23.46 偏差 4 更正为「已修复」、§21.3 核对表补该测试、§23.48 末行移除偏差 4；计划文档新增批次 42。
-- **仍未处理**：偏差 1（E2E 禁用自动推进）、偏差 3（多节点真并发集成测试）及其它阶段 5 遗留项。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。**偏差 3 已由批次 43 收敛，见 §23.50**。
 
 ### 23.50 批次 43 拆分与 43-1 范围边界（确定性并发验收）
 
@@ -1727,4 +1729,9 @@ Application 层按用例拆分：
 - **43-1 实现**：真实 `FlowOrchestrationService`（复用编排器测试的最小 stub 集）、`InProcessDistributedLock`（`ReentrantLock` 按 `appId` key 互斥，实现 `DistributedLock.lockAndRun`）、状态化 `StepExecutionRepository`（`ConcurrentHashMap`，`findByRequestNo` 从 `save` 写入的 map 查询）、`CountDownLatch` 让 2 个线程同时用相同 requestNo 调 `advanceApplication`。锁串行化后第一个节点保存步骤执行，第二个节点在锁内查到已存在 requestNo 被幂等短路。
 - **防假绿与稳定性**：反向把 `findByRequestNo` 临时改成恒返回 empty，测试红灯并明确报出 `save` 被调用 2 次，证明测试真的在检验幂等保护、不是空转；改回后连续运行 5 次全部 exit=0，确认无调度 flaky。线程体用 `try/finally { done.countDown(); }`，保证异常能经 `Future.get()` 传播而非伪装成超时。
 - **验证**：新增验收测试 1 项；kernel domain 174 / application 219（+1）/ infra 87 / adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。
-- **仍未处理**：43-2（乐观锁并发写冲突不覆盖新状态，落在 infrastructure 模块）；偏差 1（E2E 禁用自动推进）及其它阶段 5 遗留项。
+- **43-2 实现**（infrastructure 模块 `OptimisticLockConcurrencyTest`）：真实 `BusinessBatchRepositoryImpl` + 状态化 fake `BusinessBatchMapper`——`selectOneById` 返回当前库版本并在其内部用 `bothRead` 屏障保证两个节点都读到同一版本，`update` 以 DO 版本做 `AtomicInteger.compareAndSet`（等价 MyBatis-Flex `@Column(version=true)` 用版本做 WHERE 条件），`converter.toDO` 每次返回独立 DO。两个节点各基于 version=3 修改后并发 `save`，断言恰好一个成功、一个抛 `SystemException(OPTIMISTIC_LOCK_FAILURE)`、最终库版本只 +1（先写入的新状态未被后写入的旧副本覆盖）。
+- **防假绿与稳定性**：反向把 `update` 临时改成无条件 `incrementAndGet + 返回 1`（模拟无乐观锁），测试红灯并明确报出「Expected size: 1 but was: 0」（两个节点都成功、覆盖发生），证明测试真的在检验冲突保护；改回后连续 5 次运行全绿，两并发类联合运行全绿，无调度 flaky。线程体捕获 `Throwable` 作为 `Future` 返回值，避免异常伪装成超时。
+- **验证**：kernel domain 174 / application 219 / infra 88（+1）/ adapter 13 / 架构 11、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动。
+- **收口结论**：**批次 43 全部完成，§23.46 偏差 3 收敛**——§21.2 第 2/3 条与 §21.5 第 3 条的「多节点真并发、乐观锁写冲突」现有可执行验收（确定性并发），§23.46 核对表 3 行状态已同步更新为 ✅。
+- **如实保留的边界**：本批是进程内状态化 fake 的确定性并发，用于锁定「锁串行化 + 幂等短路」「CAS 乐观锁不覆盖」两条契约；**多进程 + 真实 Redis `DistributedLock` + 真实数据库**的集成测试仍未做，列为阶段 5 遗留，不冒充已覆盖。此前偏差 2 已由批次 41 部分收敛、偏差 4 由批次 42 修复，四项偏差中仅偏差 1（E2E 禁用自动推进）尚未处理。
+- **仍未处理**：偏差 1（E2E 禁用自动推进）、多进程真 Redis 锁集成测试，及其它阶段 5 遗留项。
