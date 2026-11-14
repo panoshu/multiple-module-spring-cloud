@@ -3,7 +3,7 @@
 > 生成日期：2026-11-14
 > 依据：`2026-11-14-remaining-work-inventory.md` #1/#2（用户选择「立项组织目录」）、设计文档 §23.69/§23.72、当前代码逐项核实
 > 性质：立项方案 + 开工决策记录。§6 开放点已按推荐默认值一次性决策落盘，按用户既有「采纳建议 / 连续推进 / 每批自动提交推送」偏好连续推进批次 66–69，不再逐项确认
-> 状态：**批次 66–67 已完成**（台账 §23.73/§23.74）；68–69 推进中
+> 状态：**批次 66–68 已完成**（台账 §23.73–§23.75）；69 收尾中
 > 约束：延续「不要太大超级计划」——每批 3–8 文件、独立 TDD 与验收；零 DDL、Stub 保留兜底
 
 ---
@@ -84,7 +84,7 @@
 |---|---|---|---|
 | **66（auth-api 契约）✅ 已完成（§23.73）** | 新建 `PlanDirectoryApi` + `ListPlanMembersRequest`/`PlanMembersResponse`/`GetParentPlanRequest`/`ParentPlanResponse`；补契约测试 6 项 | 6 | `@HttpExchange`/`@PostExchange`/CQE 校验注解齐备，auth-api 9 项全绿 |
 | **67（auth 供给侧）✅ 已完成（§23.74）** | `PlanDirectoryQueryService`（复用 `PlanReachabilityService` + `ProductGateway`）、`PlanDirectoryController`；提供 `InMemoryProductGateway`（`@Primary`，从配置加载计划层级）替换 Stub 的**示例数据**；补仓储/服务/Controller 测试 | 6–8 | 计划成员按 scope 继承正确、父计划取 `parentPlanNo`、无数据时 fail-closed；auth 全模块与启动测试全绿 |
-| **68（approval SAME_PLAN）** | domain 层新增 `PlanHierarchyGateway` 端口；`RoleUserGatewayImpl.getUsersInSamePlan` 接 `/members`；`ApprovalNodeResolver.SAME_PLAN` 分支改为调端口；补 Resolver/网关测试 | 5–7 | SAME_PLAN 命中同计划用户、排除发起人、auth 不可用 fail-closed；批次 62 的会签/身份校验零回归 |
+| **68（approval SAME_PLAN）✅ 已完成（§23.75）** | 复用已有 `RoleUserGateway.getUsersInSamePlan` SPI（不新建冗余端口），`RoleUserGatewayImpl` 注入 `PlanDirectoryApi` 接 `/members`；`ApprovalNodeResolver.SAME_PLAN` 分支改为调该 SPI 并以 `instance.createdBy()` 排除发起人；补 Resolver/网关测试。`PlanHierarchyGateway` 顺延至批次 69 | 4 | SAME_PLAN 命中同计划用户、排除发起人、auth 不可用 fail-closed；批次 62 的会签/身份校验零回归 |
 | **69（approval LEVEL_UP）** | `PlanHierarchyGateway` 增加父计划查询；`ApprovalNodeResolver.LEVEL_UP` 分支按 `parentPlanNo` 取用户；`TerminalLevel` 边界；补测试 | 4–6 | 有父计划取父级成员、无父计划 fail-closed 回退、`TerminalLevel` 到顶不越级 |
 
 **顺序**：66 → 67 → 68 → 69 串行（契约→供给→消费→层级）。每批独立 TDD、全仓验证、台账、自动提交推送；**Stub 保留兜底**，任一中间批次不破坏 annuity E2E。

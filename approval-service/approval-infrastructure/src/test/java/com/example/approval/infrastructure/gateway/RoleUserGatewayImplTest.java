@@ -1,7 +1,10 @@
 package com.example.approval.infrastructure.gateway;
 
+import com.example.auth.api.PlanDirectoryApi;
 import com.example.auth.api.RoleUserQueryApi;
+import com.example.auth.api.dto.PlanMembersResponse;
 import com.example.auth.api.dto.RoleUserBatchResponse;
+import com.example.auth.api.query.ListPlanMembersRequest;
 import com.example.auth.api.query.ListRoleUsersRequest;
 import com.example.core.types.PlanNo;
 import com.example.core.types.UserNo;
@@ -22,18 +25,21 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * 批次 60：{@code RoleUserGatewayImpl} 接入 auth-api 的批量角色查询与 fail-closed 降级。
+ * 批次 60/68：{@code RoleUserGatewayImpl} 接入 auth-api 的角色查询与计划成员查询，
+ * 以及 fail-closed 降级。
  */
-@DisplayName("角色用户网关接入 auth-api（批次 60）")
+@DisplayName("角色用户网关接入 auth-api（批次 60/68）")
 class RoleUserGatewayImplTest {
 
   private RoleUserQueryApi roleUserQueryApi;
+  private PlanDirectoryApi planDirectoryApi;
   private RoleUserGatewayImpl gateway;
 
   @BeforeEach
   void setUp() {
     roleUserQueryApi = mock(RoleUserQueryApi.class);
-    gateway = new RoleUserGatewayImpl(roleUserQueryApi);
+    planDirectoryApi = mock(PlanDirectoryApi.class);
+    gateway = new RoleUserGatewayImpl(roleUserQueryApi, planDirectoryApi);
   }
 
   @Test
@@ -77,8 +83,42 @@ class RoleUserGatewayImplTest {
   }
 
   @Test
-  @DisplayName("getUsersInSamePlan 仍为未接线 stub（无消费方）")
-  void getUsersInSamePlan_stillStub() {
-    assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), UserNo.of("U-1"))).isEmpty();
+  @DisplayName("同计划成员映射响应并把 planNo / excludeUserNo 透传给 /members")
+  void getUsersInSamePlan_mapsResponseAndPassesRequest() {
+    when(planDirectoryApi.listMembers(any())).thenReturn(ApiResult.success(
+      new PlanMembersResponse(List.of("U-1", "U-2"))));
+
+    List<UserNo> result = gateway.getUsersInSamePlan(PlanNo.of("P-1"), UserNo.of("U-INIT"));
+
+    assertThat(result).containsExactly(UserNo.of("U-1"), UserNo.of("U-2"));
+    ArgumentCaptor<ListPlanMembersRequest> captor =
+      ArgumentCaptor.forClass(ListPlanMembersRequest.class);
+    verify(planDirectoryApi).listMembers(captor.capture());
+    assertThat(captor.getValue().planNo()).isEqualTo("P-1");
+    assertThat(captor.getValue().excludeUserNo()).isEqualTo("U-INIT");
+  }
+
+  @Test
+  @DisplayName("计划号为 null 时短路，不发起跨服务调用")
+  void getUsersInSamePlan_nullPlanSkipsCall() {
+    assertThat(gateway.getUsersInSamePlan(null, UserNo.of("U-INIT"))).isEmpty();
+    verifyNoInteractions(planDirectoryApi);
+  }
+
+  @Test
+  @DisplayName("/members 返回 null 时 fail-closed 返回空")
+  void getUsersInSamePlan_failsClosedOnNullResponse() {
+    when(planDirectoryApi.listMembers(any())).thenReturn(null);
+
+    assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), null)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("/members 抛异常时 fail-closed 返回空")
+  void getUsersInSamePlan_failsClosedOnException() {
+    when(planDirectoryApi.listMembers(any()))
+      .thenThrow(new IllegalStateException("auth down"));
+
+    assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), null)).isEmpty();
   }
 }

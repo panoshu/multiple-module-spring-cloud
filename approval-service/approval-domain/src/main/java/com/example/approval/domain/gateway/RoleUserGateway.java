@@ -29,14 +29,16 @@ public interface RoleUserGateway {
   Map<String, List<UserNo>> getUsersByRoles(List<String> roleIds, PlanNo planNo);
 
   /**
-   * 获取同一计划下的用户列表（排除指定用户）。
+   * 获取同一计划下的用户列表并排除指定用户（批次 68 接线）。
    * <p>
-   * 当前全仓无消费方（SAME_PLAN / LEVEL_UP 节点解析仍是 TODO），保留为未接线 stub；
-   * 待组织目录接入与 SAME_PLAN 节点立专项时再实现。
+   * 经 auth-api {@code PlanDirectoryApi} 的 {@code /members} 查询：服务端按 PLAN 精确
+   * scope 与 CUSTOMER / PRODUCT 继承匹配，并排除 {@code excludeUser}（发起人本人）。
+   * auth 不可用、响应异常或计划层级数据缺失时应 fail-closed 返回空列表，不回退节点
+   * 配置的审批人，避免把他人任务误展开为 SAME_PLAN 审批人。
    *
-   * @param planId      计划ID
-   * @param excludeUser 要排除的用户
-   * @return 用户列表（当前为空）
+   * @param planId      计划号
+   * @param excludeUser 要排除的用户（发起人，可空）
+   * @return 用户列表
    */
   List<UserNo> getUsersInSamePlan(PlanNo planId, UserNo excludeUser);
 }

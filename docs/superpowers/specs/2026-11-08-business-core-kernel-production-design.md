@@ -2020,3 +2020,13 @@ Application 层按用例拆分：
 - **TDD**：`PlanDirectoryQueryServiceTest` 5 项、`PlanDirectoryControllerTest` 2 项、`InMemoryProductGatewayTest` 5 项，先编译红灯后转绿；修复 Mockito 嵌套 stubbing 与接口 default 方法 mock 返回 null 两处测试陷阱。
 - **验证**：auth-application 51 / auth-infrastructure 161 / auth-adapter 3、架构 17、annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
 - **同步**：清单 #1 与计划文档标注批次 67 完成。**仍未处理**：批次 68（approval SAME_PLAN）、69（LEVEL_UP），#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
+
+### 23.75 批次 68 范围边界（approval SAME_PLAN 节点解析）
+
+- **来源**：`2026-11-14-organization-directory-design.md` §5 批次 68；承接批次 67 供给能力，接线 SAME_PLAN 消费侧。
+- **方案微调（如实记录）**：立项建议「domain 层新增 `PlanHierarchyGateway` 端口」，核实发现 `RoleUserGateway` 已有 `getUsersInSamePlan(PlanNo, UserNo)` SPI 且本身即 domain 层端口、已隔绝 auth-api，故**复用该 SPI 不新建冗余端口**；`PlanHierarchyGateway` 顺延至批次 69（LEVEL_UP 需查父计划，属新增能力）。功能与立项一致。
+- **实现**：`RoleUserGatewayImpl` 新增 `PlanDirectoryApi` 依赖并实现 `getUsersInSamePlan`（调 `/members`、响应映射、null/异常/失败 fail-closed）；`ApprovalNodeResolver.SAME_PLAN` 分支改为按 `instance.initiatorPlan()` 查同计划成员，以 `instance.createdBy()` 作为发起人排除，缺计划 fail-closed 返回空（不再回退 `node.approverIds()`）；`RoleUserGateway` javadoc 去掉「未接线 stub」描述。
+- **TDD**：`ApprovalNodeResolverTest` +2、`RoleUserGatewayImplTest` 把「仍是 stub」断言替换为 4 项实现测试，先红（domain 2 项断言失败）后绿；approval-domain 95、approval-infrastructure 33 全绿，批次 62 会签/身份校验零回归。
+- **验证**：架构 17、annuity E2E 8、全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
+- **运行时边界**：`PlanDirectoryApi` 客户端 bean 由 approval-starter 的 `@HttpExchange` 扫描装配，单测不覆盖端到端 HTTP（与 §23.66/#12 一致）；auth 未接入时 `/members` 返回空，SAME_PLAN fail-closed 不展开审批人。
+- **同步**：清单 #2 与计划文档标注批次 68 完成。**仍未处理**：批次 69（approval LEVEL_UP）、#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。

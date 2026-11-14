@@ -66,14 +66,17 @@ public class ApprovalNodeResolver {
     NodeType nodeType = node.nodeType();
 
     if (nodeType == NodeType.SAME_PLAN) {
-      // 同方案审批：获取同一计划下的用户
-      // 这里需要从实例中获取发起人方案
+      // 同计划审批：按发起人计划查同计划成员，并排除发起人本人
       String initiatorPlan = instance.initiatorPlan();
-      if (initiatorPlan != null) {
-        // TODO: 需要根据方案ID查询用户
-        // 暂时返回节点配置的用户列表
-        return node.approverIds();
+      if (initiatorPlan == null || initiatorPlan.isBlank()) {
+        return List.of();
       }
+      String initiator = instance.createdBy();
+      UserNo excludeUser = (initiator == null || initiator.isBlank())
+        ? null : UserNo.of(initiator);
+      List<UserNo> users =
+        roleUserGateway.getUsersInSamePlan(PlanNo.of(initiatorPlan), excludeUser);
+      return users == null ? List.of() : users;
     }
 
     if (nodeType == NodeType.LEVEL_UP) {
