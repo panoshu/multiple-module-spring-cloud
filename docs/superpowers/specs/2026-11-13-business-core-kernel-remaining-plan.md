@@ -285,7 +285,7 @@
 - 背景：批次 36b/37b/37c 每次改 kernel 表都要临时解冻 annuity 同步 3 份复制 DDL，用户确认按「完全解耦」方案消除根因。
 - 方案：kernel 表定义只保留在 kernel 模块（PG/MySQL/H2 三份同模块），annuity 不再持有任何副本；annuity E2E 通过 `schema-locations` 组合加载 kernel H2 + 自有 H2。
 - 拆分：**40-1**（H2 测试链路：kernel 新增唯一命名 `schema-kernel-h2.sql`、annuity H2 缩减重命名、配置组合加载）+ **40-2**（PG/MySQL 部署脚本删除 kernel 表段落改为指引注释、清理过时注释、台账收口）。
-- 状态：**40-1 已完成**（设计文档 §23.47），40-2 待推进。
+- 状态：**全部完成**（设计文档 §23.47）。40-1 完成 H2 测试链路解耦（kernel H2 唯一定义 + annuity 组合加载 + 修正 request_no 列宽漂移）；40-2 完成 PG/MySQL 部署脚本解耦并清理 kernel 双库过时注释。annuity 不再持有任何 kernel 表副本，反复解冻的根因消除；部署流程改为「先执行 kernel 的 schema-*.sql，再执行 annuity 自有表脚本」，需 DBA 知悉。
 
 ---
 

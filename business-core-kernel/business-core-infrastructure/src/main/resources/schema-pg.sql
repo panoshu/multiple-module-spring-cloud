@@ -1,14 +1,22 @@
 -- =============================================================================
 -- business-core-kernel - PostgreSQL Schema
 -- =============================================================================
--- 三张表对应 kernel 的三个聚合根：
---   t_business_application  ←  BusinessApplication
---   t_business_batch        ←  BusinessBatch
---   t_business_form         ←  BusinessForm
+-- kernel 通用表的唯一权威定义（PostgreSQL）。MySQL 变体见 schema-mysql.sql，
+-- H2 测试变体见 schema-kernel-h2.sql（供依赖 kernel 的业务服务 E2E 组合加载）。
+-- 新增或修改表时三处须同步，业务服务不再持有副本。
+--
+-- 表清单：
+--   t_business_application           ←  BusinessApplication
+--   t_business_batch                 ←  BusinessBatch
+--   t_business_form                  ←  BusinessForm
+--   t_business_step_execution        ←  StepExecution
+--   t_business_external_interaction  ←  ExternalInteraction
+--   t_business_event_receipt         ←  事件消费回执
+--   t_id_generator                   ←  shared-id-starter 号段表
 --
 -- 设计要点：
 --   1. BusinessContext / OperatorInfo 拍平为独立列，便于 SQL 查询和索引
---   2. businessExtension 使用 JSONB 存储多态值对象
+--   2. 业务扩展数据由业务服务自有存储承载，不在核心表持久化
 --   3. 主键 id 由应用层通过 shared-id-starter 生成（ULID），禁用自增
 --   4. 通用字段 created_by/create_time/updated_by/update_time/deleted/version 齐备
 --   5. createTime/updateTime 由应用层管理，不使用 ORM 自动填充

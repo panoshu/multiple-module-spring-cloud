@@ -1161,7 +1161,9 @@ Application 层按用例拆分：
 
 | 批次 39-2 | `beddf211` | **§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表**（计划批次 39 收口，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationFixtures` 共享夹具与 `FinalAcceptanceContractTest` 4 项（新业务只加定义+SPI、定义升级不影响在途 v1 实例、步骤执行历史可审计、重复回调不重复跃迁）；台账补 §23.46 最终验收核对表，把 §21.1–§21.5 共 30 条标准逐条映射到已有/新增测试并如实标注 4 类偏差；阶段 0–5 全部收口 | 新增验收测试 4 项（两验收类合计 11 项全绿）；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
-| 批次 40-1 | 本次（未提交） | **annuity 复制 DDL 解耦 · H2 测试链路**（规格收口后的追加批次，经用户确认「完全解耦」方案）：`business-core-infrastructure` 新增唯一命名资源 `schema-kernel-h2.sql`，承接原 annuity H2 里的 7 张 kernel 表定义并修正 `t_business_external_interaction.request_no` 列宽漂移 64→128；annuity 的 `schema-h2.sql` 缩减并重命名为 `schema-annuity-h2.sql`，只保留 `sys_event_*` 与 2 张年金自有表；`application-test.yml` 的 `schema-locations` 改为组合加载两个 H2 资源 | annuity E2E 6 全绿（验证 7 张 kernel 表由新资源创建、组合加载生效）；全仓 `test-compile`、`git diff --check` 通过；annuity H2 仅剩 4 张表、kernel H2 含 7 张表 |
+| 批次 40-1 | `f6aded21` | **annuity 复制 DDL 解耦 · H2 测试链路**（规格收口后的追加批次，经用户确认「完全解耦」方案）：`business-core-infrastructure` 新增唯一命名资源 `schema-kernel-h2.sql`，承接原 annuity H2 里的 7 张 kernel 表定义并修正 `t_business_external_interaction.request_no` 列宽漂移 64→128；annuity 的 `schema-h2.sql` 缩减并重命名为 `schema-annuity-h2.sql`，只保留 `sys_event_*` 与 2 张年金自有表；`application-test.yml` 的 `schema-locations` 改为组合加载两个 H2 资源 | annuity E2E 6 全绿（验证 7 张 kernel 表由新资源创建、组合加载生效）；全仓 `test-compile`、`git diff --check` 通过；annuity H2 仅剩 4 张表、kernel H2 含 7 张表 |
+
+| 批次 40-2 | 本次（未提交） | **annuity 复制 DDL 解耦 · PG/MySQL 部署脚本收口**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表，头部改为「先执行 kernel 的 schema-*.sql」部署顺序指引；kernel 双库头部清理 37b 后残留的 `businessExtension/JSONB` 过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。**批次 40 全部完成**，annuity 不再持有任何 kernel 表副本 | 全仓 `mvn clean install -DskipTests` 后 annuity E2E 6 全绿（排除旧构建产物干扰，确认组合加载真实生效）；kernel domain 174 / application 216 / infra 87 / adapter 13 / 架构 7 全绿；全仓 `test-compile`、`git diff --check` 通过；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各 7 张表 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1663,7 +1665,7 @@ Application 层按用例拆分：
   2. §21.4 六条架构不变量未全部机器化；`ArchitectureInvariantTest` 覆盖的是 demo-shared/网关/BFF 方向，kernel 分层纯净性与 CQE 化未做 ArchUnit 断言。
   3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
   4. `CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被监听器消费（监听器统一传 `SUCCEEDED`/`FAILED`，驳回/撤回由 `advanceByApprovalResult` 终止语义处理）。
-- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 启动，见 §23.47**。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 全部完成，见 §23.47**。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
 
@@ -1674,4 +1676,8 @@ Application 层按用例拆分：
 - **顺带修正漂移**：批次 36 只改了 kernel 双库的 `request_no` 列宽到 128，annuity 复制 H2 仍是 `VARCHAR(64)`；新 kernel H2 以 kernel 权威定义为准改为 128，消除该漂移。
 - **零行为变更保证**：7 张表的 H2 定义按 annuity 原 H2 段落原样搬入（保留 H2 兼容写法：`deleted INT DEFAULT 0`、时间戳 `DEFAULT CURRENT_TIMESTAMP`），仅列宽放宽；表数量与索引一一对应，E2E 无需改动。
 - **验证**：annuity E2E 6 全绿（E2E 断言查询 `t_business_external_interaction` / `t_business_step_execution`，绿灯即证明 kernel H2 资源被组合加载）；全仓 `test-compile`、`git diff --check` 通过；`grep CREATE TABLE` 核对 annuity 4 张 / kernel 7 张，无重复无遗漏。
-- **仍未处理**：40-2——annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落、改为「先执行 kernel 的 schema-*.sql」指引；清理 kernel PG DDL 残留的过时注释；台账收口。
+- **40-2 实现**：annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落（含索引与 COMMENT），只保留 2 张年金自有表；头部改为部署顺序指引「先执行 `business-core-infrastructure` 的 `schema-pg.sql` / `schema-mysql.sql`，再执行本文件」。kernel 双库头部清理 37b 移除 `business_extension` 后残留的「三张表 / businessExtension 使用 JSONB」过时注释，补齐 7 张表清单与「PG/MySQL/H2 三处同步」说明。
+- **部署流程变化**（需 DBA 知悉）：annuity 生产建库不再是单文件，必须按 kernel 优先的两步顺序执行；H2 E2E 由 Spring `schema-locations` 自动按同顺序组合加载，无需人工干预。
+- **验证**：先 `mvn clean install -DskipTests` 清除 `target/` 里残留的旧 DDL 产物，再跑 annuity E2E 6 全绿，确认组合加载真实生效、无旧文件兜底；kernel 全模块与架构测试全绿；源码 grep 确认 annuity 3 份 DDL 仅剩自有表、kernel 三份各含 7 张表定义。
+- **收口结论**：**批次 40 全部完成**——kernel 表定义只存在于 `business-core-infrastructure`（PG / MySQL / H2 三份同模块），annuity 3 份 DDL 只含年金自有表与事件存储表，不再持有任何 kernel 表副本。此前批次 36b/37b/37c 反复「临时解冻 annuity 同步 DDL」的根因消除；后续 kernel 改表只需改 kernel 模块内三处，annuity 无需解冻。
+- **仍未处理**：无（本批次为规格收口后的追加解耦任务）。其余阶段 5 遗留项见 §23.46。
