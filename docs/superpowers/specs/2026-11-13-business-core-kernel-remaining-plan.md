@@ -263,8 +263,9 @@
 - **拆分（实测影响面 20+ 文件，设计文档 §23.39）**：
   - 37a：`planMaterials`/`packageFile` → 可选材料能力 `ApplicationMaterialState`（内存态，零 DDL、零 annuity 改动）。**已完成**（反射契约锁 + 7 项值对象测试）。
   - 37b：`BusinessExtension` → annuity 业务服务自有聚合（需新增 annuity 存储、改 3 处业务读取点、移除 kernel DO 列与 5 份 DDL）。
-  - 37c：`parsedJsonFileId` → `ExternalInteraction`（需改摄入 Action/`requireFileForParsing`/详情响应/E2E 事件构造，移除 DO 列与 5 份 DDL）。
-- 状态：37a、37b 已完成（§23.39 / §23.40），仅 37c（`parsedJsonFileId`）待推进。
+  - 37c-1：解析文件引用写入侧（kernel SPI + annuity 自有实现 + 表单裂变保存），**已完成**（§23.41）。时序上摄入步骤早于 `ExternalInteraction` 创建，故不落到规格原建议的协作记录，改用 37b 同构的业务服务自有存储。
+  - 37c-2：读取侧改从 SPI 读，移除 `parsedJsonFileId` 字段/`requireFileForParsing`/`createFromForm` 参数、DO 列与 5 份 DDL 列/索引/COMMENT，改 7 处调用点与 E2E。
+- 状态：37a、37b、37c-1 已完成（§23.39 / §23.40 / §23.41），仅 37c-2 待推进。
 
 #### 批次 38 — starter 显式接入与生产 fail-fast（§14）
 - 目标：显式接入 web/cache/logging/permission，生产配置缺失 fail-fast；MDC 统一携带。

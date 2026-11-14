@@ -7,6 +7,7 @@ import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
@@ -46,6 +47,7 @@ public class BusinessFormAppService {
   private final FileIntegrationGateway fileIntegrationGateway;
   private final IdService idService;
   private final ProcessDefinitionGateway processDefinitionGateway;
+  private final ParsedFileReferenceGateway parsedFileReferenceGateway;
 
   /**
    * 步骤 1：确认文件已上传 (由 BFF 层调用)
@@ -118,6 +120,8 @@ public class BusinessFormAppService {
       );
 
       applicationRepository.save(newApp);
+      // 解析后的明细 JSON 文件引用按 applicationId 交给业务服务自有存储（§6.2，批次 37c-1）
+      parsedFileReferenceGateway.save(newApp.id(), result.jsonFileId());
     }
     if (batch != null) {
       batchRepository.save(batch);

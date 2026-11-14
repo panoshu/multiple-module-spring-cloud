@@ -10,6 +10,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.AccountMa
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
@@ -65,6 +66,7 @@ class BusinessFormAppServiceTest {
   private FileIntegrationGateway fileIntegrationGateway;
   private IdService idService;
   private ProcessDefinitionGateway processDefinitionGateway;
+  private ParsedFileReferenceGateway parsedFileReferenceGateway;
   private BusinessFormAppService appService;
 
   @BeforeEach
@@ -76,11 +78,12 @@ class BusinessFormAppServiceTest {
     fileIntegrationGateway = mock(FileIntegrationGateway.class);
     idService = mock(IdService.class);
     processDefinitionGateway = mock(ProcessDefinitionGateway.class);
+    parsedFileReferenceGateway = mock(ParsedFileReferenceGateway.class);
     when(processDefinitionGateway.loadLatest(any()))
       .thenReturn(Optional.of(definitionWith(BatchMode.REQUIRED)));
     appService = new BusinessFormAppService(
       formRepository, applicationRepository, batchRepository, configGateway,
-      fileIntegrationGateway, idService, processDefinitionGateway
+      fileIntegrationGateway, idService, processDefinitionGateway, parsedFileReferenceGateway
     );
   }
 
@@ -116,6 +119,26 @@ class BusinessFormAppServiceTest {
 
     assertThat(result).isSameAs(form);
     verify(formRepository).loadOrThrow(FORM_ID);
+  }
+
+  @Test
+  @DisplayName("解析结果按 applicationId 保存明细 JSON 文件引用（§6.2，批次 37c-1）")
+  void handleParsingResult_savesParsedFileReferences() {
+    BusinessBatch batch = newBatch();
+    BusinessForm form = mockForm(batch.id());
+    when(formRepository.loadOrThrow(FORM_ID)).thenReturn(form);
+    when(batchRepository.loadOrThrow(batch.id())).thenReturn(batch);
+    when(idService.nextId(ApplicationId.class, ""))
+      .thenReturn(new ApplicationId("APP-1"), new ApplicationId("APP-2"));
+    List<ParsedPlanResult> results = List.of(
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1),
+      new ParsedPlanResult(PlanNo.of("PLAN-2"), new FileId("JSON-2"), 2)
+    );
+
+    appService.handleParsingResult(FORM_ID, results);
+
+    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-1"), new FileId("JSON-1"));
+    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-2"), new FileId("JSON-2"));
   }
 
   @Test
