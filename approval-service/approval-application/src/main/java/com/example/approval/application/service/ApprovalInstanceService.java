@@ -16,6 +16,7 @@ import com.example.approval.domain.valueobject.FlowVersion;
 import com.example.approval.domain.valueobject.NodeOrder;
 import com.example.approval.domain.valueobject.RejectTarget;
 import com.example.approval.types.ApprovalInstanceId;
+import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
@@ -258,9 +259,38 @@ public class ApprovalInstanceService {
    */
   @Transactional(readOnly = true)
   public PageData<PendingApprovalDTO> listMyPendingApprovals(ListMyPendingApprovalsRequest request) {
-    // TODO: 实现待审批列表查询逻辑
-    // 这里需要根据审批人和状态查询待审批的实例列表
-    throw new UnsupportedOperationException("待实现待审批列表查询逻辑");
+    UserNo approver = UserNo.of(request.approver());
+    List<ApprovalInstance> candidates = instanceRepository.findByStatuses(
+      List.of(InstanceStatus.PENDING, InstanceStatus.APPROVING));
+
+    List<PendingApprovalDTO> matched = new ArrayList<>();
+    for (ApprovalInstance instance : candidates) {
+      Optional<ApprovalFlow> flow = flowRepository.load(instance.flowId());
+      if (flow.isEmpty()) {
+        continue;
+      }
+      Optional<ApprovalNode> node = flow.get().getNode(instance.currentNodeOrder());
+      // 节点审批人配置在静态 flow 定义中；角色审批需 RoleUserGateway（暂无提供方），本版只认指定用户
+      if (node.isEmpty() || !node.get().isSpecifiedUserApproval()
+        || !node.get().approverIds().contains(approver)) {
+        continue;
+      }
+      matched.add(new PendingApprovalDTO(
+        instance.id(),
+        instance.businessApplicationId().value(),
+        instance.businessType(),
+        flow.get().flowName().value(),
+        node.get().nodeType().name(),
+        instance.createdBy(),
+        instance.createdAt()));
+    }
+
+    int total = matched.size();
+    int start = request.pagination().startPos();
+    int end = Math.min(start + request.pagination().pageSize(), total);
+    List<PendingApprovalDTO> items = start >= total ? List.of() : matched.subList(start, end);
+    boolean hasMore = end < total;
+    return new PageData<>(total, start, items.size(), hasMore, items);
   }
 
   /**

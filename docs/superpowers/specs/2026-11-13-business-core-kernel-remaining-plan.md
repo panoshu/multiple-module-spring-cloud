@@ -346,7 +346,11 @@
 
 #### 批次 54 — P3-1 能力 B 实现 listApprovalFlows
 - 范围：`ApprovalFlowRepository` 新增按条件分页查询，`ApprovalFlowService.listApprovalFlows` 复用 `convertToDTO` 组装 `PageData`；补仓储/应用测试。
-- 状态：**完成**（设计文档 §23.61）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/12/23、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。能力 C（批次 55）待 §6 开放点确认。
+- 状态：**完成**（设计文档 §23.61）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/12/23、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。
+
+#### 批次 55 — P3-1 能力 C 实现 listMyPendingApprovals（最小可用版本）
+- 范围：评估后按立项方案 §4 推荐落地——删除死接口 `findByApproverId`，新增 `findByStatuses`（DB STATUS IN 走索引），应用层按节点 `approverIds` 过滤 + 内存分页 + 组装 DTO；只支持 `SPECIFIED_USER` 节点。
+- 状态：**完成**（设计文档 §23.62）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/16/25、annuity E2E 10、全仓 test-compile 全绿；零 DDL、零契约变更。开放点 ④（approver 越权，BREAKING CHANGE 需同步 BFF）与角色审批仍为遗留。
 
 ---
 

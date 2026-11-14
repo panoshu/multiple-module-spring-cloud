@@ -5,8 +5,8 @@ import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.repository.Repository;
 import com.example.core.types.ApplicationId;
-import com.example.core.types.UserNo;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,11 +48,14 @@ public interface ApprovalInstanceRepository extends Repository<ApprovalInstance,
   Optional<ApprovalInstance> findByRequestNo(String requestNo);
 
   /**
-   * 根据审批人ID和状态查找审批实例列表
+   * 按状态批量查询审批实例（批次 55，P3-1 能力 C）。
+   * <p>
+   * 待审批列表需按「当前节点审批人」过滤，而该信息在静态审批流节点定义中、
+   * 实例表无审批人字段，无法在 DB 侧直接过滤；故仓储只按状态取出活跃实例，
+   * 由应用层结合节点定义过滤并内存分页。走 {@code idx_approval_instance_status} 索引。
    *
-   * @param approverId 审批人ID
-   * @param status     实例状态
-   * @return 审批实例列表
+   * @param statuses 状态集合（空集合直接返回空列表）
+   * @return 匹配状态的审批实例列表（按创建时间降序）
    */
-  List<ApprovalInstance> findByApproverId(UserNo approverId, InstanceStatus status);
+  List<ApprovalInstance> findByStatuses(Collection<InstanceStatus> statuses);
 }

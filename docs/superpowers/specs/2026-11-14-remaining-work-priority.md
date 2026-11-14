@@ -34,7 +34,7 @@
 
 ## 3. 优先级清单
 
-> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-2 ✅ 已完成（批次 47，§23.54，用户解冻 annuity）；P0-3 ✅ 已核查并机器化（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）；P1-3 ✅ 已完成（批次 45）——**P0/P1 全部清空**；批次 48 修正 P0-2 评估时发现的 fail-fast 开关语义缺陷（§23.55，清单外配套项）；**P2 专项方案已采纳且 49→50 全部完成**（见 `2026-11-14-p2-special-plan.md`）：批次 49 §21.4 规格修订（§23.56）、批次 50 向前 ArchUnit 约束（§23.57）；P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓；**批次 51 回补 §21.4 第 4 条 Adapter 构造边界**（§23.58，部分机器化、字面张力如实标注）；**批次 52 完成 P3-2 复核（属性命名空间统一，§23.59）**；**P3-1 能力 A/B 已完成**（批次 53/54，§23.60/§23.61）、能力 C 待 6 个开放点确认（见 `2026-11-14-p3-approval-stub-cross-service-design.md`）；P3-3 维持记录。
+> **推进状态**：P0-1 ✅ 已修复（批次 45，§23.52）；P0-2 ✅ 已完成（批次 47，§23.54，用户解冻 annuity）；P0-3 ✅ 已核查并机器化（批次 45）；P1-1 / P1-2 ✅ 已完成（批次 46，§23.53）；P1-3 ✅ 已完成（批次 45）——**P0/P1 全部清空**；批次 48 修正 P0-2 评估时发现的 fail-fast 开关语义缺陷（§23.55，清单外配套项）；**P2 专项方案已采纳且 49→50 全部完成**（见 `2026-11-14-p2-special-plan.md`）：批次 49 §21.4 规格修订（§23.56）、批次 50 向前 ArchUnit 约束（§23.57）；P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓；**批次 51 回补 §21.4 第 4 条 Adapter 构造边界**（§23.58，部分机器化、字面张力如实标注）；**批次 52 完成 P3-2 复核（属性命名空间统一，§23.59）**；**P3-1 能力 A/B/C 全部完成**（批次 53/54/55，§23.60/§23.61/§23.62，见 `2026-11-14-p3-approval-stub-cross-service-design.md`）；能力 C 为最小可用版本，角色审批 / approver 越权 / `RoleUserGatewayImpl` stub 列为遗留；P3-3 维持记录。
 
 ### P0 — 上线前必做（正确性 / 安全）
 
@@ -69,7 +69,7 @@
 
 | # | 项 | 核实结论 | 处置 |
 |---|---|---|---|
-| P3-1 | approval-service stub | 实际 **3 个**（清单原写 2 个）：`ApprovalFlowService.listApprovalFlows`、`ApprovalInstanceService.listMyPendingApprovals` 抛 `UnsupportedOperationException`，`getApprovalHistory` 返回 `List.of()`；**新发现 2 个隐藏 stub**（`ApprovalInstanceRepositoryImpl.findByApproverId`、`RoleUserGatewayImpl`）与 1 个越权风险（approver 由请求体透传、无当前登录人校验） | **已单独立项**（见 `2026-11-14-p3-approval-stub-cross-service-design.md`）：跨服务边界核实为 kernel 零改动、消费方 intranet-bff；拆批次 53/54/55——**能力 A 已由批次 53 完成（§23.60）、能力 B 已由批次 54 完成（§23.61）**，**能力 C 待 6 个开放点确认，确认前不开工** |
+| P3-1 | approval-service stub | 实际 **3 个**（清单原写 2 个）：`ApprovalFlowService.listApprovalFlows`、`ApprovalInstanceService.listMyPendingApprovals` 抛 `UnsupportedOperationException`，`getApprovalHistory` 返回 `List.of()`；**新发现 2 个隐藏 stub**（`ApprovalInstanceRepositoryImpl.findByApproverId`、`RoleUserGatewayImpl`）与 1 个越权风险（approver 由请求体透传、无当前登录人校验） | **已单独立项**（见 `2026-11-14-p3-approval-stub-cross-service-design.md`）：跨服务边界核实为 kernel 零改动、消费方 intranet-bff；拆批次 53/54/55——**能力 A/B/C 已由批次 53/54/55 完成**（§23.60/§23.61/§23.62）——3 个 service stub 全部清零；能力 C 为**最小可用版本**，仅支持 `SPECIFIED_USER` 节点，角色审批与 approver 越权（BREAKING CHANGE 需同步 BFF）仍为遗留 |
 | P3-2 | kernel `@ConditionalOnProperty` 清单复核 | 原记「无实际问题」**不成立**：5 个 Controller 用遗留 `core-kernel.controllers.enabled`，validator（`core.kernel.production.fail-fast`）/ recovery（`core.kernel.recovery.enabled`）用点分隔前缀，同模块两套命名空间；全仓无 yml 显式配置这些键 | ✅ **已由批次 52 修复并机器化**（§23.59）：统一为 `core.kernel.controllers.enabled`，新增 ArchUnit 契约禁止遗留前缀，同步 4 处文档引用 |
 | P3-3 | MDC 键常量抽取 | kernel 4 键（`applicationId`/`stepExecutionId`/`requestNo`/`businessType`）仅编排器 + 其测试读写；shared-web-core 用 `traceId` 与配置别名，键不重叠，「多组件读写同组键」未发生 | **保持记录**（§23.44 已知边界：过早抽象），触发条件不变 |
 
