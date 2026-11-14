@@ -18,8 +18,8 @@
 
 | # | 项 | 来源 | 当前代码核实（2026-11-14） | 建议 |
 |---|---|---|---|---|
-| 1 | **组织目录真实接入** | §23.59/§23.61/§23.69 | `ProductGateway` 仅 `StubProductGateway`；`PlanReachabilityService.listAssignmentsForPlan` 生产不可用；CUSTOMER/PRODUCT/GLOBAL 继承展开不支持，角色审批仅 `SPECIFIED_ROLE` + PLAN 精确 scope | 需真实组织目录服务，属跨服务新契约，单独立项 |
-| 2 | **SAME_PLAN / LEVEL_UP 节点解析** | §23.67/§23.69 | `ApprovalNodeResolver` 两个分支仍是 TODO（回退 `node.approverIds()`）；`RoleUserGatewayImpl.getUsersInSamePlan` 仍为未接线 stub（全仓无消费方） | 与 #1 一并立项；当前框架视角下「无调用方」可接受，但节点语义不完整 |
+| 1 | **组织目录真实接入** | §23.59/§23.61/§23.69 | `ProductGateway` 仅 `StubProductGateway`；`PlanReachabilityService.listAssignmentsForPlan` 生产不可用；CUSTOMER/PRODUCT/GLOBAL 继承展开不支持，角色审批仅 `SPECIFIED_ROLE` + PLAN 精确 scope | **已单独立项**（`2026-11-14-organization-directory-design.md`）：核实发现领域模型/ACL 端口齐备、仓库外无真实主数据系统；方案为契约 + 可替换内存实现，分批次 66–69，待 §6 开放点确认后开工 |
+| 2 | **SAME_PLAN / LEVEL_UP 节点解析** | §23.67/§23.69 | `ApprovalNodeResolver` 两个分支仍是 TODO（回退 `node.approverIds()`）；`RoleUserGatewayImpl.getUsersInSamePlan` 仍为未接线 stub（全仓无消费方） | 与 #1 合并立项（同一文档批次 68/69）；节点解析结果经批次 62 主链路直接进入身份校验与会签判断，语义敏感 |
 | 3 | **`Map<String,Object>` 业务扩展字段强类型化** | P2-1 / §23.46 | kernel domain/application 约 30 处 SPI（全仓含测试/局部变量共 72 行命中）：`FormParsingConfig.splitRules`、`StepExtensionConfig.params`、`BusinessMetaContext.extensionFacts`、`ExtensionExecutionResult.mutations`、`StepExtensionAction.execute` 等 | P2 专项方案已判定**降级关闭**：动态 Map 是通用编排引擎承载业务线自定义配置/事实的正确设计，强类型化会把业务 schema 固化进 kernel。仅补设计说明，不改代码 |
 | 4 | **多进程 + 真实 Redis 分布式锁 + 真实 DB 并发集成测试** | P2-4 / §23.50 / §21.5 核对表 | 批次 43 的 `ConcurrentAdvanceAcceptanceTest`/`OptimisticLockConcurrencyTest` 是进程内状态化 fake 的确定性并发；无真实 Redis/多 JVM 集成 | **暂缓**：需集成测试环境（Docker + Redis + 多 JVM），核心不变量已有契约测试 |
 | 5 | **annuity 自有存储改持久化聚合** | P2-3 / §23.40/§23.42 | `InMemoryAnnuityApplicationExtensionStore` 与 `InMemoryParsedFileReferenceGateway` 仍是 `ConcurrentHashMap` | **wontfix**：annuity 是冻结的早期示例服务，进程内态满足 E2E；仅当转真实业务服务时再做 |
