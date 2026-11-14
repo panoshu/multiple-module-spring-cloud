@@ -1159,7 +1159,7 @@ Application 层按用例拆分：
 
 | 批次 39-1 | `0b90782b` | **§21.3 外部协作验收组合测试**（计划批次 39 首个切片，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationAcceptanceTest`，用真实领域聚合 + mock 仓储/网关串起 7 条故障→状态→恢复→闭环链路——明确失败进入 FAILED 且可 `RETRY_WAIT` 重派、超时滞留 DISPATCHING 回收 UNKNOWN 且禁止未对账重派、响应丢失后按 requestNo 补发回调闭环 UNKNOWN、服务重启凭持久化状态恢复派发与对账、审批通过/驳回/撤回分别落到 SUCCEEDED/FAILED/FAILED（补齐撤回缺口）、文件 PARTIAL 保留失败明细且只推进一次 FAILED 不推进 | 新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
-| 批次 39-2 | 本次（未提交） | **§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表**（计划批次 39 收口，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationFixtures` 共享夹具与 `FinalAcceptanceContractTest` 4 项（新业务只加定义+SPI、定义升级不影响在途 v1 实例、步骤执行历史可审计、重复回调不重复跃迁）；台账补 §23.46 最终验收核对表，把 §21.1–§21.5 共 30 条标准逐条映射到已有/新增测试并如实标注 4 类偏差；阶段 0–5 全部收口 | 新增验收测试 4 项（两验收类合计 11 项全绿）；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
+| 批次 39-2 | `beddf211` | **§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表**（计划批次 39 收口，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationFixtures` 共享夹具与 `FinalAcceptanceContractTest` 4 项（新业务只加定义+SPI、定义升级不影响在途 v1 实例、步骤执行历史可审计、重复回调不重复跃迁）；台账补 §23.46 最终验收核对表，把 §21.1–§21.5 共 30 条标准逐条映射到已有/新增测试并如实标注 4 类偏差；阶段 0–5 全部收口 | 新增验收测试 4 项（两验收类合计 11 项全绿）；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
