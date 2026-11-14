@@ -185,9 +185,8 @@ Every use case follows: load aggregate → invoke behavior method → `repositor
 
 ## Known Gaps
 
-- `business-core-api` is empty (placeholder for cross-service DTOs).
-- `business-core-adapter` has no code (controllers provided by business service adapters).
-- `BusinessConfigGateway` and `FileIntegrationGateway` have no default implementations in kernel — each business service must implement them.
+- `business-core-api` now contains `@HttpExchange` APIs, CQE objects and DTOs (e.g. `BusinessProgressApi`, `AdvanceStepCommand`); `business-core-adapter` provides controllers, MapStruct converters and auto-configuration.
+- `BusinessConfigGateway` still has no kernel default implementation — each business service must implement it. `FileIntegrationGateway` is provided by kernel's `FileServiceIntegrationGateway` (`@ConditionalOnProperty`, overridable by business services).
 - Several approval-service methods are stubs: `listMyPendingApprovals` throws `UnsupportedOperationException`, `getApprovalHistory` returns empty list, `RoleUserGatewayImpl.getUsersInSamePlan` is a mock.
 
 ## Agent skills

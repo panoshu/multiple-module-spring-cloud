@@ -11,7 +11,7 @@ import java.util.List;
  * 出站文件生成完成领域事件。
  * <p>
  * 当 file-service 完成所有 SubTaskData 的出站 Excel 生成后发布此事件，
- * 由 kernel 的 OutboundFileEventListener 消费，推进 BusinessApplication 步骤。
+ * 由 kernel 的 {@code OutboundFileGeneratedEventListener} 消费，推进 BusinessApplication 步骤。
  * <p>
  * 出站粒度为 1:N（每个 SubTaskData 生成一个文件），本事件聚合所有结果。
  */

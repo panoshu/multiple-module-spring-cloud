@@ -1175,6 +1175,8 @@ Application 层按用例拆分：
 
 | 批次 44 | `9fad176a` | **新增不禁用自动推进的独立 E2E**（§23.46 偏差 1 收口）：新增 `AutoAdvanceEnabledEndToEndTest`，刻意不声明 `StepAutoAdvanceListener` 的 `@MockitoBean`（独立 Spring context，断言 `mockingDetails(...).isMock()` 为 false）、用独立 H2 库 `auto_advance_e2e` 与现有 E2E 隔离、`createFromForm` 正常入口建单不预置 DB 记录、一次手动 `advanceStep` 点火后轮询等待 `@Async @TransactionalEventListener(AFTER_COMMIT)` 级联推进 3 个 SYSTEM_TASK 步骤至 USER_TASK（APPROVAL）挂起；断言该申请单步骤执行记录 ≥3。**保留现有 6 项手动推进 E2E 不动**，两边互补。连续 5 次运行全绿 | annuity-starter 全量 7 项（新 1 + 原 6）全绿，日志确认 task-1/2/3 自动级联与 USER_TASK 挂起；kernel domain 174 / application 219 / infra 88 / adapter 13 / 架构 11 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码改动 |
 
+| 批次 45 | 本次（未提交） | **修复重复出站事件监听器**（`2026-11-14-remaining-work-priority.md` P0-1 + P0-3 + P1-3）：新增 `arch-tests/EventListenerUniquenessTest` 2 条契约——同一集成事件 DTO 只允许一个 `@EventListener` 入口、所有集成事件 listener 必须持有 `EventReceiptGateway`（先红：唯一性 2、旧类缺回执）；退役旧 `OutboundFileEventListener` 与死代码 `FlowOrchestrationService.advanceByOutboundFile`，唯一入口改为 `OutboundFileGeneratedEventListener`（含 `tryConsume` + 回调关联 + `NO_CORRELATION` 回退）；更新 file-api/file-domain Javadoc 指向新监听器。P0-3 核查确认所有 `handleXxx`/`onXxx` 入口均经回执；P1-3 更新 CODEBUDDY.md Known Gaps 与 §23.46 过时条目 | `mvn clean install -DskipTests` 后契约测试 2 项全绿；annuity E2E 6 / 自动推进 E2E 1、kernel 全模块、架构测试全绿；全仓 `test-compile`、`git diff --check` 通过 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1676,8 +1678,8 @@ Application 层按用例拆分：
   2. §21.4 架构不变量**部分机器化**：批次 41 的 `KernelLayerArchitectureTest` 已把「domain 框架纯净 / domain 不依赖上层 / application 不依赖 adapter+infra / 跨服务只经 api+types」4 条固化为 ArchUnit 规则（§23.48）；CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条与现状有张力，未机器化。
   3. **已由批次 43 收敛**（§23.50）：`ConcurrentAdvanceAcceptanceTest`（43-1，并发推进幂等）与 `OptimisticLockConcurrencyTest`（43-2，乐观锁写冲突不覆盖新状态）用确定性并发补齐可执行验收。仍如实保留一条边界：这是进程内状态化 fake 的确定性并发，不是多进程 + 真实 Redis 分布式锁 + 真实数据库的集成测试，后者列为阶段 5 遗留。
   4. **已由批次 42 修复**（§23.49）：原描述「枚举值未被监听器消费」有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤执行为 SUCCEEDED 而申请单已被 `rejectApplication`/`withdrawApplication` 终止，审计状态矛盾；现改为显式映射，§21.3「分别进入正确状态」真正落地。
-- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 全部完成，见 §23.47**。
-- **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级；含本次分析新发现的 P0 缺陷「重复出站事件监听器」，以及 4 条过时描述的纠偏）。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、恢复任务事务边界精修、批次扫描按状态索引查询。**已移除/收敛**：`StepDefinition.actionType()` 显式声明核实已完成；增量事件消费端按 eventId 幂等核实主体已完成并由批次 45 补齐入口一致性契约；annuity 复制 DDL 解耦由批次 40 完成（§23.47）；重复出站事件监听器由批次 45 修复（§23.52）。
+- **剩余工作优先级**：见 `2026-11-14-remaining-work-priority.md`（逐项代码核实后按 P0/P1/P2/P3 分级，含纠偏表与批次推进记录）。
 
 ### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
 
@@ -1752,3 +1754,15 @@ Application 层按用例拆分：
 - **验证**：annuity-starter 全量 7 项（新 1 + 原 6）同批运行全绿；kernel domain 174 / application 219 / infra 88 / adapter 13 / 架构 11 全绿；全仓 `test-compile`、`git diff --check` 通过。零生产代码改动。
 - **收口结论**：**§23.46 四项偏差至此全部有处置**——偏差 1 由批次 44 收敛、偏差 2 由批次 41 部分机器化、偏差 3 由批次 43 确定性并发验收、偏差 4 由批次 42 修复。§21.5 第 8 条核对表由 ❌ 更新为 ✅。
 - **仍未处理**：多进程 + 真实 Redis `DistributedLock` + 真实数据库的并发集成测试，以及既有阶段 5 遗留项（见 §23.46）。
+
+### 23.52 批次 45 范围边界（重复出站事件监听器修复）
+
+- **来源**：`2026-11-14-remaining-work-priority.md` 的第一批（P0-1 + P0-3 + P1-3）。P0-1 是制定优先级清单时逐项核实代码**新发现**、台账未记录的生产缺陷。
+- **缺陷**：`OutboundFileEventListener`（旧，2026-10-29）与 `OutboundFileGeneratedEventListener`（新，阶段 C 导出闭环）同为 `@Component` + `@EventListener`，监听同一 `OutboundFileGeneratedEventDTO`。`IntegrationEventSimulator.publish` 用 `ApplicationEventPublisher.publishEvent` 本地广播，因此**每个出站事件会被两个监听器各处理一次**；旧类 `handleOutboundFileGenerated` 无 `tryConsume`、绕过 `CallbackCorrelationService`，直接 `advanceByOutboundFile`（假定 `fileTaskId == applicationId`），重复事件必然重复推进。旧类零测试覆盖，且无任何 `@Bean` 注册或外部调用（仅注释引用）。
+- **TDD 红灯**：新增 `arch-tests/EventListenerUniquenessTest` 2 条 ArchUnit 契约——① 监听 `OutboundFileGeneratedEventDTO` 的 `@EventListener` 方法数应为 1（实际 2）；② 所有集成事件（参数包名含 `.api.event`）监听入口所在类必须持有 `EventReceiptGateway`（`OutboundFileEventListener` 违反）。两条均精确红灯。
+- **修复**：`git rm` 退役旧 `OutboundFileEventListener`；删除仅由它调用的死代码 `FlowOrchestrationService.advanceByOutboundFile`（含 Javadoc）；`file-api/OutboundFileGeneratedEventDTO` 与 `file-domain/OutboundFileGeneratedEvent` 的 Javadoc 改指向 `OutboundFileGeneratedEventListener`。**唯一入口**现为 `OutboundFileGeneratedEventListener`：`tryConsume` 幂等 → `CallbackCorrelationService` 关联 → `APPLIED` 走 `completeWaitingStep`、`NO_CORRELATION` 走 `advanceByFileTaskId`、`UNMATCHED/OUT_OF_ORDER` 不推进，异常仅记录不吞事件语义。
+- **冻结约束**：annuity 的 `MockFileIntegrationGateway` Javadoc 仍以 `{@code OutboundFileEventListener}` 描述出站回调（纯文本、非编译引用）。因 annuity 业务实现已冻结，本批**未改 annuity 任何文件**，该过时注释记为此处已知项；若将来解冻可顺带更新。
+- **P0-3 核查结论**：`ApprovalResultEventListener` 的 3 个 `handleXxx` 均经 `isDuplicate → tryConsume`，`FileParsedEventListener.handleFileParsed` 与 `OutboundFileGeneratedEventListener.onOutboundFileGenerated` 均经 `tryConsume`；`StepAutoAdvanceListener` / `ApplicationSpawnedListener` / `ExternalInteractionRequestedListener` 处理的是领域事件（AFTER_COMMIT 本地派发，非 MQ 集成事件），不走消费回执属设计如此。契约测试②已把「新增集成事件 listener 必须持有回执网关」机器化，防止回归。仓库内未发现 RocketMQ consumer 类，生产 MQ 接入时须直调含回执的入口。
+- **P1-3 文档纠偏**：CODEBUDDY.md Known Gaps 前两条（core-api 空、adapter 无代码）与第三条（两个 Gateway 都无默认实现）均按现状改写——core-api 已有 `@HttpExchange` API/CQE/DTO、adapter 已有 Controller/Converter/自动配置、`FileIntegrationGateway` 已由 kernel `FileServiceIntegrationGateway`（`@ConditionalOnProperty`）提供默认实现，`BusinessConfigGateway` 仍无 kernel 默认实现；§23.46 遗留清单移除已完成的 `StepDefinition.actionType()`、改写事件幂等条目；优先级清单标注 P0-1/P0-3/P1-3 完成。
+- **验证**：先 `mvn clean install -DskipTests` 清除 stale class（否则 ArchUnit 仍会看到已删除的 listener），契约测试 2 项转绿；annuity E2E 6 + 自动推进 E2E 1、kernel 全模块、架构测试全绿；全仓 `test-compile`、`git diff --check` 通过。E2E 不发布 `OutboundFileGeneratedEventDTO`，故删除旧 listener 无回归风险。
+- **仍未处理**：P0-2（annuity 生产 profile，触及冻结配置需单独确认）、批次 46 的 P1-1 / P1-2，以及优先级清单 P2/P3 各项。

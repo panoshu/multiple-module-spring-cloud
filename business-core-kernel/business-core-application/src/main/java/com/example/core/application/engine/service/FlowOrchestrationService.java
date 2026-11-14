@@ -357,20 +357,6 @@ public class FlowOrchestrationService {
   }
 
   /**
-   * 根据出站文件生成结果推进业务申请单。
-   * <p>
-   * 由 {@code OutboundFileEventListener} 在收到出站文件生成完成事件后调用。
-   * 出站请求中的 {@code fileTaskId} 等于 {@code applicationId}，因此可直接加载申请单并推进。
-   *
-   * @param fileTaskId 文件任务 ID（等于 applicationId）
-   */
-  @Transactional
-  public void advanceByOutboundFile(String fileTaskId) {
-    ApplicationId appId = new ApplicationId(fileTaskId);
-    advanceStep(appId);
-  }
-
-  /**
    * 完成等待中的外部步骤（spec §9.2 阶段 C）。
    * <p>
    * 外部协作回调到达后，用本门面把流程从 WAITING_EXTERNAL 归位 RUNNING 并按版本化

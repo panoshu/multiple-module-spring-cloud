@@ -307,6 +307,15 @@
 - 方案：保留现有 6 项手动确定性 E2E 不动，新增 `AutoAdvanceEnabledEndToEndTest`——不声明该 mock（独立 Spring context）、独立 H2 库隔离、`createFromForm` 正常入口建单、一次手动点火后轮询等待 AFTER_COMMIT + @Async 级联至 USER_TASK(APPROVAL) 挂起。连续 5 次运行全绿。
 - 状态：**完成**（设计文档 §23.51）。§21.5 第 8 条核对表由 ❌ 更新为 ✅，§23.46 四项偏差全部有处置。
 
+#### 批次 45 — 修复重复出站事件监听器（优先级清单第一批）
+- 来源：`2026-11-14-remaining-work-priority.md` 的 P0-1 + P0-3 + P1-3。P0-1 为清单制定时新发现的台账未记录缺陷。
+- 改动：`arch-tests/EventListenerUniquenessTest` 2 条契约先红后绿；退役旧 `OutboundFileEventListener` 与死代码 `advanceByOutboundFile`，唯一入口为 `OutboundFileGeneratedEventListener`；核查所有集成事件入口回执覆盖；更新 CODEBUDDY.md Known Gaps 与 §23.46 过时条目。
+- 状态：**完成**（设计文档 §23.52）。
+
+#### 批次 46 — 恢复链路扫描与事务边界（优先级清单第二批）
+- 范围：P1-1（`reconcileAllActive` 改按状态索引查询替代 `loadAll` 全表扫描）+ P1-2（`ExternalInteractionRecoveryService` 按单条加事务包装）。
+- 状态：待推进。
+
 ---
 
 ## 6. 全局约束与验收基线
