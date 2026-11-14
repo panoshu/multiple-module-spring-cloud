@@ -1095,7 +1095,7 @@ Application 层按用例拆分：
 | 阶段 2 建立可靠性底座 | 进行中 | 领域事件发布所有权已统一到 Repository → `EventBus`（§13.2）；Outbox 序列化 P0 已修复（EventStore 自持注册 `JavaTimeModule` 的专用 mapper），落库真正生效；不受控异步线程已移除（受控 `applicationTaskExecutor` + 只读传递 app，§10.3）；发布失败事务回滚已落地（§9.1 业务状态与 Outbox 严格同事务）。`IdService` 号段生成已接入并补齐 `t_id_generator` DDL，`StepExecution` 运行时接线已完成。事件消费回执与入站幂等已落地（§7.4）。`ExternalInteraction` 运行时接线（阶段 A）已完成。外部协作重试恢复机制（四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领，§19.2）已落地。`DistributedLock` 短临界区互斥已接入（§9.3 第一层，弱依赖可选注入）。§9.2 完整事务外派发与阶段 3 回调链路、其他业务服务本地事件发布失败隔离待后续批次 |
 | 阶段 3 重构 file/approval 协作 | 进行中 | 契约形状（批次 20）、kernel requestNo 贯通（批次 21）、approval 侧（批次 22）与 file 侧（批次 23）requestNo 幂等闭环均已落地——两侧聚合/事件/Converter/DDL/用例幂等/按 requestNo 查询 API 齐备，2 个 file 与 4 个 approval 集成事件均回传真实 requestNo；阶段 C 回调按 requestNo 关联（批次 24：`CallbackCorrelationService` 关联+校验+分类+协作/步骤状态闭环，3 个监听器接入 APPLIED/回退/分类三路径）与「完成等待步骤」编排门面（批次 25：`completeWaitingStep` 不重跑 Handler 管线、WAITING_EXTERNAL→RUNNING→nextStep，3 个监听器 APPLIED 分支接入）均已落地。阶段 B 事务外派发按 `2026-11-13-...remaining-plan.md` 拆批推进：批次 26（检查点载荷写入）、27（FILE_* 网关 externalTaskId）、28（派发器骨架+SPI）、29（FILE_PARSE 派发闭环+调度入口统一）均已落地，`PENDING_DISPATCH → DISPATCHING → WAITING_CALLBACK` 对 FILE_PARSE 已接通。批次 30（FILE_OUTBOUND 派发闭环+载荷持久化）亦已落地，`PENDING_DISPATCH → DISPATCHING → WAITING_CALLBACK` 对 FILE_PARSE/FILE_OUTBOUND 两种文件协作均已接通。批次 31（申请单 WAITING_EXTERNAL 接线 + APPROVAL 派发闭环 + 三类协作全链路验收）亦已落地，阶段 B 事务外派发主线完成、4 个挂起 Handler 事务内直调清零。阶段 3 主线完成，`StepDefinition.actionType()` 显式声明等收敛项归入阶段 4 |
 | 阶段 4 收敛可选能力与公共 API | 进行中 | §8.2 `StepExecutionStatus`/`StepExecutionState` 语义边界已由批次 32 以「保留两者 + 语义契约测试 + 对称文档」收敛（评估决策，不重命名跨服务公开 SPI）；批次统计对账重算已由批次 33 落地（`BusinessBatch.reconcile` 绝对赋值幂等 + `reconcileStatistics`/`reconcileAllActive` + 恢复 Job 接线）；条件表达式语法预校验已由批次 34 落地（`ConditionEvaluationGateway.validate` + 三引擎实现 + 发布期全步骤校验）；批次 35 已落地推进 Command 携带 `expectedStep`/`requestNo`/`operator` 与 `advanceApplication` CQE 入口（幂等 + 期望步骤校验 + requestNo 不再仅由编排器派生）。**阶段 4 主线完成**；`StepDefinition.actionType()` 显式声明等残留收敛项归入阶段 5 |
-| 阶段 5 清理与生产验收 | 进行中 | 批次 36 已落地 `request_no` 列宽统一 128 + `eventId().value()` 统一；开放点 3 经确认后表名 `t_step_execution` → `t_business_step_execution` 由 36b 完成（§23.38），D1 收敛。批次 37 按规模拆为 37a/37b/37c-1/37c-2 并**全部完成**（§23.39–§23.42）：材料状态迁到可选材料能力、`BusinessExtension` 与 `parsedJsonFileId` 迁到业务服务自有存储，核心聚合已无 §6.2 点名的遗留字段；批次 38 拆为 38-1/38-2 并**全部完成**（§23.43–§23.44）：starter 显式依赖、生产 fail-fast、MDC 统一携带流程标识；仅剩 §21.3 验收（39） |
+| 阶段 5 清理与生产验收 | 进行中 | 批次 36 已落地 `request_no` 列宽统一 128 + `eventId().value()` 统一；开放点 3 经确认后表名 `t_step_execution` → `t_business_step_execution` 由 36b 完成（§23.38），D1 收敛。批次 37 按规模拆为 37a/37b/37c-1/37c-2 并**全部完成**（§23.39–§23.42）：材料状态迁到可选材料能力、`BusinessExtension` 与 `parsedJsonFileId` 迁到业务服务自有存储，核心聚合已无 §6.2 点名的遗留字段；批次 38 拆为 38-1/38-2 并**全部完成**（§23.43–§23.44）：starter 显式依赖、生产 fail-fast、MDC 统一携带流程标识；批次 39 按「不要超级计划」拆为 39-1（§21.3 外部协作验收，已完成，§23.45）与 39-2（§21.5 最终验收契约 + 逐条验收核对表，待推进） |
 
 ### 23.2 实现批次
 
@@ -1155,7 +1155,9 @@ Application 层按用例拆分：
 
 | 批次 38-1 | `5aaa7056` | **starter 显式接入与生产 fail-fast**（§14）：`business-core-adapter` 显式依赖 `shared-web-starter`/`shared-cache-starter`/`shared-logging-starter`（版本由父 pom 管理），不再依赖宿主偶然提供；新增 `KernelProductionReadinessValidator`（`ApplicationRunner`，默认启用、非生产 profile 跳过），生产启动时校验 `permission.session.signature-key` 非缺失/非 `dev-` 占位且 `SessionContextSignatureVerifier` bean 可用，缺失即抛 `IllegalStateException` 拒绝启动。`shared-lock-starter` 保持弱依赖不显式引入 | 新增校验器测试 5 项；kernel domain 174 / application 203 / infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
 
-| 批次 38-2 | 本次（未提交） | **MDC 统一携带流程标识**（§14）：`FlowOrchestrationService.withApplicationLock` 在推进临界区备份/写入/恢复 MDC，`doAdvanceStep` 创建步骤执行后补写 `applicationId`/`stepExecutionId`/`requestNo`/`businessType`；`traceId` 由 `shared-web-starter` 过滤器注入且不覆盖。新增 2 项编排器测试断言推进期间 4 键齐全、结束后恢复现场与预置 `traceId`。**批次 38 全部完成** | kernel domain 174 / application 205（+2）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+| 批次 38-2 | `9ec25cc4` | **MDC 统一携带流程标识**（§14）：`FlowOrchestrationService.withApplicationLock` 在推进临界区备份/写入/恢复 MDC，`doAdvanceStep` 创建步骤执行后补写 `applicationId`/`stepExecutionId`/`requestNo`/`businessType`；`traceId` 由 `shared-web-starter` 过滤器注入且不覆盖。新增 2 项编排器测试断言推进期间 4 键齐全、结束后恢复现场与预置 `traceId`。**批次 38 全部完成** | kernel domain 174 / application 205（+2）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile` 通过；`git diff --check` 通过 |
+
+| 批次 39-1 | 本次（未提交） | **§21.3 外部协作验收组合测试**（计划批次 39 首个切片，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationAcceptanceTest`，用真实领域聚合 + mock 仓储/网关串起 7 条故障→状态→恢复→闭环链路——明确失败进入 FAILED 且可 `RETRY_WAIT` 重派、超时滞留 DISPATCHING 回收 UNKNOWN 且禁止未对账重派、响应丢失后按 requestNo 补发回调闭环 UNKNOWN、服务重启凭持久化状态恢复派发与对账、审批通过/驳回/撤回分别落到 SUCCEEDED/FAILED/FAILED（补齐撤回缺口）、文件 PARTIAL 保留失败明细且只推进一次 FAILED 不推进 | 新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1576,4 +1578,20 @@ Application 层按用例拆分：
 - **为何放在 withApplicationLock 而非事务块**：MDC 需覆盖前置校验、主处理器、明细/后置管道、事务保存的整段推进过程；`withApplicationLock` 是 `advanceStep`/`advanceApplication`/`completeWaitingStep` 等入口的统一包装点，改动集中且语义是「一次流程操作的上下文作用域」。
 - **验证**：`FlowOrchestrationServiceTest` 新增 2 项——用 `doAnswer` 在管道执行期间捕获 MDC 快照，断言 4 个键齐全且值正确、结束后 `applicationId` 为空；另一项预置 `traceId` 后推进，断言其未被覆盖且 kernel 键已清理。kernel domain 174 / application 205（+2）/ infra 87 / adapter 13 / 架构 7、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过；E2E 无 `Failed to save event`/异步 NPE。
 - **已知边界**：MDC 键为字符串常量（定义在编排器内），若后续其它组件也要读写应抽为共享常量类；当前仅编排器写入，避免过早抽象。`shared-logging-starter` 的脱敏/异步管道在 E2E 未实际启用，MDC 值能否被日志输出依赖宿主日志 pattern，本批只保证写入与恢复。
-- **仍未处理**：§21.3 外部协作验收测试 + §21.5 最终验收（39）；`Map<String,Object>` 业务扩展字段清理、自有存储持久化、annuity 复制 DDL 解耦、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（阶段 5）。
+- **仍未处理**：§21.5 最终验收契约 + 逐条验收核对表（39-2）；`Map<String,Object>` 业务扩展字段清理、自有存储持久化、annuity 复制 DDL 解耦、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（阶段 5）。**§21.3 外部协作验收已完成，见 §23.45**。
+
+### 23.45 批次 39 拆分与 39-1 范围边界（§21.3 外部协作验收）
+
+- **拆批依据**：计划批次 39 目标为「§21.3 外部协作验收测试 + §21.5 最终验收」，一次做完要同时铺开 6 条外部协作链路、8 条最终验收标准与一张逐条核对表，规模明显超出「细化、不要超级计划」的约束。故拆 39-1（§21.3 外部协作组合验收，纯新增测试）与 39-2（§21.5 最终验收契约 + §21.1–§21.5 逐条核对表 + 阶段 5 收口）。
+- **为何是「组合验收」而非重复单测**：§21.3 各条能力（认领、派发、回调关联、恢复、对账）在批次 12/28/31/33 已有独立单测，但都是单点断言；本批用真实领域聚合 + mock 仓储/网关把它们串成「故障 → 状态 → 恢复 → 闭环」链路，验证跨组件协作的契约，是对既有能力的可执行验收而非重写。
+- **新增 `ExternalCollaborationAcceptanceTest` 7 项**：
+  1. 明确失败 → 协作/步骤 FAILED，且 FAILED 可 `scheduleRetry`/`dispatchAgain` 重派、沿用原 requestNo；
+  2. 超时滞留 DISPATCHING → UNKNOWN，`dispatchAgain`/`scheduleRetry` 均被拒（未经对账禁止重派）；
+  3. 响应丢失后补发回调按 requestNo 命中 UNKNOWN 协作并闭环 SUCCEEDED（主动对账的另一路径由 `ExternalInteractionRecoveryServiceTest.reconcileUnknown_*` 覆盖）；
+  4. 服务重启仅凭持久化 PENDING_DISPATCH 恢复派发至 WAITING_CALLBACK；
+  5. 认领后崩溃的 DISPATCHING 记录回收 UNKNOWN 后对账确认；
+  6. 参数化 APPROVED/REJECTED/WITHDRAWN 分别落到 SUCCEEDED/FAILED/FAILED（补齐原有测试缺失的撤回）；
+  7. PARTIAL 事件保留 `invalidRows` 失败明细、只推进一次，FAILED 不推进。
+- **契约口径**：`requestNo` 用于关联协作记录，`externalTaskId` 用于查询外部系统；上游「文件部分成功不误判为全部成功」由 file-service `ParseTaskTest`（`TaskStatus.PARTIAL_SUCCESS`、`invalidCount` 聚合）保证，kernel 侧只负责消费侧分流与不重复推进。
+- **验证**：新增验收测试 7 项；kernel domain 174 / application 212（+7）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全绿；全仓 `test-compile`、`git diff --check` 通过。零生产代码、零 annuity 改动。
+- **仍未处理**：39-2（§21.5 最终验收契约 + 逐条验收核对表）；核对表中需如实标注的偏差——E2E 用 `@MockitoBean` 禁用 `StepAutoAdvanceListener`（§21.5 第 8 条）、§21.4 六条架构不变量未全部机器化、`CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被消费、多节点真并发未做集成测试。
