@@ -281,6 +281,12 @@
 - 拆分（按「不要超级计划」）：**39-1**（§21.3 外部协作组合验收，`ExternalCollaborationAcceptanceTest` 7 项）+ **39-2**（§21.5 最终验收契约 `FinalAcceptanceContractTest` + §21.1–§21.5 逐条验收核对表 + 阶段 5 收口）。
 - 状态：**全部完成**（设计文档 §23.45 / §23.46）。39-1 新增 `ExternalCollaborationAcceptanceTest` 7 项组合验收；39-2 新增共享夹具与 `FinalAcceptanceContractTest` 4 项，并在 §23.46 落地 §21.1–§21.5 共 30 条逐条验收核对表，如实标注 E2E 禁用自动推进、§21.4 架构不变量未全机器化、多节点真并发未集成测试等偏差。阶段 0–5 全部收口，剩余遗留项见 §23.46。
 
+#### 批次 40 — annuity 复制 DDL 解耦（规格收口后的追加批次）
+- 背景：批次 36b/37b/37c 每次改 kernel 表都要临时解冻 annuity 同步 3 份复制 DDL，用户确认按「完全解耦」方案消除根因。
+- 方案：kernel 表定义只保留在 kernel 模块（PG/MySQL/H2 三份同模块），annuity 不再持有任何副本；annuity E2E 通过 `schema-locations` 组合加载 kernel H2 + 自有 H2。
+- 拆分：**40-1**（H2 测试链路：kernel 新增唯一命名 `schema-kernel-h2.sql`、annuity H2 缩减重命名、配置组合加载）+ **40-2**（PG/MySQL 部署脚本删除 kernel 表段落改为指引注释、清理过时注释、台账收口）。
+- 状态：**40-1 已完成**（设计文档 §23.47），40-2 待推进。
+
 ---
 
 ## 6. 全局约束与验收基线

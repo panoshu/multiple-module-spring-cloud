@@ -1161,6 +1161,8 @@ Application 层按用例拆分：
 
 | 批次 39-2 | `beddf211` | **§21.5 最终验收契约 + §21.1–§21.5 逐条验收核对表**（计划批次 39 收口，纯新增测试、零生产代码/零 annuity 改动）：新增 `ExternalCollaborationFixtures` 共享夹具与 `FinalAcceptanceContractTest` 4 项（新业务只加定义+SPI、定义升级不影响在途 v1 实例、步骤执行历史可审计、重复回调不重复跃迁）；台账补 §23.46 最终验收核对表，把 §21.1–§21.5 共 30 条标准逐条映射到已有/新增测试并如实标注 4 类偏差；阶段 0–5 全部收口 | 新增验收测试 4 项（两验收类合计 11 项全绿）；kernel domain 174 / application 216（+4）/ infra 87 / adapter 13、架构 7、annuity E2E 6 全部通过；全仓 `test-compile`、`git diff --check` 通过 |
 
+| 批次 40-1 | 本次（未提交） | **annuity 复制 DDL 解耦 · H2 测试链路**（规格收口后的追加批次，经用户确认「完全解耦」方案）：`business-core-infrastructure` 新增唯一命名资源 `schema-kernel-h2.sql`，承接原 annuity H2 里的 7 张 kernel 表定义并修正 `t_business_external_interaction.request_no` 列宽漂移 64→128；annuity 的 `schema-h2.sql` 缩减并重命名为 `schema-annuity-h2.sql`，只保留 `sys_event_*` 与 2 张年金自有表；`application-test.yml` 的 `schema-locations` 改为组合加载两个 H2 资源 | annuity E2E 6 全绿（验证 7 张 kernel 表由新资源创建、组合加载生效）；全仓 `test-compile`、`git diff --check` 通过；annuity H2 仅剩 4 张表、kernel H2 含 7 张表 |
+
 ### 23.3 批次 2 范围边界
 
 按评审确认的「纯领域模型」范围，本批次**不**包含：
@@ -1661,4 +1663,15 @@ Application 层按用例拆分：
   2. §21.4 六条架构不变量未全部机器化；`ArchitectureInvariantTest` 覆盖的是 demo-shared/网关/BFF 方向，kernel 分层纯净性与 CQE 化未做 ArchUnit 断言。
   3. 多节点真并发、乐观锁写冲突覆盖未做集成测试，仅有锁接线与版本递增单测。
   4. `CallbackOutcome.REJECTED/WITHDRAWN` 枚举值当前未被监听器消费（监听器统一传 `SUCCEEDED`/`FAILED`，驳回/撤回由 `advanceByApprovalResult` 终止语义处理）。
-- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、annuity 复制 DDL 解耦（改为直接引用 kernel schema 资源）、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。
+- **既有阶段 5 待办（继续保留）**：`Map<String,Object>` 业务扩展字段清理、annuity 自有扩展/解析文件引用存储改为持久化聚合、`StepDefinition.actionType()` 显式声明、annuity 生产 profile 治理（`spring.profiles.include: local` 使 fail-fast 跳过）、增量事件消费端按 eventId 幂等、恢复任务事务边界精修、批次扫描按状态索引查询。**annuity 复制 DDL 解耦已由追加批次 40 启动，见 §23.47**。
+
+### 23.47 批次 40 拆分与 40-1 范围边界（annuity 复制 DDL 解耦）
+
+- **背景**：规格 §20 全部批次与 §21 验收收口后，用户确认按建议处理「annuity 复制 DDL 解耦」——这是之前批次 36b（表名统一）、37b/37c（列移除）每次都必须临时解冻 annuity 的根因：annuity 持有 3 份 DDL（PG / MySQL / H2），其中 7 张 kernel 表是复制定义。
+- **现状评估**：`annuity-infrastructure` 已依赖 `business-core-infrastructure`，kernel 的 schema 资源本就在 classpath 上；但只有 `schema-h2.sql` 被 Spring `spring.sql.init.schema-locations` 自动加载（E2E），PG/MySQL 两份是生产手工部署脚本、运行时不加载。H2 用 `MODE=PostgreSQL`，与 kernel PG DDL 有方言差异（`JSONB`→`TEXT`、`COMMENT ON`、`deleted BOOLEAN`→`INT`），不能直接执行 kernel PG 文件；且 `classpath:schema-pg.sql` 在多个 jar 中同名会冲突，故 kernel 的 H2 资源必须唯一命名。
+- **方案（用户确认「完全解耦」）**：kernel 表定义只保留在 kernel 模块（PG/MySQL/H2 三份同模块），annuity 不再持有任何副本；annuity 的 E2E 通过 `schema-locations` 组合加载 kernel H2 + 自有 H2。按「不要超级计划」拆 40-1（H2 测试链路）与 40-2（PG/MySQL 部署脚本）。
+- **40-1 实现**：新增 `schema-kernel-h2.sql`（`src/main/resources`，随 jar 分发）承接 7 张 kernel 表：`t_business_application` / `t_business_batch` / `t_business_form` / `t_business_step_execution` / `t_business_external_interaction` / `t_id_generator` / `t_business_event_receipt` 及索引；annuity 的 H2 文件用 `git mv` 重命名为 `schema-annuity-h2.sql` 并缩减为 4 张表（`sys_event_store` / `sys_event_dispatch_log` / `t_annuity_employee_batch` / `t_annuity_employee_detail`）；`application-test.yml` 改为 `classpath:schema-kernel-h2.sql,classpath:schema-annuity-h2.sql`。
+- **顺带修正漂移**：批次 36 只改了 kernel 双库的 `request_no` 列宽到 128，annuity 复制 H2 仍是 `VARCHAR(64)`；新 kernel H2 以 kernel 权威定义为准改为 128，消除该漂移。
+- **零行为变更保证**：7 张表的 H2 定义按 annuity 原 H2 段落原样搬入（保留 H2 兼容写法：`deleted INT DEFAULT 0`、时间戳 `DEFAULT CURRENT_TIMESTAMP`），仅列宽放宽；表数量与索引一一对应，E2E 无需改动。
+- **验证**：annuity E2E 6 全绿（E2E 断言查询 `t_business_external_interaction` / `t_business_step_execution`，绿灯即证明 kernel H2 资源被组合加载）；全仓 `test-compile`、`git diff --check` 通过；`grep CREATE TABLE` 核对 annuity 4 张 / kernel 7 张，无重复无遗漏。
+- **仍未处理**：40-2——annuity-infrastructure 的 `schema-pg.sql` / `schema-mysql.sql` 删除 7 张 kernel 表段落、改为「先执行 kernel 的 schema-*.sql」指引；清理 kernel PG DDL 残留的过时注释；台账收口。
