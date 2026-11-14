@@ -1183,6 +1183,7 @@ Application 层按用例拆分：
 | 批次 47 | `ed069f44` | **P0-2 annuity 生产 profile 治理**（用户解冻 annuity）：移除 `application.yml` 的 `spring.profiles.include: local`（原使 prod 也带 `local` profile、`KernelProductionReadinessValidator.isNonProduction()` 误判跳过 fail-fast、验签密钥缺失或 `dev-` 占位时静默降级）；主配置改为注释指引「本地显式 `--spring.profiles.active=local`」；`application-test.yml` 补测试专用 `permission.session.signature-key` 使 test profile 自包含、不再隐式依赖 local。新增 `ProductionProfileIsolationTest` 2 项契约：① 主配置不无条件 include 非生产 profile（`YamlPropertySourceLoader` 静态锁定，先红后绿）；② prod profile 缺密钥触发 fail-fast | annuity-starter 9 项（契约 2 + 自动推进 E2E 1 + 原 E2E 6）全绿；kernel domain 174 / application 222 / infra 90 / adapter 13 / 架构 13 全绿；全仓 `test-compile`、`git diff --check` 通过 |
 | 批次 48 | `ee85acc3` | **修正 fail-fast 开关语义**（批次 47 分析发现的配套缺陷）：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty(havingValue="false")` 与 Javadoc「`=false` 显式关闭」相反——`=false`/缺省反而装配（启用校验）、`=true` 才关闭；改为 `havingValue="true"`，缺省或 `=true` 启用、`=false` 关闭，缺省行为不变，Javadoc 补齐三态。新增 `KernelProductionReadinessConditionTest` 3 项 `ApplicationContextRunner` 装配契约（`=true`/`=false` 先红后绿、缺省保持绿），并在 `AutoAdvanceEnabledEndToEndTest` 补真实 E2E 上下文缺省装配断言（`isMock()==false`），排除「少一个 ApplicationRunner 反而更绿」的静默降级 | adapter 16（+3）、annuity-starter 10（+1）、kernel domain 174 / application 222 / infra 90、架构 13 全绿；全仓 `install -DskipTests`、`test-compile`、`git diff --check` 通过；E2E 无 `NoSuchBeanDefinitionException` |
 | 批次 49 | `ae211980` | **P2-2a §21.4 规格修订**（P2 专项方案已采纳，纯文档）：修订 §21.4 第 2/3/5 条——application 禁依赖 file/approval 非 API 层类型（事件 DTO 属允许的 `*.api.event` 契约）、新增/修改的写操作入口必须 CQE（存量不回溯）、types 只放跨层共享领域原语（不得放聚合根/实体/领域服务）；§21.4 加批次修订注记；§23.46 核对表三行状态由 ⚠️ 改为「规格已修订 + 向前约束待批次 50」。P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓按方案记入台账（含触发重启条件与前置决策清单） | 纯文档零代码；`git diff --check` 通过；规格正文与核对表自洽 |
+| 批次 50 | 本次（未提交） | **P2-2b §21.4 向前约束机器化**（P2 专项方案，arch-tests 新增）：新增 `KernelForwardConstraintTest` 2 条 ArchUnit——① application 层新增 `*Service` public 方法参数须为 CQE 或零参（存量 37 个方法以 `类名#方法名` 基线快照豁免，不回溯改造）；② types 层不得 assignable to `Entity`（覆盖聚合根）或标 `@DomainService`。含 4 项防假绿断言（导入规模 / Service 类数 / types 类数 / 基线命中数）与两轮反向验证：故意漏 1 个基线条目红灯（捕获 `FlowOrchestrationService#advanceStep`）、把规则 2 指向聚合根包红灯（捕获 3 次违规），改回后转绿 | arch-tests 15（+2）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `test-compile`、`git diff --check` 通过；纯新增测试、零生产代码与零 annuity 改动 |
 
 ### 23.3 批次 2 范围边界
 
@@ -1661,9 +1662,9 @@ Application 层按用例拆分：
 | domain 不依赖 Spring/Web/JSON/DB | `KernelLayerArchitectureTest.domainIsFrameworkFree`（批次 41） | ✅ 已机器化 |
 | domain 不依赖 file/approval 类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ⚠️ 现状 domain 依赖 `file.types.FileId` 等 ID 原语；规则按「只经 api/types」机器化，字面「零 file/approval 类型」不成立 |
 | application 不依赖 file/approval 非 API 层类型 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 规格已修订（批次 49，§23.56）：事件 DTO 属允许的 `*.api.event` 契约；「不触及实现层」已机器化 |
-| 新增/修改的写操作入口入参必须 CQE | 批次 35 `advanceApplication` 落地 CQE | ✅ 规格已修订（批次 49）；向前约束由批次 50 机器化，存量约 30 个裸参方法不回溯 |
+| 新增/修改的写操作入口入参必须 CQE | `KernelForwardConstraintTest.newServiceMethods_useCqeOrNoArgs`（批次 50） | ✅ 规格已修订（批次 49）+ 向前约束已机器化（批次 50）；存量约 30 个裸参方法不回溯 |
 | Adapter 不直接构造领域对象 | 无 | ⚠️ 未机器化（`CoreKernelAutoConfiguration` 构造的是 application 层 Job，非领域聚合根） |
-| types 只放跨层共享领域原语 | `CoreTypesIdentifierValidationTest` | ✅ 规格已修订（批次 49）；向前约束（不得放聚合根/实体/领域服务）由批次 50 机器化 |
+| types 只放跨层共享领域原语 | `KernelForwardConstraintTest.typesLayer_onlySharedPrimitives`（批次 50） | ✅ 规格已修订（批次 49）+ 向前约束已机器化（批次 50）：不得放聚合根/实体/领域服务 |
 | 跨服务只依赖 API 模块 | `KernelLayerArchitectureTest.kernelDependsOnBusinessServicesOnlyThroughApiAndTypes`（批次 41） | ✅ 已机器化（允许 api + types，禁止 domain/application/adapter/infrastructure） |
 
 | §21.5 最终验收 | 覆盖测试 | 状态 |
@@ -1814,4 +1815,16 @@ Application 层按用例拆分：
 - **刻意不修订的条目（如实标注）**：§21.4 第 1 条「domain 不依赖 file/approval 类型」与第 6 条「跨服务只依赖 API 模块」仍与现状有字面张力（domain 依赖 `file.types.FileId` 等 ID 原语；批次 41 机器化为「允许 api + types」），核对表已标 ⚠️/✅；因不在 P2 专项方案确认的三条范围内，本批不改，留待后续规格整体复核。「Adapter 不直接构造领域对象」仍未机器化，保持 ⚠️。
 - **P2 其余三项决策落实**：P2-1 `Map<String,Object>` **降级关闭**（核实分「动态配置 / 执行上下文 facts / 解析数据行 / 补充数据」4 类语义，全量强类型化会把业务 schema 固化进 kernel、破坏通用编排引擎扩展能力；备选仅做类型安全读取包装，见方案 §2）；P2-3 annuity 自有存储 **wontfix**（冻结示例服务，重启丢失可接受，DDL 已由批次 40 解耦；触发重启条件：转为真实生产服务时按「DO+Mapper+DDL+SPI 实现」立项）；P2-4 真 Redis 并发 **暂缓**（无 testcontainers / CI Docker 待定 / 单 JVM+真 Redis 可降级为 4–6 文件小批次）。三项均在方案文档记录结论与前置条件，不遗忘、不冒充已覆盖。
 - **验证**：纯文档，`git diff --check` 通过；规格正文与 §23.46 核对表状态自洽。
-- **仍未处理**：批次 50（向前 ArchUnit 约束：新增方法 CQE + types 不放聚合根，含防假绿与反向验证）。
+- **仍未处理**：批次 50（向前 ArchUnit 约束：新增方法 CQE + types 不放聚合根，含防假绿与反向验证）——**已由批次 50 完成，见 §23.57**。
+
+### 23.57 批次 50 范围边界（P2-2b §21.4 向前约束机器化）
+
+- **来源**：`2026-11-14-p2-special-plan.md` 批次 50（用户采纳建议后与批次 49 连续推进）。规格 §21.4 经批次 49 修订后明确「存量不回溯」，本批把「防继续劣化」落成机器强制层。
+- **为何用基线快照**：ArchUnit 静态分析无 git 感知，无法直接判定「新增」。故以「批次 50 时点的存量方法基线」（37 个 `简单类名#方法名`）豁免现有裸参方法；不在基线中的新 public 方法，参数必须是 CQE（Command/Query/Event）或零参。基线按「类名#方法名」而非全签名记录，参数类型重构不会误报，新增方法名则必然被检查。
+- **规则 1**：`classes().that().resideInAPackage("com.example.core.application..").and().haveSimpleNameEndingWith("Service").should(NEW_METHODS_USE_CQE)`——自定义 `ArchCondition<JavaClass>` 遍历 public 非构造器方法，跳过基线命中项，其余校验 `getRawParameterTypes()` 的 simpleName 后缀。
+- **规则 2**：`noClasses().that().resideInAPackage("com.example.core.types..").should().beAssignableTo(Entity)`（`AggregateRoot extends Entity`，一条覆盖聚合根与实体）+ `.should().beAnnotatedWith(DomainService)`。用字符串形式 FQN 避免 arch-tests 编译期依赖业务类。
+- **TDD 与反向验证**：写测试时故意漏 `FlowOrchestrationService#advanceStep` 一个基线条目 → 红灯精确报「新增方法使用非 CQE 参数」（1 次违规）→ 补入基线转绿；再临时把规则 2 的检查包改为 `...domain.business.aggregate.root..` → 红灯捕获 3 次 `Entity` assignable 违规 → 改回正式规则转绿。两轮证明规则真在检查、非空转。
+- **防假绿**：`@BeforeAll` 断言导入总数 > 500、application `*Service` 类数 ≥ 9、types 包类数 > 10，且基线 37 项中命中导入类方法数 > 20（防止白名单写错导致规则空转）。
+- **边界（如实标注）**：只约束「新增方法名」；新增一个与存量方法**同名**但不同参数的重载，因基线按方法名命中，不会被拦截——向前约束取稳健而非穷尽。存量约 30 个裸参方法按规格修订明确不回溯。「Adapter 不直接构造领域对象」仍未机器化，§21.4 第 1/6 条字面张力仍在，均保持 §23.46 核对表原状态。
+- **验证**：arch-tests 15（原 13 + 新 2）、kernel domain 174 / application 222 / infra 90 / adapter 16、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过。纯新增测试、零生产代码与零 annuity 改动。
+- **优先级清单同步**：§23.46 核对表两行「向前约束由批次 50 机器化」改为 ✅；计划文档、优先级清单、P2 方案文档标注批次 49/50 完成。**P2 专项方案采纳后的编码工作至此收口**，P2-1/3/4 按决策保持关闭/暂缓。
