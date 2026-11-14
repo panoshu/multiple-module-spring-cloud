@@ -1988,4 +1988,17 @@ Application 层按用例拆分：
 - **TDD**：`PartialParseStatisticsTest` 2 项（汇总+编码、`subTasks` 为 null 的防御）、`ExternalCollaborationAcceptanceTest.partialFileStatus_routesWithoutOvercounting` 补 `resultRef` 端到端断言，先编译红灯（`PartialParseStatistics` 不存在）→ 实现后 16 项全绿。
 - **边界（如实标注）**：统计是**事件快照**而非实时查询；业务侧需要逐行明细仍需查 file-service `subTasks`（跨服务契约，不在 kernel 内持久化）。结果引用长度远小于列宽，未做解析 API（当前仅供审计/排障）。§21.3 核对表该行由 ⚠️ 更新为 ✅。
 - **验证**：kernel domain 174 / application 226（+2）/ infrastructure 90 / adapter 16、架构 17、annuity E2E 10 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 改动、零 DDL。
-- **同步**：清单 #10 标注完成、§21.3 核对表更新。**仍未处理**：清单 #1–#6、#8、#9、#11–#18。
+- **同步**：清单 #10 标注完成、§21.3 核对表更新。**仍未处理**：清单 #1–#6、#8、#9、#11–#18。**批次 65 已复核其中 4 项并判定不做（§23.72）**。
+
+### 23.72 批次 65 范围边界（剩余清单复核与收口判定）
+
+- **来源**：用户要求「按计划、高效、明确清楚推进剩余工作」。按 `2026-11-14-remaining-work-inventory.md` §4 建议优先级推进到 ③（#6 增量事件消费端）时，先逐项对照当前代码再决定是否编码，不接受台账「待办」表述为事实。
+- **复核方法**：核对领域事件清单、三引擎 `validate` 实现、`StartApprovalRequest` 字段、`BusinessConfigGateway` 实现、`BusinessApplication.complete()/fail()` 的事件注册情况。
+- **判定结论（4 项由「待办」改为「设计选择 / 已决策不做」）**：
+  1. **#6 增量事件消费端**：`BusinessApplication.complete()/fail()` **不注册任何终态领域事件**，全仓无「申请完成/失败」事件可消费（现有仅 `ApplicationSpawned`/`StepEntered`/`PipelineExecuted`/`BatchStatusChanged`）；批次 33 的 `reconcile` 全量重算已是权威对账，再接增量消费端会形成**双写**与幂等负担。`registerSuccess/registerFailure` 保留为领域能力，无调用方不影响框架完整性。
+  2. **#8 条件表达式返回类型校验**：三引擎 `validate` 均只做 parse/compile/check（SpEL `parseExpression`、Aviator `compile`、QLExpress `check`），表达式可引用运行时变量，**静态无法可靠判定返回类型**；`evaluate` 运行期已有显式失败（批次 4 覆盖）。强做会误拒合法动态表达式。
+  3. **#9 `BusinessConfigGateway` 默认实现**：kernel 刻意不提供默认（配置来自各业务线无法统一），CODEBUDDY.md 明确「each business service must implement it」，属设计选择而非缺口。
+  4. **#11 `startApproval` 发起人身份**：`StartApprovalRequest.initiator` 由 kernel **服务间调用**传入（`application.createdBy()`），非人工会话操作；按批次 57 用会话账号覆盖会 fail-closed 拒绝无会话 header 的服务间调用，破坏真实流程。
+- **本批为文档决策（零生产代码）**：更新清单 #6/#8/#9/#11 状态、§4 建议优先级与结论。清单由「18 项待办/暂存」收敛为「2 项已完成（63/64）+ 4 项判定不做 + 1 个需立项方向（#1/#2）+ 1 个待环境方向（#4）+ 其余已决策保留/部署检查/文档欠账」。
+- **验证**：本批不改代码，故无新增测试；沿用批次 64 的全量回归结果（kernel 174/226/90/16、架构 17、annuity E2E 10 全绿，全仓 `test-compile`、`git diff --check` 通过）。
+- **结论**：§21 验收核对表已无 ⚠️/❌，规格内无欠账；**当前没有可安全小步推进的 kernel 代码项**。**仍未处理**：#1/#2（组织目录 + SAME_PLAN/LEVEL_UP，需跨服务新契约立项）、#4（真 Redis 集成，待环境），以及 #12/#13 部署联调检查与清单 §3 文档欠账。
