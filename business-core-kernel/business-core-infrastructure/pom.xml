@@ -25,10 +25,8 @@
       <groupId>com.example</groupId>
       <artifactId>approval-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-client-starter</artifactId>
-    </dependency>
+    <!-- S-07：kernel 出站使用 Spring RestClient/HttpExchange，不依赖 shared-client-starter；
+         移除未使用依赖，避免日志/ Retrofit 自动配置被无意带入宿主。 -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-id-starter</artifactId>

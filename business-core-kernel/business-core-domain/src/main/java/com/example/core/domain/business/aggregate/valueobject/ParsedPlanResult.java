@@ -1,6 +1,6 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.core.types.PlanNo;
 
 /**
@@ -23,14 +23,27 @@ public record ParsedPlanResult(
 
   /*
    * 该计划对应的明细 JSON 文件凭证。
-   * (业务后续将通过这个 FileId 进行流式读取和明细落库)
+   * (业务后续将通过这个 FileRefId 进行流式读取和明细落库)
    */
-  FileId jsonFileId,
+  FileRefId jsonFileId,
 
   /*
    * 解析出的有效明细总条数。
    * (极其重要：用于后续流式摄入完成后的【数据对账】，防止丢数据)
    */
-  int totalRecordCount
+  int totalRecordCount,
+
+  /*
+   * file-service 当前的标准数据子任务凭证（ParsedDataApi.fetchRows 的入参）。
+   * 旧版 JSON 文件模式可空，由 jsonFileId 兼容。
+   */
+  String subTaskId
 ) {
+
+  /**
+   * 兼容旧调用：仅携带 JSON 文件凭证的解析结果。
+   */
+  public ParsedPlanResult(PlanNo planId, FileRefId jsonFileId, int totalRecordCount) {
+    this(planId, jsonFileId, totalRecordCount, null);
+  }
 }

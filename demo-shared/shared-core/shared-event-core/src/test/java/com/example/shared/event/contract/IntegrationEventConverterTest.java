@@ -1,7 +1,7 @@
 package com.example.shared.event.contract;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

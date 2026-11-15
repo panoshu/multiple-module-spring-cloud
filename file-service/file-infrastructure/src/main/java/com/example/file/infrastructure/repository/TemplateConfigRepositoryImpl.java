@@ -8,7 +8,6 @@ import com.example.file.infrastructure.entity.TemplateConfigDO;
 import com.example.file.infrastructure.mapper.TemplateConfigMapper;
 import com.example.file.types.BizType;
 import com.example.file.types.TemplateConfigId;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.file.infrastructure.entity.table.TemplateConfigDOTableDef.TEMPLATE_CONFIG_DO;
 
@@ -123,11 +121,6 @@ public class TemplateConfigRepositoryImpl implements TemplateConfigRepository {
     return mapper.selectAll().stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(TemplateConfigId id, Consumer<AggregateRoot<TemplateConfigId>> processor) {
-    findById(id).ifPresent(config -> processor.accept(config));
   }
 
   private void publishDomainEvents(TemplateConfig config) {

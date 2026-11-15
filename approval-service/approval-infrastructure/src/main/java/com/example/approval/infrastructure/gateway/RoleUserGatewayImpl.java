@@ -9,8 +9,6 @@ import com.example.auth.api.dto.RoleUserBatchResponse;
 import com.example.auth.api.query.GetParentPlanRequest;
 import com.example.auth.api.query.ListPlanMembersRequest;
 import com.example.auth.api.query.ListRoleUsersRequest;
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,55 +37,55 @@ public class RoleUserGatewayImpl implements RoleUserGateway {
   private final PlanDirectoryApi planDirectoryApi;
 
   @Override
-  public Map<String, List<UserNo>> getUsersByRoles(List<String> roleIds, PlanNo planNo) {
+  public Map<String, List<String>> getUsersByRoles(List<String> roleIds, String planNo) {
     if (roleIds == null || roleIds.isEmpty() || planNo == null) {
       return Map.of();
     }
 
     try {
       ApiResult<RoleUserBatchResponse> result = roleUserQueryApi.listByRoles(
-        new ListRoleUsersRequest(roleIds, planNo.value()));
+        new ListRoleUsersRequest(roleIds, planNo));
       if (result == null || !result.isSuccess() || result.data() == null
         || result.data().usersByRole() == null) {
         return Map.of();
       }
 
-      Map<String, List<UserNo>> converted = new LinkedHashMap<>();
+      Map<String, List<String>> converted = new LinkedHashMap<>();
       result.data().usersByRole().forEach((role, users) ->
-        converted.put(role, users == null ? List.of() : users.stream().map(UserNo::of).toList()));
+        converted.put(role, users == null ? List.of() : users));
       return converted;
     } catch (Exception e) {
       log.warn("角色用户查询失败，fail-closed 不展开角色: planNo={}, roleIds={}",
-        planNo.value(), roleIds, e);
+        planNo, roleIds, e);
       return Map.of();
     }
   }
 
   @Override
-  public List<UserNo> getUsersInSamePlan(PlanNo planId, UserNo excludeUser) {
+  public List<String> getUsersInSamePlan(String planId, String excludeUser) {
     if (planId == null) {
       return List.of();
     }
 
     try {
       ApiResult<PlanMembersResponse> result = planDirectoryApi.listMembers(
-        new ListPlanMembersRequest(planId.value(), excludeUserNo(excludeUser)));
+        new ListPlanMembersRequest(planId, excludeUserNo(excludeUser)));
       return toUserNos(result);
     } catch (Exception e) {
-      log.warn("计划成员查询失败，fail-closed 返回空: planNo={}", planId.value(), e);
+      log.warn("计划成员查询失败，fail-closed 返回空: planNo={}", planId, e);
       return List.of();
     }
   }
 
   @Override
-  public List<UserNo> getUsersInParentPlan(PlanNo planNo, UserNo excludeUser) {
+  public List<String> getUsersInParentPlan(String planNo, String excludeUser) {
     if (planNo == null) {
       return List.of();
     }
 
     try {
       ApiResult<ParentPlanResponse> parentResult = planDirectoryApi.getParentPlan(
-        new GetParentPlanRequest(planNo.value()));
+        new GetParentPlanRequest(planNo));
       if (parentResult == null || !parentResult.isSuccess() || parentResult.data() == null
         || parentResult.data().parentPlanNo() == null) {
         return List.of();
@@ -96,20 +94,20 @@ public class RoleUserGatewayImpl implements RoleUserGateway {
         new ListPlanMembersRequest(parentResult.data().parentPlanNo(), excludeUserNo(excludeUser)));
       return toUserNos(membersResult);
     } catch (Exception e) {
-      log.warn("父计划成员查询失败，fail-closed 返回空: planNo={}", planNo.value(), e);
+      log.warn("父计划成员查询失败，fail-closed 返回空: planNo={}", planNo, e);
       return List.of();
     }
   }
 
-  private List<UserNo> toUserNos(ApiResult<PlanMembersResponse> result) {
+  private List<String> toUserNos(ApiResult<PlanMembersResponse> result) {
     if (result == null || !result.isSuccess() || result.data() == null
       || result.data().userNos() == null) {
       return List.of();
     }
-    return result.data().userNos().stream().map(UserNo::of).toList();
+    return result.data().userNos();
   }
 
-  private String excludeUserNo(UserNo excludeUser) {
-    return excludeUser == null ? null : excludeUser.value();
+  private String excludeUserNo(String excludeUser) {
+    return excludeUser;
   }
 }

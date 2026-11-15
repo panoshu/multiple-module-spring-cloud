@@ -20,4 +20,10 @@ public interface TradeSubmissionAppService {
    * @return 提交结果
    */
   FileSubmissionResult submitOutboundFile(String fileId, String tradeCode, Map<String, String> headParams);
+
+  /**
+   * 幂等提交：同一 eventId + outboundFileId 只成功提交一次；失败释放后允许重投重试。
+   */
+  FileSubmissionResult submitOutboundFileOnce(String eventId, String fileId, String tradeCode,
+                                              Map<String, String> headParams);
 }

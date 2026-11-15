@@ -6,10 +6,11 @@ import com.example.file.domain.repository.FileMetadataRepository;
 import com.example.file.infrastructure.converter.FileMetadataConverter;
 import com.example.file.infrastructure.entity.FileMetadataDO;
 import com.example.file.infrastructure.mapper.FileMetadataMapper;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.file.types.FileId;
 import com.example.core.types.UserNo;
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.SystemException;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.file.infrastructure.entity.table.FileMetadataDOTableDef.FILE_METADATA_DO;
 
@@ -47,12 +47,29 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
       throw new IllegalArgumentException("file 不能为空");
     }
     FileMetadataDO aDo = converter.toDO(file);
-    if (mapper.selectOneById(aDo.getId()) == null) {
+    FileMetadataDO existing = mapper.selectOneById(aDo.getId());
+    if (existing == null) {
       mapper.insert(aDo);
       log.debug("新增文件元数据: fileId={}", file.id());
     } else {
-      mapper.update(aDo);
-      file.syncVersionAfterUpdate();
+      // 领域方法（如 completeUpload）可能已调用 markUpdated 提前递增版本；
+      // MyBatis-Flex 用 DO.version 作为 UPDATE 的 WHERE 条件，必须回退为数据库当前版本，
+      // 否则 WHERE version = 旧值+1 匹配 0 行且静默丢失更新（文件永远停在 PENDING_UPLOAD）。
+      int persistedVersion = existing.getVersion() != null ? existing.getVersion() : 0;
+      long domainVersion = file.version() != null ? file.version().value() : 0L;
+      if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+        throw new SystemException(CommonError.CONCURRENCY_ERROR)
+          .withLogDetail("文件元数据版本冲突: fileId=" + file.id()
+            + ", domainVersion=" + domainVersion + ", persistedVersion=" + persistedVersion);
+      }
+      aDo.setVersion(persistedVersion);
+      if (mapper.update(aDo) != 1) {
+        throw new SystemException(CommonError.CONCURRENCY_ERROR)
+          .withLogDetail("文件元数据更新失败（版本冲突）: fileId=" + file.id());
+      }
+      if (domainVersion == persistedVersion) {
+        file.syncVersionAfterUpdate();
+      }
       log.debug("更新文件元数据: fileId={}, version={}", file.id(), file.version());
     }
     publishDomainEvents(file);
@@ -84,14 +101,6 @@ public class FileMetadataRepositoryImpl implements FileMetadataRepository {
     return mapper.selectAll().stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(FileId id, Consumer<AggregateRoot<FileId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

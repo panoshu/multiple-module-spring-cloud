@@ -2,8 +2,10 @@ package com.example.core.infrastructure.engine.gateway;
 
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
+import com.example.file.api.OutboundApi;
 import com.example.file.api.ParsedDataApi;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,21 +32,31 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class FileServiceClientConfiguration {
 
   @Bean
+  @ConditionalOnMissingBean
   public FileAccessApi fileAccessApi(RestClient.Builder restClientBuilder,
                                      FileServiceClientProperties properties) {
     return buildProxy(restClientBuilder, properties.getBaseUrl(), FileAccessApi.class);
   }
 
   @Bean
+  @ConditionalOnMissingBean
   public FileTaskApi fileTaskApi(RestClient.Builder restClientBuilder,
                                  FileServiceClientProperties properties) {
     return buildProxy(restClientBuilder, properties.getBaseUrl(), FileTaskApi.class);
   }
 
   @Bean
+  @ConditionalOnMissingBean
   public ParsedDataApi parsedDataApi(RestClient.Builder restClientBuilder,
                                      FileServiceClientProperties properties) {
     return buildProxy(restClientBuilder, properties.getBaseUrl(), ParsedDataApi.class);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public OutboundApi outboundApi(RestClient.Builder restClientBuilder,
+                                 FileServiceClientProperties properties) {
+    return buildProxy(restClientBuilder, properties.getBaseUrl(), OutboundApi.class);
   }
 
   private static <T> T buildProxy(RestClient.Builder builder, String baseUrl, Class<T> apiType) {

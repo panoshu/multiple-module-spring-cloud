@@ -15,6 +15,7 @@ import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,6 +36,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+  prefix = "core.integration.approval", name = "enabled",
+  havingValue = "true", matchIfMissing = true)
 public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGateway {
 
   private static final String UNKNOWN_STATUS = "UNKNOWN";

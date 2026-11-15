@@ -1,0 +1,44 @@
+# 源模板配置 - 年金员工明细标准表单
+#
+# 对应 Excel 结构（Sheet1）：
+#   R1: 计划编号： | PLAN-2026-001 | 客户编号： | CUST-001 | 客户名称： | 示例客户
+#   R2: (空行)
+#   R3: 员工姓名 | 身份证号 | 年龄 | 月薪(分) | 月缴费(分)
+#   R4-Rn: 数据行
+#   Rn+1: 结束
+#
+# 该模板与 file-service 的自动识别、区域状态机、拆分/校验链路完全配置驱动，
+# 不含任何 Excel 列代码硬编码。
+id: FORM_DETAIL_ANNUITY_STANDARD
+name: "年金员工明细标准模板"
+identifyMode: AUTO
+fingerprint: [ "计划编号：", "客户编号：", "员工姓名", "身份证号" ]
+
+regions:
+  - name: basic_info
+    type: KEY_VALUE
+    bindTo: properties
+    trigger: { matchType: HEADER_SNIFF, minMatchCount: 3 }
+    strategy:
+      valuePosition: RIGHT
+      labelAliases:
+        planNo: [ "计划编号：", "计划编号:" ]
+        customerNo: [ "客户编号：", "客户编号:" ]
+        customerName: [ "客户名称：", "客户名称:" ]
+      maxBlankRows: 1
+
+  - name: employee_list
+    type: TABLE
+    bindTo: employees
+    trigger: { matchType: HEADER_SNIFF, minMatchCount: 5 }
+    strategy:
+      headerRows: 1
+      headerNameRow: 1
+      matchBy: HEADER_NAME
+      headerAliases:
+        employeeName: [ "员工姓名", "姓名" ]
+        idCardNo: [ "身份证号", "证件号码" ]
+        age: [ "年龄" ]
+        monthlySalary: [ "月薪(分)", "月薪（分）", "月薪" ]
+        monthlyContribution: [ "月缴费(分)", "月缴费（分）", "月缴费" ]
+      dataEnd: { markers: [ "结束" ], blankRowCount: 1 }

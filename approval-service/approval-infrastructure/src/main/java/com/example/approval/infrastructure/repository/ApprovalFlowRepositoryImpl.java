@@ -13,7 +13,6 @@ import com.example.approval.infrastructure.mapper.ApprovalFlowMapper;
 import com.example.approval.infrastructure.mapper.ApprovalNodeMapper;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.enums.FlowStatus;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.approval.infrastructure.entity.table.ApprovalFlowDOTableDef.APPROVAL_FLOW_DO;
 import static com.example.approval.infrastructure.entity.table.ApprovalNodeDOTableDef.APPROVAL_NODE_DO;
@@ -64,28 +62,11 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
         .orderBy(APPROVAL_NODE_DO.NODE_ORDER.asc())
     );
 
-    // 转换为领域对象
-    ApprovalFlow flow = converter.toDomain(flowDO);
-
-    // 转换节点列表
+    // 转换节点列表后一次性重建完整聚合（聚合要求节点非空）
     List<ApprovalNode> nodes = nodeDOs.stream()
       .map(converter::toNodeDomain)
       .toList();
-
-    // 使用重建方法创建完整的聚合根
-    return Optional.of(ApprovalFlow.reconstitute(
-      flow.id(),
-      flow.flowName(),
-      flow.matchRules(),
-      nodes,
-      flow.flowVersion(),
-      flow.status(),
-      flow.createdBy(),
-      flow.updatedBy(),
-      flow.createdAt(),
-      flow.updatedAt(),
-      flow.version()
-    ));
+    return Optional.of(converter.toDomain(flowDO, nodes));
   }
 
   @Override
@@ -112,28 +93,11 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
         .orderBy(APPROVAL_NODE_DO.NODE_ORDER.asc())
     );
 
-    // 转换为领域对象
-    ApprovalFlow flow = converter.toDomain(flowDO);
-
-    // 转换节点列表
+    // 转换节点列表后一次性重建完整聚合（聚合要求节点非空）
     List<ApprovalNode> nodes = nodeDOs.stream()
       .map(converter::toNodeDomain)
       .toList();
-
-    // 使用重建方法创建完整的聚合根
-    return Optional.of(ApprovalFlow.reconstitute(
-      flow.id(),
-      flow.flowName(),
-      flow.matchRules(),
-      nodes,
-      flow.flowVersion(),
-      flow.status(),
-      flow.createdBy(),
-      flow.updatedBy(),
-      flow.createdAt(),
-      flow.updatedAt(),
-      flow.version()
-    ));
+    return Optional.of(converter.toDomain(flowDO, nodes));
   }
 
   @Override
@@ -196,14 +160,6 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
     return flowDOs.stream()
       .map(this::convertToFlowWithNodes)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(ApprovalFlowId id, Consumer<AggregateRoot<ApprovalFlowId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override
@@ -307,27 +263,13 @@ public class ApprovalFlowRepositoryImpl implements ApprovalFlowRepository {
         .orderBy(APPROVAL_NODE_DO.NODE_ORDER.asc())
     );
 
-    // 转换为领域对象
-    ApprovalFlow flow = converter.toDomain(flowDO);
-
     // 转换节点列表
     List<ApprovalNode> nodes = nodeDOs.stream()
       .map(converter::toNodeDomain)
       .toList();
 
-    // 使用重建方法创建完整的聚合根
-    return ApprovalFlow.reconstitute(
-      flow.id(),
-      flow.flowName(),
-      flow.matchRules(),
-      nodes,
-      flow.flowVersion(),
-      flow.status(),
-      flow.createdBy(),
-      flow.updatedBy(),
-      flow.createdAt(),
-      flow.updatedAt(),
-      flow.version()
-    );
+    // 一次性重建完整聚合：聚合不变量要求节点列表非空，
+    // 不能先以空节点重建再二次填充。
+    return converter.toDomain(flowDO, nodes);
   }
 }

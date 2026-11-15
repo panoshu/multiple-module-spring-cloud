@@ -15,7 +15,6 @@ import com.example.approval.domain.valueobject.FlowVersion;
 import com.example.approval.infrastructure.entity.ApprovalInstanceDO;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.ApprovalInstanceId;
-import com.example.core.types.ApplicationId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -84,7 +83,7 @@ class ApprovalRequestNoContractTest {
     assertThat(ApprovalInstance.class.getDeclaredMethod("requestNo")).isNotNull();
     assertThat(ApprovalInstance.class.getDeclaredMethod("create",
       ApprovalInstanceId.class, ApprovalFlowId.class, FlowVersion.class,
-      ApplicationId.class, String.class, String.class, String.class, String.class)).isNotNull();
+      String.class, String.class, String.class, String.class, String.class)).isNotNull();
     assertThat(ApprovalInstanceRepository.class.getDeclaredMethod("findByRequestNo", String.class)).isNotNull();
     assertThat(ApprovalInstanceDO.class.getDeclaredMethod("getRequestNo")).isNotNull();
     assertThat(List.of(ApprovalInstanceCreated.class, ApprovalInstanceApproved.class,

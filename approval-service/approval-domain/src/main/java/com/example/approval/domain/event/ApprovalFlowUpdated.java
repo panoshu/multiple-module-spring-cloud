@@ -2,7 +2,7 @@ package com.example.approval.domain.event;
 
 import com.example.approval.types.ApprovalFlowId;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 
 import java.time.LocalDateTime;
 

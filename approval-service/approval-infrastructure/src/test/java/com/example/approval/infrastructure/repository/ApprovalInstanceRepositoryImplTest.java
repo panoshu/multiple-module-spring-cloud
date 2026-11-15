@@ -6,12 +6,12 @@ import com.example.approval.infrastructure.mapper.ApprovalInstanceMapper;
 import com.example.approval.infrastructure.mapper.ApprovalNodeExecutionMapper;
 import com.example.approval.infrastructure.mapper.ApprovalRecordMapper;
 import com.example.approval.types.enums.InstanceStatus;
+import com.example.shared.domain.event.EventBus;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ class ApprovalInstanceRepositoryImplTest {
       mock(ApprovalNodeExecutionMapper.class),
       mock(ApprovalRecordMapper.class),
       mock(ApprovalInstanceConverter.class),
-      mock(ApplicationEventPublisher.class));
+      mock(EventBus.class));
   }
 
   @Test

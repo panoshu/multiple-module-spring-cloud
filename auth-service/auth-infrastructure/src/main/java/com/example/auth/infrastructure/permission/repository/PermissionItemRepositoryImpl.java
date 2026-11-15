@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.permission.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.authorization.enumeration.PermissionCategory;
@@ -20,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.example.auth.infrastructure.permission.entity.table.PermissionItemDOTableDef.PERMISSION_ITEM_DO;
@@ -90,14 +88,6 @@ public class PermissionItemRepositoryImpl implements PermissionItemRepository {
   @Override
   public List<PermissionItem> loadAll() {
     return mapper.selectAll().stream().map(converter::toDomain).toList();
-  }
-
-  @Override
-  public void streamByAppId(PermissionItemId id, Consumer<AggregateRoot<PermissionItemId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

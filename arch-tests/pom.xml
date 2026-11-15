@@ -147,6 +147,19 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- X-06：starter 装配入口与 kernel 仓储实现的边界规则需要其类路径 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-starter</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-infrastructure</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-permission-starter</artifactId>

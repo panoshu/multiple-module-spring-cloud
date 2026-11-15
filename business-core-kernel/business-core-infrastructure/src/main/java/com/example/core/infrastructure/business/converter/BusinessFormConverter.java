@@ -18,7 +18,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.core.types.UserNo;
 import org.mapstruct.Mapper;
 
@@ -120,7 +120,7 @@ public abstract class BusinessFormConverter {
     BusinessFile formFile = null;
     if (aDo.getFormFileId() != null) {
       formFile = new BusinessFile(
-        new FileId(aDo.getFormFileId()),
+        new FileRefId(aDo.getFormFileId()),
         aDo.getFormFileName(),
         null,
         aDo.getFormFileSize()

@@ -8,7 +8,6 @@ import com.example.approval.types.enums.ExecutionStatus;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -203,7 +202,7 @@ public class NodeExecution extends Entity<ExecutionId> {
    * @param approverId 审批人ID
    * @return true 如果已审批
    */
-  public boolean hasApprovedBy(UserNo approverId) {
+  public boolean hasApprovedBy(String approverId) {
     if (approverId == null) {
       return false;
     }

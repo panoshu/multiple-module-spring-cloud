@@ -1,4 +1,4 @@
-# 本机开发覆盖（始终经 spring.profiles.include: local 加载，生产环境用环境变量覆盖）
+# 本机开发覆盖（由 spring.profiles.group.<profile>: local 按部署实例引入，生产环境用环境变量覆盖）
 spring:
   data:
     redis:
@@ -8,6 +8,10 @@ spring:
       password: redis
   cloud:
     nacos.discovery.server-addr: ${NACOS_ADDR:127.0.0.1:8848}
+
+# auth-api 客户端基础地址（库 3.5.5 前缀 http-exchange；旧写法不生效）
+http-exchange:
+  base-url: lb://auth-service
 
 # 会话签名配置：网关对 X-Account-Id / X-Session-Context 签名，业务服务验签防伪造
 # 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入，禁止使用此开发密钥

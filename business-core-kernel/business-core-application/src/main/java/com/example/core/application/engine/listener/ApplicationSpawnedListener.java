@@ -1,6 +1,7 @@
 package com.example.core.application.engine.listener;
 
 import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.application.engine.spi.ApplicationSpawnInitializer;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.List;
 
 /**
  * ApplicationSpawnedListener
@@ -21,6 +24,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class ApplicationSpawnedListener {
 
   private final FlowOrchestrationService orchestrationService;
+  private final List<ApplicationSpawnInitializer> spawnInitializers;
 
   /**
    * 监听申请单裂变孵化事件。
@@ -31,6 +35,9 @@ public class ApplicationSpawnedListener {
    * 如果不加这个，异步线程可能去查库时，申请单还没插到数据库里，报“找不到记录”。
    * 2. @Async:
    * 交由 Spring 内部的线程池（如 TaskExecutor）并发执行。每个申请单的 advanceStep 都在独立的线程和全新独立的事务中运行。
+   * <p>
+   * 点火前先执行 {@link ApplicationSpawnInitializer} 扩展点，确保业务扩展数据
+   * （年金 planType/初始缴费等）在第一步执行前已就绪。
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -38,6 +45,7 @@ public class ApplicationSpawnedListener {
     log.info("监听到新生申请单 {}，将其推入流程编排引擎...", event.applicationId());
 
     try {
+      spawnInitializers.forEach(initializer -> initializer.initialize(event.applicationId()));
       // 点火启动：引擎接管，开始跑 FORM_DETAIL_INGESTION 等步骤
       orchestrationService.advanceStep(event.applicationId());
     } catch (Exception e) {

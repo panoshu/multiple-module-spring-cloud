@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>gateway-framework</artifactId>
-  <description>渠道侧网关框架（认证、加解密、会话注入、路由排除），供 channel-gateway 复用。框架零业务 artifact 依赖，会话签名契约来自 shared-utils。</description>
+  <description>渠道侧网关框架（认证、加解密、会话注入、路由排除），供 channel-gateway 复用。框架零业务 artifact 依赖，会话签名契约来自 shared-security-contract。</description>
 
   <dependencies>
     <dependency>
@@ -33,10 +33,6 @@
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-utils</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>

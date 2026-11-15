@@ -50,8 +50,12 @@ class ProductionProfileIsolationTest {
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles("prod");
     ObjectProvider<SessionContextSignatureVerifier> verifierProvider = mock(ObjectProvider.class);
-    KernelProductionReadinessValidator validator =
-      new KernelProductionReadinessValidator(environment, verifierProvider);
+    ObjectProvider<com.example.shared.security.permission.PermissionCheckPort> permissionCheckPortProvider =
+      mock(ObjectProvider.class);
+    ObjectProvider<com.example.shared.permission.RequirePermissionAspect> requirePermissionAspectProvider =
+      mock(ObjectProvider.class);
+    KernelProductionReadinessValidator validator = new KernelProductionReadinessValidator(
+      environment, verifierProvider, permissionCheckPortProvider, requirePermissionAspectProvider);
 
     assertThatThrownBy(() -> validator.run(null))
       .isInstanceOf(IllegalStateException.class)

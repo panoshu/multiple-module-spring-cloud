@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public record MaterialItem(
   }
 
   // 移除文件（保持不可变）
-  public MaterialItem removeUpload(FileId fileId) {
+  public MaterialItem removeUpload(FileRefId fileId) {
     if (uploadInfo.isEmpty()) {
       return this;
     }

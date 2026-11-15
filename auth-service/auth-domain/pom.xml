@@ -21,6 +21,11 @@
       <groupId>com.example</groupId>
       <artifactId>auth-types</artifactId>
     </dependency>
+    <!-- AU-04：权限点上报端口使用 shared-security-contract 的描述符 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-security-contract</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>business-core-types</artifactId>

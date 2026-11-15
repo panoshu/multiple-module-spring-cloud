@@ -34,12 +34,16 @@ public class ExternalInteractionRecoveryJob {
   @Scheduled(fixedDelayString = "${core.kernel.recovery.fixed-delay:60000}")
   public void recover() {
     LocalDateTime now = LocalDateTime.now();
+    log.debug("外部协作恢复任务开始: now={}", now);
     safeRun("派发待派发协作", dispatcher::dispatchPending);
     safeRun("回收滞留派发协作",
       () -> recoveryService.reclaimStaleDispatching(now.minusMinutes(STALE_MINUTES)));
     safeRun("处理到期重试", () -> recoveryService.processDueRetries(now));
     safeRun("UNKNOWN 对账", recoveryService::reconcileUnknown);
-    safeRun("重算批次统计", batchAppService::reconcileAllActive);
+    safeRun("重算批次统计", () -> {
+      int reconciled = batchAppService.reconcileAllActive();
+      log.debug("批次统计对账完成: reconciled={}", reconciled);
+    });
   }
 
   private void safeRun(String label, Runnable action) {

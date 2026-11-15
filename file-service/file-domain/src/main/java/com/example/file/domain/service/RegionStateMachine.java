@@ -5,13 +5,18 @@ import com.example.file.domain.model.parse.valueobject.RawRowStream;
 import com.example.file.domain.model.parse.valueobject.config.RegionDef;
 import com.example.file.domain.model.parse.valueobject.RawRow;
 import com.example.file.domain.model.parse.valueobject.RegionParseResult;
-import com.example.shared.domain.annotation.DomainService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@DomainService
+/**
+ * 区域状态机.
+ *
+ * <p>依赖 {@code Map<RegionType, RegionParser>}，由宿主配置显式装配
+ * （见 file-infrastructure 的 FileDomainServiceConfiguration），
+ * 不使用 {@code @DomainService} 自动扫描——Spring 无法按枚举键自动注入该 Map。
+ */
 public class RegionStateMachine {
 
   private final Map<RegionType, RegionParser> parsers;

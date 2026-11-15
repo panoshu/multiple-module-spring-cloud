@@ -1,0 +1,15 @@
+# shared-pdf-starter 示例（实验性能力，宿主按需引入并显式声明字体）
+shared:
+  pdf:
+    template-prefix: "classpath:/pdf-resource/templates/"
+    base-uri: "classpath:/pdf-resource/static/"
+    fonts:
+      - family-name: "SimHei"
+        path: "classpath:/fonts/SimHei.ttf"   # 需随应用资源打包，禁止依赖本机绝对路径
+      - family-name: "SimSun"
+        path: "classpath:/fonts/SimSun.ttf"
+    default-metadata:
+      author: demo-author
+      creator: demo-creator
+      keywords: demo, setting, keywords
+      subject: demo-subject

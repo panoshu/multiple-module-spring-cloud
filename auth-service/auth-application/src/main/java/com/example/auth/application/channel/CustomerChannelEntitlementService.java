@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 客户渠道开通记录应用服务.
@@ -47,7 +48,8 @@ public class CustomerChannelEntitlementService {
    */
   @Transactional(readOnly = true)
   public CustomerChannelEntitlementResponse getEntitlement(GetEntitlementQuery query) {
-    return repository.findByCustomer(query.customerNo())
+    CustomerNo customerNo = new CustomerNo(query.customerNo());
+    return repository.findByCustomer(customerNo)
       .map(this::toResponse)
       .orElse(null);
   }
@@ -63,13 +65,16 @@ public class CustomerChannelEntitlementService {
    */
   @Transactional
   public CustomerChannelEntitlementResponse enable(EnableChannelCommand command) {
-    Optional<CustomerChannelEntitlement> existing = repository.findByCustomer(command.customerNo());
+    CustomerNo customerNo = new CustomerNo(command.customerNo());
+    Channel channel = Channel.fromChannelType(command.channel());
+    UserNo operator = new UserNo(command.operator());
+    Optional<CustomerChannelEntitlement> existing = repository.findByCustomer(customerNo);
     CustomerChannelEntitlement entitlement;
     if (existing.isPresent()) {
       entitlement = existing.get();
-      entitlement.enable(command.channel(), command.operator());
+      entitlement.enable(channel, operator);
     } else {
-      entitlement = createEntitlement(command.customerNo(), Set.of(command.channel()), command.operator());
+      entitlement = createEntitlement(customerNo, Set.of(channel), operator);
     }
     repository.save(entitlement);
     return toResponse(entitlement);
@@ -85,10 +90,13 @@ public class CustomerChannelEntitlementService {
    */
   @Transactional
   public CustomerChannelEntitlementResponse disable(DisableChannelCommand command) {
-    CustomerChannelEntitlement entitlement = repository.findByCustomer(command.customerNo())
+    CustomerNo customerNo = new CustomerNo(command.customerNo());
+    Channel channel = Channel.fromChannelType(command.channel());
+    UserNo operator = new UserNo(command.operator());
+    CustomerChannelEntitlement entitlement = repository.findByCustomer(customerNo)
       .orElseThrow(() -> new BusinessException(ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED)
         .withUserDetail("客户未配置任何渠道开通记录"));
-    entitlement.disable(command.channel(), command.operator());
+    entitlement.disable(channel, operator);
     repository.save(entitlement);
     return toResponse(entitlement);
   }
@@ -103,10 +111,15 @@ public class CustomerChannelEntitlementService {
    */
   @Transactional
   public CustomerChannelEntitlementResponse replace(ReplaceChannelsCommand command) {
-    CustomerChannelEntitlement entitlement = repository.findByCustomer(command.customerNo())
+    CustomerNo customerNo = new CustomerNo(command.customerNo());
+    Set<Channel> channels = command.channels().stream()
+      .map(Channel::fromChannelType)
+      .collect(Collectors.toSet());
+    UserNo operator = new UserNo(command.operator());
+    CustomerChannelEntitlement entitlement = repository.findByCustomer(customerNo)
       .orElseThrow(() -> new BusinessException(ChannelErrorCode.CUSTOMER_CHANNEL_NOT_ENABLED)
         .withUserDetail("客户未配置任何渠道开通记录"));
-    entitlement.replaceChannels(command.channels(), command.operator());
+    entitlement.replaceChannels(channels, operator);
     repository.save(entitlement);
     return toResponse(entitlement);
   }

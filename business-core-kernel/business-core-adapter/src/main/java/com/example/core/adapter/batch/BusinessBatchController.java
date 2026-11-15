@@ -13,7 +13,7 @@ import com.example.core.api.batch.query.GetBatchDetailQuery;
 import com.example.core.api.batch.response.BatchCreatedResponse;
 import com.example.core.api.batch.response.BatchDetailResponse;
 import com.example.core.api.batch.response.BatchSummaryResponse;
-import com.example.core.api.context.BusinessMetaContext;
+import com.example.core.api.context.BusinessMetaCommandContext;
 import com.example.shared.security.SessionClaims;
 import com.example.core.application.business.guard.BusinessAccessGuard;
 import com.example.core.application.business.service.BusinessBatchAppService;
@@ -49,7 +49,7 @@ import java.util.Optional;
  * <ol>
  *   <li>业务类型校验({@link SupportedBusinessTypeValidator})</li>
  *   <li>会话解析({@link SessionContextResolver})</li>
- *   <li>BusinessMetaContext 组装({@link BusinessMetaContextAssembler})</li>
+ *   <li>BusinessMetaCommandContext 组装({@link BusinessMetaContextAssembler})</li>
  *   <li>权限校验({@link BusinessAccessGuard})</li>
  *   <li>调用 AppService({@link BusinessBatchAppService})</li>
  * </ol>
@@ -102,7 +102,7 @@ public class BusinessBatchController implements BusinessBatchApi {
   public ApiResult<BatchCreatedResponse> create(@Valid @RequestBody CreateBatchCommand command) {
     typeValidator.validate(command.businessType());
     SessionClaims session = sessionResolver.require();
-    BusinessMetaContext meta = metaAssembler.assemble(command.businessType(), command.planNo(), session);
+    BusinessMetaCommandContext meta = metaAssembler.assemble(command.businessType(), command.planNo(), session);
     accessGuard.checkCanHandle(session, meta);
 
     log.info("创建业务批次: businessType={}, planNo={}, userNo={}",
@@ -135,9 +135,9 @@ public class BusinessBatchController implements BusinessBatchApi {
   }
 
   /**
-   * 将 BusinessMetaContext + SessionClaims 转换为领域 BusinessContext。
+   * 将 BusinessMetaCommandContext + SessionClaims 转换为领域 BusinessContext。
    */
-  private BusinessContext toDomainContext(BusinessMetaContext meta, SessionClaims session) {
+  private BusinessContext toDomainContext(BusinessMetaCommandContext meta, SessionClaims session) {
     return new BusinessContext(
       BusinessType.valueOf(meta.businessType()),
       new CustomerNo(meta.customerNo()),
@@ -158,7 +158,7 @@ public class BusinessBatchController implements BusinessBatchApi {
    * isProxy 直接取自 SessionClaims(仅 INTERNET 渠道为 true)。
    */
   private OperatorInfo toOperatorInfo(SessionClaims session) {
-    Channel channel = mapChannel(session.channelType());
+    Channel channel = Channel.fromChannelType(session.channelType());
     return new OperatorInfo(
       channel,
       session.userNo(),
@@ -177,15 +177,4 @@ public class BusinessBatchController implements BusinessBatchApi {
    *   <li>HQ → REGIONAL_CENTER(总部渠道)</li>
    * </ul>
    */
-  private Channel mapChannel(String channelType) {
-    if (channelType == null) {
-      return Channel.NETAPP;
-    }
-    return switch (channelType) {
-      case "INTERNET" -> Channel.NETAPP;
-      case "BRANCH" -> Channel.TELLER;
-      case "HQ" -> Channel.REGIONAL_CENTER;
-      default -> Channel.NETAPP;
-    };
-  }
 }

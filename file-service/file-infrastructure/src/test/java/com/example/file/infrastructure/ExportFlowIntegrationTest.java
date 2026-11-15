@@ -18,6 +18,7 @@ import org.apache.fesod.sheet.FesodSheet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.*;
@@ -43,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>模板由 {@code @BeforeAll static} 程序生成到 JUnit {@code @TempDir}，
  * 占位符严格遵循 fesod 2.0.2 语法 (无前导点)。源代码树在测试期间不被修改。
  */
+@ExtendWith(ExcelFixtureExtension.class)
 class ExportFlowIntegrationTest {
 
   /**

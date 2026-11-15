@@ -1,5 +1,6 @@
 package com.example.integration.application.trade.impl;
 
+import com.example.integration.domain.trade.gateway.OutboundSubmissionReceiptGateway;
 import com.example.integration.application.trade.service.TradeSubmissionAppService;
 import com.example.integration.domain.trade.gateway.FileSubmissionGateway;
 import com.example.integration.domain.trade.model.FileSubmissionResult;
@@ -22,11 +23,29 @@ import java.util.Map;
 public class TradeSubmissionAppServiceImpl implements TradeSubmissionAppService {
 
   private final FileSubmissionGateway fileSubmissionGateway;
+  private final OutboundSubmissionReceiptGateway receiptGateway;
 
   @Override
   @Transactional
   public FileSubmissionResult submitOutboundFile(String fileId, String tradeCode, Map<String, String> headParams) {
     log.info("提交出站文件, fileId={}, tradeCode={}", fileId, tradeCode);
     return fileSubmissionGateway.submit(fileId, tradeCode, headParams);
+  }
+
+  @Override
+  public FileSubmissionResult submitOutboundFileOnce(String eventId, String fileId, String tradeCode,
+                                                     Map<String, String> headParams) {
+    if (!receiptGateway.tryAcquire(eventId, fileId)) {
+      log.info("出站文件重复提交已跳过: eventId={}, fileId={}", eventId, fileId);
+      return FileSubmissionResult.duplicate(tradeCode);
+    }
+    try {
+      FileSubmissionResult result = submitOutboundFile(fileId, tradeCode, headParams);
+      receiptGateway.markSuccess(eventId, fileId);
+      return result;
+    } catch (RuntimeException e) {
+      receiptGateway.release(eventId, fileId);
+      throw e;
+    }
   }
 }

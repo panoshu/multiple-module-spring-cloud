@@ -18,6 +18,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>approval-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>business-core-api</artifactId>
     </dependency>
     <dependency>
@@ -54,11 +58,8 @@
       <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
     </dependency>
-    <!-- 不可变流程定义与只读规则缓存（生产可切 L2/MULTI，示例服务降级 L1_ONLY） -->
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-cache-starter</artifactId>
-    </dependency>
+    <!-- S-06：kernel 代码零 ICacheTemplate 使用，移除 shared-cache-starter 传递依赖。
+         需要缓存的宿主（如 file-service）自行显式引入，避免“引入即已使用”的误读。 -->
     <!-- 步骤耗时 / HTTP 日志 / 脱敏 / MDC 管道 -->
     <dependency>
       <groupId>com.example</groupId>

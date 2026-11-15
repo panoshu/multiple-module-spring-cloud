@@ -1,6 +1,6 @@
 package com.example.core.application.business.guard;
 
-import com.example.core.api.context.BusinessMetaContext;
+import com.example.core.api.context.BusinessMetaCommandContext;
 import com.example.shared.exception.BusinessException;
 import com.example.shared.security.SessionClaims;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,8 +48,8 @@ class SessionClaimsGuardRoundTripTest {
     );
   }
 
-  private BusinessMetaContext meta() {
-    return new BusinessMetaContext("ANNUITY_OPEN", "P001", "C001", "Customer A",
+  private BusinessMetaCommandContext meta() {
+    return new BusinessMetaCommandContext("ANNUITY_OPEN", "P001", "C001", "Customer A",
       "PRD001", "Product A", "Plan A", "MODEL_A", "CJP");
   }
 
@@ -93,7 +93,7 @@ class SessionClaimsGuardRoundTripTest {
   @DisplayName("INTERNET 代办 + 超出委托范围 → 拒绝")
   void internet_proxy_outside_delegated_rejected() {
     SessionClaims session = claims("INTERNET", true, false);
-    BusinessMetaContext otherPlan = new BusinessMetaContext("ANNUITY_OPEN", "P999", "C001",
+    BusinessMetaCommandContext otherPlan = new BusinessMetaCommandContext("ANNUITY_OPEN", "P999", "C001",
       "Customer A", "PRD001", "Product A", "Plan A", "MODEL_A", "CJP");
     assertThatThrownBy(() -> guard.checkCanHandle(session, otherPlan))
       .isInstanceOf(BusinessException.class)

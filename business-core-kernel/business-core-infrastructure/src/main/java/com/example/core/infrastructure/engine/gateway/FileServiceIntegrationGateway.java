@@ -21,7 +21,11 @@ import com.example.file.api.response.FileTaskIdResponse;
 import com.example.file.api.response.OutboundFileIdResponse;
 import com.example.shared.exception.SystemException;
 import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
+import com.example.core.types.BatchId;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.FormId;
+import com.example.core.types.ProductNo;
 import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +51,7 @@ import java.util.Map;
  * 本实现属于核心编排域 (kernel) 的基础设施层，通过 {@link FileTaskApi} 和 {@link FileAccessApi}
  * 这两个 @HttpExchange 接口向 file-service 发起远程调用。
  * <p>
- * {@link #downloadStream(FileId, BusinessMetaContext)} 采用两阶段令牌下载:
+ * {@link #downloadStream(FileRefId, BusinessMetaContext)} 采用两阶段令牌下载:
  * 先用业务上下文申请下载令牌,再以令牌换取流式响应,通过管道流将
  * {@link StreamingResponseBody} 桥接为 {@link InputStream} 供上游 Jackson 流式解析消费。
  *
@@ -62,14 +66,25 @@ import java.util.Map;
 public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   private static final String BIZ_TYPE_FORM_DETAIL = "FORM_DETAIL";
-  private static final String BIZ_TYPE_MATERIAL = "MATERIAL";
   private static final String SOURCE_APP = "business-core";
   private static final long DEFAULT_TTL_MINUTES = 30L;
   private static final long TOKEN_EXPIRE_DAYS = 7L;
   private static final int STREAM_BUFFER_SIZE = 8192;
   private static final UserNo SYSTEM_USER = UserNo.of("SYSTEM");
-  private static final List<String> DEFAULT_ALLOWED_CONTENT_TYPES =
-    List.of("application/pdf", "image/*");
+  /**
+   * 表单上传 token 允许的文件类型：Excel/CSV/PDF/图片。
+   *
+   * <p>表单解析链路的核心输入是 Excel（xlsx/xls），此前仅允许 PDF/图片
+   * 会导致前端直传表单文件被 file-service 拒绝。材料上传仍由调用方
+   * 按需扩展（后续可下沉为配置）。</p>
+   */
+  private static final List<String> DEFAULT_ALLOWED_CONTENT_TYPES = List.of(
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "text/csv",
+    "application/pdf",
+    "image/*"
+  );
 
   private final FileAccessApi fileAccessApi;
   private final ParsedDataApi parsedDataApi;
@@ -86,6 +101,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
     UploadFileRequest request = new UploadFileRequest(
       BIZ_TYPE_FORM_DETAIL, "FORM", null,
       resolveTemplateCode(businessMetaContext),
+      toFileServiceId(formFile.fileId()),
       formFile.fileName(),
       formFile.fileSizeBytes() != null ? formFile.fileSizeBytes() : 0L,
       resolveUploader(businessForm),
@@ -95,31 +111,32 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   }
 
   @Override
-  public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+  public void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules) {
     triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules, null);
   }
 
   @Override
-  public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+  public void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules, String requestNo) {
     dispatchParsing(formId, sourceFileId, parseTemplateId, splitRules, requestNo);
   }
 
   @Override
-  public String triggerAsyncParsingAndGetTaskId(FormId formId, FileId sourceFileId,
+  public String triggerAsyncParsingAndGetTaskId(FormId formId, FileRefId sourceFileId,
                                                 String parseTemplateId,
                                                 Map<String, Object> splitRules,
                                                 String requestNo) {
     return dispatchParsing(formId, sourceFileId, parseTemplateId, splitRules, requestNo);
   }
 
-  private String dispatchParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+  private String dispatchParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                  Map<String, Object> splitRules, String requestNo) {
     String clientRequestNo = requestNo != null ? requestNo : formId.value();
     UploadFileRequest request = new UploadFileRequest(
       BIZ_TYPE_FORM_DETAIL, "FORM", null,
       parseTemplateId,
+      toFileServiceId(sourceFileId),
       resolveFileName(sourceFileId),
       0L,
       "system",
@@ -129,7 +146,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   }
 
   @Override
-  public InputStream downloadStream(FileId fileId, BusinessMetaContext context) {
+  public InputStream downloadStream(FileRefId fileId, BusinessMetaContext context) {
     String token = applyDownloadToken(fileId, context);
     ResponseEntity<StreamingResponseBody> response = fileAccessApi.download(token);
     if (response == null || response.getBody() == null) {
@@ -149,13 +166,13 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
    * @param context 业务上下文
    * @return 下载令牌
    */
-  private String applyDownloadToken(FileId fileId, BusinessMetaContext context) {
+  private String applyDownloadToken(FileRefId fileId, BusinessMetaContext context) {
     ApplyDownloadTokenRequest request = new ApplyDownloadTokenRequest(
-      fileId,
+      toFileServiceId(fileId),
       SOURCE_APP,
-      context.customerNo(),
-      context.productNo(),
-      SYSTEM_USER,
+      context.customerNo() != null ? context.customerNo().value() : null,
+      context.productNo() != null ? context.productNo().value() : null,
+      SYSTEM_USER.value(),
       Duration.ofMinutes(DEFAULT_TTL_MINUTES)
     );
     ApplyDownloadTokenResponse response = fileAccessApi.applyDownloadToken(request);
@@ -177,7 +194,7 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
    * @param fileId 文件 ID(仅用于日志)
    * @return 可供读取的输入流
    */
-  private InputStream bridgeToInputStream(StreamingResponseBody body, FileId fileId) {
+  private InputStream bridgeToInputStream(StreamingResponseBody body, FileRefId fileId) {
     PipedOutputStream pipedOut = new PipedOutputStream();
     PipedInputStream pipedIn;
     try {
@@ -206,13 +223,19 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
 
   @Override
   public String applyUploadToken(String clientIp, String userId, long maxSize) {
+    return applyUploadToken(clientIp, userId, maxSize, null, null, null);
+  }
+
+  @Override
+  public String applyUploadToken(String clientIp, String userId, long maxSize,
+                                 BatchId batchId, CustomerNo customerNo, ProductNo productNo) {
     ApplyUploadTokenRequest request = new ApplyUploadTokenRequest(
-      BIZ_TYPE_MATERIAL, "MATERIAL", null,
+      BIZ_TYPE_FORM_DETAIL, "FORM", null,
       SOURCE_APP,
-      null,
-      null,
-      null,
-      UserNo.of(userId),
+      batchId != null ? batchId.value() : null,
+      customerNo != null ? customerNo.value() : null,
+      productNo != null ? productNo.value() : null,
+      userId,
       LocalDateTime.now().plusDays(TOKEN_EXPIRE_DAYS),
       DEFAULT_ALLOWED_CONTENT_TYPES,
       maxSize,
@@ -281,7 +304,14 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
       : "system";
   }
 
-  private String resolveFileName(FileId fileId) {
+  /**
+   * kernel 文件引用 → file-service 文件 ID（防腐层边界转换）。
+   */
+  private FileId toFileServiceId(FileRefId fileRefId) {
+    return fileRefId != null ? new FileId(fileRefId.value()) : null;
+  }
+
+  private String resolveFileName(FileRefId fileId) {
     return fileId != null ? fileId.value() + ".json" : "form-detail.json";
   }
 

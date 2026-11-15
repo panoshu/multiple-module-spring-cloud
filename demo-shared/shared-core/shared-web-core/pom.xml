@@ -12,11 +12,8 @@
   <artifactId>shared-web-core</artifactId>
 
   <dependencies>
-    <dependency>
-      <!-- GlobalExceptionHandler 的 sa-token 框架异常适配（NotLogin/NotPermission → 统一响应） -->
-      <groupId>cn.dev33</groupId>
-      <artifactId>sa-token-core</artifactId>
-    </dependency>
+    <!-- S-04：sa-token 是 auth-service 的实现细节，异常适配已迁至 auth-adapter，
+         shared-web-core 不再传递 sa-token-core。 -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-exception</artifactId>
@@ -69,6 +66,13 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- V-05：traceId 入站生成/透传的过滤器测试 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>

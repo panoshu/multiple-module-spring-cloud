@@ -6,16 +6,21 @@ spring:
       discovery:
         namespace: ${NACOS_NAMESPACE:public}
 
-# httpexchange 客户端代理配置：将下游服务 API 包映射到服务名
-# httpexchange-spring-boot-autoconfigure 自动为 @HttpExchange 接口创建代理 Bean
-httpexchange:
-  clients:
-    com.example.approval.api:
-      url: lb://approval-service
-    com.example.auth.api:
-      url: lb://auth-service
-    com.example.annuity.api.kernel:
-      url: lb://annuity-service
+# HttpExchange 客户端代理配置（库 3.5.5 使用 http-exchange.channels，旧写法不生效）
+http-exchange:
+  channels:
+    - name: approval
+      base-url: lb://approval-service
+      clients:
+        - com.example.approval.api.**
+    - name: auth
+      base-url: lb://auth-service
+      clients:
+        - com.example.auth.api.**
+    - name: annuity
+      base-url: lb://annuity-service
+      clients:
+        - com.example.annuity.api.kernel.**
 
 logging:
   level:

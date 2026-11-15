@@ -125,7 +125,7 @@ public class JetCacheSharedCacheTemplate implements ICacheTemplate {
       return rules.get(cacheName);
     }
     // 未声明规则：全局 mode + 规则默认值（TTL 1h 为 CacheRule 默认）
-    return new SharedCacheProperties.CacheRule(null, null, 0, 0, false, true);
+    return new SharedCacheProperties.CacheRule(null, null, 0, 0);
   }
 
   private CacheType toCacheType(SharedCacheProperties.CacheMode mode) {

@@ -16,9 +16,11 @@
       <groupId>com.example</groupId>
       <artifactId>approval-domain</artifactId>
     </dependency>
+    <!-- P-04：approval-api 仅供测试中的契约校验；主代码不再依赖自身 API 模块 -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>approval-api</artifactId>
+      <scope>test</scope>
     </dependency>
     <!-- 角色用户查询：跨服务只依赖 auth-api（批次 60） -->
     <dependency>

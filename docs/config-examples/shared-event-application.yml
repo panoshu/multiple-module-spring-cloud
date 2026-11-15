@@ -1,0 +1,10 @@
+# shared-event 事件通道示例（不再由 starter 自动加载）
+shared:
+  event:
+    redis:
+      enabled: false          # 与 rocketmq 二选一，避免重复投递
+    rocketmq:
+      enabled: true
+      endpoints: http://127.0.0.1:8081   # RocketMQ 5 Proxy gRPC 端点
+      topic: event
+      # consumer-group: 默认 <spring.application.name>-event

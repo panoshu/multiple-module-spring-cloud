@@ -73,7 +73,7 @@ Each carries an `ErrorDefinition` with structured error codes.
 | Module | Role | DDD Layers |
 |---|---|---|
 | `demo-shared` | Shared infrastructure (26 sub-modules) | 3 tiers: `shared-lib` (domain primitives), `shared-core` (starter cores), `shared-starter` (auto-config) |
-| `business-core-kernel` | Business process orchestration engine | 6 layers (no starter; consumed as library) |
+| `business-core-kernel` | Business process orchestration engine | 7 modules incl. `business-core-starter`; hosts depend on starter, not kernel package scanning |
 | `file-service` | Excel parsing/export, template management | 7 layers |
 | `approval-service` | Approval flow & instance management | 7 layers |
 | `integration-service` | External system integration (5564 trade code) | 6 layers (no types layer) |
@@ -91,19 +91,22 @@ Each carries an `ErrorDefinition` with structured error codes.
 
 **shared-lib** (domain primitives, no Spring):
 - `shared-types`, `shared-exception`, `shared-domain`, `shared-api`, `shared-utils`
+- `shared-types` now only keeps identifier contracts/enum helpers; `EventId` lives in `shared-domain.event`, page value objects in `shared-domain.page`
+- starters MUST NOT ship `application.yml`; defaults belong to `@ConfigurationProperties` or host config (see `docs/architecture/shared-starter-dependency-matrix.md`)
 - `shared-crypto`, `shared-json`, `shared-lock`
 - `gateway-shared` (gateway common components), `bff-shared` (BFF common components)
 
 **shared-core** (starter core logic, no auto-configuration):
 - `shared-cache-core`, `shared-client-core`, `shared-event-core`, `shared-id-core`
-- `shared-logging-core`, `shared-pdf-core`, `shared-web-core`
+- `shared-logging-core`, `shared-pdf-core`, `shared-permission-core`, `shared-web-core`
 
 **shared-starter** (auto-configuration via `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`):
-- `shared-cache-starter` (Caffeine L1 + Redisson L2 + distributed lock)
+- `shared-cache-starter` (JetCache L1/L2; no starter `application.yml`)
+- `shared-discovery-starter` (Nacos discovery split out of shared-web)
 - `shared-client-starter` (Retrofit + Logbook)
 - `shared-crypto-starter`, `shared-event-starter` (domain events → integration events → MQ)
-- `shared-id-starter` (ULID/UUID_V7/SEGMENT, provides MySQL + PG schemas)
-- `shared-logging-starter`, `shared-pdf-starter`, `shared-web-starter`, `shared-permission-starter`
+- `shared-id-starter` (ULID/UUID_V7/SEGMENT; rules configured by host)
+- `shared-logging-starter`, `shared-pdf-starter` (experimental), `shared-web-starter`, `shared-permission-starter` (implementation in `shared-permission-core`)
 
 ## business-core-kernel: Business Orchestration Engine
 
@@ -164,7 +167,7 @@ Every use case follows: load aggregate → invoke behavior method → `repositor
 | Spring Cloud Alibaba (Nacos) | 2025.0.0.0 |
 | MyBatis-Flex | 1.11.5 |
 | Redisson | 4.3.1 |
-| RocketMQ Spring Boot Starter | 2.3.6 |
+| RocketMQ Client (gRPC) | 5.0.7 |
 | MapStruct | 1.6.3 |
 | Lombok | 1.18.46 |
 | Apache Fesod (Excel) | 2.0.2-incubating |

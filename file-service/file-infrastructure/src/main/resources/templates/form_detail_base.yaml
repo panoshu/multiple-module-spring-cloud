@@ -1,0 +1,39 @@
+# 业务基线配置 - 年金员工明细表单（FORM_DETAIL）
+#
+# 与 annuity-service 的 AnnuityEmployeeDTO 字段保持一致：
+# employeeName / idCardNo / age / monthlySalary / monthlyContribution
+#
+# splitKey 使用 properties.planNo（无 "." 路径 = 属性级拆分），
+# 一份表单只产生一个 subTask；subTask.splitKey 即计划号，供 kernel 裂变时作为 PlanNo。
+bizType: FORM_DETAIL
+version: "1.0"
+errorPolicy: COLLECT_ALL
+
+canonicalModel:
+  properties:
+    - { code: planNo,       type: STRING, required: true }
+    - { code: customerNo,   type: STRING, required: false }
+    - { code: customerName, type: STRING, required: false }
+  tables:
+    - code: employees
+      fields:
+        - { code: employeeName,        type: STRING,  required: true }
+        - { code: idCardNo,            type: STRING,  required: true }
+        - { code: age,                 type: INTEGER, required: false }
+        - { code: monthlySalary,       type: INTEGER, required: false }
+        - { code: monthlyContribution, type: INTEGER, required: false }
+
+# 文件层不做行级校验：canonical 行由业务消费方（annuity）逐行校验，
+# 避免 ParseFileUseCase 仅对 properties 执行 ROW 规则造成误判。
+validationRules: [ ]
+
+derivationRules: [ ]
+
+splitConfig:
+  keys: [ planNo ]
+  splitKey:
+    targetField: planNo
+    sourcePath: planNo
+    type: FIELD_VALUE
+  onMiss: ERROR
+  maxRowsPerSubTask: 0

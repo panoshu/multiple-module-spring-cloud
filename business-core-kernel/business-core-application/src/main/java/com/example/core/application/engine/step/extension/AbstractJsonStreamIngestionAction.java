@@ -7,7 +7,7 @@ import com.example.core.domain.engine.aggregate.valueobject.ExtensionExecutionRe
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.spi.StepExtensionAction;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,7 +55,7 @@ public abstract class AbstractJsonStreamIngestionAction<D, T> implements StepExt
 
   @Override
   public ExtensionExecutionResult execute(BusinessApplication app, BusinessMetaContext context, Map<String, Object> params) {
-    FileId jsonFileId = parsedFileGateway.load(app.id()).orElse(null);
+    FileRefId jsonFileId = parsedFileGateway.load(app.id()).orElse(null);
     if (jsonFileId == null) {
       return ExtensionExecutionResult.failure("MISSING_JSON", "申请单缺少解析后的 JSON 文件凭证");
     }

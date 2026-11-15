@@ -43,10 +43,20 @@
       <groupId>com.example</groupId>
       <artifactId>shared-logging-starter</artifactId>
     </dependency>
+    <!-- 跨服务事件通道：订阅 file-service 的出站文件生成事件并驱动提交（I-02） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-event-starter</artifactId>
+    </dependency>
     <!-- Web 服务基础设施：内嵌容器、自动配置、注册中心等 -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
+    </dependency>
+    <!-- S-03：注册中心从 shared-web-starter 拆出，需要 Nacos 注册的服务显式引入 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-discovery-starter</artifactId>
     </dependency>
     <!-- 负载均衡：支持 lb:// 服务名解析调用 auth-service -->
     <dependency>

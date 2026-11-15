@@ -9,6 +9,7 @@ import com.example.file.domain.model.parse.valueobject.RawRow;
 import com.example.file.domain.model.parse.valueobject.RegionParseResult;
 import com.example.file.domain.model.parse.valueobject.TableRegionResult;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -18,6 +19,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.file.infrastructure.ExcelFixtureExtension;
+@ExtendWith(ExcelFixtureExtension.class)
 class ExcelParserImplTest {
 
   private static final String EXCEL_PATH =

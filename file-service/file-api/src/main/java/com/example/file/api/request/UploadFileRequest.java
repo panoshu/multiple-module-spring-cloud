@@ -1,5 +1,6 @@
 package com.example.file.api.request;
 
+import com.example.file.types.FileId;
 import jakarta.validation.constraints.NotBlank;
 
 public record UploadFileRequest(
@@ -13,6 +14,11 @@ public record UploadFileRequest(
    */
   java.util.Map<String, String> routingContext,
   String templateCode,
+  /**
+   * 待解析源文件 ID（前端已直传 file-service 后返回的 FileId）。
+   * 解析任务必须持有该凭证才能读取文件内容。
+   */
+  FileId sourceFileId,
   @NotBlank String fileName,
   long fileSize,
   @NotBlank String uploader,

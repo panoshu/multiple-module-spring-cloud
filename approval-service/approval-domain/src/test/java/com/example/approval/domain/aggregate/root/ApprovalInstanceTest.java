@@ -10,8 +10,6 @@ import com.example.approval.types.NodeId;
 import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.approval.types.enums.SignMode;
-import com.example.core.types.ApplicationId;
-import com.example.core.types.UserNo;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,9 +40,9 @@ class ApprovalInstanceTest {
 
 
   private static final String INITIATOR = "user-initiator";
-  private static final UserNo APPROVER_1 = UserNo.of("user-001");
-  private static final UserNo APPROVER_2 = UserNo.of("user-002");
-  private static final ApplicationId BUSINESS_APP_ID = new ApplicationId("app-001");
+  private static final String APPROVER_1 = "user-001";
+  private static final String APPROVER_2 = "user-002";
+  private static final String BUSINESS_APP_ID = new String("app-001");
   private static final String BUSINESS_TYPE = "ANNUITY";
 
   private ApprovalInstance newApprovingInstance() {
@@ -75,7 +73,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个用户审批
-    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(),
+    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1,
       TEST_ID_GENERATOR, List.of(APPROVER_1, APPROVER_2));
 
     // then: 节点不应完成，实例应仍在审批中
@@ -104,7 +102,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个审批人通过
-    instance.approve(userNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(),
+    instance.approve(userNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1,
       TEST_ID_GENERATOR, List.of(APPROVER_1, APPROVER_2));
 
     // then: 节点不应完成
@@ -114,7 +112,7 @@ class ApprovalInstanceTest {
       "AND_SIGN 用户审批节点单人通过后不应标记为已通过");
 
     // when: 第二个审批人通过
-    instance.approve(userNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2.value(),
+    instance.approve(userNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2,
       TEST_ID_GENERATOR, List.of(APPROVER_1, APPROVER_2));
 
     // then: 节点应完成，实例应已通过
@@ -137,7 +135,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     // when: 第一个用户审批
-    instance.approve(orSignRoleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(),
+    instance.approve(orSignRoleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1,
       TEST_ID_GENERATOR, List.of(APPROVER_1));
 
     // then: 或签模式下节点应完成
@@ -156,15 +154,15 @@ class ApprovalInstanceTest {
       List.of("ROLE_MANAGER"),
       SignMode.AND_SIGN,
       INITIATOR);
-    List<UserNo> expanded = List.of(APPROVER_1, APPROVER_2);
+    List<String> expanded = List.of(APPROVER_1, APPROVER_2);
     ApprovalInstance instance = newApprovingInstance();
 
-    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1.value(),
+    instance.approve(roleNode, APPROVER_1, ApprovalOpinion.of("同意"), APPROVER_1,
       TEST_ID_GENERATOR, expanded);
     assertEquals(InstanceStatus.APPROVING, instance.status(),
       "展开结果中仍有未审批人时节点不应完成");
 
-    instance.approve(roleNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2.value(),
+    instance.approve(roleNode, APPROVER_2, ApprovalOpinion.of("同意"), APPROVER_2,
       TEST_ID_GENERATOR, expanded);
     assertEquals(InstanceStatus.APPROVED, instance.status(),
       "展开结果中所有人审批后节点应完成");
@@ -179,7 +177,7 @@ class ApprovalInstanceTest {
     ApprovalInstance instance = newApprovingInstance();
 
     assertThrows(DomainException.class, () ->
-      instance.approve(userNode, UserNo.of("U-OTHER"), ApprovalOpinion.of("同意"),
+      instance.approve(userNode, "U-OTHER", ApprovalOpinion.of("同意"),
         "U-OTHER", TEST_ID_GENERATOR, List.of(APPROVER_1)));
   }
 }

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +24,10 @@ class ChannelGatewayApplicationTest {
 
   @Autowired
   private ApplicationContext context;
+
+  /** 测试 profile 排除 Redis 自动配置，但网关会话注入器仍需要该端口 Bean。 */
+  @MockitoBean
+  private ReactiveStringRedisTemplate reactiveStringRedisTemplate;
 
   @Test
   @DisplayName("上下文加载成功")

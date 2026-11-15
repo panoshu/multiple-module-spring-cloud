@@ -190,6 +190,26 @@ public class FileMetadata extends AggregateRoot<FileId> {
       businessBatchId, targetId, storageType, uploadedBy, expiresAt);
   }
 
+  /**
+   * 上传前置登记：在写存储前记录原始文件名/大小/类型。
+   *
+   * <p>存储 key 由 {@code FileStorageRouter} 基于元数据生成，其中包含 originalName；
+   * 若等 completeUpload 才写入，生成出的 key 会包含字面量 {@code null}。</p>
+   */
+  public void prepareUpload(String originalName, long size, String contentType) {
+    if (this.status != FileStatus.PENDING_UPLOAD) {
+      throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("当前状态: " + this.status + ", 期望状态: PENDING_UPLOAD, fileId=" + id());
+    }
+    if (originalName == null || originalName.isBlank()) {
+      throw new DomainException(SharedDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("originalName 不能为空, fileId=" + id());
+    }
+    this.originalName = originalName;
+    this.size = size;
+    this.contentType = contentType;
+  }
+
   // ============ 新增 completeUpload（Token 路径）============
   public void completeUpload(String originalName, long size, String contentType,
                              String storageKey, String digest) {

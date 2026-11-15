@@ -17,7 +17,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ApprovalSubmissionHandlerTest {
 
   private static final ApplicationId APPLICATION_ID = new ApplicationId("app-001");
-  private static final FileId PARSED_JSON_FILE_ID = new FileId("file-parsed-001");
+  private static final FileRefId PARSED_JSON_FILE_ID = new FileRefId("file-parsed-001");
   private static final String OPERATOR_ID = "user-001";
   private static final String REQUEST_NO = "SE-9";
 

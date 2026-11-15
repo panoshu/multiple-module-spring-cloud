@@ -9,7 +9,6 @@ import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.NodeId;
 import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.SignMode;
-import com.example.core.types.UserNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,7 @@ class ApprovalFlowTest {
       NodeId.of(1L),
       NodeOrder.first(),
       ApproverType.SPECIFIED_USER,
-      List.of(UserNo.of("user-002")),
+      List.of("user-002"),
       List.of(),
       SignMode.OR_SIGN,
       OPERATOR);

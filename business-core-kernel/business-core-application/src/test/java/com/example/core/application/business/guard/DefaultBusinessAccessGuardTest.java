@@ -1,6 +1,6 @@
 package com.example.core.application.business.guard;
 
-import com.example.core.api.context.BusinessMetaContext;
+import com.example.core.api.context.BusinessMetaCommandContext;
 import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,8 +61,8 @@ class DefaultBusinessAccessGuardTest {
     );
   }
 
-  private BusinessMetaContext metaWith(String businessType, String planNo) {
-    return new BusinessMetaContext(businessType, planNo, "C001", "Customer A",
+  private BusinessMetaCommandContext metaWith(String businessType, String planNo) {
+    return new BusinessMetaCommandContext(businessType, planNo, "C001", "Customer A",
       "PRD001", "Product A", "Plan A", "MODEL_A", "CJP");
   }
 

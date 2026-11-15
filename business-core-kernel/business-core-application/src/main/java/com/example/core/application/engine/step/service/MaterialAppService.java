@@ -6,7 +6,7 @@ import com.example.core.domain.business.aggregate.valueobject.MaterialConditionC
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,7 +64,7 @@ public class MaterialAppService {
    * @param fileId       文件 ID
    */
   @Transactional
-  public void unbindIndividualMaterial(ApplicationId appId, String materialCode, FileId fileId) {
+  public void unbindIndividualMaterial(ApplicationId appId, String materialCode, FileRefId fileId) {
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     app.removeIndividualPlanMaterial(materialCode, fileId);
     applicationRepository.save(app);

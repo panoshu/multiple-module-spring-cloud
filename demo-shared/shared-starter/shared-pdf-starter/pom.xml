@@ -10,6 +10,7 @@
   </parent>
 
   <artifactId>shared-pdf-starter</artifactId>
+  <description>【实验性】PDF 模板渲染与字体缓存；字体必须使用 classpath 资源，不再内置 Windows 绝对路径</description>
 
   <dependencies>
     <dependency>

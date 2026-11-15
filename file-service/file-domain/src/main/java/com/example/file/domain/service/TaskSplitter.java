@@ -21,9 +21,15 @@ public class TaskSplitter {
     }
 
     String sourcePath = keyDef.sourcePath();
+    if (sourcePath == null || sourcePath.isBlank()) {
+      return List.of(new SplitUnit("default", new LinkedHashMap<>(data)));
+    }
     int dot = sourcePath.indexOf('.');
     if (dot < 0) {
-      return List.of(new SplitUnit("default", new LinkedHashMap<>(data)));
+      // 属性级拆分（如 planNo/customerNo）：一份表单一个子任务，splitKey 取属性值。
+      Object value = data.get(sourcePath);
+      String key = value != null ? value.toString() : "default";
+      return List.of(new SplitUnit(key, new LinkedHashMap<>(data)));
     }
     String regionName = sourcePath.substring(0, dot);
     String field = sourcePath.substring(dot + 1);

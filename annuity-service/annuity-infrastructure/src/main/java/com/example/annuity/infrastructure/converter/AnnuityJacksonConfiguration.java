@@ -6,6 +6,7 @@ import com.example.core.infrastructure.engine.configuration.LibJacksonModule;
 import com.example.core.infrastructure.engine.json.BusinessExtensionMixIn;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +49,14 @@ public class AnnuityJacksonConfiguration {
   @Bean
   @Primary
   public ObjectMapper annuityObjectMapper() {
-    return configure(new ObjectMapper());
+    // 必须注册 JSR-310（及 Jdk8 等）模块：该 ObjectMapper 是 @Primary，
+    // Spring Boot 的 HTTP 消息转换器会用它序列化 @HttpExchange 请求体；
+    // 裸 ObjectMapper 会让 LocalDateTime（如 ApplyUploadTokenRequest.expiresAt）序列化直接失败。
+    // 同时保持 Spring Boot 默认的反序列化宽容度：ApiResult 额外输出 success/failure
+    // 派生属性，若 FAIL_ON_UNKNOWN_PROPERTIES 开启，所有远程响应解析都会失败。
+    ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+    mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    return configure(mapper);
   }
 
   /**

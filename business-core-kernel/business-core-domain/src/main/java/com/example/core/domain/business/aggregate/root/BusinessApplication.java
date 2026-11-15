@@ -16,7 +16,7 @@ import com.example.shared.exception.DomainException;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.core.types.FormId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -162,7 +162,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @param materialCode 材料编码
    * @param fileId       文件 ID
    */
-  public void removeIndividualPlanMaterial(String materialCode, FileId fileId) {
+  public void removeIndividualPlanMaterial(String materialCode, FileRefId fileId) {
     this.materialState = this.materialState.removeIndividualPlanMaterial(materialCode, fileId, this.id());
   }
 
@@ -211,6 +211,32 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
       this.markUpdated(requireOperator());
     }
     this.registerDomainEvent(StepEnteredEvent.of(this.id(), previousStep, nextStep));
+  }
+
+  /**
+   * 完成外部等待步骤：{@code WAITING_EXTERNAL → RUNNING} 与步骤跃迁合并为一次版本递增。
+   *
+   * <p>外部回调到达时若先调用 {@link #retry()} 再调用 {@link #completeCurrentStep}，
+   * 两次 {@code markUpdated} 会让领域版本一次前进 2，而仓储只接受“持久化版本 / +1”，
+   * 导致合法回调被误判为乐观锁冲突。本方法把两段状态变更合并为一次更新。</p>
+   */
+  public void completeWaitingStep(ApplicationFlowStep nextStep) {
+    if (nextStep == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("后继步骤不能为空");
+    }
+    if (currentStatus() != ApplicationStatus.WAITING_EXTERNAL) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
+        .withLogDetail("只有 WAITING_EXTERNAL 状态可完成等待步骤，当前: " + currentStatus());
+    }
+    // 状态先归位 RUNNING，但不单独递增版本；由 completeCurrentStep 统一 markUpdated。
+    this.status = ApplicationStatus.RUNNING;
+    if (this.currentStep == nextStep) {
+      // 自环步骤：completeCurrentStep 会幂等返回，这里补一次版本递增保证状态落库
+      this.markUpdated(requireOperator());
+      return;
+    }
+    completeCurrentStep(nextStep);
   }
 
   public void start() {

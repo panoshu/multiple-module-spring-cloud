@@ -20,10 +20,6 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>business-core-types</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
       <artifactId>shared-security-contract</artifactId>
     </dependency>
     <dependency>

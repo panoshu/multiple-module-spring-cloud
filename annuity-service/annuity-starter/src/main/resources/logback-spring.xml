@@ -12,6 +12,11 @@
   <property name="MDC_CONTEXT_FIELDS"
             value="[traceId:%X{traceId:-}][applicationId:%X{applicationId:-}][stepExecutionId:%X{stepExecutionId:-}][requestNo:%X{requestNo:-}][businessType:%X{businessType:-}]"/>
 
+  <!-- fat jar 的 Tomcat/JULI 桥接线程上，%wEx 的 packaging data 计算偶尔
+       触发 NoClassDefFoundError(ClassPackagingData)，连带吞掉真实异常并挂起请求。
+       %rEx 输出完整堆栈但不计算 packaging data，牺牲 jar 坐标信息换取可诊断性。 -->
+  <property name="LOG_EXCEPTION_CONVERSION_WORD" value="%rEx"/>
+
   <property name="CONSOLE_LOG_PATTERN"
             value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:-}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %clr(${MDC_CONTEXT_FIELDS}){yellow} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
   <property name="FILE_LOG_PATTERN"

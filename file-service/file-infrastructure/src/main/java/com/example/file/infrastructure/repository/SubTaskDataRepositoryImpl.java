@@ -12,7 +12,6 @@ import com.example.file.infrastructure.entity.SubTaskDataDO;
 import com.example.file.infrastructure.mapper.SubTaskDataMapper;
 import com.example.file.types.FileTaskId;
 import com.example.file.types.SubTaskId;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.file.infrastructure.entity.table.SubTaskDataDOTableDef.SUB_TASK_DATA_DO;
 
@@ -118,11 +116,6 @@ public class SubTaskDataRepositoryImpl implements SubTaskDataRepository {
     return mapper.selectAll().stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(SubTaskId id, Consumer<AggregateRoot<SubTaskId>> processor) {
-    findById(id).ifPresent(task -> processor.accept(task));
   }
 
   private void publishDomainEvents(SubTaskData subTask) {

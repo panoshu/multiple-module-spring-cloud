@@ -8,6 +8,7 @@ import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.ParsedPlanResult;
 import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
+import com.example.core.domain.business.gateway.ParsedSubTaskReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
@@ -18,10 +19,15 @@ import com.example.core.domain.engine.aggregate.valueobject.enums.definition.Bat
 import com.example.core.domain.engine.gateway.BusinessConfigGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.domain.engine.gateway.ProcessDefinitionGateway;
+import com.example.shared.exception.DomainException;
 import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.IdService;
+import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.BatchId;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.FormId;
+import com.example.core.types.ProductNo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +54,7 @@ public class BusinessFormAppService {
   private final IdService idService;
   private final ProcessDefinitionGateway processDefinitionGateway;
   private final ParsedFileReferenceGateway parsedFileReferenceGateway;
+  private final ParsedSubTaskReferenceGateway parsedSubTaskReferenceGateway;
 
   /**
    * 步骤 1：确认文件已上传 (由 BFF 层调用)
@@ -67,21 +74,29 @@ public class BusinessFormAppService {
   @Transactional
   public void triggerParsing(FormId formId) {
     BusinessForm form = formRepository.loadOrThrow(formId);
+    if (form.formFile() == null || form.formFile().fileId() == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("表单尚未挂载上传文件，无法触发解析: formId=" + formId.value());
+    }
 
     // 查询该表单类型对应的解析配置
     FormParsingConfig parsingConfig = configGateway.getFormParsingConfig(form.buildConfigQueryContext());
 
+    // 先落 PARSING 再派发：解析回调可能同步/快速返回（Mock 或同进程），
+    // 若先派发后保存，回调已把表单置为 PARSED，随后用旧对象保存会覆盖状态甚至触发乐观锁。
+    form.markAsParsing();
+    formRepository.save(form);
+
     // 防腐调用：让底层基础设施去解析 Excel 拆分出 Json
+    // 以 formId 作为外部协作幂等键：file-service 解析完成事件会原样回传，
+    // 供 kernel 将解析结果关联回表单（FileParsedMessage.requestNo）。
     fileIntegrationGateway.triggerAsyncParsing(
       form.id(),
       form.formFile().fileId(),
       parsingConfig.parseTemplateId(),
-      parsingConfig.splitRules()
+      parsingConfig.splitRules(),
+      form.id().value()
     );
-
-    // 聚合根行为：修改状态为 PARSING
-    form.markAsParsing();
-    formRepository.save(form);
   }
 
   /**
@@ -120,8 +135,15 @@ public class BusinessFormAppService {
       );
 
       applicationRepository.save(newApp);
-      // 解析后的明细 JSON 文件引用按 applicationId 交给业务服务自有存储（§6.2，批次 37c-1）
-      parsedFileReferenceGateway.save(newApp.id(), result.jsonFileId());
+      // 解析结果凭证按 applicationId 交给业务服务自有存储（§6.2）：
+      // - subTaskId：当前 file-service canonical 数据分页拉取凭证（首选）
+      // - jsonFileId：旧版 JSON 文件模式兼容
+      if (result.subTaskId() != null && !result.subTaskId().isBlank()) {
+        parsedSubTaskReferenceGateway.save(newApp.id(), result.subTaskId());
+      }
+      if (result.jsonFileId() != null) {
+        parsedFileReferenceGateway.save(newApp.id(), result.jsonFileId());
+      }
     }
     if (batch != null) {
       batchRepository.save(batch);
@@ -148,8 +170,21 @@ public class BusinessFormAppService {
    * @return 上传 token 字符串
    */
   public String applyUploadToken(String clientIp, String userId, long fileSize) {
-    String token = fileIntegrationGateway.applyUploadToken(clientIp, userId, fileSize);
-    log.info("申请上传 token 成功: userId={}, fileSize={}", userId, fileSize);
+    return applyUploadToken(clientIp, userId, fileSize, null, null, null);
+  }
+
+  /**
+   * 申请上传 token（携带批次与企业/产品访问范围）。
+   *
+   * <p>file-service 的上传 token 必须绑定访问范围（FileAccessScope）与批次，
+   * BFF/前端透传会话上下文后由此方法完整传递给文件网关。</p>
+   */
+  public String applyUploadToken(String clientIp, String userId, long fileSize,
+                                 BatchId batchId, CustomerNo customerNo, ProductNo productNo) {
+    String token = fileIntegrationGateway.applyUploadToken(
+      clientIp, userId, fileSize, batchId, customerNo, productNo);
+    log.info("申请上传 token 成功: userId={}, fileSize={}, batchId={}", userId, fileSize,
+      batchId != null ? batchId.value() : null);
     return token;
   }
 

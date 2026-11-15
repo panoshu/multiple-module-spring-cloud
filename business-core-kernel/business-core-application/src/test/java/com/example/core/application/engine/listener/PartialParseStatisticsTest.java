@@ -1,6 +1,6 @@
 package com.example.core.application.engine.listener;
 
-import com.example.file.api.event.FileParsedEventDTO;
+import com.example.core.application.engine.inbound.FileParsedMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,11 +18,11 @@ class PartialParseStatisticsTest {
   @Test
   @DisplayName("汇总子任务行数与失败子任务数，并编码为紧凑 resultRef")
   void from_sumsRowsAndEncodesResultRef() {
-    List<FileParsedEventDTO.SubTaskSummaryDTO> subTasks = List.of(
-      new FileParsedEventDTO.SubTaskSummaryDTO("ST-1", "K1", 10, 10, 0, "SUCCESS"),
-      new FileParsedEventDTO.SubTaskSummaryDTO("ST-2", "K2", 10, 7, 3, "PARTIAL"));
-    FileParsedEventDTO event = new FileParsedEventDTO(
-      "evt-1", "task-1", "FORM_DETAIL", "PARTIAL", 2, subTasks, null, NOW);
+    List<FileParsedMessage.ParsedSubTaskMessage> subTasks = List.of(
+      new FileParsedMessage.ParsedSubTaskMessage("ST-1", "K1", 10, 10, 0, "SUCCESS"),
+      new FileParsedMessage.ParsedSubTaskMessage("ST-2", "K2", 10, 7, 3, "PARTIAL"));
+    FileParsedMessage event = new FileParsedMessage(
+      "evt-1", "task-1", null, "PARTIAL", 2, subTasks, null);
 
     PartialParseStatistics stats = PartialParseStatistics.from(event);
 
@@ -38,8 +38,8 @@ class PartialParseStatisticsTest {
   @Test
   @DisplayName("subTasks 为 null 时防御性按 0 汇总")
   void from_nullSubTasksIsDefensive() {
-    FileParsedEventDTO event = new FileParsedEventDTO(
-      "evt-2", "task-2", "FORM_DETAIL", "PARTIAL", 3, null, null, NOW);
+    FileParsedMessage event = new FileParsedMessage(
+      "evt-2", "task-2", null, "PARTIAL", 3, null, null);
 
     PartialParseStatistics stats = PartialParseStatistics.from(event);
 

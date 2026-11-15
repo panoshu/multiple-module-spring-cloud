@@ -14,7 +14,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class BusinessFormAccessorTest {
   @Test
   @DisplayName("create() 创建初始状态为 UPLOADED 的表单并注册 FormUploadedEvent")
   void create_setsUploadedStatusAndEvent() {
-    BusinessFile file = new BusinessFile(new FileId("F-FILE"), "form.xlsx", "xlsx", 1024L);
+    BusinessFile file = new BusinessFile(new FileRefId("F-FILE"), "form.xlsx", "xlsx", 1024L);
 
     BusinessForm form = BusinessForm.create(
       new FormId("F-1"), BatchId.of("B-1"), buildContext(), buildOperator(), file
@@ -44,10 +44,30 @@ class BusinessFormAccessorTest {
   }
 
   @Test
+  @DisplayName("markAsUploaded() 迁移为 UPLOADED 并注册一次 FormUploadedEvent")
+  void markAsUploaded_registersEventOnce() {
+    LocalDateTime now = LocalDateTime.now();
+    BusinessFile file = new BusinessFile(new FileRefId("F-FILE"), "form.xlsx", "xlsx", 1024L);
+    BusinessForm form = BusinessForm.reconstitute(
+      new FormId("F-U"), "U-C", "U-U",
+      now.minusDays(1), now, Version.of(1L),
+      BatchId.of("B-1"), buildContext(), buildOperator(),
+      null, FormStatus.WAITING_UPLOAD, List.of()
+    );
+
+    form.markAsUploaded(file);
+    form.markAsUploaded(file);
+
+    assertThat(form.formStatus()).isEqualTo(FormStatus.UPLOADED);
+    assertThat(form.formFile().fileId().value()).isEqualTo("F-FILE");
+    assertThat(form.domainEvents()).hasSize(1);
+  }
+
+  @Test
   @DisplayName("reconstitute() 装配所有字段且不触发业务事件")
   void reconstitute_assemblesAllFields() {
     LocalDateTime now = LocalDateTime.now();
-    BusinessFile file = new BusinessFile(new FileId("F-FILE"), "form.xlsx", "xlsx", 1024L);
+    BusinessFile file = new BusinessFile(new FileRefId("F-FILE"), "form.xlsx", "xlsx", 1024L);
 
     BusinessForm form = BusinessForm.reconstitute(
       new FormId("F-R"), "U-C", "U-U",

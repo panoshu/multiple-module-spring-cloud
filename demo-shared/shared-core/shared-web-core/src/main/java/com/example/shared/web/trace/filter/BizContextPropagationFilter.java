@@ -8,9 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,17 +16,30 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static com.example.shared.web.trace.constant.TraceConstants.CONTEXT_BACKUP_KEY;
 
 /**
  * 业务上下文入站过滤器
- * 优先级设置得较高，确保在进入 Controller 之前完成上下文初始化
+ * 优先级设置得较高，确保在进入 Controller 之前完成上下文初始化。
+ *
+ * <p>V-05：traceId 是链路追踪的基础设施字段，不依赖 Micrometer。过滤器优先复用
+ * 上游传入的 {@code X-Trace-Id}，缺失或非法时生成 32 位十六进制 ID；写入 MDC 后，
+ * 业务日志与出站 RestClient/Retrofit/OkHttp 拦截器即可自动携带。</p>
  */
-@Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 @RequiredArgsConstructor
 public class BizContextPropagationFilter extends OncePerRequestFilter {
+
+  /**
+   * MDC 中的链路 ID 键（logback pattern 使用 {@code %X{traceId}}）。
+   */
+  public static final String TRACE_ID_MDC_KEY = "traceId";
+
+  private static final String TRACE_RESPONSE_HEADER = "trace-id";
+  private static final Pattern VALID_TRACE_ID = Pattern.compile("[A-Za-z0-9._-]{1,64}");
 
   private final TraceContextProperties properties;
   private final BizContextAccessor contextAccessor;
@@ -49,19 +60,17 @@ public class BizContextPropagationFilter extends OncePerRequestFilter {
       }
     }
 
-    // 2. 显式将 Trace ID 写入 Response Header
-    // 尝试从 MDC 获取 TraceId 并写入响应头
-    // 如果项目引入了 Micrometer，它会在更早的 Filter 中把 traceId 放入 MDC
-    // 常见的 Key 是 "traceId" 或 "trace_id"，Logback 默认通常是 "traceId"
-    String traceId = MDC.get("traceId");
-    if (traceId != null) {
-      response.setHeader("trace-id", traceId);
-    }
+    // 2. 解析/生成 traceId（上游透传优先，非法值丢弃后重新生成）
+    String traceHeaderKey = properties.getHeaderKey(TRACE_ID_MDC_KEY);
+    String traceId = resolveTraceId(request.getHeader(traceHeaderKey));
+    contextMap.put(TRACE_ID_MDC_KEY, traceId);
+    response.setHeader(traceHeaderKey, traceId);
+    response.setHeader(TRACE_RESPONSE_HEADER, traceId);
 
     // 3. 备份到 Request Attribute (给 GlobalExceptionHandler 用)
     request.setAttribute(CONTEXT_BACKUP_KEY, new HashMap<>(contextMap));
 
-    // 3. 执行链路
+    // 4. 执行链路
     try {
       contextAccessor.withContext(contextMap, (ThrowableSupplier<Void>) () -> {
         filterChain.doFilter(request, response);
@@ -72,5 +81,12 @@ public class BizContextPropagationFilter extends OncePerRequestFilter {
     } catch (Throwable e) {
       throw new ServletException(e);
     }
+  }
+
+  private String resolveTraceId(String candidate) {
+    if (candidate != null && VALID_TRACE_ID.matcher(candidate).matches()) {
+      return candidate;
+    }
+    return UUID.randomUUID().toString().replace("-", "");
   }
 }

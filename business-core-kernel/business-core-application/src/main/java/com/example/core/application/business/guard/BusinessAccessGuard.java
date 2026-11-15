@@ -1,6 +1,6 @@
 package com.example.core.application.business.guard;
 
-import com.example.core.api.context.BusinessMetaContext;
+import com.example.core.api.context.BusinessMetaCommandContext;
 import com.example.shared.security.SessionClaims;
 
 /**
@@ -28,5 +28,5 @@ public interface BusinessAccessGuard {
    * @param meta    业务元数据上下文
    * @throws com.example.shared.exception.BusinessException 校验不通过时
    */
-  void checkCanHandle(SessionClaims session, BusinessMetaContext meta);
+  void checkCanHandle(SessionClaims session, BusinessMetaCommandContext meta);
 }

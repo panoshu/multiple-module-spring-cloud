@@ -182,6 +182,9 @@ CREATE TABLE IF NOT EXISTS t_approval_instance
 )
   );
 
+-- 兼容旧库：request_no（外部协作幂等键，spec §12.3）为后加列。
+ALTER TABLE t_approval_instance ADD COLUMN IF NOT EXISTS request_no VARCHAR(128);
+
 CREATE INDEX IF NOT EXISTS idx_approval_instance_flow_id ON t_approval_instance(flow_id);
 CREATE INDEX IF NOT EXISTS idx_approval_instance_business_application_id ON t_approval_instance(business_application_id);
 CREATE INDEX IF NOT EXISTS idx_approval_instance_business_no ON t_approval_instance(business_no);

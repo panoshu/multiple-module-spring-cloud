@@ -2,7 +2,7 @@ package com.example.core.domain.business.gateway;
 
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.exception.DomainException;
 
 import java.util.Optional;
@@ -18,15 +18,15 @@ import java.util.Optional;
  */
 public interface ParsedFileReferenceGateway {
 
-  void save(ApplicationId applicationId, FileId jsonFileId);
+  void save(ApplicationId applicationId, FileRefId jsonFileId);
 
-  Optional<FileId> load(ApplicationId applicationId);
+  Optional<FileRefId> load(ApplicationId applicationId);
 
   /** 按解析文件凭证反向定位申请单，供文件解析回调关联使用。 */
-  Optional<ApplicationId> findByFileId(FileId jsonFileId);
+  Optional<ApplicationId> findByFileId(FileRefId jsonFileId);
 
   /** 读取并强制要求存在，缺失时按领域规则拒绝（替代聚合根的 requireFileForParsing）。 */
-  default FileId require(ApplicationId applicationId) {
+  default FileRefId require(ApplicationId applicationId) {
     return load(applicationId).orElseThrow(() ->
       new DomainException(CoreDomainErrorCode.INVALID_DATA)
         .withLogDetail("Application: " + applicationId.value() + " 申请单尚未挂载解析文件"));

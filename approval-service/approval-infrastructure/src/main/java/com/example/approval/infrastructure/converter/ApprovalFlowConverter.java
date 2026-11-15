@@ -12,7 +12,6 @@ import com.example.approval.types.enums.FlowStatus;
 import com.example.approval.types.enums.NodeType;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.core.types.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,11 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ApprovalFlowConverter {
 
-  ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  /**
+   * MatchRules 含 Optional 字段，必须注册 Jdk8Module（findAndRegisterModules 同时
+   * 覆盖 JavaTimeModule），否则创建审批流时序列化直接失败。
+   */
+  ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
   /**
    * 审批流领域对象转DO对象
@@ -44,8 +47,9 @@ public interface ApprovalFlowConverter {
    */
   @Mapping(target = "id", expression = "java(flow.id() != null ? String.valueOf(flow.id().value()) : null)")
   @Mapping(target = "flowName", expression = "java(flow.flowName() != null ? flow.flowName().value() : null)")
-  // businessType 在领域对象中不存在，DO 保留此字段供未来扩展，暂忽略
-  @Mapping(target = "businessType", ignore = true)
+  // 领域对象不单独持有 businessType（冗余字段），从匹配规则中提取落库：
+  // t_approval_flow.business_type 为 NOT NULL，忽略会导致创建审批流失败。
+  @Mapping(target = "businessType", expression = "java(flow.matchRules() != null ? flow.matchRules().businessType() : null)")
   @Mapping(target = "matchRules", expression = "java(matchRulesToJson(flow.matchRules()))")
   @Mapping(target = "flowVersion", expression = "java(flow.flowVersion() != null ? flow.flowVersion().value() : null)")
   @Mapping(target = "status", expression = "java(flowStatusToString(flow.status()))")
@@ -65,6 +69,16 @@ public interface ApprovalFlowConverter {
    * @return 审批流领域对象
    */
   default ApprovalFlow toDomain(ApprovalFlowDO flowDO) {
+    return toDomain(flowDO, List.of());
+  }
+
+  /**
+   * 带节点列表的整聚合重建。
+   *
+   * <p>不能先以空节点调用 {@code reconstitute}：聚合不变量要求节点列表非空，
+   * 旧实现先 toDomain(flowDO) 再二次重建，会在第一步直接抛「审批节点列表不能为空」。</p>
+   */
+  default ApprovalFlow toDomain(ApprovalFlowDO flowDO, List<ApprovalNode> nodes) {
     if (flowDO == null) {
       return null;
     }
@@ -72,7 +86,7 @@ public interface ApprovalFlowConverter {
       toApprovalFlowId(flowDO.getId()),
       toFlowName(flowDO.getFlowName()),
       jsonToMatchRules(flowDO.getMatchRules()),
-      null,
+      nodes,
       toFlowVersion(flowDO.getFlowVersion()),
       stringToFlowStatus(flowDO.getStatus()),
       flowDO.getCreatedBy(),
@@ -159,8 +173,8 @@ public interface ApprovalFlowConverter {
   }
 
   @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
+  default String toUserNo(String userNo) {
+    return userNo;
   }
 
   @Named("toNodeId")
@@ -248,31 +262,25 @@ public interface ApprovalFlowConverter {
   }
 
   @Named("userNoListToJson")
-  default String userNoListToJson(List<UserNo> userNos) {
+  default String userNoListToJson(List<String> userNos) {
     if (userNos == null || userNos.isEmpty()) {
       return null;
     }
     try {
-      List<String> values = userNos.stream()
-        .map(UserNo::value)
-        .toList();
-      return OBJECT_MAPPER.writeValueAsString(values);
+      return OBJECT_MAPPER.writeValueAsString(userNos);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("序列化审批人ID列表失败", e);
     }
   }
 
   @Named("jsonToUserNoList")
-  default List<UserNo> jsonToUserNoList(String json) {
+  default List<String> jsonToUserNoList(String json) {
     if (json == null || json.isBlank()) {
       return Collections.emptyList();
     }
     try {
-      List<String> values = OBJECT_MAPPER.readValue(json, new TypeReference<>() {
+      return OBJECT_MAPPER.readValue(json, new TypeReference<>() {
       });
-      return values.stream()
-        .map(UserNo::of)
-        .toList();
     } catch (JsonProcessingException e) {
       throw new RuntimeException("反序列化审批人ID列表失败", e);
     }

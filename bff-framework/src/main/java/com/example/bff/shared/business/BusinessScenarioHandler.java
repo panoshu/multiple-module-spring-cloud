@@ -43,6 +43,13 @@ public interface BusinessScenarioHandler {
   Set<String> supportedTypes();
 
   /**
+   * 该场景对应的后端服务名（用于系统元信息展示，默认可不实现）。
+   */
+  default String serviceName() {
+    return "unknown";
+  }
+
+  /**
    * 创建批次 — 简单转发到业务服务的 kernel batch API。
    */
   ApiResult<BatchCreatedResponse> createBatch(BffCreateBatchRequest request);

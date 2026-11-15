@@ -3,11 +3,15 @@ spring:
     virtual:
       enabled: true # JDK 21 虚拟线程开启
   profiles:
-    # 本机覆盖（注册中心/Redis/签名密钥/日志级别）始终经 local 加载，生产环境用环境变量覆盖；
-    # 同一套代码部署多实例：默认激活 dev 实例（三渠道联调入口，18080），
-    # 生产按 --spring.profiles.active=internet（互联网渠道）/ intranet（内网渠道）指定实例，
-    # 服务名与实例专属配置（路由/渠道/白名单）在各实例的 application-{profile}.yml 中
-    include: local,dev
+    # 同一套代码部署多实例：默认 dev（三渠道联调入口，18080）；
+    # 生产通过 --spring.profiles.active=internet / intranet 指定实例。
+    # local 仅作为所选实例的附加 profile 由 group 引入，禁止无条件 include dev，
+    # 否则 internet/intranet 实例会加载 application-dev.yml 的三渠道直连路由与白名单。
+    default: dev
+    group:
+      internet: local
+      intranet: local
+      dev: local
 
   # Redis 连接池（环境无关）；host/port/database 等连接配置在 application-local.yml
   data:

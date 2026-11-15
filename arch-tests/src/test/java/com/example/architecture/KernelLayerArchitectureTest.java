@@ -16,10 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 把规格 §21.4 / 01-架构与依赖规则 / 03-领域模型约束中「现状确实成立」的分层边界
  * 固化为机器强制层，任何退化在构建期即被拦截。纯新增测试，不改生产代码。
  * <p>
- * 刻意不机器化的三条（现状与规格字面存在张力，需规格修订或大范围重构，见设计文档
- * §23.48）：ApplicationService 入参全部 CQE 化、types 层只含 ID 类型、
- * application 零 file/approval 「DTO」依赖（现状消费 {@code file.api.event.*} 事件 DTO）。
- * 本类只检查「依赖哪一层」，不因允许的跨服务 ID/事件契约误报。
+ * K-07/K-08 后 application 已不依赖 file/approval 的 API/事件 DTO，相关边界由
+ * {@link KernelStarterBoundaryTest} 继续守护；本类只检查「依赖哪一层」。
  */
 @DisplayName("§21.4 kernel 分层架构不变量（成立子集）")
 class KernelLayerArchitectureTest {

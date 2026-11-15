@@ -1,7 +1,5 @@
 package com.example.approval.domain.gateway;
 
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +24,7 @@ public interface RoleUserGateway {
    * @param planNo  计划号（PLAN 精确 scope）
    * @return 角色编码 → 用户列表
    */
-  Map<String, List<UserNo>> getUsersByRoles(List<String> roleIds, PlanNo planNo);
+  Map<String, List<String>> getUsersByRoles(List<String> roleIds, String planNo);
 
   /**
    * 获取同一计划下的用户列表并排除指定用户（批次 68 接线）。
@@ -40,7 +38,7 @@ public interface RoleUserGateway {
    * @param excludeUser 要排除的用户（发起人，可空）
    * @return 用户列表
    */
-  List<UserNo> getUsersInSamePlan(PlanNo planId, UserNo excludeUser);
+  List<String> getUsersInSamePlan(String planId, String excludeUser);
 
   /**
    * 获取上一级计划（直接父计划）下的用户列表并排除指定用户（批次 69 接线）。
@@ -54,5 +52,5 @@ public interface RoleUserGateway {
    * @param excludeUser 要排除的用户（发起人，可空）
    * @return 父计划成员列表
    */
-  List<UserNo> getUsersInParentPlan(PlanNo planNo, UserNo excludeUser);
+  List<String> getUsersInParentPlan(String planNo, String excludeUser);
 }

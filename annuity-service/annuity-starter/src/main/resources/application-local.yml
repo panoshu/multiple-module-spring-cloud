@@ -10,7 +10,9 @@ spring:
       database: 0
       password: redis
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
+    # stringtype=unspecified：JSONB 列（如 t_annuity_employee_detail.materials）以 String 写入时，
+    # 由 PostgreSQL 自行推断类型；缺失会报 "column is of type jsonb but expression is of type character varying"
+    url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai&stringtype=unspecified
     username: user_demo
     password: passwd_demo
     driver-class-name: org.postgresql.Driver
@@ -21,17 +23,55 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-# 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
-httpexchange:
-  clients:
-    com.example.auth.api:
-      url: lb://auth-service
+# HttpExchange 客户端（库 3.5.5 配置前缀为 http-exchange；旧 httpexchange.clients.<包>.url 不生效）
+http-exchange:
+  channels:
+    - name: approval
+      base-url: lb://approval-service
+      clients:
+        - com.example.approval.api.**
+    - name: file
+      base-url: lb://file-service
+      clients:
+        - com.example.file.api.**
+    - name: integration
+      base-url: lb://cjannuity-channel-integration
+      clients:
+        - com.example.integration.api.**
+    - name: auth
+      base-url: lb://auth-service
+      clients:
+        - com.example.auth.api.**
 
 permission:
   # 会话签名验证：验证网关签发的 X-Account-Id / X-Session-Context 签名防伪造
   # 生产环境通过环境变量 PERMISSION_SESSION_SIGNATURE_KEY 注入
   session:
     signature-key: dev-session-signature-key-2026
+
+# 跨服务事件通道：订阅 file-service 的 FileParsedEvent / approval-service 的审批结果事件
+shared:
+  event:
+    redis:
+      enabled: false
+    rocketmq:
+      enabled: true
+      endpoints: http://127.0.0.1:8081
+      topic: event
+
+# 本机联调：文件网关走真实 file-service；客户画像仍用 Mock（外部主数据未接入）
+annuity:
+  demo:
+    file-mock:
+      enabled: false
+    customer-mock:
+      enabled: true
+
+# kernel 真实文件网关（FileServiceIntegrationGateway + FileServiceClientConfiguration）
+core:
+  integration:
+    file:
+      base-url: http://127.0.0.1:18082
 
 logging:
   level:

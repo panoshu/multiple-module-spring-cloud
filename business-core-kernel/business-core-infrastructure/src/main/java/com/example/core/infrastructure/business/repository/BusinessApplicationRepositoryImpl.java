@@ -1,12 +1,14 @@
 package com.example.core.infrastructure.business.repository;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.infrastructure.business.converter.BusinessApplicationConverter;
 import com.example.core.infrastructure.business.entity.BusinessApplicationDO;
 import com.example.core.infrastructure.business.mapper.BusinessApplicationMapper;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
+import com.example.core.types.FileRefId;
 import com.mybatisflex.core.BaseMapper;
 import com.example.shared.domain.event.EventBus;
 
@@ -19,9 +21,9 @@ import static com.example.core.infrastructure.business.entity.table.BusinessAppl
  * 业务申请单仓储基类实现
  * <p>
  * 继承 {@link AbstractBusinessRepository}，封装通用的 CRUD 与领域事件发布逻辑。
- * 本类<b>不标注 {@code @Repository}</b>，由具体业务服务（如 annuity-service）继承本类
- * 并标注 {@code @Repository}，覆写 {@link #findByBatchId} 等业务专属查询方法；
- * 按文件凭证反查申请单已迁到业务服务自有存储（§6.2，批次 37c-2），不再由本类承担。
+ * 本类<b>不标注 {@code @Repository}</b>，由 {@code business-core-starter} 统一注册为
+ * Spring Bean；宿主可通过声明同类型 Bean 覆盖。按文件凭证反查申请单委托业务服务提供的
+ * {@link ParsedFileReferenceGateway}，不再要求宿主继承本类。
  *
  * @author core-kernel
  * @since 2026/8/8
@@ -32,13 +34,22 @@ public class BusinessApplicationRepositoryImpl
 
   protected final BusinessApplicationMapper mapper;
   protected final BusinessApplicationConverter converter;
+  private final ParsedFileReferenceGateway parsedFileReferenceGateway;
 
   public BusinessApplicationRepositoryImpl(EventBus eventBus,
                                            BusinessApplicationMapper mapper,
                                            BusinessApplicationConverter converter) {
+    this(eventBus, mapper, converter, null);
+  }
+
+  public BusinessApplicationRepositoryImpl(EventBus eventBus,
+                                           BusinessApplicationMapper mapper,
+                                           BusinessApplicationConverter converter,
+                                           ParsedFileReferenceGateway parsedFileReferenceGateway) {
     super(eventBus);
     this.mapper = mapper;
     this.converter = converter;
+    this.parsedFileReferenceGateway = parsedFileReferenceGateway;
   }
 
   @Override
@@ -90,6 +101,23 @@ public class BusinessApplicationRepositoryImpl
       ).stream()
       .map(converter::toDomain)
       .toList();
+  }
+
+  /**
+   * 通过文件任务 ID 反查申请单：委托宿主提供的解析文件引用存储。
+   * <p>
+   * 未装配 {@link ParsedFileReferenceGateway} 的宿主仍保留契约默认的显式失败语义，
+   * 避免在缺少关联存储时静默返回空结果。
+   */
+  @Override
+  public Optional<BusinessApplication> findByFileTaskId(String fileTaskId) {
+    if (fileTaskId == null || fileTaskId.isBlank()) {
+      return Optional.empty();
+    }
+    if (parsedFileReferenceGateway == null) {
+      return ApplicationRepository.super.findByFileTaskId(fileTaskId);
+    }
+    return parsedFileReferenceGateway.findByFileId(new FileRefId(fileTaskId)).flatMap(this::load);
   }
 
 }

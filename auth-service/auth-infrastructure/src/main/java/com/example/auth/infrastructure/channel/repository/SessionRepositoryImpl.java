@@ -1,7 +1,6 @@
 package com.example.auth.infrastructure.channel.repository;
 
 import com.example.core.types.Channel;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -21,7 +20,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * 渠道会话仓储实现（基于 Redis）.
@@ -125,14 +123,6 @@ public class SessionRepositoryImpl implements SessionRepository {
     // 生产环境应避免调用；如确有需要，可改用 SCAN 命令
     throw new UnsupportedOperationException(
       "Redis 实现不支持 loadAll()，请使用按 ID 或按账号查询");
-  }
-
-  @Override
-  public void streamByAppId(SessionId id, Consumer<AggregateRoot<SessionId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

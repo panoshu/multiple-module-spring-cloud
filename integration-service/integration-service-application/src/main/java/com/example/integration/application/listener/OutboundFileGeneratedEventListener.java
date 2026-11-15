@@ -45,8 +45,8 @@ public class OutboundFileGeneratedEventListener {
     }
     for (OutboundFileGeneratedEventDTO.GeneratedFileInfoDTO file : event.generatedFiles()) {
       try {
-        var result = tradeSubmission.submitOutboundFile(
-          file.outboundFileId(), defaultTradeCode, java.util.Map.of());
+        var result = tradeSubmission.submitOutboundFileOnce(
+          event.eventId(), file.outboundFileId(), defaultTradeCode, java.util.Map.of());
         log.info("出站文件已提交外部系统: fileId={}, subTaskId={}, splitKey={}, result={}",
           file.outboundFileId(), file.subTaskId(), file.splitKeyValue(), result);
       } catch (Exception e) {

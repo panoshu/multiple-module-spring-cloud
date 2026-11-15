@@ -4,6 +4,7 @@ import com.example.annuity.domain.aggregate.valueobject.CustomerProfile;
 import com.example.annuity.domain.gateway.AnnuityCustomerGateway;
 import com.example.core.types.CustomerNo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.List;
 @Slf4j
 @Component
 @Primary
+@ConditionalOnProperty(name = "annuity.demo.customer-mock.enabled", havingValue = "true")
 public class MockAnnuityCustomerGateway implements AnnuityCustomerGateway {
 
   @Override

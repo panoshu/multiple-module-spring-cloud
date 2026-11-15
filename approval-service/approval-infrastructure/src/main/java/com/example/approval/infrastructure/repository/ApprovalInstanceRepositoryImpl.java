@@ -13,19 +13,18 @@ import com.example.approval.infrastructure.mapper.ApprovalNodeExecutionMapper;
 import com.example.approval.infrastructure.mapper.ApprovalRecordMapper;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
-import com.example.core.types.ApplicationId;
+import com.example.shared.domain.event.EventBus;
+import com.example.shared.exception.CommonError;
+import com.example.shared.exception.SystemException;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.approval.infrastructure.entity.table.ApprovalInstanceDOTableDef.APPROVAL_INSTANCE_DO;
 import static com.example.approval.infrastructure.entity.table.ApprovalNodeExecutionDOTableDef.APPROVAL_NODE_EXECUTION_DO;
@@ -48,7 +47,7 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
   private final ApprovalNodeExecutionMapper executionMapper;
   private final ApprovalRecordMapper recordMapper;
   private final ApprovalInstanceConverter converter;
-  private final ApplicationEventPublisher eventPublisher;
+  private final EventBus eventBus;
 
   @Override
   public Optional<ApprovalInstance> load(ApprovalInstanceId instanceId) {
@@ -135,7 +134,10 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
       instance.updatedBy(),
       instance.createdAt(),
       instance.updatedAt(),
-      instance.version()
+      instance.version(),
+      // 必须透传 requestNo：二次重建遗漏会让审批结果事件丢失外部协作幂等键，
+      // kernel 只能走 businessNo 回退路径并重跑步骤管线。
+      instance.requestNo()
     );
   }
 
@@ -155,9 +157,23 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
       instanceMapper.insert(instanceDO);
       log.debug("新增审批实例: instanceId={}", instance.id());
     } else {
-      // 更新
-      instanceMapper.update(instanceDO);
-      instance.syncVersionAfterUpdate();
+      // 更新：领域方法可能已 markUpdated 提前递增版本，DO 的 WHERE 版本必须回退为数据库当前值，
+      // 否则 UPDATE 匹配 0 行且静默丢失状态变更（审批永远停在 APPROVING）。
+      int persistedVersion = existingInstance.getVersion() != null ? existingInstance.getVersion() : 0;
+      long domainVersion = instance.version() != null ? instance.version().value() : 0L;
+      if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+        throw new SystemException(CommonError.CONCURRENCY_ERROR)
+          .withLogDetail("审批实例版本冲突: instanceId=" + instance.id()
+            + ", domainVersion=" + domainVersion + ", persistedVersion=" + persistedVersion);
+      }
+      instanceDO.setVersion(persistedVersion);
+      if (instanceMapper.update(instanceDO) != 1) {
+        throw new SystemException(CommonError.CONCURRENCY_ERROR)
+          .withLogDetail("审批实例更新失败（版本冲突）: instanceId=" + instance.id());
+      }
+      if (domainVersion == persistedVersion) {
+        instance.syncVersionAfterUpdate();
+      }
       log.debug("更新审批实例: instanceId={}, version={}", instance.id(), instance.version());
     }
 
@@ -224,22 +240,14 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
   }
 
   @Override
-  public void streamByAppId(ApprovalInstanceId id, Consumer<AggregateRoot<ApprovalInstanceId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
-  }
-
-  @Override
-  public Optional<ApprovalInstance> findByBusinessApplicationId(ApplicationId applicationId) {
+  public Optional<ApprovalInstance> findByBusinessApplicationId(String applicationId) {
     if (applicationId == null) {
       return Optional.empty();
     }
 
     ApprovalInstanceDO instanceDO = instanceMapper.selectOneByQuery(
       QueryWrapper.create()
-        .where(APPROVAL_INSTANCE_DO.BUSINESS_APPLICATION_ID.eq(applicationId.value()))
+        .where(APPROVAL_INSTANCE_DO.BUSINESS_APPLICATION_ID.eq(applicationId))
     );
 
     if (instanceDO == null) {
@@ -300,9 +308,21 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
         // 新增
         executionMapper.insert(executionDO);
       } else {
-        // 更新
-        executionMapper.update(executionDO);
-        execution.syncVersionAfterUpdate();
+        // 更新：与实例相同，DO 版本回退到数据库当前值后再做乐观锁更新
+        int persistedVersion = existingExecution.getVersion() != null ? existingExecution.getVersion() : 0;
+        long domainVersion = execution.version() != null ? execution.version().value() : 0L;
+        if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+          throw new SystemException(CommonError.CONCURRENCY_ERROR)
+            .withLogDetail("节点执行记录版本冲突: executionId=" + execution.id());
+        }
+        executionDO.setVersion(persistedVersion);
+        if (executionMapper.update(executionDO) != 1) {
+          throw new SystemException(CommonError.CONCURRENCY_ERROR)
+            .withLogDetail("节点执行记录更新失败: executionId=" + execution.id());
+        }
+        if (domainVersion == persistedVersion) {
+          execution.syncVersionAfterUpdate();
+        }
       }
 
       // 保存审批记录
@@ -334,9 +354,21 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
         // 新增
         recordMapper.insert(recordDO);
       } else {
-        // 更新
-        recordMapper.update(recordDO);
-        record.syncVersionAfterUpdate();
+        // 更新：DO 版本回退到数据库当前值，避免 markUpdated 已递增导致 0 行更新
+        int persistedVersion = existingRecord.getVersion() != null ? existingRecord.getVersion() : 0;
+        long domainVersion = record.version() != null ? record.version().value() : 0L;
+        if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+          throw new SystemException(CommonError.CONCURRENCY_ERROR)
+            .withLogDetail("审批记录版本冲突: recordId=" + record.id());
+        }
+        recordDO.setVersion(persistedVersion);
+        if (recordMapper.update(recordDO) != 1) {
+          throw new SystemException(CommonError.CONCURRENCY_ERROR)
+            .withLogDetail("审批记录更新失败: recordId=" + record.id());
+        }
+        if (domainVersion == persistedVersion) {
+          record.syncVersionAfterUpdate();
+        }
       }
     }
 
@@ -356,7 +388,9 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
 
     for (DomainEvent event : events) {
       try {
-        eventPublisher.publishEvent(event);
+        // 走 EventBus（Outbox + 本地 Spring 分发 + Redis 远端投递）：
+        // 审批结果事件必须跨服务到达 kernel，仅用 ApplicationEventPublisher 会永远留在本进程。
+        eventBus.publish(event);
         log.debug("发布领域事件: eventId={}, eventType={}",
           event.eventId(), event.getClass().getSimpleName());
       } catch (Exception e) {

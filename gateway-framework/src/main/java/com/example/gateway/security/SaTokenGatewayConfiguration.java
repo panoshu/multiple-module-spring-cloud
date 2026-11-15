@@ -86,7 +86,15 @@ public class SaTokenGatewayConfiguration {
           return;
         }
 
-        // 3. 非渠道前缀路径 → 默认 StpLogic 登录校验（识别本网关启用渠道 token）
+        // 3. 非渠道前缀路径 → 遍历本网关启用渠道逐个校验登录态。
+        //    多渠道 token 按 StpLogic(loginType) 隔离存储（satoken-internet 等），
+        //    默认 StpLogic 无法识别渠道 token —— 批次 74 修正（端到端发现）。
+        for (ChannelType ch : channelAwareSaRouter.enabledChannels()) {
+          cn.dev33.satoken.stp.StpLogic logic = channelAwareSaRouter.getStpLogic(ch);
+          if (logic != null && logic.isLogin()) {
+            return;
+          }
+        }
         StpUtil.checkLogin();
       })
       .setError(this::handleError);

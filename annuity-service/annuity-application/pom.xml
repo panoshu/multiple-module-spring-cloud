@@ -29,6 +29,16 @@
       <groupId>com.example</groupId>
       <artifactId>integration-service-api</artifactId>
     </dependency>
+    <!-- LinkTestService 直连 file/approval 的链路探测接口。
+         K-08 后 kernel application 不再传递 file-api/approval-api，需在此显式声明。 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>file-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>approval-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>

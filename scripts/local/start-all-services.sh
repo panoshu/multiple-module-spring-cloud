@@ -1,8 +1,10 @@
 #!/bin/bash
-# 全链路集成测试：按依赖顺序启动 7 个服务，端口就绪后继续
+# 全链路集成测试：按依赖顺序启动 7 个业务服务 + integration，端口就绪后继续
 cd /home/archie/develop/java/multiple-module-spring-cloud
 
-JVM="-Xms128m -Xmx512m -XX:+UseG1GC"
+# VirtualThreadExecutor（StructuredTaskScope）依赖 JDK 25 preview，缺 --enable-preview 时
+# 首次异步派发/事件投递会抛 UnsupportedClassVersionError（class file version 69.65535）。
+JVM="-Xms128m -Xmx256m -XX:+UseG1GC --enable-preview"
 
 start() {
   local name=$1 jar=$2; shift 2
@@ -27,18 +29,20 @@ wait_port() {
 
 start auth      auth-service/auth-starter/target/auth-service.jar
 wait_port 18085 auth || exit 1
-start file      file-service/file-starter/target/file-service.jar
+start file      file-service/file-starter/target/file-service.jar --spring.profiles.active=local --permission.enforcement.enabled=false
 wait_port 18082 file || exit 1
-start approval  approval-service/approval-starter/target/approval-service.jar
+start approval  approval-service/approval-starter/target/approval-service.jar --spring.profiles.active=local --permission.enforcement.enabled=false
 wait_port 18081 approval || exit 1
-start annuity   annuity-service/annuity-starter/target/annuity-service.jar --spring.profiles.active=local
+start annuity   annuity-service/annuity-starter/target/annuity-service.jar --spring.profiles.active=local --permission.enforcement.enabled=false
 wait_port 18090 annuity || exit 1
-start intranet-bff intranet-bff/intranet-bff-starter/target/intranet-bff.jar
+start integration integration-service/integration-service-starter/target/integration-service.jar --spring.profiles.active=local --permission.enforcement.enabled=false
+wait_port 18083 integration || exit 1
+start intranet-bff intranet-bff/intranet-bff-starter/target/intranet-bff.jar --spring.profiles.active=local --permission.enforcement.enabled=false
 wait_port 18091 intranet-bff || exit 1
-start internet-bff internet-bff/internet-bff-starter/target/internet-bff.jar --server.port=18092
+start internet-bff internet-bff/internet-bff-starter/target/internet-bff.jar --spring.profiles.active=local --permission.enforcement.enabled=false
 wait_port 18092 internet-bff || exit 1
 start gateway   channel-gateway/target/channel-gateway.jar --spring.profiles.active=dev
 wait_port 18080 gateway || exit 1
 
-echo "[$(date +%T)] ALL 7 SERVICES UP"
+echo "[$(date +%T)] ALL 8 SERVICES UP"
 wait

@@ -17,7 +17,6 @@ import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.RecordId;
 import com.example.approval.types.enums.ApprovalAction;
 import com.example.approval.types.enums.NodeType;
-import com.example.core.types.UserNo;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
@@ -118,7 +117,7 @@ class ApprovalHistoryServiceTest {
   private ApprovalRecord record(long id, String operator, ApprovalAction action, String comment) {
     ApprovalRecord record = mock(ApprovalRecord.class);
     when(record.id()).thenReturn(RecordId.of(id));
-    when(record.approverId()).thenReturn(UserNo.of(operator));
+    when(record.approverId()).thenReturn(operator);
     when(record.action()).thenReturn(action);
     when(record.opinion()).thenReturn(ApprovalOpinion.of(comment));
     when(record.operatedAt()).thenReturn(OPERATED_AT);

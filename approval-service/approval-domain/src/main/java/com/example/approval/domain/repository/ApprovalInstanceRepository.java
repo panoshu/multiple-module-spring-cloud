@@ -4,7 +4,6 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.repository.Repository;
-import com.example.core.types.ApplicationId;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +41,7 @@ public interface ApprovalInstanceRepository extends Repository<ApprovalInstance,
    * @param applicationId 业务申请ID
    * @return 审批实例（可能为空）
    */
-  Optional<ApprovalInstance> findByBusinessApplicationId(ApplicationId applicationId);
+  Optional<ApprovalInstance> findByBusinessApplicationId(String applicationId);
 
   /** 按外部协作幂等键查询（spec §12.3）：用于重复启动幂等与响应丢失对账。 */
   Optional<ApprovalInstance> findByRequestNo(String requestNo);

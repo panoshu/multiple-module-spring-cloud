@@ -20,6 +20,7 @@
     <module>shared-event-starter</module>
     <module>shared-logging-starter</module>
     <module>shared-web-starter</module>
+    <module>shared-discovery-starter</module>
     <module>shared-client-starter</module>
     <module>shared-pdf-starter</module>
     <module>shared-permission-starter</module>

@@ -1,6 +1,5 @@
 package com.example.shared.domain.event;
 
-import com.example.shared.identifier.id.EventId;
 
 import java.time.LocalDateTime;
 

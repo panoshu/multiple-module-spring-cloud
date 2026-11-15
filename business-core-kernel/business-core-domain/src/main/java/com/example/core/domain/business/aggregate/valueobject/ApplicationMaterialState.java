@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.domain.aggregate.valueobject.ValueObject;
 import com.example.shared.exception.DomainException;
 
@@ -79,7 +79,7 @@ public record ApplicationMaterialState(
 
   /** 移除某个材料项下指定的已上传文件；打包模式下禁止。 */
   public ApplicationMaterialState removeIndividualPlanMaterial(
-    String materialCode, FileId fileId, ApplicationId applicationId) {
+    String materialCode, FileRefId fileId, ApplicationId applicationId) {
     requireNotPackageMode(applicationId, "移除");
     return new ApplicationMaterialState(
       this.planMaterials.stream()

@@ -12,7 +12,10 @@ spring:
     virtual:
       enabled: true
   profiles:
-    include: local,sofa
+    # 无显式 profile 时按本机开发运行；SOFA 部署必须显式指定 --spring.profiles.active=sofa
+    default: local
+    group:
+      sofa: local
 
 trace:
   context:

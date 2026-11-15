@@ -5,7 +5,7 @@ import com.example.core.application.engine.callback.CorrelationResult;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import com.example.core.types.ApplicationId;
-import com.example.file.api.event.OutboundFileGeneratedEventDTO;
+import com.example.core.application.engine.inbound.OutboundFileGeneratedMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,8 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -33,7 +31,6 @@ class OutboundFileGeneratedEventListenerTest {
   private static final String CONSUMER = "OutboundFileGeneratedEventListener";
   private static final String FILE_TASK_ID = "task-001";
   private static final String TEMPLATE_ID = "TPL-1";
-  private static final LocalDateTime OCCURRED_ON = LocalDateTime.now();
 
   @Mock
   private FlowOrchestrationService orchestrationService;
@@ -52,9 +49,8 @@ class OutboundFileGeneratedEventListenerTest {
       .thenReturn(CorrelationResult.noCorrelation());
   }
 
-  private OutboundFileGeneratedEventDTO legacyEvent() {
-    return new OutboundFileGeneratedEventDTO(
-      EVENT_ID, FILE_TASK_ID, TEMPLATE_ID, List.of(), OCCURRED_ON);
+  private OutboundFileGeneratedMessage legacyEvent() {
+    return new OutboundFileGeneratedMessage(EVENT_ID, FILE_TASK_ID, null, TEMPLATE_ID, 0);
   }
 
   @Test
@@ -71,8 +67,8 @@ class OutboundFileGeneratedEventListenerTest {
     ApplicationId appId = new ApplicationId("APP-9");
     when(callbackCorrelationService.correlate(any()))
       .thenReturn(CorrelationResult.applied(appId));
-    OutboundFileGeneratedEventDTO event = new OutboundFileGeneratedEventDTO(
-      EVENT_ID, FILE_TASK_ID, TEMPLATE_ID, List.of(), OCCURRED_ON, "SE-9");
+    OutboundFileGeneratedMessage event = new OutboundFileGeneratedMessage(
+      EVENT_ID, FILE_TASK_ID, "SE-9", TEMPLATE_ID, 1);
 
     listener.onOutboundFileGenerated(event);
 
@@ -86,8 +82,8 @@ class OutboundFileGeneratedEventListenerTest {
   void onOutbound_whenUnmatched_shouldNotAdvance() {
     when(callbackCorrelationService.correlate(any()))
       .thenReturn(CorrelationResult.unmatched());
-    OutboundFileGeneratedEventDTO event = new OutboundFileGeneratedEventDTO(
-      EVENT_ID, FILE_TASK_ID, TEMPLATE_ID, List.of(), OCCURRED_ON, "SE-9");
+    OutboundFileGeneratedMessage event = new OutboundFileGeneratedMessage(
+      EVENT_ID, FILE_TASK_ID, "SE-9", TEMPLATE_ID, 1);
 
     listener.onOutboundFileGenerated(event);
 

@@ -49,7 +49,7 @@ public class SessionController implements SessionApi {
 
   @Override
   public ApiResult<LoginResponse> login(LoginRequest request) {
-    Channel channel = EnumCodeCache.get(Channel.class, request.channel());
+    Channel channel = resolveChannel(request.channel());
     CredentialOwner owner = resolveOwner(request.ownerType(), request.ownerId());
     Mobile phone = request.phoneNumber() != null ? new Mobile(request.phoneNumber()) : null;
 
@@ -97,6 +97,23 @@ public class SessionController implements SessionApi {
       case AllPlans ap -> java.util.List.of("ALL");
     };
     return ApiResult.success(new SelectablePlansResponse(plans));
+  }
+
+  /**
+   * 登录 channel 同时接受 CodeEnum 编码（01/02/...）与渠道名（NETAPP/TELLER/...）。
+   * 未知值 fail-fast，避免 EnumCodeCache 返回 null 后在领域层触发 NPE。
+   */
+  private Channel resolveChannel(String channel) {
+    Channel resolved = EnumCodeCache.get(Channel.class, channel);
+    if (resolved != null) {
+      return resolved;
+    }
+    try {
+      return Channel.fromChannelType(channel);
+    } catch (IllegalArgumentException e) {
+      throw new BusinessException(CommonError.BAD_REQUEST)
+        .withUserDetail("未知渠道: " + channel);
+    }
   }
 
   private CredentialOwner resolveOwner(String ownerType, String ownerId) {

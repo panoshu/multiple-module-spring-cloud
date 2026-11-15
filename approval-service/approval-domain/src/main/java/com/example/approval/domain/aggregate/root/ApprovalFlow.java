@@ -11,7 +11,6 @@ import com.example.approval.types.enums.FlowStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
-import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.*;

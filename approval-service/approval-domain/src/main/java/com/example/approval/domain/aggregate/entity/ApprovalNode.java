@@ -10,7 +10,6 @@ import com.example.approval.types.enums.NodeType;
 import com.example.approval.types.enums.SignMode;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -55,7 +54,7 @@ public class ApprovalNode extends Entity<NodeId> {
   /**
    * 审批人ID列表
    */
-  private final List<UserNo> approverIds;
+  private final List<String> approverIds;
 
   /**
    * 角色ID列表
@@ -71,7 +70,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * 场景1: 业务创建
    */
   private ApprovalNode(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
-                       TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
+                       TerminalLevel terminalLevel, ApproverType approverType, List<String> approverIds,
                        List<String> roleIds, SignMode signMode, String operator) {
     super(id, operator);
     this.nodeOrder = nodeOrder;
@@ -89,7 +88,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * 场景2: 从数据库重建
    */
   private ApprovalNode(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
-                       TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
+                       TerminalLevel terminalLevel, ApproverType approverType, List<String> approverIds,
                        List<String> roleIds, SignMode signMode,
                        String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
@@ -118,7 +117,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * @return ApprovalNode 实例
    */
   public static ApprovalNode createSpecifiedPlanNode(NodeId id, NodeOrder nodeOrder, String specifiedPlanId,
-                                                     ApproverType approverType, List<UserNo> approverIds,
+                                                     ApproverType approverType, List<String> approverIds,
                                                      List<String> roleIds, SignMode signMode, String operator) {
     if (specifiedPlanId == null || specifiedPlanId.isBlank()) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("指定方案节点必须提供 specifiedPlanId");
@@ -140,7 +139,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * @return ApprovalNode 实例
    */
   public static ApprovalNode createSamePlanNode(NodeId id, NodeOrder nodeOrder,
-                                                ApproverType approverType, List<UserNo> approverIds,
+                                                ApproverType approverType, List<String> approverIds,
                                                 List<String> roleIds, SignMode signMode, String operator) {
     return new ApprovalNode(id, nodeOrder, NodeType.SAME_PLAN, null, null,
       approverType, approverIds, roleIds, signMode, operator);
@@ -160,7 +159,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * @return ApprovalNode 实例
    */
   public static ApprovalNode createLevelUpNode(NodeId id, NodeOrder nodeOrder, TerminalLevel terminalLevel,
-                                               ApproverType approverType, List<UserNo> approverIds,
+                                               ApproverType approverType, List<String> approverIds,
                                                List<String> roleIds, SignMode signMode, String operator) {
     if (terminalLevel == null) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_FLOW_NODE_INVALID).withUserDetail("上一级节点必须提供 terminalLevel");
@@ -173,7 +172,7 @@ public class ApprovalNode extends Entity<NodeId> {
    * 静态工厂方法 - 从数据库重建
    */
   public static ApprovalNode reconstitute(NodeId id, NodeOrder nodeOrder, NodeType nodeType, String specifiedPlanId,
-                                          TerminalLevel terminalLevel, ApproverType approverType, List<UserNo> approverIds,
+                                          TerminalLevel terminalLevel, ApproverType approverType, List<String> approverIds,
                                           List<String> roleIds, SignMode signMode,
                                           String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalNode(id, nodeOrder, nodeType, specifiedPlanId, terminalLevel, approverType,
@@ -200,7 +199,7 @@ public class ApprovalNode extends Entity<NodeId> {
     return approverType;
   }
 
-  public List<UserNo> approverIds() {
+  public List<String> approverIds() {
     return Collections.unmodifiableList(approverIds);
   }
 

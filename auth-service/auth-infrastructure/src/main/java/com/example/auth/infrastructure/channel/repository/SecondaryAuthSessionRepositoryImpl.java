@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.channel.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.channel.entity.table.SecondaryAuthSessionDOTableDef.SECONDARY_AUTH_SESSION_DO;
 
@@ -89,14 +87,6 @@ public class SecondaryAuthSessionRepositoryImpl implements SecondaryAuthSessionR
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(SecondaryAuthSessionId id, Consumer<AggregateRoot<SecondaryAuthSessionId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

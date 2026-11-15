@@ -3,7 +3,7 @@ package com.example.core.domain.business.event;
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.BatchId;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 
 import java.time.LocalDateTime;
 

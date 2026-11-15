@@ -27,6 +27,7 @@ class CoreTypesIdentifierValidationTest {
       Arguments.of("ApplicationId", (Function<String, Object>) ApplicationId::new),
       Arguments.of("BatchId", (Function<String, Object>) BatchId::new),
       Arguments.of("FormId", (Function<String, Object>) FormId::new),
+      Arguments.of("FileRefId", (Function<String, Object>) FileRefId::new),
       Arguments.of("PlanNo", (Function<String, Object>) PlanNo::new),
       Arguments.of("ProductNo", (Function<String, Object>) ProductNo::new)
     );

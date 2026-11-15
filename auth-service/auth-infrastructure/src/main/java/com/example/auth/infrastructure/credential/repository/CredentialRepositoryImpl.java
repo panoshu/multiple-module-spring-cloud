@@ -1,7 +1,6 @@
 package com.example.auth.infrastructure.credential.repository;
 
 import com.example.core.types.Channel;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.credential.aggregate.Credential;
 import com.example.auth.domain.credential.enumeration.CredentialStatus;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.credential.entity.table.CredentialDOTableDef.CREDENTIAL_DO;
 
@@ -91,14 +89,6 @@ public class CredentialRepositoryImpl implements CredentialRepository {
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(CredentialId id, Consumer<AggregateRoot<CredentialId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.file.infrastructure.entity.table.FileAccessLogDOTableDef.FILE_ACCESS_LOG_DO;
 
@@ -77,14 +76,6 @@ public class FileAccessLogRepositoryImpl implements FileAccessLogRepository {
     return mapper.selectAll().stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(FileAccessLogId id, Consumer<com.example.shared.domain.aggregate.root.AggregateRoot<FileAccessLogId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

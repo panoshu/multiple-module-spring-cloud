@@ -5,7 +5,7 @@ import com.example.shared.event.contract.EventDispatcher;
 import com.example.shared.event.contract.EventStore;
 import com.example.shared.event.contract.IntegrationEventConverter;
 import com.example.shared.event.deliverer.EventDeliverer;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

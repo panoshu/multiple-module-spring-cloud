@@ -82,7 +82,7 @@ public class BusinessApplicationController implements BusinessApplicationApi {
     ApplicationId appId = new ApplicationId(query.applicationId());
     BusinessApplication app = applicationAppService.loadOrThrow(appId);
     String jsonFileId = parsedFileGateway.load(appId)
-      .map(com.example.file.types.FileId::value).orElse(null);
+      .map(com.example.core.types.FileRefId::value).orElse(null);
     return ApiResult.success(converter.toDetailResponse(app, jsonFileId));
   }
 

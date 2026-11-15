@@ -25,6 +25,11 @@
       <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
     </dependency>
+    <!-- S-03：注册中心从 shared-web-starter 拆出，需要 Nacos 注册的服务显式引入 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-discovery-starter</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.cloud</groupId>

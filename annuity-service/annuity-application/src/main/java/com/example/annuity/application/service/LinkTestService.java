@@ -10,9 +10,8 @@ import com.example.file.api.FileTaskApi;
 import com.example.file.api.request.GetFileTaskRequest;
 import com.example.integration.api.core.trade.api.TradeQueryApi;
 import com.example.integration.api.core.trade.dto.PortfolioQueryDTO;
-import com.example.shared.page.Pagination;
-import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageQuery;
+import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +51,7 @@ public class LinkTestService {
     log.info("链路测试: annuity -> approval, approver={}", request.approver());
     var approvalRequest = new ListMyPendingApprovalsRequest(
       request.approver(),
-      Pagination.of(0, 10)
+      PageQuery.of(0, 10)
     );
     ApiResult<?> result = approvalInstanceApi.listMyPending(approvalRequest);
     log.info("链路测试: annuity -> approval 完成, code={}", result.code());

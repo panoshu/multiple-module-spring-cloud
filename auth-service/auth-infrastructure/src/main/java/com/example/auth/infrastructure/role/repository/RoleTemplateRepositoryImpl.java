@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.role.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.role.aggregate.RoleTemplate;
 import com.example.auth.domain.role.enumeration.RoleTemplateStatus;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.role.entity.table.RoleTemplateDOTableDef.ROLE_TEMPLATE_DO;
 
@@ -88,14 +86,6 @@ public class RoleTemplateRepositoryImpl implements RoleTemplateRepository {
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(RoleTemplateId id, Consumer<AggregateRoot<RoleTemplateId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * 业务聚合根仓储抽象基类
@@ -148,14 +147,6 @@ public abstract class AbstractBusinessRepository<
     return mapper().selectAll().stream()
       .map(this::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(ID id, Consumer<AggregateRoot<ID>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   /**

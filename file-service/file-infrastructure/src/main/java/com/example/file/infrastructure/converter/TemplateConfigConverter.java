@@ -12,7 +12,6 @@ import com.example.shared.domain.aggregate.valueobject.Version;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -22,7 +21,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface TemplateConfigConverter {
 
-  ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
+  ObjectMapper OBJECT_MAPPER = TemplateConfigJson.MAPPER;
 
   @Mapping(target = "id", expression = "java(config.id().value())")
   @Mapping(target = "bizType", expression = "java(bizTypeToString(config.bizType()))")
@@ -35,6 +34,7 @@ public interface TemplateConfigConverter {
   @Mapping(target = "sourceTemplates", expression = "java(sourceTemplateListToJson(config.sourceTemplates()))")
   @Mapping(target = "targetTemplateRef", expression = "java(config.targetTemplateRef())")
   @Mapping(target = "targetMapping", expression = "java(targetMappingToJson(config.targetMapping()))")
+  @Mapping(target = "routingRules", expression = "java(TemplateConfigConverter.routingRulesToJson(config.routingRules()))")
   @Mapping(target = "status", expression = "java(configStatusToString(config.status()))")
   @Mapping(target = "effectiveFrom", expression = "java(config.effectiveFrom())")
   @Mapping(target = "effectiveTo", expression = "java(config.effectiveTo())")
@@ -195,27 +195,12 @@ public interface TemplateConfigConverter {
   }
 
   default String sourceTemplateListToJson(List<SourceTemplateDef> list) {
-    if (list == null || list.isEmpty()) {
-      return null;
-    }
-    try {
-      return OBJECT_MAPPER.writeValueAsString(list);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("序列化源模板列表失败", e);
-    }
+    return TemplateConfigJson.sourceTemplatesToJson(list);
   }
 
   @Named("jsonToSourceTemplateList")
   default List<SourceTemplateDef> jsonToSourceTemplateList(String json) {
-    if (json == null || json.isBlank()) {
-      return List.of();
-    }
-    try {
-      return OBJECT_MAPPER.readValue(json, new TypeReference<List<SourceTemplateDef>>() {
-      });
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("反序列化源模板列表失败", e);
-    }
+    return TemplateConfigJson.sourceTemplatesFromJson(json);
   }
 
   default String targetMappingToJson(TargetMapping targetMapping) {

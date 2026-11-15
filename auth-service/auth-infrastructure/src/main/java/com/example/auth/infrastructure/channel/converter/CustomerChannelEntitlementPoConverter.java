@@ -111,7 +111,9 @@ public abstract class CustomerChannelEntitlementPoConverter {
       });
       Set<Channel> channels = new HashSet<>();
       for (String name : names) {
-        channels.add(EnumCodeCache.get(Channel.class, name));
+        // DB 以 Channel.name() 存储（NETAPP/BANK_BRANCH）；兼容历史 CodeEnum 编码（01/05）
+        Channel channel = EnumCodeCache.get(Channel.class, name);
+        channels.add(channel != null ? channel : Channel.fromChannelType(name));
       }
       return channels;
     } catch (JsonProcessingException e) {

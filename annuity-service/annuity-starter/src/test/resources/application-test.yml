@@ -44,6 +44,23 @@ mybatis-flex:
 permission:
   session:
     signature-key: test-session-signature-key-2026
+  # 测试环境使用权限自动装配的完整链路（客户端 Bean 由 @MockitoBean 替换亦可通过上下文）
+  enforcement:
+    enabled: true
+
+# kernel 事件模拟器：仅测试/演示显式开启；真实 Redis/RocketMQ 环境下保持关闭
+core:
+  kernel:
+    event-simulator:
+      enabled: true
+
+# 演示用 Mock 网关：仅在显式开启时装配，防止内存态/Mock 实现进入生产上下文
+annuity:
+  demo:
+    file-mock:
+      enabled: true
+    customer-mock:
+      enabled: true
 
 # shared-logging-starter 的 SanitizationProperties 强制校验 @NotNull global 和 @NotEmpty fields
 # 测试环境不实际使用脱敏，仅提供最小合法配置让上下文绑定通过

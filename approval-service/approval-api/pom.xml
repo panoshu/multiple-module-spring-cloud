@@ -20,10 +20,6 @@
       <groupId>com.example</groupId>
       <artifactId>shared-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-types</artifactId>
-    </dependency>
   </dependencies>
 
 </project>

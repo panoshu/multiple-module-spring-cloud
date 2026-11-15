@@ -1,6 +1,6 @@
 package com.example.core.application.engine.listener;
 
-import com.example.file.api.event.FileParsedEventDTO;
+import com.example.core.application.engine.inbound.FileParsedMessage;
 
 import java.util.List;
 
@@ -29,15 +29,14 @@ public record PartialParseStatistics(
 
   private static final String SUCCESS_STATUS = "SUCCESS";
 
-  public static PartialParseStatistics from(FileParsedEventDTO event) {
-    List<FileParsedEventDTO.SubTaskSummaryDTO> subTasks =
-      event.subTasks() == null ? List.of() : event.subTasks();
+  public static PartialParseStatistics from(FileParsedMessage event) {
+    List<FileParsedMessage.ParsedSubTaskMessage> subTasks = event.subTasks();
     return new PartialParseStatistics(
       event.totalSubTasks(),
       (int) subTasks.stream().filter(s -> !SUCCESS_STATUS.equals(s.status())).count(),
-      subTasks.stream().mapToInt(FileParsedEventDTO.SubTaskSummaryDTO::totalRows).sum(),
-      subTasks.stream().mapToInt(FileParsedEventDTO.SubTaskSummaryDTO::validRows).sum(),
-      subTasks.stream().mapToInt(FileParsedEventDTO.SubTaskSummaryDTO::invalidRows).sum());
+      subTasks.stream().mapToInt(FileParsedMessage.ParsedSubTaskMessage::totalRows).sum(),
+      subTasks.stream().mapToInt(FileParsedMessage.ParsedSubTaskMessage::validRows).sum(),
+      subTasks.stream().mapToInt(FileParsedMessage.ParsedSubTaskMessage::invalidRows).sum());
   }
 
   /** 紧凑、可读、可解析的结果引用，长度远小于 resultRef 列宽。 */

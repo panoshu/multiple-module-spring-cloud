@@ -79,6 +79,8 @@ public class UploadFileWithTokenUseCase {
 
     // 5. 存储文件 + 6. completeUpload
     try {
+      // 先登记原始文件名：存储 key 由元数据生成（含 originalName），否则路径出现字面量 null。
+      meta.prepareUpload(file.getOriginalFilename(), file.getSize(), file.getContentType());
       StoreResult result = storageGateway.store(meta.id(), file.getInputStream(), file.getSize());
       meta.completeUpload(
         file.getOriginalFilename(), file.getSize(), file.getContentType(),

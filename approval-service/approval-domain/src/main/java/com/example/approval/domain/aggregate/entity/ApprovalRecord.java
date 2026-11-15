@@ -9,7 +9,6 @@ import com.example.approval.types.RecordId;
 import com.example.approval.types.enums.ApprovalAction;
 import com.example.shared.domain.aggregate.entity.Entity;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.core.types.UserNo;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +25,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 审批人ID
    */
-  private final UserNo approverId;
+  private final String approverId;
 
   /**
    * 审批动作
@@ -46,7 +45,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 转交目标用户（仅当 action 为 TRANSFER 时有效）
    */
-  private final UserNo transferTo;
+  private final String transferTo;
 
   /**
    * 操作时间
@@ -56,7 +55,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 通过
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, String operator) {
+  private ApprovalRecord(RecordId id, String approverId, ApprovalOpinion opinion, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.APPROVE;
@@ -70,7 +69,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 拒绝
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
+  private ApprovalRecord(RecordId id, String approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.REJECT;
@@ -84,7 +83,7 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景1: 业务创建 - 转交
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, String operator) {
+  private ApprovalRecord(RecordId id, String approverId, ApprovalOpinion opinion, String transferTo, String operator) {
     super(id, operator);
     this.approverId = approverId;
     this.action = ApprovalAction.TRANSFER;
@@ -98,8 +97,8 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 场景2: 从数据库重建
    */
-  private ApprovalRecord(RecordId id, UserNo approverId, ApprovalAction action, ApprovalOpinion opinion,
-                         RejectTarget rejectTarget, UserNo transferTo, LocalDateTime operatedAt,
+  private ApprovalRecord(RecordId id, String approverId, ApprovalAction action, ApprovalOpinion opinion,
+                         RejectTarget rejectTarget, String transferTo, LocalDateTime operatedAt,
                          String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     super(id, createdBy, updatedBy, createdAt, updatedAt, version);
     this.approverId = approverId;
@@ -120,7 +119,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator   操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord approve(RecordId id, UserNo approverId, ApprovalOpinion opinion, String operator) {
+  public static ApprovalRecord approve(RecordId id, String approverId, ApprovalOpinion opinion, String operator) {
     if (approverId == null) {
       throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
@@ -140,7 +139,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator     操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord reject(RecordId id, UserNo approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
+  public static ApprovalRecord reject(RecordId id, String approverId, ApprovalOpinion opinion, RejectTarget rejectTarget, String operator) {
     if (approverId == null) {
       throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
@@ -163,7 +162,7 @@ public class ApprovalRecord extends Entity<RecordId> {
    * @param operator   操作人
    * @return ApprovalRecord 实例
    */
-  public static ApprovalRecord transfer(RecordId id, UserNo approverId, ApprovalOpinion opinion, UserNo transferTo, String operator) {
+  public static ApprovalRecord transfer(RecordId id, String approverId, ApprovalOpinion opinion, String transferTo, String operator) {
     if (approverId == null) {
       throw new DomainException(CommonError.BAD_REQUEST).withUserDetail("审批人ID不能为空");
     }
@@ -179,13 +178,13 @@ public class ApprovalRecord extends Entity<RecordId> {
   /**
    * 静态工厂方法 - 从数据库重建
    */
-  public static ApprovalRecord reconstitute(RecordId id, UserNo approverId, ApprovalAction action, ApprovalOpinion opinion,
-                                            RejectTarget rejectTarget, UserNo transferTo, LocalDateTime operatedAt,
+  public static ApprovalRecord reconstitute(RecordId id, String approverId, ApprovalAction action, ApprovalOpinion opinion,
+                                            RejectTarget rejectTarget, String transferTo, LocalDateTime operatedAt,
                                             String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
     return new ApprovalRecord(id, approverId, action, opinion, rejectTarget, transferTo, operatedAt, createdBy, updatedBy, createdAt, updatedAt, version);
   }
 
-  public UserNo approverId() {
+  public String approverId() {
     return approverId;
   }
 
@@ -201,7 +200,7 @@ public class ApprovalRecord extends Entity<RecordId> {
     return rejectTarget;
   }
 
-  public UserNo transferTo() {
+  public String transferTo() {
     return transferTo;
   }
 

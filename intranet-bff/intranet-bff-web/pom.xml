@@ -24,6 +24,10 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
+      <artifactId>bff-annuity-support</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
       <artifactId>annuity-api</artifactId>
     </dependency>
     <dependency>

@@ -17,7 +17,6 @@ import com.example.approval.types.NodeId;
 import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.FlowStatus;
 import com.example.approval.types.enums.SignMode;
-import com.example.core.types.UserNo;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +104,7 @@ class ApprovalFlowRepositoryImplTest {
   private ApprovalNode node() {
     return ApprovalNode.createSamePlanNode(
       NodeId.of(1L), NodeOrder.of(1),
-      ApproverType.SPECIFIED_USER, List.of(UserNo.of("U-1")), List.of(),
+      ApproverType.SPECIFIED_USER, List.of("U-1"), List.of(),
       SignMode.OR_SIGN, "SYSTEM");
   }
 }

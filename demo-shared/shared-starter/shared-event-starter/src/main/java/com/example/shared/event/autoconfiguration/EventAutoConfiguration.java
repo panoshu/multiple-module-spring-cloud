@@ -7,6 +7,7 @@ import com.example.shared.event.bus.DefaultEventBus;
 import com.example.shared.event.deliverer.EventDeliverer;
 import com.example.shared.event.dispatcher.RedisEventDispatcher;
 import com.example.shared.event.dispatcher.RocketMQEventDispatcher;
+import com.example.shared.event.dispatcher.RocketMQEventSubscriber;
 import com.example.shared.event.dispatcher.SpringEventDispatcher;
 import com.example.shared.event.jackson.DddJacksonModule;
 import com.example.shared.event.job.EventRecoveryJob;
@@ -22,10 +23,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 事件模块自动配置。
@@ -128,9 +132,12 @@ public class EventAutoConfiguration {
       com.fasterxml.jackson.databind.ObjectMapper eventObjectMapper =
         new com.fasterxml.jackson.databind.ObjectMapper();
       eventObjectMapper.findAndRegisterModules();
+      // 必须用 EVERYTHING：集成事件 DTO 与 EventEnvelope 都是 record（final class），
+      // NON_FINAL 不会写入 @class，订阅端反序列化会报
+      // "missing type id property '@class'" 并静默丢弃跨服务事件。
       eventObjectMapper.activateDefaultTyping(
         com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator.instance,
-        com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.NON_FINAL,
+        com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.EVERYTHING,
         com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
       org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer serializer =
         new org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer(eventObjectMapper);
@@ -173,14 +180,71 @@ public class EventAutoConfiguration {
     }
   }
 
+  /**
+   * RocketMQ 5.x 事件通道（X-04）：官方 gRPC 客户端直连 Proxy 8081。
+   * <p>启用后同时装配 producer（outbox 远程通道）与 simple consumer
+   * （消费全部事件并转回本地 Spring 事件）。</p>
+   */
   @Configuration(proxyBeanMethods = false)
-  @ConditionalOnClass(name = "org.apache.rocketmq.spring.core.RocketMQTemplate")
+  @ConditionalOnClass(name = "org.apache.rocketmq.client.apis.ClientServiceProvider")
   @ConditionalOnProperty(prefix = "shared.event.rocketmq", name = "enabled", havingValue = "true")
   static class RocketMQConfig {
+
+    private static final String DEFAULT_ENDPOINTS = "http://127.0.0.1:8081";
+
+    @Bean(destroyMethod = "close")
+    @ConditionalOnMissingBean
+    public org.apache.rocketmq.client.apis.producer.Producer rocketMQProducer(
+        Environment environment) throws Exception {
+      String endpoints = environment.getProperty(
+        "shared.event.rocketmq.endpoints", DEFAULT_ENDPOINTS);
+      String topic = environment.getProperty("shared.event.rocketmq.topic", "event");
+      var config = org.apache.rocketmq.client.apis.ClientConfiguration.newBuilder()
+        .setEndpoints(endpoints)
+        .setRequestTimeout(Duration.ofSeconds(5))
+        .build();
+      return org.apache.rocketmq.client.apis.ClientServiceProvider.loadService()
+        .newProducerBuilder()
+        .setClientConfiguration(config)
+        .setTopics(topic)
+        .build();
+    }
+
     @Bean
-    public EventDispatcher rocketMQEventDispatcher(
-      org.apache.rocketmq.spring.core.RocketMQTemplate template) {
-      return new RocketMQEventDispatcher(template);
+    @ConditionalOnMissingBean
+    public RocketMQEventDispatcher rocketMQEventDispatcher(
+        org.apache.rocketmq.client.apis.producer.Producer producer,
+        Environment environment) {
+      String topic = environment.getProperty("shared.event.rocketmq.topic", "event");
+      return new RocketMQEventDispatcher(
+        org.apache.rocketmq.client.apis.ClientServiceProvider.loadService(), producer, topic);
+    }
+
+    @Bean(initMethod = "start", destroyMethod = "close")
+    @ConditionalOnMissingBean
+    public RocketMQEventSubscriber rocketMQEventSubscriber(
+        ApplicationEventPublisher publisher,
+        Environment environment) throws Exception {
+      String endpoints = environment.getProperty(
+        "shared.event.rocketmq.endpoints", DEFAULT_ENDPOINTS);
+      String topic = environment.getProperty("shared.event.rocketmq.topic", "event");
+      String group = environment.getProperty(
+        "shared.event.rocketmq.consumer-group",
+        environment.getProperty("spring.application.name", "unknown") + "-event");
+      var config = org.apache.rocketmq.client.apis.ClientConfiguration.newBuilder()
+        .setEndpoints(endpoints)
+        .setRequestTimeout(Duration.ofSeconds(5))
+        .build();
+      org.apache.rocketmq.client.apis.consumer.SimpleConsumer consumer =
+        org.apache.rocketmq.client.apis.ClientServiceProvider.loadService()
+          .newSimpleConsumerBuilder()
+          .setClientConfiguration(config)
+          .setConsumerGroup(group)
+          .setAwaitDuration(Duration.ofSeconds(20))
+          .setSubscriptionExpressions(Map.of(
+            topic, org.apache.rocketmq.client.apis.consumer.FilterExpression.SUB_ALL))
+          .build();
+      return new RocketMQEventSubscriber(consumer, publisher);
     }
   }
 }

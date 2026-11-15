@@ -2,8 +2,11 @@ package com.example.core.domain.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.file.types.FileId;
+import com.example.core.types.BatchId;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.FormId;
+import com.example.core.types.ProductNo;
+import com.example.core.types.FileRefId;
 
 import java.io.InputStream;
 import java.util.List;
@@ -33,13 +36,13 @@ public interface FileIntegrationGateway {
    * @param parseTemplateId 从业务配置中心查出的解析模板 ID
    * @param splitRules      业务级别的拆分与校验规则透传
    */
-  void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId, Map<String, Object> splitRules);
+  void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId, Map<String, Object> splitRules);
 
   /**
    * 带外部协作幂等键的解析触发（spec §11.4）。默认委托旧签名；
    * kernel 基础设施实现覆盖本方法，把 {@code requestNo} 写入 {@code UploadFileRequest.clientRequestNo}。
    */
-  default void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+  default void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                    Map<String, Object> splitRules, String requestNo) {
     triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules);
   }
@@ -52,7 +55,7 @@ public interface FileIntegrationGateway {
    * kernel 基础设施实现覆盖本方法返回真实任务 ID。返回 {@code null} 时调用方不得强推
    * WAITING_CALLBACK，应保留 DISPATCHING 交由恢复任务回收对账。
    */
-  default String triggerAsyncParsingAndGetTaskId(FormId formId, FileId sourceFileId,
+  default String triggerAsyncParsingAndGetTaskId(FormId formId, FileRefId sourceFileId,
                                                  String parseTemplateId,
                                                  Map<String, Object> splitRules,
                                                  String requestNo) {
@@ -72,7 +75,7 @@ public interface FileIntegrationGateway {
    * @param context 业务上下文(提供 customerNo/productNo 等令牌申请要素)
    * @return 文件的输入流
    */
-  InputStream downloadStream(FileId fileId, BusinessMetaContext context);
+  InputStream downloadStream(FileRefId fileId, BusinessMetaContext context);
 
   /**
    * 3. 获取文件上传的临时凭证 (Token/Presigned URL)
@@ -80,6 +83,17 @@ public interface FileIntegrationGateway {
    * 供 BFF 层或应用层申请，直接返回给前端用于直传给文件服务，避免文件流经过业务服务。
    */
   String applyUploadToken(String clientIp, String userId, long maxSize);
+
+  /**
+   * 3.1 带业务上下文的临时凭证申请（推荐）。
+   *
+   * <p>file-service 要求上传 token 关联企业/产品访问范围与业务批次；缺失会导致
+   * {@code FileAccessScope} 构造失败。默认实现回退旧签名，保持既有实现兼容。</p>
+   */
+  default String applyUploadToken(String clientIp, String userId, long maxSize,
+                                  BatchId batchId, CustomerNo customerNo, ProductNo productNo) {
+    return applyUploadToken(clientIp, userId, maxSize);
+  }
 
   /**
    * 4. 触发出站文件生成

@@ -8,8 +8,6 @@ import com.example.auth.api.dto.RoleUserBatchResponse;
 import com.example.auth.api.query.GetParentPlanRequest;
 import com.example.auth.api.query.ListPlanMembersRequest;
 import com.example.auth.api.query.ListRoleUsersRequest;
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,10 +49,10 @@ class RoleUserGatewayImplTest {
     when(roleUserQueryApi.listByRoles(any())).thenReturn(ApiResult.success(
       new RoleUserBatchResponse(Map.of("R1", List.of("U-1", "U-2")))));
 
-    Map<String, List<UserNo>> result =
-      gateway.getUsersByRoles(List.of("R1"), PlanNo.of("P-1"));
+    Map<String, List<String>> result =
+      gateway.getUsersByRoles(List.of("R1"), "P-1");
 
-    assertThat(result.get("R1")).containsExactly(UserNo.of("U-1"), UserNo.of("U-2"));
+    assertThat(result.get("R1")).containsExactly("U-1", "U-2");
     ArgumentCaptor<ListRoleUsersRequest> captor =
       ArgumentCaptor.forClass(ListRoleUsersRequest.class);
     verify(roleUserQueryApi).listByRoles(captor.capture());
@@ -65,7 +63,7 @@ class RoleUserGatewayImplTest {
   @Test
   @DisplayName("角色列表为空时短路，不发起跨服务调用")
   void getUsersByRoles_emptyRoleIdsSkipsCall() {
-    assertThat(gateway.getUsersByRoles(List.of(), PlanNo.of("P-1"))).isEmpty();
+    assertThat(gateway.getUsersByRoles(List.of(), "P-1")).isEmpty();
     verifyNoInteractions(roleUserQueryApi);
   }
 
@@ -74,7 +72,7 @@ class RoleUserGatewayImplTest {
   void getUsersByRoles_failsClosedOnNullResponse() {
     when(roleUserQueryApi.listByRoles(any())).thenReturn(null);
 
-    assertThat(gateway.getUsersByRoles(List.of("R1"), PlanNo.of("P-1"))).isEmpty();
+    assertThat(gateway.getUsersByRoles(List.of("R1"), "P-1")).isEmpty();
   }
 
   @Test
@@ -82,7 +80,7 @@ class RoleUserGatewayImplTest {
   void getUsersByRoles_failsClosedOnException() {
     when(roleUserQueryApi.listByRoles(any())).thenThrow(new IllegalStateException("auth down"));
 
-    assertThat(gateway.getUsersByRoles(List.of("R1"), PlanNo.of("P-1"))).isEmpty();
+    assertThat(gateway.getUsersByRoles(List.of("R1"), "P-1")).isEmpty();
   }
 
   @Test
@@ -91,9 +89,9 @@ class RoleUserGatewayImplTest {
     when(planDirectoryApi.listMembers(any())).thenReturn(ApiResult.success(
       new PlanMembersResponse(List.of("U-1", "U-2"))));
 
-    List<UserNo> result = gateway.getUsersInSamePlan(PlanNo.of("P-1"), UserNo.of("U-INIT"));
+    List<String> result = gateway.getUsersInSamePlan("P-1", "U-INIT");
 
-    assertThat(result).containsExactly(UserNo.of("U-1"), UserNo.of("U-2"));
+    assertThat(result).containsExactly("U-1", "U-2");
     ArgumentCaptor<ListPlanMembersRequest> captor =
       ArgumentCaptor.forClass(ListPlanMembersRequest.class);
     verify(planDirectoryApi).listMembers(captor.capture());
@@ -104,7 +102,7 @@ class RoleUserGatewayImplTest {
   @Test
   @DisplayName("计划号为 null 时短路，不发起跨服务调用")
   void getUsersInSamePlan_nullPlanSkipsCall() {
-    assertThat(gateway.getUsersInSamePlan(null, UserNo.of("U-INIT"))).isEmpty();
+    assertThat(gateway.getUsersInSamePlan(null, "U-INIT")).isEmpty();
     verifyNoInteractions(planDirectoryApi);
   }
 
@@ -113,7 +111,7 @@ class RoleUserGatewayImplTest {
   void getUsersInSamePlan_failsClosedOnNullResponse() {
     when(planDirectoryApi.listMembers(any())).thenReturn(null);
 
-    assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), null)).isEmpty();
+    assertThat(gateway.getUsersInSamePlan("P-1", null)).isEmpty();
   }
 
   @Test
@@ -122,7 +120,7 @@ class RoleUserGatewayImplTest {
     when(planDirectoryApi.listMembers(any()))
       .thenThrow(new IllegalStateException("auth down"));
 
-    assertThat(gateway.getUsersInSamePlan(PlanNo.of("P-1"), null)).isEmpty();
+    assertThat(gateway.getUsersInSamePlan("P-1", null)).isEmpty();
   }
 
   @Test
@@ -133,9 +131,9 @@ class RoleUserGatewayImplTest {
     when(planDirectoryApi.listMembers(any())).thenReturn(ApiResult.success(
       new PlanMembersResponse(List.of("U-P1"))));
 
-    List<UserNo> result = gateway.getUsersInParentPlan(PlanNo.of("P-1"), UserNo.of("U-INIT"));
+    List<String> result = gateway.getUsersInParentPlan("P-1", "U-INIT");
 
-    assertThat(result).containsExactly(UserNo.of("U-P1"));
+    assertThat(result).containsExactly("U-P1");
     ArgumentCaptor<GetParentPlanRequest> parentCaptor =
       ArgumentCaptor.forClass(GetParentPlanRequest.class);
     verify(planDirectoryApi).getParentPlan(parentCaptor.capture());
@@ -153,7 +151,7 @@ class RoleUserGatewayImplTest {
     when(planDirectoryApi.getParentPlan(any())).thenReturn(ApiResult.success(
       new ParentPlanResponse(null)));
 
-    assertThat(gateway.getUsersInParentPlan(PlanNo.of("P-1"), null)).isEmpty();
+    assertThat(gateway.getUsersInParentPlan("P-1", null)).isEmpty();
     verify(planDirectoryApi, never()).listMembers(any());
   }
 
@@ -163,7 +161,7 @@ class RoleUserGatewayImplTest {
     when(planDirectoryApi.getParentPlan(any()))
       .thenThrow(new IllegalStateException("auth down"));
 
-    assertThat(gateway.getUsersInParentPlan(PlanNo.of("P-1"), null)).isEmpty();
+    assertThat(gateway.getUsersInParentPlan("P-1", null)).isEmpty();
   }
 
   @Test

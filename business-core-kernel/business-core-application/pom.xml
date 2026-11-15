@@ -28,15 +28,8 @@
       <artifactId>shared-lock</artifactId>
     </dependency>
 
-    <!-- 外部服务 API（@HttpExchange 接口，供通用 Handler 调用 file-service / approval-service） -->
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>file-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>approval-api</artifactId>
-    </dependency>
+    <!-- K-07/K-08：应用层只消费 kernel 自有入站消息与 FileRefId，
+         不再依赖 file-api / approval-api / file-types。 -->
 
     <!-- Spring 事务管理 -->
     <dependency>

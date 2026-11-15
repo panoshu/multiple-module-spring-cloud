@@ -20,11 +20,10 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-# 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
-httpexchange:
-  clients:
-    com.example.auth.api:
-      url: lb://auth-service
+# 功能权限校验: 通过 HttpExchange 调用 auth-service
+# 库 3.5.5 配置前缀为 http-exchange；旧的 httpexchange.clients.<包>.url 不生效
+http-exchange:
+  base-url: lb://auth-service
 
 permission:
   # 会话签名验证：验证网关签发的 X-Account-Id / X-Session-Context 签名防伪造
@@ -33,6 +32,14 @@ permission:
     signature-key: dev-session-signature-key-2026
 
 shared:
+  # 事件通道：与 file/approval/annuity 一致，本地统一走 RocketMQ 5.x Proxy(gRPC 8081)
+  event:
+    redis:
+      enabled: false
+    rocketmq:
+      enabled: true
+      endpoints: http://127.0.0.1:8081
+      topic: event
   logging:
     database:
       enable: true

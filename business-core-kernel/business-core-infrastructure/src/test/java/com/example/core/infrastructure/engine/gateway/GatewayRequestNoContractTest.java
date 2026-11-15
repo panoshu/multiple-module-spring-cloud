@@ -2,7 +2,7 @@ package com.example.core.infrastructure.engine.gateway;
 
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.types.FormId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ class GatewayRequestNoContractTest {
     assertThat(ApprovalServiceIntegrationGateway.class.getDeclaredMethod(
       "startApproval", BusinessApplication.class, String.class)).isNotNull();
     assertThat(FileServiceIntegrationGateway.class.getDeclaredMethod(
-      "triggerAsyncParsing", FormId.class, FileId.class, String.class, Map.class, String.class)).isNotNull();
+      "triggerAsyncParsing", FormId.class, FileRefId.class, String.class, Map.class, String.class)).isNotNull();
     assertThat(FileServiceIntegrationGateway.class.getDeclaredMethod(
       "triggerOutboundGeneration", String.class, String.class, Map.class, String.class, String.class)).isNotNull();
   }
@@ -30,7 +30,7 @@ class GatewayRequestNoContractTest {
     assertThat(ApprovalServiceIntegrationGateway.class.getDeclaredMethod(
       "startApproval", BusinessApplication.class)).isNotNull();
     assertThat(FileServiceIntegrationGateway.class.getDeclaredMethod(
-      "triggerAsyncParsing", FormId.class, FileId.class, String.class, Map.class)).isNotNull();
+      "triggerAsyncParsing", FormId.class, FileRefId.class, String.class, Map.class)).isNotNull();
     assertThat(FileServiceIntegrationGateway.class.getDeclaredMethod(
       "triggerOutboundGeneration", String.class, String.class, Map.class, String.class)).isNotNull();
   }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>business-core-kernel</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>business-core-starter</artifactId>
+  <description>
+    business-core-kernel 宿主装配入口（薄 starter）。
+    宿主只依赖本模块，不再扫描 com.example.core 或显式扫描 kernel mapper。
+  </description>
+
+  <dependencies>
+    <!-- 适配层：Controller/AutoConfiguration/Converter -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-adapter</artifactId>
+    </dependency>
+    <!-- 基础设施：Repository/DO/Mapper/Gateway 实现 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-infrastructure</artifactId>
+    </dependency>
+
+    <!-- @AutoConfiguration / @ConditionalOn... / @EnableAsync -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

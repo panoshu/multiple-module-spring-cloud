@@ -16,7 +16,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +61,7 @@ class BusinessApplicationAccessorTest {
       DefinitionVersion.of("v2"),
       ApplicationStatus.COMPLETED, ApplicationFlowStep.COMPLETED,
       now, now,
-      List.of(item), new BusinessFile(new FileId("PKG-1"), "pkg.zip", "zip", 100L)
+      List.of(item), new BusinessFile(new FileRefId("PKG-1"), "pkg.zip", "zip", 100L)
     );
 
     assertThat(app.id().value()).isEqualTo("APP-R");

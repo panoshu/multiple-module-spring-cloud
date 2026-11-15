@@ -13,6 +13,7 @@ import com.example.shared.domain.aggregate.valueobject.Version;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.time.LocalDateTime;
 
@@ -32,10 +33,13 @@ class ApprovalDispatchHandlerTest {
   private ApprovalDispatchHandler handler;
 
   @BeforeEach
+  @SuppressWarnings("unchecked")
   void setUp() {
     applicationRepository = mock(ApplicationRepository.class);
     approvalGateway = mock(ApprovalIntegrationGateway.class);
-    handler = new ApprovalDispatchHandler(applicationRepository, approvalGateway);
+    ObjectProvider<ApprovalIntegrationGateway> provider = mock(ObjectProvider.class);
+    when(provider.getIfAvailable()).thenReturn(approvalGateway);
+    handler = new ApprovalDispatchHandler(applicationRepository, provider);
   }
 
   @Test
@@ -64,6 +68,21 @@ class ApprovalDispatchHandlerTest {
     ExternalInteraction interaction = interaction();
 
     assertThat(handler.dispatch(interaction)).isNull();
+  }
+
+  @Test
+  @DisplayName("审批网关未装配时给出明确错误，而不是 NPE")
+  @SuppressWarnings("unchecked")
+  void dispatch_failsFastWhenGatewayMissing() {
+    ObjectProvider<ApprovalIntegrationGateway> empty = mock(ObjectProvider.class);
+    when(empty.getIfAvailable()).thenReturn(null);
+    ApprovalDispatchHandler withoutGateway =
+      new ApprovalDispatchHandler(applicationRepository, empty);
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+        () -> withoutGateway.dispatch(interaction()))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("审批集成网关未装配");
   }
 
   private ExternalInteraction interaction() {

@@ -10,6 +10,8 @@ import com.example.core.application.engine.dispatch.InteractionDispatchHandler;
 import com.example.core.application.engine.listener.FileParsedEventListener;
 import com.example.core.application.engine.service.ExternalInteractionRecoveryService;
 import com.example.core.application.engine.service.FlowOrchestrationService;
+import com.example.core.application.engine.step.service.BusinessFormAppService;
+import com.example.core.domain.business.repository.FormRepository;
 import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.root.StepExecution;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
@@ -19,7 +21,7 @@ import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
 import com.example.core.domain.engine.gateway.EventReceiptGateway;
 import com.example.core.domain.engine.repository.ExternalInteractionRepository;
 import com.example.core.domain.engine.repository.StepExecutionRepository;
-import com.example.file.api.event.FileParsedEventDTO;
+import com.example.core.application.engine.inbound.FileParsedMessage;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -202,22 +204,24 @@ class ExternalCollaborationAcceptanceTest {
     CallbackCorrelationService correlation = mock(CallbackCorrelationService.class);
     when(receipt.tryConsume(any(), any())).thenReturn(true);
     when(correlation.correlate(any())).thenReturn(CorrelationResult.noCorrelation());
-    FileParsedEventListener listener = new FileParsedEventListener(orchestration, receipt, correlation);
+    FileParsedEventListener listener = new FileParsedEventListener(
+      orchestration, receipt, correlation,
+      mock(BusinessFormAppService.class), mock(FormRepository.class));
 
     // 2 个子任务：一个全成功、一个含 3 行无效；顶层 status=PARTIAL 而非 SUCCESS
-    List<FileParsedEventDTO.SubTaskSummaryDTO> subTasks = List.of(
-      new FileParsedEventDTO.SubTaskSummaryDTO("ST-1", "K1", 10, 10, 0, "SUCCESS"),
-      new FileParsedEventDTO.SubTaskSummaryDTO("ST-2", "K2", 10, 7, 3, "PARTIAL"));
-    FileParsedEventDTO partial = new FileParsedEventDTO(
-      "evt-partial", TASK_ID, "FORM_DETAIL", "PARTIAL", 2, subTasks, null, NOW);
-    FileParsedEventDTO failed = new FileParsedEventDTO(
-      "evt-failed", TASK_ID, "FORM_DETAIL", "FAILED", 0, List.of(), "格式错误", NOW);
+    List<FileParsedMessage.ParsedSubTaskMessage> subTasks = List.of(
+      new FileParsedMessage.ParsedSubTaskMessage("ST-1", "K1", 10, 10, 0, "SUCCESS"),
+      new FileParsedMessage.ParsedSubTaskMessage("ST-2", "K2", 10, 7, 3, "PARTIAL"));
+    FileParsedMessage partial = new FileParsedMessage(
+      "evt-partial", TASK_ID, null, "PARTIAL", 2, subTasks, null);
+    FileParsedMessage failed = new FileParsedMessage(
+      "evt-failed", TASK_ID, null, "FAILED", 0, List.of(), "格式错误");
 
     listener.handleFileParsed(partial);
     listener.handleFileParsed(failed);
 
     // 失败明细未被折叠成「全部成功」，且 PARTIAL 只推进一次、FAILED 不推进
-    assertThat(partial.subTasks()).extracting(FileParsedEventDTO.SubTaskSummaryDTO::invalidRows)
+    assertThat(partial.subTasks()).extracting(FileParsedMessage.ParsedSubTaskMessage::invalidRows)
       .containsExactly(0, 3);
     verify(orchestration, times(1)).advanceByFileTaskId(TASK_ID);
 

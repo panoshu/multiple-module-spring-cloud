@@ -1,7 +1,7 @@
 package com.example.auth.domain.user.event;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 import com.example.core.types.UserNo;
 import lombok.Builder;
 import lombok.With;

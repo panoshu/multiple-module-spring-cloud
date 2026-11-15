@@ -5,30 +5,30 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
- * 年金业务演示服务启动类
- * <p>
- * scanBasePackages 同时包含 {@code com.example.annuity}（本服务）和 {@code com.example.core}
- * （kernel 基础设施：DomainServiceConfiguration、LibJacksonModule、IntegrationEventSimulator 等），
- * 确保 kernel 提供的 @DomainService / @Component / @Configuration 能被正确扫描和注册。
- * <p>
- * {@code @MapperScan} 显式扫描 annuity-infrastructure 与 kernel infrastructure 的 BaseMapper 接口，
- * 使 MyBatis-Flex 注册 AnnuityEmployeeBatchMapper / AnnuityEmployeeDetailMapper（annuity 专属）
- * 以及 BusinessApplicationMapper / BusinessBatchMapper / BusinessFormMapper（kernel 通用）为 Bean。
- * <p>
- * {@code @EnableExchangeClients} 注册 kernel 集成网关所需的远程 API 客户端代理
- * （approval-api / file-api），通过 LoadBalancer 解析服务名调用 approval-service / file-service。
+ * 年金业务演示服务启动类（kernel starter 宿主示例）。
+ *
+ * <p><b>K-05 宿主契约</b>：本类不再声明
+ * {@code scanBasePackages = "com.example.core"}，也不再扫描
+ * {@code com.example.core.infrastructure.business.mapper}。
+ * kernel 的组件、领域服务、自动配置、Mapper 与 {@code @EnableAsync}
+ * 全部由 {@code business-core-starter} 统一装配（依赖见 annuity-starter POM）。</p>
+ *
+ * <p>{@code @MapperScan} 只保留本服务自己的 mapper 包；kernel mapper 由 starter 扫描。</p>
+ *
+ * <p>{@code @EnableExchangeClients} 注册审批/外接/权限远程 API 客户端代理；
+ * file-api 客户端由 kernel 的 {@code FileServiceClientConfiguration} 按
+ * {@code core.integration.file.base-url} 直接装配（避免与 httpexchange 代理重复定义，
+ * 同时支持 file-service 不经注册中心的本地直连）。</p>
  *
  * @author annuity-service
  * @since 2026/7/21
  */
-@EnableAsync
 @EnableDiscoveryClient
-@EnableExchangeClients(basePackages = {"com.example.approval.api", "com.example.file.api", "com.example.integration.api", "com.example.auth.api"})
-@SpringBootApplication(scanBasePackages = {"com.example.annuity", "com.example.core"})
-@MapperScan({"com.example.annuity.infrastructure.mapper", "com.example.core.infrastructure.business.mapper"})
+@EnableExchangeClients(basePackages = {"com.example.approval.api", "com.example.integration.api", "com.example.auth.api"})
+@SpringBootApplication
+@MapperScan("com.example.annuity.infrastructure.mapper")
 public class AnnuityApplication {
 
   public static void main(String[] args) {

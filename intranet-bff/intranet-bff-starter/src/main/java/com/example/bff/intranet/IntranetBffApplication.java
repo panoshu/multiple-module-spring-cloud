@@ -21,7 +21,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 })
 @SpringBootApplication(scanBasePackages = {
   "com.example.bff.intranet",
-  "com.example.bff.shared"
+  "com.example.bff.shared",
+  "com.example.bff.annuity"
 })
 public class IntranetBffApplication {
   public static void main(String[] args) {

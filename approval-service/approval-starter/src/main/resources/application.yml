@@ -23,7 +23,8 @@ spring:
         read-timeout: 30s
         connection-time-to-live: 30s
   profiles:
-    include: local
+    # 无显式 profile 时按本机开发运行；生产必须显式指定 --spring.profiles.active=prod
+    default: local
 
 mybatis-flex:
   mapper-locations: classpath*:/mapper/**/*.xml

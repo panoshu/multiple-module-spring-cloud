@@ -9,7 +9,7 @@ import com.example.approval.api.request.WithdrawRequest;
 import com.example.approval.application.service.ApprovalInstanceService;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.shared.exception.BusinessException;
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import com.example.shared.permission.AccountIdResolver;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageData;
@@ -51,7 +51,7 @@ class ApprovalInstanceAdapterTest {
   void listMyPending_overridesRequestBodyApproverWithSessionAccount() {
     when(accountIdResolver.resolve(isNull())).thenReturn("U-SESSION");
     ListMyPendingApprovalsRequest request =
-      new ListMyPendingApprovalsRequest("U-ATTACKER", Pagination.of(5, 10));
+      new ListMyPendingApprovalsRequest("U-ATTACKER", PageQuery.of(5, 10));
 
     ApiResult<PageData<PendingApprovalDTO>> result = adapter.listMyPending(request);
 
@@ -60,7 +60,7 @@ class ApprovalInstanceAdapterTest {
       ArgumentCaptor.forClass(ListMyPendingApprovalsRequest.class);
     verify(service).listMyPendingApprovals(captor.capture());
     assertThat(captor.getValue().approver()).isEqualTo("U-SESSION");
-    assertThat(captor.getValue().pagination()).isEqualTo(Pagination.of(5, 10));
+    assertThat(captor.getValue().pagination()).isEqualTo(PageQuery.of(5, 10));
   }
 
   @Test
@@ -68,7 +68,7 @@ class ApprovalInstanceAdapterTest {
   void listMyPending_failsClosedWhenSessionMissing() {
     when(accountIdResolver.resolve(isNull())).thenReturn(null);
     ListMyPendingApprovalsRequest request =
-      new ListMyPendingApprovalsRequest("U-ATTACKER", Pagination.of(0, 10));
+      new ListMyPendingApprovalsRequest("U-ATTACKER", PageQuery.of(0, 10));
 
     assertThatThrownBy(() -> adapter.listMyPending(request))
       .isInstanceOf(BusinessException.class);
@@ -81,7 +81,7 @@ class ApprovalInstanceAdapterTest {
   void listMyPending_failsClosedWhenSessionAccountBlank() {
     when(accountIdResolver.resolve(isNull())).thenReturn("  ");
     ListMyPendingApprovalsRequest request =
-      new ListMyPendingApprovalsRequest("U-ATTACKER", Pagination.of(0, 10));
+      new ListMyPendingApprovalsRequest("U-ATTACKER", PageQuery.of(0, 10));
 
     assertThatThrownBy(() -> adapter.listMyPending(request))
       .isInstanceOf(BusinessException.class);

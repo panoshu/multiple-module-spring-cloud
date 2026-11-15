@@ -1,8 +1,8 @@
 package com.example.core.domain.business.event;
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.EventId;
-import com.example.file.types.FileId;
+import com.example.shared.domain.event.EventId;
+import com.example.core.types.FileRefId;
 import com.example.core.types.FormId;
 
 import java.time.LocalDateTime;
@@ -17,12 +17,12 @@ import java.time.LocalDateTime;
 public record FormUploadedEvent(
   EventId eventId,
   FormId formId,
-  FileId fileId,
+  FileRefId fileId,
   String fileName,
   LocalDateTime occurredOn
 ) implements DomainEvent {
 
-  public static FormUploadedEvent of(FormId formId, FileId fileId, String fileName) {
+  public static FormUploadedEvent of(FormId formId, FileRefId fileId, String fileName) {
     return new FormUploadedEvent(EventId.generate(), formId, fileId, fileName, LocalDateTime.now());
   }
 }

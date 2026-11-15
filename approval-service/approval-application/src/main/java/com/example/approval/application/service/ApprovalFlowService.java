@@ -12,8 +12,7 @@ import com.example.approval.domain.valueobject.MatchRules;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
-import com.example.core.types.UserNo;
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -154,7 +153,7 @@ public class ApprovalFlowService {
    */
   @Transactional(readOnly = true)
   public PageData<ApprovalFlowDTO> listApprovalFlows(ListApprovalFlowsRequest request) {
-    Pagination pagination = request.pagination();
+    PageQuery pagination = request.pagination();
     ApprovalFlowPage page = flowRepository.findByCondition(
       request.businessType(), request.status(), pagination.startPos(), pagination.pageSize());
 
@@ -260,7 +259,7 @@ public class ApprovalFlowService {
       com.example.approval.domain.valueobject.NodeOrder.of(dto.order()),
       com.example.approval.types.enums.ApproverType.valueOf(dto.nodeType()),
       dto.approvalUsers() != null
-        ? dto.approvalUsers().stream().map(UserNo::of).toList()
+        ? dto.approvalUsers()
         : List.of(),
       null, // roleIds
       com.example.approval.types.enums.SignMode.OR_SIGN, // 默认或签
@@ -310,7 +309,7 @@ public class ApprovalFlowService {
       node.nodeType().name(), // nodeName
       node.nodeType().name(),
       node.isSpecifiedRoleApproval() ? node.roleIds().get(0) : null,
-      node.approverIds().stream().map(UserNo::value).toList(),
+      node.approverIds(),
       node.nodeOrder().value(),
       true // required
     );

@@ -1,15 +1,19 @@
 package com.example.shared.permission;
 
 import com.example.shared.security.permission.PermissionCheckPort;
+import com.example.shared.security.permission.PermissionRegistrationPort;
 import com.example.shared.security.annotation.RequirePermission;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * shared-permission-starter 自动装配入口.
@@ -25,7 +29,6 @@ import org.springframework.context.annotation.Bean;
  *
  * @author shared-permission-starter
  */
-@Slf4j
 @AutoConfiguration
 @ConditionalOnClass(RequirePermission.class)
 @EnableConfigurationProperties({PermissionProperties.class, PermissionCacheProperties.class})
@@ -52,9 +55,46 @@ public class PermissionAutoConfiguration {
       properties.getSession().getSignatureKey());
   }
 
+  /**
+   * 业务服务默认权限执行器：本地 Caffeine + HttpExchange 调用 auth-service.
+   *
+   * <p>此前该类仅标注 {@code @Component}，但 starter 包不会被宿主组件扫描，
+   * 导致 {@code PermissionExecutor} 缺失、权限切面静默不装配。改为自动配置显式注册。</p>
+   */
+  @Bean
+  @ConditionalOnBean(PermissionCheckPort.class)
+  @ConditionalOnMissingBean(PermissionExecutor.class)
+  public HttpExchangePermissionExecutor httpExchangePermissionExecutor(
+    PermissionCheckPort permissionCheckPort,
+    PermissionCacheProperties cacheProperties) {
+    return new HttpExchangePermissionExecutor(permissionCheckPort, cacheProperties);
+  }
+
+  /**
+   * 业务服务默认数据范围解析器（auth 侧由 LocalDataScopeResolver 覆盖）.
+   */
+  @Bean
+  @ConditionalOnBean({PermissionCheckPort.class, AccountIdResolver.class})
+  @ConditionalOnMissingBean(DataScopeResolver.class)
+  public DefaultDataScopeResolver defaultDataScopeResolver(
+    PermissionCheckPort permissionCheckPort,
+    AccountIdResolver accountIdResolver) {
+    return new DefaultDataScopeResolver(permissionCheckPort, accountIdResolver);
+  }
+
+  /**
+   * 功能权限切面.
+   *
+   * <p>{@code permission.enforcement.enabled=false} 时整体关闭权限校验，
+   * 仅用于本地/联调环境（无 auth-service 或批量服务启动）——生产环境必须保持默认开启，
+   * 不得在 prod 显式关闭（{@link PermissionReadinessValidator} 会 fail-fast）.</p>
+   */
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnBean(PermissionCheckPort.class)
+  @ConditionalOnBean(PermissionExecutor.class)
+  @ConditionalOnProperty(
+    prefix = "permission.enforcement", name = "enabled",
+    havingValue = "true", matchIfMissing = true)
   public RequirePermissionAspect requirePermissionAspect(
     PermissionExecutor permissionExecutor,
     AccountIdResolver accountIdResolver,
@@ -66,8 +106,41 @@ public class PermissionAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   @ConditionalOnBean(DataScopeResolver.class)
+  @ConditionalOnProperty(
+    prefix = "permission.enforcement", name = "enabled",
+    havingValue = "true", matchIfMissing = true)
   public DataScopeAspect dataScopeAspect(DataScopeResolver dataScopeResolver) {
     return new DataScopeAspect(dataScopeResolver);
+  }
+
+  /**
+   * 权限点启动上报 Runner（auth-service 自身排除）.
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnBean(PermissionRegistrationPort.class)
+  @ConditionalOnExpression("'${spring.application.name:unknown}' != 'auth-service'")
+  public PermissionRegistrationRunner permissionRegistrationRunner(
+    RequestMappingHandlerMapping handlerMapping,
+    PermissionRegistrationPort registrationApi,
+    Environment environment) {
+    return new PermissionRegistrationRunner(handlerMapping, registrationApi, environment);
+  }
+
+  /**
+   * 生产就绪校验：非 test/local/dev 环境必须存在权限客户端、执行器、切面与签名密钥.
+   *
+   * <p>解决“配置错误时切面静默不装配、@RequirePermission 全部失效”的 fail-open 问题.</p>
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  public PermissionReadinessValidator permissionReadinessValidator(
+    Environment environment,
+    ObjectProvider<PermissionCheckPort> permissionCheckPort,
+    ObjectProvider<PermissionExecutor> permissionExecutor,
+    ObjectProvider<RequirePermissionAspect> requirePermissionAspect) {
+    return new PermissionReadinessValidator(
+      environment, permissionCheckPort, permissionExecutor, requirePermissionAspect);
   }
 
   /**
@@ -75,10 +148,10 @@ public class PermissionAutoConfiguration {
    */
   @Bean
   @ConditionalOnMissingBean
-  @ConditionalOnBean(HttpExchangePermissionExecutor.class)
+  @ConditionalOnBean(PermissionCachePort.class)
   public PermissionCacheInvalidationListener permissionCacheInvalidationListener(
-    HttpExchangePermissionExecutor executor) {
-    return new PermissionCacheInvalidationListener(executor);
+    PermissionCachePort cachePort) {
+    return new PermissionCacheInvalidationListener(cachePort);
   }
 
   /**

@@ -6,6 +6,7 @@ import com.example.shared.id.metadata.IdDataType;
 import com.example.shared.id.metadata.IdMeta;
 import com.example.shared.id.strategy.IdGenerationStrategy;
 import com.example.shared.id.strategy.IdGenerationStrategy.IdContext;
+import com.example.shared.identifier.contract.IdType;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +25,14 @@ public class LongTypeHandler implements IdTypeHandler {
     // 2. 生成原始 Long
     long rawVal = strategy.nextLongId(new IdContext(meta.baseName(), seqKey));
 
-    // 3. 简单模式直接返回
+    // 3. SNOWFLAKE 原始值已是最终唯一 Long（19 位）。
+    //    再按默认 "%p%d%s" 拼接日期前缀会得到 27 位数字，Long.parseLong 必然溢出
+    //    （ApprovalFlowId/ApprovalInstanceId 等 Long 型雪花 ID 走此路径）。
+    if (meta.type() == IdType.SNOWFLAKE) {
+      return rawVal;
+    }
+
+    // 4. 简单模式直接返回
     if (meta.isSimpleSequence()) {
       return rawVal;
     }

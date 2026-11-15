@@ -16,11 +16,12 @@
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>file-api</artifactId>
+      <artifactId>file-domain</artifactId>
     </dependency>
+    <!-- F-01：基础设施实现 application 定义的 FileTokenPolicy 端口 -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>file-domain</artifactId>
+      <artifactId>file-application</artifactId>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>

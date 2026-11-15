@@ -18,7 +18,7 @@ import com.example.file.application.usecase.UploadFileWithTokenUseCase;
 import com.example.file.application.util.TokenHashUtil;
 import com.example.file.domain.errorcode.FileErrorCodes;
 import com.example.file.domain.model.storage.valueobject.SessionUser;
-import com.example.file.infrastructure.storage.FileTokenProperties;
+import com.example.file.application.access.FileTokenPolicy;
 import com.example.shared.exception.BusinessException;
 import com.example.core.types.CustomerNo;
 import com.example.core.types.ProductNo;
@@ -57,7 +57,7 @@ import java.nio.charset.StandardCharsets;
  *       不在 {@link FileAccessApi} 接口中声明（接口仅声明 token + file，由适配层负责
  *       请求上下文装配）。使用 {@link RequestContextHolder} 在方法体内获取
  *       {@link HttpServletRequest}，保持接口方法签名不变。</li>
- *   <li>ttl 由 {@link FileTokenProperties} 提供默认值，通过 {@link FileAccessConverter}
+ *   <li>ttl 由 {@link FileTokenPolicy} 提供默认值，通过 {@link FileAccessConverter}
  *       显式传入 Command（Task 15 fix: Command 必传 ttl）。</li>
  *   <li>download 采用两阶段：prepareDownload（事务内消费 token + 写审计）→
  *       openStream（事务外读取流）→ {@link StreamingResponseBody} 异步写出，
@@ -77,7 +77,7 @@ public class FileAccessAdapter implements FileAccessApi {
   private final ApplyDownloadTokenUseCase applyDownloadTokenUseCase;
   private final DownloadFileWithTokenUseCase downloadFileWithTokenUseCase;
   private final FileAccessConverter converter;
-  private final FileTokenProperties tokenProperties;
+  private final FileTokenPolicy tokenPolicy;
 
   /**
    * 计算 token 的 SHA-256 短摘要（前 8 位）用于日志脱敏。
@@ -96,7 +96,7 @@ public class FileAccessAdapter implements FileAccessApi {
   public ApplyUploadTokenResponse applyUploadToken(ApplyUploadTokenRequest request) {
     log.info("申请上传 Token: bizType={}, sourceApp={}, uploader={}",
       request.bizType(), request.sourceApp(), request.uploader());
-    var cmd = converter.toCommand(request, tokenProperties.getDefaultUploadTtl());
+    var cmd = converter.toCommand(request, tokenPolicy.defaultUploadTtl());
     ApplyUploadTokenResult result = applyUploadTokenUseCase.apply(cmd);
     return new ApplyUploadTokenResponse(result.token(), result.fileId());
   }
@@ -105,7 +105,7 @@ public class FileAccessAdapter implements FileAccessApi {
   @RequirePermission(business = "FILE_ACCESS", action = "APPLY_TOKEN", category = PermissionCategory.PLATFORM)
   public ApplyDownloadTokenResponse applyDownloadToken(ApplyDownloadTokenRequest request) {
     log.info("申请下载 Token: fileId={}, downloader={}", request.fileId(), request.downloader());
-    var cmd = converter.toCommand(request, tokenProperties.getDefaultDownloadTtl());
+    var cmd = converter.toCommand(request, tokenPolicy.defaultDownloadTtl());
     String token = applyDownloadTokenUseCase.apply(cmd);
     return new ApplyDownloadTokenResponse(token);
   }

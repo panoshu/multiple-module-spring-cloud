@@ -26,7 +26,7 @@ import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +83,9 @@ class AutoAdvanceEnabledEndToEndTest {
 
   @Autowired
   private ParsedFileReferenceGateway parsedFileGateway;
+
+  @Autowired
+  private com.example.core.domain.business.gateway.ParsedSubTaskReferenceGateway parsedSubTaskGateway;
 
   @Autowired
   private KernelProductionReadinessValidator readinessValidator;
@@ -151,7 +154,7 @@ class AutoAdvanceEnabledEndToEndTest {
     OperatorInfo operator = new OperatorInfo(
       Channel.NETAPP, "U-TEST-001", "测试操作人", false);
     ApplicationId appId = new ApplicationId("APP-AUTO-" + UUID.randomUUID());
-    FileId jsonFileId = new FileId("FILE-AUTO-" + UUID.randomUUID());
+    FileRefId jsonFileId = new FileRefId("FILE-AUTO-" + UUID.randomUUID());
 
     BusinessApplication app = BusinessApplication.createFromForm(
       appId, new ApplicationSource(new FormId("FORM-AUTO-001"), BatchId.of("BATCH-AUTO-001")),
@@ -161,6 +164,7 @@ class AutoAdvanceEnabledEndToEndTest {
       BusinessType.ACC_PLAN_CREATE, AnnuityApplicationExtension.PLAN_TYPE_NEW,
       20000L, false));
     parsedFileGateway.save(appId, jsonFileId);
+    parsedSubTaskGateway.save(appId, "MOCK-SUBTASK-" + appId.value());
     setUpdatedBy(app, operator.operatorId());
     applicationRepository.save(app);
     return appId;

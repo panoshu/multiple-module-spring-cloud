@@ -327,6 +327,9 @@ CREATE TABLE IF NOT EXISTS t_file_parse_task
 )
   );
 
+-- 兼容旧库：request_no（外部协作幂等键，spec §11.4）为后加列，CREATE TABLE IF NOT EXISTS 不会补齐。
+ALTER TABLE t_file_parse_task ADD COLUMN IF NOT EXISTS request_no VARCHAR(128);
+
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_biz_status ON t_file_parse_task(biz_type, status);
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_source_file ON t_file_parse_task(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_create_time ON t_file_parse_task(create_time);

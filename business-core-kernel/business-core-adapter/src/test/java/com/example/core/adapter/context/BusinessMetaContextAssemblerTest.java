@@ -1,6 +1,6 @@
 package com.example.core.adapter.context;
 
-import com.example.core.api.context.BusinessMetaContext;
+import com.example.core.api.context.BusinessMetaCommandContext;
 import com.example.shared.security.SessionClaims;
 import com.example.shared.exception.BusinessException;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class BusinessMetaContextAssemblerTest {
     String businessType = "ANNUITY_OPEN";
     String planNo = "P001";
 
-    BusinessMetaContext meta = assembler.assemble(businessType, planNo, session);
+    BusinessMetaCommandContext meta = assembler.assemble(businessType, planNo, session);
 
     assertThat(meta.businessType()).isEqualTo("ANNUITY_OPEN");
     assertThat(meta.planNo()).isEqualTo("P001");

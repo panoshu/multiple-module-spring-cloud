@@ -4,8 +4,8 @@ import com.example.auth.api.PermissionRegistrationApi;
 import com.example.shared.security.permission.PermissionRegistrationRequest;
 import com.example.shared.security.permission.PermissionRegistrationResponse;
 import com.example.shared.web.core.api.ApiResult;
-import com.example.auth.infrastructure.permission.PermissionRegistrationResult;
-import com.example.auth.infrastructure.permission.PermissionScannerService;
+import com.example.auth.domain.permission.PermissionRegistrationResult;
+import com.example.auth.domain.permission.PermissionRegistrationUseCase;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 public class PermissionRegistrationController implements PermissionRegistrationApi {
 
-  private final PermissionScannerService scannerService;
+  private final PermissionRegistrationUseCase scannerService;
 
   @Override
   public ApiResult<PermissionRegistrationResponse> register(

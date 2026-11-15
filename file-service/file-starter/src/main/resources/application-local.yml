@@ -19,11 +19,10 @@ spring:
       database: 0
       password: redis
 
-# 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
-httpexchange:
-  clients:
-    com.example.auth.api:
-      url: lb://auth-service
+# 功能权限校验: 通过 HttpExchange 调用 auth-service
+# 库 3.5.5 配置前缀为 http-exchange；旧的 httpexchange.clients.<包>.url 不生效
+http-exchange:
+  base-url: lb://auth-service
 
 permission:
   # 会话签名验证：验证网关签发的 X-Account-Id / X-Session-Context 签名防伪造
@@ -33,6 +32,14 @@ permission:
 
 # shared-logging-starter 脱敏配置（最小化满足 SanitizationProperties @NotNull/@NotEmpty 校验）
 shared:
+  # X-04：本地联调使用 RocketMQ 5 Proxy（gRPC 8081）；Redis 仅保留缓存/会话用途
+  event:
+    redis:
+      enabled: false
+    rocketmq:
+      enabled: true
+      endpoints: http://127.0.0.1:8081
+      topic: event
   logging:
     obfuscate:
       global:
@@ -56,6 +63,12 @@ logging:
 
 # 本地开发环境文件存储覆盖配置
 file:
+  # 本地联调播种 FORM_DETAIL 模板配置（无管理端时的便捷启动；生产禁止开启）
+  demo:
+    template-seed:
+      enabled: true
+      biz-type: FORM_DETAIL
+      version: "1.0"
   storage:
     targets:
       - id: local-default

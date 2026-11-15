@@ -9,7 +9,6 @@ import com.example.auth.api.command.EnableChannelRequest;
 import com.example.auth.api.command.ReplaceChannelsRequest;
 import com.example.auth.api.dto.CustomerChannelEntitlementResponse;
 import com.example.auth.api.query.GetEntitlementRequest;
-import com.example.core.types.UserNo;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.auth.application.channel.CustomerChannelEntitlementService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CustomerChannelEntitlementController implements CustomerChannelEntitlementApi {
 
-  private static final UserNo SYSTEM_OPERATOR = UserNo.of("SYSTEM");
+  private static final String SYSTEM_OPERATOR = "SYSTEM";
 
   private final CustomerChannelEntitlementService service;
   private final CustomerChannelEntitlementConverter converter;

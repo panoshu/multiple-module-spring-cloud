@@ -40,19 +40,24 @@ public class Lock4jDistributedLock implements DistributedLock {
     long expireMs = leaseTime > 0 ? unit.toMillis(leaseTime) : -1L;
     long acquireMs = Math.max(0, unit.toMillis(waitTime));
     LockInfo info = lockTemplate.lock(key, expireMs, acquireMs, RedisTemplateLockExecutor.class);
+    log.debug("[Lock] acquire key={}, waitMs={}, leaseMs={}, success={}",
+      key, acquireMs, expireMs, info != null);
     return info != null ? Optional.of(new Lock4jHandle(lockTemplate, info)) : Optional.empty();
   }
 
   @Override
   public <T> T lockAndRun(String key, long waitTime, long leaseTime, TimeUnit unit, Supplier<T> task) {
     Optional<LockHandle> handle = tryLock(key, waitTime, leaseTime, unit);
-    return handle.map(h -> {
-      try (LockHandle ignored = h) {
-        return task.get();
-      }
-    }).orElseThrow(() -> new com.example.shared.exception.SystemException(
-      com.example.shared.lock.errorcode.LockErrorDefinition.GET_LOCK_FAILED)
-      .withLogDetail("Failed to acquire lock: " + key));
+    if (handle.isEmpty()) {
+      throw new com.example.shared.exception.SystemException(
+        com.example.shared.lock.errorcode.LockErrorDefinition.GET_LOCK_FAILED)
+        .withLogDetail("Failed to acquire lock: " + key);
+    }
+    // 不能用 Optional.map：任务返回 null（如 void 语义的 advanceStep）时 map 会得到 empty，
+    // orElseThrow 会在任务成功执行并释放锁之后误报「获取锁失败」。
+    try (LockHandle ignored = handle.get()) {
+      return task.get();
+    }
   }
 
   /**
@@ -76,6 +81,7 @@ public class Lock4jDistributedLock implements DistributedLock {
       }
       released = true;
       boolean ok = lockTemplate.releaseLock(lockInfo);
+      log.debug("[Lock] release key={}, success={}", lockInfo.getLockKey(), ok);
       if (!ok) {
         log.warn("锁释放未成功（可能已过期被回收）, key: {}", lockInfo.getLockKey());
       }

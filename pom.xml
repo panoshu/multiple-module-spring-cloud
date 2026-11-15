@@ -16,6 +16,7 @@
     <module>arch-tests</module>
     <module>gateway-framework</module>
     <module>bff-framework</module>
+    <module>bff-annuity-support</module>
     <module>demo-shared</module>
     <module>integration-service</module>
     <module>business-core-kernel</module>
@@ -67,7 +68,7 @@
     <fesod.version>2.0.2-incubating</fesod.version>
     <aviator.version>5.9.0</aviator.version>
     <qlexpress4.version>4.1.2</qlexpress4.version>
-    <rocketmq.version>2.3.6</rocketmq.version>
+    <rocketmq.version>5.0.7</rocketmq.version>
     <kona-crypto.version>1.0.15</kona-crypto.version>
     <sa-token.version>1.45.0</sa-token.version>
     <commons-pool2.version>2.12.1</commons-pool2.version>
@@ -183,17 +184,17 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>business-core-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>auth-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>integration-service-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.example</groupId>
-        <artifactId>integration-service-types</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -214,6 +215,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>bff-framework</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>bff-annuity-support</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -328,6 +334,11 @@
       </dependency>
       <dependency>
         <groupId>com.example</groupId>
+        <artifactId>shared-discovery-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
         <artifactId>shared-client-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -359,6 +370,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>shared-crypto-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>shared-permission-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -448,7 +464,7 @@
       <!-- RocketMQ -->
       <dependency>
         <groupId>org.apache.rocketmq</groupId>
-        <artifactId>rocketmq-spring-boot-starter</artifactId>
+        <artifactId>rocketmq-client-java</artifactId>
         <version>${rocketmq.version}</version>
       </dependency>
 
@@ -478,7 +494,7 @@
         <version>${kona-crypto.version}</version>
       </dependency>
 
-      <!-- sa-token-core：shared-web-core 异常适配（无 spring 集成的纯核心） -->
+      <!-- sa-token-core：auth-adapter 的 sa-token 异常映射（无 spring 集成的纯核心） -->
       <dependency>
         <groupId>cn.dev33</groupId>
         <artifactId>sa-token-core</artifactId>

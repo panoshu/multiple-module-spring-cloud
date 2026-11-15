@@ -43,7 +43,7 @@ public class FileAccessLogDO {
   private LocalDateTime updateTime;
 
   @Column(isLogicDelete = true)
-  private Integer deleted;
+  private Boolean deleted;
 
   @Column(version = true)
   private Integer version;

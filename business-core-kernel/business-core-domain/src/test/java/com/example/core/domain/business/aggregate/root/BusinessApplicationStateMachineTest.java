@@ -16,7 +16,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
@@ -79,6 +79,29 @@ class BusinessApplicationStateMachineTest {
       assertThatThrownBy(() -> terminal.completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION))
         .isInstanceOf(DomainException.class);
     }
+  }
+
+  @Test
+  @DisplayName("外部等待回调完成：WAITING_EXTERNAL → RUNNING 与步骤跃迁只递增一次版本")
+  void completeWaitingStep_combinesStatusAndStepTransition() {
+    BusinessApplication app = app();
+    app.waitForExternal();
+    long versionBeforeCallback = app.version().value();
+
+    app.completeWaitingStep(ApplicationFlowStep.DATA_VERIFICATION);
+
+    assertThat(app.status()).isEqualTo(ApplicationStatus.RUNNING);
+    assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.DATA_VERIFICATION);
+    assertThat(app.version().value()).isEqualTo(versionBeforeCallback + 1);
+  }
+
+  @Test
+  @DisplayName("非 WAITING_EXTERNAL 状态不允许完成等待步骤")
+  void completeWaitingStep_rejectsWrongStatus() {
+    BusinessApplication app = app();
+
+    assertThatThrownBy(() -> app.completeWaitingStep(ApplicationFlowStep.DATA_VERIFICATION))
+      .isInstanceOf(DomainException.class);
   }
 
   @Test

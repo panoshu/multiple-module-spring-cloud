@@ -14,12 +14,9 @@ import com.example.approval.domain.valueobject.NodeOrder;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.enums.NodeType;
-import com.example.core.types.ApplicationId;
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import com.example.shared.web.core.dto.PageData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -74,7 +71,7 @@ class PendingApprovalServiceTest {
     candidate(2L, 2L, true, List.of("U-1"));
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.totalCount()).isEqualTo(2);
     assertThat(result.currentStart()).isZero();
@@ -98,7 +95,7 @@ class PendingApprovalServiceTest {
     candidate(2L, 2L, true, List.of("U-2"));
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.isEmpty()).isTrue();
     assertThat(result.totalCount()).isZero();
@@ -109,7 +106,7 @@ class PendingApprovalServiceTest {
   @DisplayName("无候选实例时返回空 PageData")
   void listMyPendingApprovals_emptyCandidates() {
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.isEmpty()).isTrue();
     assertThat(result.currentStart()).isZero();
@@ -123,7 +120,7 @@ class PendingApprovalServiceTest {
     }
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(5, 5)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(5, 5)));
 
     assertThat(result.totalCount()).isEqualTo(7);
     assertThat(result.currentStart()).isEqualTo(5);
@@ -136,11 +133,11 @@ class PendingApprovalServiceTest {
   @DisplayName("角色节点命中：按当前计划展开角色用户后判断审批人")
   void listMyPendingApprovals_roleNodeHitsExpandedApprover() {
     roleCandidate(1L, 1L, "P-1", List.of("R1"));
-    when(roleUserGateway.getUsersByRoles(List.of("R1"), PlanNo.of("P-1")))
-      .thenReturn(Map.of("R1", List.of(UserNo.of("U-1"))));
+    when(roleUserGateway.getUsersByRoles(List.of("R1"), "P-1"))
+      .thenReturn(Map.of("R1", List.of("U-1")));
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.totalCount()).isEqualTo(1);
     assertThat(result.items().get(0).instanceId()).isEqualTo(ApprovalInstanceId.of(1L));
@@ -153,12 +150,12 @@ class PendingApprovalServiceTest {
     roleCandidate(1L, 1L, "P-1", List.of("R1"));
     roleCandidate(2L, 2L, "P-1", List.of("R2"));
     when(roleUserGateway.getUsersByRoles(any(), any()))
-      .thenReturn(Map.of("R1", List.of(UserNo.of("U-1")), "R2", List.of()));
+      .thenReturn(Map.of("R1", List.of("U-1"), "R2", List.of()));
 
     service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
-    verify(roleUserGateway).getUsersByRoles(List.of("R1", "R2"), PlanNo.of("P-1"));
+    verify(roleUserGateway).getUsersByRoles(List.of("R1", "R2"), "P-1");
   }
 
   @Test
@@ -168,7 +165,7 @@ class PendingApprovalServiceTest {
     when(roleUserGateway.getUsersByRoles(any(), any())).thenReturn(Map.of());
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.isEmpty()).isTrue();
   }
@@ -179,7 +176,7 @@ class PendingApprovalServiceTest {
     roleCandidate(1L, 1L, null, List.of("R1"));
 
     PageData<PendingApprovalDTO> result = service.listMyPendingApprovals(
-      new ListMyPendingApprovalsRequest("U-1", Pagination.of(0, 10)));
+      new ListMyPendingApprovalsRequest("U-1", PageQuery.of(0, 10)));
 
     assertThat(result.isEmpty()).isTrue();
     verify(roleUserGateway, never()).getUsersByRoles(any(), any());
@@ -191,7 +188,7 @@ class PendingApprovalServiceTest {
     when(instance.id()).thenReturn(ApprovalInstanceId.of(instanceId));
     when(instance.flowId()).thenReturn(ApprovalFlowId.of(flowId));
     when(instance.currentNodeOrder()).thenReturn(CURRENT_NODE);
-    when(instance.businessApplicationId()).thenReturn(new ApplicationId("APP-" + instanceId));
+    when(instance.businessApplicationId()).thenReturn("APP-" + instanceId);
     when(instance.businessType()).thenReturn("ANNUITY");
     when(instance.createdBy()).thenReturn("INITIATOR");
     when(instance.createdAt()).thenReturn(NOW);
@@ -199,7 +196,7 @@ class PendingApprovalServiceTest {
 
     ApprovalNode node = mock(ApprovalNode.class);
     when(node.isSpecifiedUserApproval()).thenReturn(specifiedUser);
-    when(node.approverIds()).thenReturn(approverIds.stream().map(UserNo::of).toList());
+    when(node.approverIds()).thenReturn(approverIds.stream().toList());
     when(node.nodeType()).thenReturn(NodeType.SPECIFIED_PLAN);
 
     ApprovalFlow flow = mock(ApprovalFlow.class);
@@ -215,7 +212,7 @@ class PendingApprovalServiceTest {
     when(instance.flowId()).thenReturn(ApprovalFlowId.of(flowId));
     when(instance.currentNodeOrder()).thenReturn(CURRENT_NODE);
     when(instance.currentPlan()).thenReturn(currentPlan);
-    when(instance.businessApplicationId()).thenReturn(new ApplicationId("APP-" + instanceId));
+    when(instance.businessApplicationId()).thenReturn("APP-" + instanceId);
     when(instance.businessType()).thenReturn("ANNUITY");
     when(instance.createdBy()).thenReturn("INITIATOR");
     when(instance.createdAt()).thenReturn(NOW);

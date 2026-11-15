@@ -35,25 +35,9 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
-    <!-- 注册中心：经 Nacos 注册（SOFA 依赖已移除；根 pom BOM 与 yml 配置保留，切回=加回 sofa-registry 依赖） -->
-    <dependency>
-      <groupId>com.alibaba.cloud</groupId>
-      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-    </dependency>
-
-<dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
-    <!-- 提供 javax.xml.bind 的运行时实现 -->
-    <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-    </dependency>
+    <!-- S-03：注册中心、commons-io、JAXB 已拆出。
+         需要注册中心的服务显式依赖 shared-discovery-starter；
+         Web 底座只保留 Web/AOP 能力，避免“引入 Web 即隐式引入 Nacos/JAXB”。 -->
   </dependencies>
 
 </project>

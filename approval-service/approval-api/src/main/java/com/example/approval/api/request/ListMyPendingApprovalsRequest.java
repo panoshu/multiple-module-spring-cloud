@@ -1,6 +1,6 @@
 package com.example.approval.api.request;
 
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -23,6 +23,6 @@ public record ListMyPendingApprovalsRequest(
    * 分页参数
    */
   @NotNull(message = "分页参数不能为空")
-  Pagination pagination
+  PageQuery pagination
 ) {
 }

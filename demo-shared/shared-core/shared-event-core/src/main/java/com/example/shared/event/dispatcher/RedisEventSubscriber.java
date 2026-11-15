@@ -50,7 +50,12 @@ public class RedisEventSubscriber implements MessageListener {
       log.warn("[RedisEventSubscriber] 载荷反序列化失败（本服务无该契约类型？），忽略: {}",
         e.getMessage());
     } catch (Exception e) {
-      log.error("[RedisEventSubscriber] 消息处理异常", e);
+      // DomainException 为性能关闭了堆栈；输出 logMessage 才能定位具体业务校验。
+      if (e instanceof com.example.shared.exception.BaseException be) {
+        log.error("[RedisEventSubscriber] 消息处理异常: {}", be.logMessage(), e);
+      } else {
+        log.error("[RedisEventSubscriber] 消息处理异常", e);
+      }
     }
   }
 }

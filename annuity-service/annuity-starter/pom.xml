@@ -23,11 +23,22 @@
       <groupId>com.example</groupId>
       <artifactId>annuity-infrastructure</artifactId>
     </dependency>
+    <!-- kernel 宿主入口：统一装配 kernel 组件、mapper 与异步能力；
+         宿主启动类不再扫描 com.example.core / kernel mapper 包 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>business-core-starter</artifactId>
+    </dependency>
 
     <!-- Web 服务基础设施：内嵌容器、自动配置、注册中心等 -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
+    </dependency>
+    <!-- S-03：注册中心从 shared-web-starter 拆出，需要 Nacos 注册的服务显式引入 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-discovery-starter</artifactId>
     </dependency>
 
     <dependency>

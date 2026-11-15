@@ -30,6 +30,11 @@
       <groupId>com.example</groupId>
       <artifactId>shared-web-starter</artifactId>
     </dependency>
+    <!-- S-03：注册中心从 shared-web-starter 拆出，需要 Nacos 注册的服务显式引入 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-discovery-starter</artifactId>
+    </dependency>
 
     <!-- 负载均衡：支持 lb:// 服务名解析调用 auth-service -->
     <dependency>
@@ -44,6 +49,12 @@
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-id-starter</artifactId>
+    </dependency>
+    <dependency>
+      <!-- 跨服务事件通道（shared-event-starter 的 RedisConfig 需要 RedisTemplate 在 classpath）：
+           审批结果事件必须经 Redis 到达 kernel，仅本地 Spring 分发无法跨进程 -->
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
     </dependency>
     <dependency>
       <!-- 数据源驱动（测试用 H2 无需驱动；真实启动必需，版本由 Spring Boot BOM 管理） -->

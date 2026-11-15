@@ -4,7 +4,7 @@ import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionRes
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.ApplicationId;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 
 import java.time.LocalDateTime;
 

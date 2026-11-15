@@ -59,12 +59,14 @@ public class BusinessForm extends AggregateRoot<FormId> {
     form.businessContext = businessContext;
     form.operatorInfo = operatorInfo;
     form.formFile = formFile;
-    form.formStatus = FormStatus.UPLOADED;
-    form.registerDomainEvent(FormUploadedEvent.of(
-      formId,
-      formFile != null ? formFile.fileId() : null,
-      formFile != null ? formFile.fileName() : null
-    ));
+    if (formFile == null) {
+      // 先创建空表单、后 confirmUpload 上传文件：由 markAsUploaded 负责注册事件
+      form.formStatus = FormStatus.WAITING_UPLOAD;
+    } else {
+      form.formStatus = FormStatus.UPLOADED;
+      form.registerDomainEvent(FormUploadedEvent.of(
+        formId, formFile.fileId(), formFile.fileName()));
+    }
     return form;
   }
 
@@ -109,7 +111,17 @@ public class BusinessForm extends AggregateRoot<FormId> {
 
   public void markAsUploaded(BusinessFile uploadedFile) {
     this.formFile = uploadedFile;
-    // TODO 创建领域事件
+    this.formStatus = FormStatus.UPLOADED;
+    if (uploadedFile == null) {
+      return;
+    }
+    // 避免 create() 已注册事件后同一聚合再次 markAsUploaded 造成重复解析
+    boolean alreadyRegistered = domainEvents().stream()
+      .anyMatch(FormUploadedEvent.class::isInstance);
+    if (!alreadyRegistered) {
+      registerDomainEvent(FormUploadedEvent.of(
+        this.id(), uploadedFile.fileId(), uploadedFile.fileName()));
+    }
   }
 
   public void markAsParsing() {

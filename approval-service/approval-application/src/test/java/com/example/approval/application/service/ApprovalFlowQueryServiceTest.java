@@ -16,11 +16,10 @@ import com.example.approval.types.NodeId;
 import com.example.approval.types.enums.ApproverType;
 import com.example.approval.types.enums.FlowStatus;
 import com.example.approval.types.enums.SignMode;
-import com.example.core.types.UserNo;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.identifier.contract.IdService;
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import com.example.shared.web.core.dto.PageData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -62,7 +61,7 @@ class ApprovalFlowQueryServiceTest {
       .thenReturn(new ApprovalFlowPage(25, List.of(flow(1L), flow(2L))));
 
     PageData<ApprovalFlowDTO> result = service.listApprovalFlows(
-      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", Pagination.of(10, 10)));
+      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", PageQuery.of(10, 10)));
 
     assertThat(result.totalCount()).isEqualTo(25);
     assertThat(result.currentStart()).isEqualTo(10);
@@ -79,7 +78,7 @@ class ApprovalFlowQueryServiceTest {
   void listApprovalFlows_passesNullableConditions() {
     when(flowRepository.findByCondition(null, null, 0, 5)).thenReturn(ApprovalFlowPage.empty());
 
-    service.listApprovalFlows(new ListApprovalFlowsRequest(null, null, Pagination.of(0, 5)));
+    service.listApprovalFlows(new ListApprovalFlowsRequest(null, null, PageQuery.of(0, 5)));
 
     verify(flowRepository).findByCondition(null, null, 0, 5);
   }
@@ -91,7 +90,7 @@ class ApprovalFlowQueryServiceTest {
       .thenReturn(ApprovalFlowPage.empty());
 
     PageData<ApprovalFlowDTO> result = service.listApprovalFlows(
-      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", Pagination.of(0, 10)));
+      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", PageQuery.of(0, 10)));
 
     assertThat(result.isEmpty()).isTrue();
     assertThat(result.hasMore()).isFalse();
@@ -106,7 +105,7 @@ class ApprovalFlowQueryServiceTest {
       .thenReturn(new ApprovalFlowPage(12, List.of(flow(1L), flow(2L))));
 
     PageData<ApprovalFlowDTO> result = service.listApprovalFlows(
-      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", Pagination.of(10, 10)));
+      new ListApprovalFlowsRequest("ANNUITY", "ACTIVE", PageQuery.of(10, 10)));
 
     assertThat(result.hasMore()).isFalse();
     assertThat(result.returnedCount()).isEqualTo(2);
@@ -126,7 +125,7 @@ class ApprovalFlowQueryServiceTest {
   private ApprovalNode node() {
     return ApprovalNode.createSamePlanNode(
       NodeId.of(1L), NodeOrder.of(1),
-      ApproverType.SPECIFIED_USER, List.of(UserNo.of("U-1")), List.of(),
+      ApproverType.SPECIFIED_USER, List.of("U-1"), List.of(),
       SignMode.OR_SIGN, "SYSTEM");
   }
 }

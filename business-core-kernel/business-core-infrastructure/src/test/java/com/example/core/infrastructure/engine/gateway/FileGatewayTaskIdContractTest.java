@@ -10,7 +10,7 @@ import com.example.file.api.OutboundApi;
 import com.example.file.api.ParsedDataApi;
 import com.example.file.api.response.FileTaskIdResponse;
 import com.example.file.api.response.OutboundFileIdResponse;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.web.core.api.ApiResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,14 +28,14 @@ import static org.mockito.Mockito.when;
 class FileGatewayTaskIdContractTest {
 
   private static final FormId FORM_ID = FormId.of("FORM-1");
-  private static final FileId FILE_ID = new FileId("FILE-1");
+  private static final FileRefId FILE_ID = new FileRefId("FILE-1");
   private static final String REQUEST_NO = "SE-9";
 
   @Test
   @DisplayName("SPI 声明两个带返回值的 default 重载")
   void spiDeclaresTaskIdOverloads() throws NoSuchMethodException {
     assertThat(FileIntegrationGateway.class.getMethod("triggerAsyncParsingAndGetTaskId",
-      FormId.class, FileId.class, String.class, Map.class, String.class)).isNotNull();
+      FormId.class, FileRefId.class, String.class, Map.class, String.class)).isNotNull();
     assertThat(FileIntegrationGateway.class.getMethod("triggerOutboundGenerationAndGetTaskId",
       String.class, String.class, Map.class, String.class, String.class)).isNotNull();
   }
@@ -106,13 +106,13 @@ class FileGatewayTaskIdContractTest {
     }
 
     @Override
-    public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+    public void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                     Map<String, Object> splitRules) {
       parsingCalled = true;
     }
 
     @Override
-    public InputStream downloadStream(FileId fileId, BusinessMetaContext context) {
+    public InputStream downloadStream(FileRefId fileId, BusinessMetaContext context) {
       return null;
     }
 

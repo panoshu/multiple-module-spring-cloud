@@ -6,6 +6,8 @@ import com.example.integration.api.core.trade.dto.FileSubmissionRequestDTO;
 import com.example.integration.api.core.trade.dto.FileSubmissionResponseDTO;
 import com.example.integration.application.trade.service.TradeSubmissionAppService;
 import com.example.integration.domain.trade.model.FileSubmissionResult;
+import com.example.shared.security.annotation.PermissionCategory;
+import com.example.shared.security.annotation.RequirePermission;
 import com.example.shared.web.core.api.ApiResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,8 @@ public class TradeSubmissionAdapter implements TradeSubmissionApi {
   private final FileSubmissionConverter fileSubmissionConverter;
 
   @Override
+  @RequirePermission(business = "TRADE_SUBMISSION", action = "SUBMIT",
+    category = PermissionCategory.PLATFORM)
   public ApiResult<FileSubmissionResponseDTO> submitFile(FileSubmissionRequestDTO request) {
     // 1. 调用应用服务
     FileSubmissionResult result = submissionAppService.submitOutboundFile(

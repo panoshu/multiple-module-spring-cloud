@@ -17,7 +17,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 @EnableExchangeClients(basePackages = "com.example.annuity.api")
 @SpringBootApplication(scanBasePackages = {
   "com.example.bff.internet",
-  "com.example.bff.shared"
+  "com.example.bff.shared",
+  "com.example.bff.annuity"
 })
 public class InternetBffApplication {
   public static void main(String[] args) {

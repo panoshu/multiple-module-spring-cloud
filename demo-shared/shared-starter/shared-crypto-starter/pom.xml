@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>shared-crypto-starter</artifactId>
-  <description>SM4 加解密自动配置模块，提供 Encryptor Bean 的自动装配</description>
+  <description>【实验性】SM4 加解密自动配置模块；gateway/file 当前直接使用 shared-crypto 自建配置，生产接入前需统一到本 starter 或明确豁免</description>
 
   <dependencies>
     <dependency>

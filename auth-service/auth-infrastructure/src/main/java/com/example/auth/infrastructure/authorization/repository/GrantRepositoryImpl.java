@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.authorization.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.authorization.aggregate.Grant;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.authorization.entity.table.GrantDOTableDef.GRANT_DO;
 
@@ -111,14 +109,6 @@ public class GrantRepositoryImpl implements GrantRepository {
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(GrantId id, Consumer<AggregateRoot<GrantId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

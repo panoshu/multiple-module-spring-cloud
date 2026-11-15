@@ -5,8 +5,6 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.approval.domain.valueobject.TerminalLevel;
 import com.example.approval.types.enums.NodeType;
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,10 +35,10 @@ class ApprovalNodeResolverTest {
   void resolveApprovers_specifiedUserReturnsConfiguredApprovers() {
     ApprovalNode node = mock(ApprovalNode.class);
     when(node.isSpecifiedUserApproval()).thenReturn(true);
-    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-1"), UserNo.of("U-2")));
+    when(node.approverIds()).thenReturn(List.of("U-1", "U-2"));
 
     assertThat(resolver.resolveApprovers(node, mock(ApprovalInstance.class), roleUserGateway))
-      .containsExactly(UserNo.of("U-1"), UserNo.of("U-2"));
+      .containsExactly("U-1", "U-2");
   }
 
   @Test
@@ -51,13 +49,13 @@ class ApprovalNodeResolverTest {
     when(node.roleIds()).thenReturn(List.of("R1", "R2"));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.currentPlan()).thenReturn("P-1");
-    when(roleUserGateway.getUsersByRoles(List.of("R1", "R2"), PlanNo.of("P-1")))
+    when(roleUserGateway.getUsersByRoles(List.of("R1", "R2"), "P-1"))
       .thenReturn(Map.of(
-        "R1", List.of(UserNo.of("U-1"), UserNo.of("U-2")),
-        "R2", List.of(UserNo.of("U-2"), UserNo.of("U-3"))));
+        "R1", List.of("U-1", "U-2"),
+        "R2", List.of("U-2", "U-3")));
 
     assertThat(resolver.resolveApprovers(node, instance, roleUserGateway))
-      .containsExactly(UserNo.of("U-1"), UserNo.of("U-2"), UserNo.of("U-3"));
+      .containsExactly("U-1", "U-2", "U-3");
   }
 
   @Test
@@ -87,11 +85,11 @@ class ApprovalNodeResolverTest {
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.initiatorPlan()).thenReturn("P-1");
     when(instance.createdBy()).thenReturn("U-INIT");
-    when(roleUserGateway.getUsersInSamePlan(PlanNo.of("P-1"), UserNo.of("U-INIT")))
-      .thenReturn(List.of(UserNo.of("U-1"), UserNo.of("U-2")));
+    when(roleUserGateway.getUsersInSamePlan("P-1", "U-INIT"))
+      .thenReturn(List.of("U-1", "U-2"));
 
     assertThat(resolver.resolveApprovers(node, instance, roleUserGateway))
-      .containsExactly(UserNo.of("U-1"), UserNo.of("U-2"));
+      .containsExactly("U-1", "U-2");
   }
 
   @Test
@@ -99,7 +97,7 @@ class ApprovalNodeResolverTest {
   void resolveApprovers_samePlanWithoutPlanFailsClosed() {
     ApprovalNode node = mock(ApprovalNode.class);
     when(node.nodeType()).thenReturn(NodeType.SAME_PLAN);
-    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
+    when(node.approverIds()).thenReturn(List.of("U-FALLBACK"));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.initiatorPlan()).thenReturn(null);
 
@@ -114,11 +112,11 @@ class ApprovalNodeResolverTest {
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.currentPlan()).thenReturn("P-1");
     when(instance.createdBy()).thenReturn("U-INIT");
-    when(roleUserGateway.getUsersInParentPlan(PlanNo.of("P-1"), UserNo.of("U-INIT")))
-      .thenReturn(List.of(UserNo.of("U-P1"), UserNo.of("U-P2")));
+    when(roleUserGateway.getUsersInParentPlan("P-1", "U-INIT"))
+      .thenReturn(List.of("U-P1", "U-P2"));
 
     assertThat(resolver.resolveApprovers(node, instance, roleUserGateway))
-      .containsExactly(UserNo.of("U-P1"), UserNo.of("U-P2"));
+      .containsExactly("U-P1", "U-P2");
   }
 
   @Test
@@ -126,7 +124,7 @@ class ApprovalNodeResolverTest {
   void resolveApprovers_levelUpWithoutCurrentPlanFailsClosed() {
     ApprovalNode node = mock(ApprovalNode.class);
     when(node.nodeType()).thenReturn(NodeType.LEVEL_UP);
-    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
+    when(node.approverIds()).thenReturn(List.of("U-FALLBACK"));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.currentPlan()).thenReturn(null);
 
@@ -139,11 +137,11 @@ class ApprovalNodeResolverTest {
     ApprovalNode node = mock(ApprovalNode.class);
     when(node.nodeType()).thenReturn(NodeType.LEVEL_UP);
     when(node.terminalLevel()).thenReturn(Optional.of(TerminalLevel.of(2)));
-    when(node.approverIds()).thenReturn(List.of(UserNo.of("U-FALLBACK")));
+    when(node.approverIds()).thenReturn(List.of("U-FALLBACK"));
     ApprovalInstance instance = mock(ApprovalInstance.class);
     when(instance.currentPlan()).thenReturn("P-ROOT");
     when(instance.createdBy()).thenReturn("U-INIT");
-    when(roleUserGateway.getUsersInParentPlan(PlanNo.of("P-ROOT"), UserNo.of("U-INIT")))
+    when(roleUserGateway.getUsersInParentPlan("P-ROOT", "U-INIT"))
       .thenReturn(List.of());
 
     assertThat(resolver.resolveApprovers(node, instance, roleUserGateway)).isEmpty();

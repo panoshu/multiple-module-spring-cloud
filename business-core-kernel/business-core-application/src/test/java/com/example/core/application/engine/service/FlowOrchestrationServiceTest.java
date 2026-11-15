@@ -366,15 +366,16 @@ class FlowOrchestrationServiceTest {
   }
 
   @Test
-  @DisplayName("completeWaitingStep：WAITING_EXTERNAL 先归位 RUNNING 再按定义推进 nextStep")
+  @DisplayName("completeWaitingStep：WAITING_EXTERNAL 合并归位与步骤跃迁，只递增一次版本")
   void completeWaitingStep_resumesAndAdvancesNextStep() {
     BusinessApplication app = stubWaitingApp(ApplicationStatus.WAITING_EXTERNAL,
       ApplicationFlowStep.DATA_VERIFICATION);
 
     service.completeWaitingStep(APP_ID);
 
-    verify(app).retry();
-    verify(app).completeCurrentStep(ApplicationFlowStep.DATA_VERIFICATION);
+    verify(app).completeWaitingStep(ApplicationFlowStep.DATA_VERIFICATION);
+    verify(app, never()).retry();
+    verify(app, never()).completeCurrentStep(any());
     verify(applicationRepository).save(app);
   }
 

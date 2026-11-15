@@ -22,7 +22,8 @@ public record FileSubmissionResult(
   public enum SubmissionStatus {
     SUCCESS,
     FAILED,
-    TIMEOUT
+    TIMEOUT,
+    DUPLICATE
   }
 
   /**
@@ -38,6 +39,14 @@ public record FileSubmissionResult(
    */
   public static FileSubmissionResult failure(String tradeCode, String message) {
     return new FileSubmissionResult(tradeCode, SubmissionStatus.FAILED, message,
+      null, LocalDateTime.now());
+  }
+
+  /**
+   * 幂等命中：相同事件/文件已成功提交过。
+   */
+  public static FileSubmissionResult duplicate(String tradeCode) {
+    return new FileSubmissionResult(tradeCode, SubmissionStatus.DUPLICATE, "重复提交已跳过",
       null, LocalDateTime.now());
   }
 

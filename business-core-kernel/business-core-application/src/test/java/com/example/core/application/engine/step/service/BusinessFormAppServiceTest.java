@@ -11,6 +11,7 @@ import com.example.core.domain.business.aggregate.valueobject.business.BusinessT
 import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
+import com.example.core.domain.business.gateway.ParsedSubTaskReferenceGateway;
 import com.example.core.domain.business.repository.ApplicationRepository;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.domain.business.repository.FormRepository;
@@ -34,7 +35,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.OperatingMode;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.exception.DomainException;
 import com.example.shared.identifier.contract.IdService;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,6 +68,7 @@ class BusinessFormAppServiceTest {
   private IdService idService;
   private ProcessDefinitionGateway processDefinitionGateway;
   private ParsedFileReferenceGateway parsedFileReferenceGateway;
+  private ParsedSubTaskReferenceGateway parsedSubTaskReferenceGateway;
   private BusinessFormAppService appService;
 
   @BeforeEach
@@ -79,23 +81,44 @@ class BusinessFormAppServiceTest {
     idService = mock(IdService.class);
     processDefinitionGateway = mock(ProcessDefinitionGateway.class);
     parsedFileReferenceGateway = mock(ParsedFileReferenceGateway.class);
+    parsedSubTaskReferenceGateway = mock(ParsedSubTaskReferenceGateway.class);
     when(processDefinitionGateway.loadLatest(any()))
       .thenReturn(Optional.of(definitionWith(BatchMode.REQUIRED)));
     appService = new BusinessFormAppService(
       formRepository, applicationRepository, batchRepository, configGateway,
-      fileIntegrationGateway, idService, processDefinitionGateway, parsedFileReferenceGateway
+      fileIntegrationGateway, idService, processDefinitionGateway,
+      parsedFileReferenceGateway, parsedSubTaskReferenceGateway
     );
   }
 
   @Test
   void should_apply_upload_token_via_gateway() {
-    when(fileIntegrationGateway.applyUploadToken("127.0.0.1", "U001", 1024L))
+    when(fileIntegrationGateway.applyUploadToken(
+      "127.0.0.1", "U001", 1024L, null, null, null))
       .thenReturn("token-abc-123");
 
     String token = appService.applyUploadToken("127.0.0.1", "U001", 1024L);
 
     assertThat(token).isEqualTo("token-abc-123");
-    verify(fileIntegrationGateway).applyUploadToken("127.0.0.1", "U001", 1024L);
+    verify(fileIntegrationGateway).applyUploadToken(
+      "127.0.0.1", "U001", 1024L, null, null, null);
+  }
+
+  @Test
+  void should_pass_batch_and_scope_to_upload_token_gateway() {
+    var batchId = com.example.core.types.BatchId.of("BATCH-1");
+    var customerNo = com.example.core.types.CustomerNo.of("CUST-1");
+    var productNo = com.example.core.types.ProductNo.of("PROD-1");
+    when(fileIntegrationGateway.applyUploadToken(
+      "127.0.0.1", "U001", 1024L, batchId, customerNo, productNo))
+      .thenReturn("token-scoped");
+
+    String token = appService.applyUploadToken(
+      "127.0.0.1", "U001", 1024L, batchId, customerNo, productNo);
+
+    assertThat(token).isEqualTo("token-scoped");
+    verify(fileIntegrationGateway).applyUploadToken(
+      "127.0.0.1", "U001", 1024L, batchId, customerNo, productNo);
   }
 
   @Test
@@ -131,14 +154,35 @@ class BusinessFormAppServiceTest {
     when(idService.nextId(ApplicationId.class, ""))
       .thenReturn(new ApplicationId("APP-1"), new ApplicationId("APP-2"));
     List<ParsedPlanResult> results = List.of(
-      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1),
-      new ParsedPlanResult(PlanNo.of("PLAN-2"), new FileId("JSON-2"), 2)
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileRefId("JSON-1"), 1),
+      new ParsedPlanResult(PlanNo.of("PLAN-2"), new FileRefId("JSON-2"), 2)
     );
 
     appService.handleParsingResult(FORM_ID, results);
 
-    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-1"), new FileId("JSON-1"));
-    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-2"), new FileId("JSON-2"));
+    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-1"), new FileRefId("JSON-1"));
+    verify(parsedFileReferenceGateway).save(new ApplicationId("APP-2"), new FileRefId("JSON-2"));
+  }
+
+  @Test
+  @DisplayName("解析结果按 applicationId 保存 subTaskId（file-service canonical 分页凭证）")
+  void handleParsingResult_savesSubTaskReferences() {
+    BusinessBatch batch = newBatch();
+    BusinessForm form = mockForm(batch.id());
+    when(formRepository.loadOrThrow(FORM_ID)).thenReturn(form);
+    when(batchRepository.loadOrThrow(batch.id())).thenReturn(batch);
+    when(idService.nextId(ApplicationId.class, ""))
+      .thenReturn(new ApplicationId("APP-1"), new ApplicationId("APP-2"));
+    List<ParsedPlanResult> results = List.of(
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), null, 1, "SUB-1"),
+      new ParsedPlanResult(PlanNo.of("PLAN-2"), null, 2, "SUB-2")
+    );
+
+    appService.handleParsingResult(FORM_ID, results);
+
+    verify(parsedSubTaskReferenceGateway).save(new ApplicationId("APP-1"), "SUB-1");
+    verify(parsedSubTaskReferenceGateway).save(new ApplicationId("APP-2"), "SUB-2");
+    verify(parsedFileReferenceGateway, never()).save(any(), any());
   }
 
   @Test
@@ -151,8 +195,8 @@ class BusinessFormAppServiceTest {
     when(idService.nextId(ApplicationId.class, ""))
       .thenReturn(new ApplicationId("APP-1"), new ApplicationId("APP-2"));
     List<ParsedPlanResult> results = List.of(
-      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1),
-      new ParsedPlanResult(PlanNo.of("PLAN-2"), new FileId("JSON-2"), 2)
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileRefId("JSON-1"), 1),
+      new ParsedPlanResult(PlanNo.of("PLAN-2"), new FileRefId("JSON-2"), 2)
     );
 
     appService.handleParsingResult(FORM_ID, results);
@@ -180,7 +224,7 @@ class BusinessFormAppServiceTest {
     when(formRepository.loadOrThrow(FORM_ID)).thenReturn(form);
     when(idService.nextId(ApplicationId.class, "")).thenReturn(new ApplicationId("APP-1"));
     List<ParsedPlanResult> results = List.of(
-      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1)
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileRefId("JSON-1"), 1)
     );
 
     appService.handleParsingResult(FORM_ID, results);
@@ -220,7 +264,7 @@ class BusinessFormAppServiceTest {
     when(formRepository.loadOrThrow(FORM_ID)).thenReturn(form);
     when(batchRepository.loadOrThrow(batch.id())).thenReturn(batch);
     List<ParsedPlanResult> results = List.of(
-      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1)
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileRefId("JSON-1"), 1)
     );
 
     assertThatThrownBy(() -> appService.handleParsingResult(FORM_ID, results))
@@ -239,7 +283,7 @@ class BusinessFormAppServiceTest {
     when(batchRepository.loadOrThrow(batchId))
       .thenThrow(new DomainException(CoreDomainErrorCode.INVALID_DATA));
     List<ParsedPlanResult> results = List.of(
-      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileId("JSON-1"), 1)
+      new ParsedPlanResult(PlanNo.of("PLAN-1"), new FileRefId("JSON-1"), 1)
     );
 
     assertThatThrownBy(() -> appService.handleParsingResult(FORM_ID, results))

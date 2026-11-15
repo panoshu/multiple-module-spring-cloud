@@ -14,8 +14,11 @@ import com.example.core.api.form.response.UploadTokenResponse;
 import com.example.core.application.engine.step.service.BusinessFormAppService;
 import com.example.core.domain.business.aggregate.root.BusinessForm;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
+import com.example.core.types.BatchId;
+import com.example.core.types.CustomerNo;
 import com.example.core.types.FormId;
+import com.example.core.types.ProductNo;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +56,10 @@ public class AnnuityKernelFormController implements BusinessFormApi {
     String token = formAppService.applyUploadToken(
       session.clientIp(),
       session.userNo(),
-      command.fileSize()
+      command.fileSize(),
+      BatchId.of(command.batchId()),
+      session.customerNo() != null ? CustomerNo.of(session.customerNo()) : null,
+      session.productNo() != null ? ProductNo.of(session.productNo()) : null
     );
     return ApiResult.success(converter.toUploadTokenResponse(token));
   }
@@ -67,7 +73,7 @@ public class AnnuityKernelFormController implements BusinessFormApi {
       command.batchId(), command.formId(), command.fileId(), session.userNo());
 
     BusinessFile uploadedFile = new BusinessFile(
-      new FileId(command.fileId()),
+      new FileRefId(command.fileId()),
       command.fileName(),
       extractExtension(command.fileName()),
       null

@@ -5,8 +5,6 @@ import com.example.approval.domain.aggregate.root.ApprovalInstance;
 import com.example.approval.domain.gateway.RoleUserGateway;
 import com.example.approval.types.enums.NodeType;
 import com.example.shared.domain.annotation.DomainService;
-import com.example.core.types.PlanNo;
-import com.example.core.types.UserNo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,7 @@ public class ApprovalNodeResolver {
    * @param roleUserGateway 角色用户网关
    * @return 审批人列表
    */
-  public List<UserNo> resolveApprovers(ApprovalNode node, ApprovalInstance instance,
+  public List<String> resolveApprovers(ApprovalNode node, ApprovalInstance instance,
                                        RoleUserGateway roleUserGateway) {
     if (node == null || instance == null || roleUserGateway == null) {
       return List.of();
@@ -49,13 +47,13 @@ public class ApprovalNodeResolver {
       if (plan == null || plan.isBlank()) {
         return List.of();
       }
-      Map<String, List<UserNo>> byRole =
-        roleUserGateway.getUsersByRoles(node.roleIds(), PlanNo.of(plan));
+      Map<String, List<String>> byRole =
+        roleUserGateway.getUsersByRoles(node.roleIds(), plan);
       if (byRole == null || byRole.isEmpty()) {
         return List.of();
       }
       // 按节点配置的角色顺序展开，保证结果确定；跨角色重复用户去重
-      List<UserNo> approvers = new ArrayList<>();
+      List<String> approvers = new ArrayList<>();
       for (String roleId : node.roleIds()) {
         approvers.addAll(byRole.getOrDefault(roleId, List.of()));
       }
@@ -72,10 +70,10 @@ public class ApprovalNodeResolver {
         return List.of();
       }
       String initiator = instance.createdBy();
-      UserNo excludeUser = (initiator == null || initiator.isBlank())
-        ? null : UserNo.of(initiator);
-      List<UserNo> users =
-        roleUserGateway.getUsersInSamePlan(PlanNo.of(initiatorPlan), excludeUser);
+      String excludeUser = (initiator == null || initiator.isBlank())
+        ? null : initiator;
+      List<String> users =
+        roleUserGateway.getUsersInSamePlan(initiatorPlan, excludeUser);
       return users == null ? List.of() : users;
     }
 
@@ -87,10 +85,10 @@ public class ApprovalNodeResolver {
         return List.of();
       }
       String initiator = instance.createdBy();
-      UserNo excludeUser = (initiator == null || initiator.isBlank())
-        ? null : UserNo.of(initiator);
-      List<UserNo> users =
-        roleUserGateway.getUsersInParentPlan(PlanNo.of(currentPlan), excludeUser);
+      String excludeUser = (initiator == null || initiator.isBlank())
+        ? null : initiator;
+      List<String> users =
+        roleUserGateway.getUsersInParentPlan(currentPlan, excludeUser);
       return users == null ? List.of() : users;
     }
 

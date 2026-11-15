@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.permission.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.permission.aggregate.PermissionMenu;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.permission.entity.table.PermissionMenuDOTableDef.PERMISSION_MENU_DO;
 import static com.example.auth.infrastructure.permission.entity.table.MenuPermissionBindingDOTableDef.MENU_PERMISSION_BINDING_DO;
@@ -109,14 +107,6 @@ public class PermissionMenuRepositoryImpl implements PermissionMenuRepository {
     return menuMapper.selectAll().stream()
       .map(doObj -> converter.toDomain(doObj, loadBindingsByMenuId(doObj.getId())))
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(PermissionMenuId id, Consumer<AggregateRoot<PermissionMenuId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

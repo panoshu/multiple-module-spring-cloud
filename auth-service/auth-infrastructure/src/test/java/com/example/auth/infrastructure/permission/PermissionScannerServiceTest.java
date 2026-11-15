@@ -1,5 +1,7 @@
 package com.example.auth.infrastructure.permission;
 
+import com.example.auth.domain.permission.PermissionRegistrationResult;
+
 import com.example.shared.security.annotation.RequirePermission;
 import com.example.shared.security.permission.PermissionItemDescriptor;
 import com.example.core.types.UserNo;

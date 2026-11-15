@@ -16,6 +16,11 @@
       <groupId>com.example</groupId>
       <artifactId>auth-domain</artifactId>
     </dependency>
+    <!-- AU-04：权限点上报用例端口使用 shared-security-contract 的 descriptor -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-security-contract</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>auth-api</artifactId>
@@ -28,9 +33,10 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
+    <!-- AU-03：统一缓存端口，替代 application 层直接依赖 Caffeine -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-event-core</artifactId>
+      <artifactId>shared-cache-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -40,10 +46,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

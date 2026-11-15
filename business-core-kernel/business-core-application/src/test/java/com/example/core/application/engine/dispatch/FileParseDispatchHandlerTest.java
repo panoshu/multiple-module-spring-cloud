@@ -14,7 +14,7 @@ import com.example.core.types.ApplicationId;
 import com.example.core.types.ExternalInteractionId;
 import com.example.core.types.FormId;
 import com.example.core.types.StepExecutionId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.domain.aggregate.valueobject.Version;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +37,7 @@ class FileParseDispatchHandlerTest {
   private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 13, 10, 0);
   private static final ApplicationId APP_ID = new ApplicationId("APP-1");
   private static final FormId FORM_ID = FormId.of("FORM-1");
-  private static final FileId FILE_ID = new FileId("FILE-1");
+  private static final FileRefId FILE_ID = new FileRefId("FILE-1");
 
   private ApplicationRepository applicationRepository;
   private BusinessConfigGateway configGateway;

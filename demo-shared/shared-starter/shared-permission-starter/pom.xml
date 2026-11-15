@@ -10,41 +10,32 @@
   </parent>
 
   <artifactId>shared-permission-starter</artifactId>
-  <description>功能权限校验自动配置模块，提供 @RequirePermission 注解的 AOP 切面和 PermissionClient 自动装配
-  </description>
+  <description>S-05：权限校验自动装配模块（仅装配，实现位于 shared-permission-core）</description>
 
   <dependencies>
-    <!-- shared-security-contract：权限注解族 + PermissionCheck/Registration 端口 + DTO 契约（A2 起不再依赖 auth-api） -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>shared-security-contract</artifactId>
+      <artifactId>shared-permission-core</artifactId>
     </dependency>
 
-    <!-- shared-utils：会话签名契约（SessionSignatureUtils） -->
+    <!-- @AutoConfiguration / @ConditionalOn* -->
     <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-utils</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
-
-    <!-- shared-exception：BusinessException + ErrorDefinition -->
     <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-exception</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
     </dependency>
 
-    <!-- PermissionRegistrationRunner 扫描 @RequirePermission 端点（RequestMappingHandlerMapping） -->
+    <!-- PermissionRegistrationRunner 扫描 @RequirePermission 端点 -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-webmvc</artifactId>
     </dependency>
 
-    <!-- Phase C：权限校验本地缓存 -->
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-    </dependency>
-
-    <!-- P0-H2：权限失效事件 Redis 订阅（宿主服务有 Redis 时才装配，optional 不传递） -->
+    <!-- 宿主有 Redis 时装配失效订阅；optional 不传递 -->
     <dependency>
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-redis</artifactId>
@@ -56,59 +47,16 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- AOP 切面支持 -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-aop</artifactId>
-    </dependency>
-
-    <!-- spring-web: RequestContextHolder / ServletRequestAttributes -->
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
-    </dependency>
-
-    <!-- 自动装配 -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-autoconfigure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-configuration-processor</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <!-- Servlet API：DefaultAccountIdResolver 从 RequestContextHolder 读取请求头 -->
-    <dependency>
-      <groupId>jakarta.servlet</groupId>
-      <artifactId>jakarta.servlet-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- MyBatis-Flex: DataScopeQueryHelper 使用 QueryWrapper / QueryColumn -->
+    <!-- 自动配置测试会加载 core 中引用 Servlet API 的 Bean；运行期由宿主提供 -->
     <dependency>
-      <groupId>com.mybatis-flex</groupId>
-      <artifactId>mybatis-flex-core</artifactId>
-      <version>${mybatis-flex.version}</version>
-      <scope>provided</scope>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

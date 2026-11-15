@@ -1,7 +1,6 @@
 package com.example.auth.infrastructure.user.repository;
 
 import com.example.core.types.contact.Mobile;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.user.aggregate.UserAggregate;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.user.entity.table.UserDOTableDef.USER_DO;
 
@@ -86,14 +84,6 @@ public class UserRepositoryImpl implements UserRepository {
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(UserNo id, Consumer<AggregateRoot<UserNo>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

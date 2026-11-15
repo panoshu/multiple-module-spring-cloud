@@ -94,6 +94,17 @@ class ScenarioHandlerRegistryTest {
   }
 
   @Test
+  @DisplayName("supportedTypes 汇总所有 handler 声明的业务类型")
+  void supportedTypes_returnsAllRegisteredTypes() {
+    ScenarioHandlerRegistry registry = new ScenarioHandlerRegistry(List.of(
+      stubHandler("ANNUITY_OPEN", "ANNUITY_CHANGE"),
+      stubHandler("LOAN_APPLY")));
+
+    assertEquals(Set.of("ANNUITY_OPEN", "ANNUITY_CHANGE", "LOAN_APPLY"),
+      registry.supportedTypes());
+  }
+
+  @Test
   @DisplayName("batchOverview 默认实现回退到 batchDetail 并组装响应")
   void batchOverview_defaultImpl_fallsBackToBatchDetail() {
     BatchDetailResponse detail = new BatchDetailResponse(

@@ -16,7 +16,7 @@ import com.example.core.application.engine.step.service.MaterialAppService;
 import com.example.core.domain.business.aggregate.valueobject.BusinessFile;
 import com.example.core.domain.business.aggregate.valueobject.MaterialItem;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.web.core.api.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +65,7 @@ public class MaterialController implements MaterialAppApi {
       command.applicationId(), command.materialCode(), session.userNo());
 
     BusinessFile file = new BusinessFile(
-      new FileId(command.fileId()),
+      new FileRefId(command.fileId()),
       command.fileName(),
       extractExtension(command.fileName()),
       null
@@ -87,7 +87,7 @@ public class MaterialController implements MaterialAppApi {
       command.applicationId(), command.fileId(), session.userNo());
 
     BusinessFile zipFile = new BusinessFile(
-      new FileId(command.fileId()),
+      new FileRefId(command.fileId()),
       command.fileName(),
       extractExtension(command.fileName()),
       null
@@ -110,7 +110,7 @@ public class MaterialController implements MaterialAppApi {
     materialAppService.unbindIndividualMaterial(
       new ApplicationId(command.applicationId()),
       command.materialCode(),
-      new FileId(command.fileId())
+      new FileRefId(command.fileId())
     );
     return ApiResult.success();
   }

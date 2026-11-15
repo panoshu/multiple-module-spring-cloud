@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessLevel;
 import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +17,8 @@ class MaterialItemTest {
   @DisplayName("removeUpload 应根据 fileId 移除对应文件")
   void removeUpload_shouldRemoveFileByFileId() {
     // given
-    FileId fileId1 = new FileId("file-id-1");
-    FileId fileId2 = new FileId("file-id-2");
+    FileRefId fileId1 = new FileRefId("file-id-1");
+    FileRefId fileId2 = new FileRefId("file-id-2");
     BusinessFile file1 = new BusinessFile(fileId1, "file1.pdf", "pdf", 1024L);
     BusinessFile file2 = new BusinessFile(fileId2, "file2.pdf", "pdf", 2048L);
 
@@ -41,7 +41,7 @@ class MaterialItemTest {
   @DisplayName("removeUpload 移除最后一个文件后 uploadInfo 应为空")
   void removeUpload_lastFileRemoved_uploadInfoShouldBeEmpty() {
     // given
-    FileId fileId = new FileId("file-id-1");
+    FileRefId fileId = new FileRefId("file-id-1");
     BusinessFile file = new BusinessFile(fileId, "file.pdf", "pdf", 1024L);
 
     MaterialItem item = new MaterialItem(
@@ -61,8 +61,8 @@ class MaterialItemTest {
   @DisplayName("removeUpload 传入不存在的 fileId 应保持原样")
   void removeUpload_nonExistentFileId_shouldReturnUnchanged() {
     // given
-    FileId fileId1 = new FileId("file-id-1");
-    FileId fileIdNotExist = new FileId("file-id-999");
+    FileRefId fileId1 = new FileRefId("file-id-1");
+    FileRefId fileIdNotExist = new FileRefId("file-id-999");
     BusinessFile file1 = new BusinessFile(fileId1, "file1.pdf", "pdf", 1024L);
 
     MaterialItem item = new MaterialItem(

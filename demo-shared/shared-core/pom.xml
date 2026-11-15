@@ -19,6 +19,7 @@
     <module>shared-id-core</module>
     <module>shared-logging-core</module>
     <module>shared-pdf-core</module>
+    <module>shared-permission-core</module>
     <module>shared-web-core</module>
   </modules>
 </project>

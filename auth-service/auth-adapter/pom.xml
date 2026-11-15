@@ -11,6 +11,11 @@
   <artifactId>auth-adapter</artifactId>
   <dependencies>
     <dependency>
+      <!-- S-04：sa-token 异常映射由 auth-adapter 自己承担，不污染 shared-web-core -->
+      <groupId>cn.dev33</groupId>
+      <artifactId>sa-token-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.example</groupId>
       <artifactId>auth-api</artifactId>
     </dependency>
@@ -18,15 +23,16 @@
       <groupId>com.example</groupId>
       <artifactId>auth-application</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>auth-infrastructure</artifactId>
-    </dependency>
 
     <!-- Web 层注解支持：@RestController, @RequestMapping 等 -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
+    </dependency>
+    <!-- AU-04：移除 auth-infrastructure 直依赖后，显式声明 SessionClaimsWriter 所需 Jackson -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
 
     <!-- Servlet API：HttpServletRequest, HttpServletResponse 等 -->

@@ -14,8 +14,6 @@ import org.mapstruct.Mapping;
 public interface FileTaskConverter {
 
   @Mapping(target = "sourceFileName", source = "fileName")
-  // sourceFileId 由应用层在上传完成后设置，Request 阶段无此信息
-  @Mapping(target = "sourceFileId", ignore = true)
   UploadFileCommand toCommand(UploadFileRequest request);
 
   @Mapping(target = "fileTaskId", source = "fileTaskId")

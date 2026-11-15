@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.channel.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.CustomerNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.channel.aggregate.CustomerChannelEntitlement;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.channel.entity.table.CustomerChannelEntitlementDOTableDef.CUSTOMER_CHANNEL_ENTITLEMENT_DO;
 
@@ -86,17 +84,6 @@ public class CustomerChannelEntitlementRepositoryImpl implements CustomerChannel
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(
-    CustomerChannelEntitlementId id,
-    Consumer<AggregateRoot<CustomerChannelEntitlementId>> processor
-  ) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

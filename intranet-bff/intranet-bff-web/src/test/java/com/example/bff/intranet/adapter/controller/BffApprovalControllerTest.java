@@ -9,7 +9,7 @@ import com.example.approval.types.ApprovalInstanceId;
 import com.example.approval.types.NodeId;
 import com.example.approval.types.RecordId;
 import com.example.bff.intranet.application.service.ApprovalManagementService;
-import com.example.shared.page.Pagination;
+import com.example.shared.web.core.dto.PageQuery;
 import com.example.shared.web.core.api.ApiResult;
 import com.example.shared.web.core.dto.PageData;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,7 +78,7 @@ class BffApprovalControllerTest {
     when(approvalManagementService.listFlows(any()))
       .thenReturn(ApiResult.success(new PageData<>(1, 0, 1, false, List.of(dto))));
 
-    ListApprovalFlowsRequest request = new ListApprovalFlowsRequest("ACC_PLAN_CREATE", null, new Pagination(0, 10));
+    ListApprovalFlowsRequest request = new ListApprovalFlowsRequest("ACC_PLAN_CREATE", null, PageQuery.of(0, 10));
 
     mockMvc.perform(post("/management/approval/flows/list")
         .contentType(MediaType.APPLICATION_JSON)
@@ -264,7 +264,7 @@ class BffApprovalControllerTest {
     when(approvalManagementService.listMyPending(any()))
       .thenReturn(ApiResult.success(new PageData<>(1, 0, 1, false, List.of(dto))));
 
-    ListMyPendingApprovalsRequest request = new ListMyPendingApprovalsRequest("user-001", new Pagination(0, 10));
+    ListMyPendingApprovalsRequest request = new ListMyPendingApprovalsRequest("user-001", PageQuery.of(0, 10));
 
     mockMvc.perform(post("/management/approval/instances/my-pending")
         .contentType(MediaType.APPLICATION_JSON)

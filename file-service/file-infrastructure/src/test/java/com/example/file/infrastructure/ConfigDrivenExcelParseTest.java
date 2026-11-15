@@ -23,6 +23,7 @@ import org.apache.fesod.sheet.FesodSheet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.FileInputStream;
@@ -56,6 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Round-trip 解析所需的 {@link RegionDef} 不来自 YAML（因导出模板是程序生成，结构与源 Excel 不同），
  * 在 {@link #buildRoundTripRegionDefs()} 中单独构建。
  */
+@ExtendWith(ExcelFixtureExtension.class)
 class ConfigDrivenExcelParseTest {
 
   private static final String BASELINE_YAML_PATH =

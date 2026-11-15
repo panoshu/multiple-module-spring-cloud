@@ -1,6 +1,5 @@
 package com.example.auth.infrastructure.assignment.repository;
 
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.example.auth.domain.assignment.aggregate.AgentIdentityAssignment;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.auth.infrastructure.assignment.entity.table.AssignmentDOTableDef.ASSIGNMENT_DO;
 
@@ -88,14 +86,6 @@ public class AssignmentRepositoryImpl implements AssignmentRepository {
     return doList.stream()
       .map(converter::toDomain)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(AssignmentId id, Consumer<AggregateRoot<AssignmentId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   @Override

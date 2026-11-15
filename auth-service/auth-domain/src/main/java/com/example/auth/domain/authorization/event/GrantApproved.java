@@ -2,7 +2,7 @@ package com.example.auth.domain.authorization.event;
 
 
 import com.example.shared.domain.event.DomainEvent;
-import com.example.shared.identifier.id.EventId;
+import com.example.shared.domain.event.EventId;
 import com.example.core.types.UserNo;
 import com.example.auth.types.GrantId;
 

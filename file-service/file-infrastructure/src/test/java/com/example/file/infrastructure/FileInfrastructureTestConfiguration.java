@@ -1,5 +1,6 @@
 package com.example.file.infrastructure;
 
+import com.example.shared.domain.event.EventBus;
 import com.mybatisflex.spring.FlexSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
@@ -69,6 +70,15 @@ public class FileInfrastructureTestConfiguration {
     FlexSqlSessionFactoryBean factoryBean = new FlexSqlSessionFactoryBean();
     factoryBean.setDataSource(dataSource);
     return factoryBean.getObject();
+  }
+
+  /**
+   * ParseTaskRepositoryImpl 经 EventBus 发布解析事件（Outbox/远端投递）。
+   * 隔离测试不启动 shared-event 自动配置，提供 mock 保持仓储可装配。
+   */
+  @Bean
+  EventBus testEventBus() {
+    return org.mockito.Mockito.mock(EventBus.class);
   }
 
   @org.springframework.context.annotation.Bean

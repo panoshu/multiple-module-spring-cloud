@@ -19,6 +19,7 @@
     <module>business-core-infrastructure</module>
     <module>business-core-types</module>
     <module>business-core-application</module>
+    <module>business-core-starter</module>
   </modules>
 
   <dependencyManagement>
@@ -26,6 +27,11 @@
       <dependency>
         <groupId>com.example</groupId>
         <artifactId>business-core-adapter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>business-core-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

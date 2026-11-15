@@ -48,7 +48,7 @@ class ArchitectureInvariantTest {
       com.example.file.application.usecase.ApplyUploadTokenUseCase.class,    // file-application（IdService 收编点）
       com.example.file.infrastructure.storage.RedisFileTokenStore.class,  // file-infrastructure（Redisson SETNX 原语，非缓存）
       com.example.integration.adapter.trade.TradeQueryAdapter.class,         // integration-service-adapter
-      com.example.core.api.context.BusinessMetaContext.class,                // business-core-api
+      com.example.core.api.context.BusinessMetaCommandContext.class,                // business-core-api
       com.example.core.application.business.guard.DefaultBusinessAccessGuard.class, // business-core-application
       com.example.core.adapter.context.SessionContextResolver.class          // business-core-adapter
     };

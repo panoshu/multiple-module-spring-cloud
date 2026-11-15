@@ -8,7 +8,6 @@ import com.example.shared.identifier.contract.Identifier;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * 泛型 Repository 接口，用于管理聚合根的持久化
@@ -73,12 +72,4 @@ public interface Repository<T extends AggregateRoot<ID>, ID extends Identifier<?
   // 还可以添加分页、排序等通用查询方法
   // Page<T> findAll(Pageable pageable);
   // List<T> findByIds(List<ID> identity);
-
-  /**
-   * 流式查询, 用于批量流式处理
-   *
-   * @param id        聚合根ID
-   * @param processor 对每条明细的处理逻辑 (由应用层提供)
-   */
-  void streamByAppId(ID id, Consumer<AggregateRoot<ID>> processor);
 }

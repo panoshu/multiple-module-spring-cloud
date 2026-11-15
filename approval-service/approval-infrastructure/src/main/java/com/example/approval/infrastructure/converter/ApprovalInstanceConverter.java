@@ -15,8 +15,6 @@ import com.example.approval.types.enums.ApprovalAction;
 import com.example.approval.types.enums.ExecutionStatus;
 import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.valueobject.Version;
-import com.example.core.types.ApplicationId;
-import com.example.core.types.UserNo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
@@ -34,7 +32,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface ApprovalInstanceConverter {
 
-  ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
   /**
    * 审批实例领域对象转DO对象
@@ -45,8 +43,8 @@ public interface ApprovalInstanceConverter {
   @Mapping(target = "id", expression = "java(instance.id() != null ? String.valueOf(instance.id().value()) : null)")
   @Mapping(target = "flowId", expression = "java(instance.flowId() != null ? String.valueOf(instance.flowId().value()) : null)")
   @Mapping(target = "flowVersion", expression = "java(instance.flowVersion() != null ? instance.flowVersion().value() : null)")
-  @Mapping(target = "businessApplicationId", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId().value() : null)")
-  @Mapping(target = "businessNo", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId().value() : null)")
+  @Mapping(target = "businessApplicationId", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId() : null)")
+  @Mapping(target = "businessNo", expression = "java(instance.businessApplicationId() != null ? instance.businessApplicationId() : null)")
   @Mapping(target = "requestNo", expression = "java(instance.requestNo())")
   @Mapping(target = "businessType", expression = "java(instance.businessType())")
   @Mapping(target = "currentNodeOrder", expression = "java(instance.currentNodeOrder() != null ? instance.currentNodeOrder().value() : null)")
@@ -150,11 +148,11 @@ public interface ApprovalInstanceConverter {
   @Mapping(target = "id", expression = "java(record.id() != null ? String.valueOf(record.id().value()) : null)")
   // executionId 由 RepositoryImpl 在保存时从聚合根上下文设置，领域对象不持有此关联字段
   @Mapping(target = "executionId", ignore = true)
-  @Mapping(target = "approverId", expression = "java(record.approverId() != null ? record.approverId().value() : null)")
+  @Mapping(target = "approverId", expression = "java(record.approverId() != null ? record.approverId() : null)")
   @Mapping(target = "action", expression = "java(approvalActionToString(record.action()))")
   @Mapping(target = "opinion", expression = "java(approvalOpinionToString(record.opinion()))")
   @Mapping(target = "rejectTarget", expression = "java(rejectTargetToJson(record.rejectTarget()))")
-  @Mapping(target = "transferTo", expression = "java(record.transferTo() != null ? record.transferTo().value() : null)")
+  @Mapping(target = "transferTo", expression = "java(record.transferTo() != null ? record.transferTo() : null)")
   @Mapping(target = "operatedAt", expression = "java(record.operatedAt())")
   // createTime/updateTime 由应用层从领域对象 createdAt()/updatedAt() 映射
   @Mapping(target = "createTime", expression = "java(record.createdAt())")
@@ -204,8 +202,8 @@ public interface ApprovalInstanceConverter {
   }
 
   @Named("toApplicationId")
-  default ApplicationId toApplicationId(String id) {
-    return id != null ? new ApplicationId(id) : null;
+  default String toApplicationId(String id) {
+    return id;
   }
 
   @Named("toFlowVersion")
@@ -224,8 +222,8 @@ public interface ApprovalInstanceConverter {
   }
 
   @Named("toUserNo")
-  default UserNo toUserNo(String userNo) {
-    return userNo != null ? UserNo.of(userNo) : null;
+  default String toUserNo(String userNo) {
+    return userNo;
   }
 
   @Named("toExecutionId")

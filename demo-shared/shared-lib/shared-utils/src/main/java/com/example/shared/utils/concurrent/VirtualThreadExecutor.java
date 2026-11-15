@@ -2,7 +2,6 @@ package com.example.shared.utils.concurrent;
 
 import com.example.shared.exception.CommonError;
 import com.example.shared.exception.SystemException;
-import com.example.shared.utils.function.TriFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
@@ -151,6 +150,14 @@ public class VirtualThreadExecutor {
       default ->
         new SystemException(CommonError.UNKNOWN_ERROR, e).withLogDetail("未知的并发错误: %s".formatted(e.getClass().getName()));
     };
+  }
+
+  /**
+   * 三参数函数（仅本执行器使用，S-14 由独立工具类内联至此）。
+   */
+  @FunctionalInterface
+  public interface TriFunction<T, U, V, R> {
+    R apply(T t, U u, V v);
   }
 
   private record MDCContext(Map<String, String> context) implements AutoCloseable {

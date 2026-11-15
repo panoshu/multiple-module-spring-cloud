@@ -6,6 +6,7 @@ import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
 import com.example.core.domain.engine.aggregate.valueobject.enums.definition.InteractionType;
 import com.example.core.domain.engine.gateway.ApprovalIntegrationGateway;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,7 +22,11 @@ import org.springframework.stereotype.Component;
 public class ApprovalDispatchHandler implements InteractionDispatchHandler {
 
   private final ApplicationRepository applicationRepository;
-  private final ApprovalIntegrationGateway approvalGateway;
+  /**
+   * 审批网关为可选依赖：不承载审批的服务可不装配（core.integration.approval.enabled=false），
+   * 启动不失败；真正派发审批时给出明确错误，而非 NPE。
+   */
+  private final ObjectProvider<ApprovalIntegrationGateway> approvalGatewayProvider;
 
   @Override
   public InteractionType supportedType() {
@@ -30,6 +35,12 @@ public class ApprovalDispatchHandler implements InteractionDispatchHandler {
 
   @Override
   public String dispatch(ExternalInteraction interaction) {
+    ApprovalIntegrationGateway approvalGateway = approvalGatewayProvider.getIfAvailable();
+    if (approvalGateway == null) {
+      throw new IllegalStateException(
+        "审批集成网关未装配（core.integration.approval.enabled=false 或缺 approval-api 客户端），"
+          + "无法派发审批协作: requestNo=" + interaction.requestNo());
+    }
     BusinessApplication app = applicationRepository.loadOrThrow(interaction.applicationId());
     return approvalGateway.startApproval(app, interaction.requestNo());
   }

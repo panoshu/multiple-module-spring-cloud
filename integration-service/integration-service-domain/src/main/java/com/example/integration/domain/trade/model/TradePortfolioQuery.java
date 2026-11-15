@@ -1,6 +1,6 @@
 package com.example.integration.domain.trade.model;
 
-import com.example.shared.page.Pagination;
+import com.example.shared.domain.page.Pagination;
 
 import java.io.Serializable;
 

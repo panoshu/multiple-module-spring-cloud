@@ -1,6 +1,7 @@
 package com.example.core.infrastructure.engine.event;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+  prefix = "core.kernel.event-simulator", name = "enabled",
+  havingValue = "true", matchIfMissing = false)
 public class IntegrationEventSimulator {
 
   private final ApplicationEventPublisher publisher;

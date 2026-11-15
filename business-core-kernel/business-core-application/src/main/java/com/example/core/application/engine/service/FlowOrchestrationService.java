@@ -86,10 +86,15 @@ public class FlowOrchestrationService {
   private final ObjectProvider<DistributedLock> lockProvider;
 
   public void advanceStep(ApplicationId appId) {
-    withApplicationLock(appId, () -> {
-      doAdvanceStep(appId, null, null);
-      return null;
-    });
+    log.debug("[advanceStep] begin appId={}, thread={}", appId.value(), Thread.currentThread());
+    try {
+      withApplicationLock(appId, () -> {
+        doAdvanceStep(appId, null, null);
+        return null;
+      });
+    } finally {
+      log.debug("[advanceStep] end appId={}, thread={}", appId.value(), Thread.currentThread());
+    }
   }
 
   /**
@@ -316,7 +321,7 @@ public class FlowOrchestrationService {
    * 通过 {@link ApplicationRepository#findByFileTaskId(String)} 反查申请单，
    * 命中后复用 {@link #advanceStep(ApplicationId)} 推进至下一节点。
    *
-   * @param fileTaskId 文件任务 ID（来自 {@code FileParsedEventDTO.fileTaskId()}）
+   * @param fileTaskId 文件任务 ID（来自 {@code FileParsedMessage.fileTaskId()}）
    */
   @Transactional
   public void advanceByFileTaskId(String fileTaskId) {
@@ -394,9 +399,11 @@ public class FlowOrchestrationService {
       return;
     }
     if (status == ApplicationStatus.WAITING_EXTERNAL) {
-      app.retry(); // WAITING_EXTERNAL → RUNNING（合法迁移，§8.1）
+      // WAITING_EXTERNAL → RUNNING 与步骤跃迁合并为一次版本递增，避免乐观锁误判
+      app.completeWaitingStep(routeConfig.nextStep());
+    } else {
+      app.completeCurrentStep(routeConfig.nextStep());
     }
-    app.completeCurrentStep(routeConfig.nextStep());
     applicationRepository.save(app);
   }
 

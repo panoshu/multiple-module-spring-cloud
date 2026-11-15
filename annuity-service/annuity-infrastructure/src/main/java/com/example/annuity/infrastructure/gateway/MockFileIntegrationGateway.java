@@ -6,10 +6,11 @@ import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.infrastructure.engine.event.IntegrationEventSimulator;
 import com.example.file.api.event.FileParsedEventDTO;
 import com.example.file.api.event.OutboundFileGeneratedEventDTO;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.core.types.FormId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +43,7 @@ import java.util.UUID;
 @Component
 @Primary
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "annuity.demo.file-mock.enabled", havingValue = "true")
 public class MockFileIntegrationGateway implements FileIntegrationGateway {
 
   private static final String BIZ_TYPE_FORM_DETAIL = "FORM_DETAIL";
@@ -62,26 +64,34 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
     }
     String fileTaskId = businessForm.id().value();
     log.info("[Mock] 立即模拟文件解析完成, formId={}", fileTaskId);
-    publishFileParsedEvent(fileTaskId);
+    publishFileParsedEvent(fileTaskId, businessForm.id().value(), businessForm.id().value());
   }
 
   /**
-   * 触发异步解析（FormId + FileId 重载）
+   * 触发异步解析（FormId + FileRefId 重载）
    * <p>
    * 使用 {@code sourceFileId.value()} 作为 fileTaskId，立即发布解析完成事件。
    * 测试场景中，业务服务自有存储里的解析 JSON 文件引用与 {@code sourceFileId} 一致，
    * 从而 {@code FileParsedEventListener} 能通过 {@code findByFileTaskId} 反查到申请单。
    */
   @Override
-  public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
+  public void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules) {
-    String fileTaskId = sourceFileId != null ? sourceFileId.value() : formId.value();
-    log.info("[Mock] 立即模拟文件解析完成, formId={}, fileTaskId={}", formId.value(), fileTaskId);
-    publishFileParsedEvent(fileTaskId);
+    triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules, formId.value());
   }
 
   @Override
-  public InputStream downloadStream(FileId fileId, BusinessMetaContext context) {
+  public void triggerAsyncParsing(FormId formId, FileRefId sourceFileId, String parseTemplateId,
+                                  Map<String, Object> splitRules, String requestNo) {
+    String fileTaskId = sourceFileId != null ? sourceFileId.value() : formId.value();
+    String effectiveRequestNo = requestNo != null ? requestNo : formId.value();
+    log.info("[Mock] 立即模拟文件解析完成, formId={}, fileTaskId={}, requestNo={}",
+      formId.value(), fileTaskId, effectiveRequestNo);
+    publishFileParsedEvent(fileTaskId, effectiveRequestNo, formId.value());
+  }
+
+  @Override
+  public InputStream downloadStream(FileRefId fileId, BusinessMetaContext context) {
     log.info("[Mock] 返回模拟员工明细 JSON 流, fileId={}", fileId.value());
     String mockJson = """
       [
@@ -125,19 +135,23 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
   /**
    * 构造并发布 FileParsedEventDTO 模拟 file-service 解析完成回调
    */
-  private void publishFileParsedEvent(String fileTaskId) {
+  private void publishFileParsedEvent(String fileTaskId, String requestNo, String splitKey) {
+    String subTaskId = "MOCK-SUBTASK-" + fileTaskId;
     FileParsedEventDTO event = new FileParsedEventDTO(
       UUID.randomUUID().toString(),
       fileTaskId,
       BIZ_TYPE_FORM_DETAIL,
       STATUS_SUCCESS,
-      0,
-      List.of(),
+      1,
+      List.of(new FileParsedEventDTO.SubTaskSummaryDTO(
+        subTaskId, splitKey, 2, 2, 0, "VALID")),
       null,
-      LocalDateTime.now()
+      LocalDateTime.now(),
+      requestNo
     );
     eventSimulator.publish(event);
-    log.info("[Mock] 已发布 FileParsedEventDTO, fileTaskId={}, status={}", fileTaskId, STATUS_SUCCESS);
+    log.info("[Mock] 已发布 FileParsedEventDTO, fileTaskId={}, requestNo={}, subTaskId={}",
+      fileTaskId, requestNo, subTaskId);
   }
 
   /**
@@ -166,10 +180,16 @@ public class MockFileIntegrationGateway implements FileIntegrationGateway {
   public ParsedRowsPage fetchParsedRows(String subTaskId, String tableCode, int page, int size) {
     Map<String, Object> row1 = new java.util.LinkedHashMap<>();
     row1.put("employeeName", "张三");
+    row1.put("idCardNo", "110101199001011234");
+    row1.put("age", 35);
     row1.put("monthlySalary", 100000);
+    row1.put("monthlyContribution", 12000);
     Map<String, Object> row2 = new java.util.LinkedHashMap<>();
     row2.put("employeeName", "李四");
+    row2.put("idCardNo", "110101198505056789");
+    row2.put("age", 40);
     row2.put("monthlySalary", 150000);
+    row2.put("monthlyContribution", 18000);
     List<Map<String, Object>> all = List.of(row1, row2);
     int from = Math.min((page - 1) * size, all.size());
     int to = Math.min(from + size, all.size());

@@ -13,6 +13,7 @@ import com.example.auth.domain.channel.event.SecondaryAuthRevoked;
 import com.example.auth.domain.channel.event.SessionCreated;
 import com.example.auth.domain.channel.event.SessionPlanSelected;
 import com.example.auth.domain.channel.valueobject.PermissionSnapshot;
+import com.example.auth.domain.product.ProductGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -54,6 +55,7 @@ public class SessionClaimsWriter {
 
   private final Map<Channel, StpLogic> channelStpLogicMap;
   private final ObjectMapper objectMapper;
+  private final ProductGateway productGateway;
 
   /**
    * 登录成功 → 写入身份 + 渠道.
@@ -74,6 +76,28 @@ public class SessionClaimsWriter {
     merge(event.sessionId().value(), claims -> {
       claims.put("userNo", event.primaryAccountId().value());
       claims.put("planNo", event.planId().value());
+
+      // 计划快照补齐客户/产品维度：下游 kernel 创建批次、file-service 申请上传 token
+      // 都依赖会话中的 customerNo/productNo；缺失会导致 accessScope 为空。
+      productGateway.findPlan(event.planId()).ifPresent(plan -> {
+        claims.put("customerNo", plan.customerNo().value());
+        claims.put("productNo", plan.productNo().value());
+        if (plan.name() != null) {
+          claims.put("planName", plan.name());
+        }
+        productGateway.findCustomer(plan.customerNo())
+          .map(customer -> customer.name())
+          .filter(name -> name != null && !name.isBlank())
+          .ifPresent(name -> claims.put("customerName", name));
+        productGateway.findProduct(plan.productNo()).ifPresent(product -> {
+          if (product.productName() != null && !product.productName().isBlank()) {
+            claims.put("productName", product.productName());
+          }
+          if (product.operatingMode() != null) {
+            claims.put("operationModel", product.operatingMode().getCode());
+          }
+        });
+      });
     });
   }
 

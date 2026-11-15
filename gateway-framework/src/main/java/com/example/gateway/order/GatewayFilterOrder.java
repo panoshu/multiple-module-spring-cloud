@@ -2,6 +2,9 @@ package com.example.gateway.order;
 
 public enum GatewayFilterOrder {
 
+  // 链路追踪（最外层，保证后续过滤器和下游请求都有 traceId）
+  TRACE_ID(-310),
+
   // 安全组（最早执行）
   IP_BLOCK(-300),
   EXCLUDE_ROUTE(-250),

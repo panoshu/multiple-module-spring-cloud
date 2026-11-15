@@ -10,7 +10,8 @@ spring:
     virtual:
       enabled: true
   profiles:
-    include: local
+    # 无显式 profile 时按本机开发运行；生产必须显式指定 --spring.profiles.active=prod
+    default: local
 
 # BFF 渠道范围
 bff:

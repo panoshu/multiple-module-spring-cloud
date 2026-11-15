@@ -1,6 +1,8 @@
 package com.example.core.adapter.configuration;
 
+import com.example.shared.permission.RequirePermissionAspect;
 import com.example.shared.permission.SessionContextSignatureVerifier;
+import com.example.shared.security.permission.PermissionCheckPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,8 @@ class KernelProductionReadinessValidatorTest {
 
   private Environment environment;
   private ObjectProvider<SessionContextSignatureVerifier> verifierProvider;
+  private ObjectProvider<PermissionCheckPort> permissionCheckPortProvider;
+  private ObjectProvider<RequirePermissionAspect> requirePermissionAspectProvider;
   private KernelProductionReadinessValidator validator;
 
   @SuppressWarnings("unchecked")
@@ -26,8 +30,11 @@ class KernelProductionReadinessValidatorTest {
   void setUp() {
     environment = mock(Environment.class);
     verifierProvider = mock(ObjectProvider.class);
+    permissionCheckPortProvider = mock(ObjectProvider.class);
+    requirePermissionAspectProvider = mock(ObjectProvider.class);
     when(environment.getActiveProfiles()).thenReturn(new String[0]);
-    validator = new KernelProductionReadinessValidator(environment, verifierProvider);
+    validator = new KernelProductionReadinessValidator(
+      environment, verifierProvider, permissionCheckPortProvider, requirePermissionAspectProvider);
   }
 
   @Test
@@ -58,10 +65,35 @@ class KernelProductionReadinessValidatorTest {
   }
 
   @Test
-  @DisplayName("生产密钥与验签器齐备时通过")
+  @DisplayName("生产缺权限客户端时拒绝启动")
+  void production_missingPermissionCheckPortFailsFast() {
+    when(environment.getProperty(KEY_PROPERTY)).thenReturn("prod-secret-key-2026-abcdef");
+    when(verifierProvider.getIfAvailable()).thenReturn(mock(SessionContextSignatureVerifier.class));
+
+    assertThatThrownBy(() -> validator.run(null))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("PermissionCheckPort");
+  }
+
+  @Test
+  @DisplayName("生产缺权限切面时拒绝启动")
+  void production_missingRequirePermissionAspectFailsFast() {
+    when(environment.getProperty(KEY_PROPERTY)).thenReturn("prod-secret-key-2026-abcdef");
+    when(verifierProvider.getIfAvailable()).thenReturn(mock(SessionContextSignatureVerifier.class));
+    when(permissionCheckPortProvider.getIfAvailable()).thenReturn(mock(PermissionCheckPort.class));
+
+    assertThatThrownBy(() -> validator.run(null))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessageContaining("RequirePermissionAspect");
+  }
+
+  @Test
+  @DisplayName("生产密钥、验签器、权限客户端与切面齐备时通过")
   void production_readyPasses() {
     when(environment.getProperty(KEY_PROPERTY)).thenReturn("prod-secret-key-2026-abcdef");
     when(verifierProvider.getIfAvailable()).thenReturn(mock(SessionContextSignatureVerifier.class));
+    when(permissionCheckPortProvider.getIfAvailable()).thenReturn(mock(PermissionCheckPort.class));
+    when(requirePermissionAspectProvider.getIfAvailable()).thenReturn(mock(RequirePermissionAspect.class));
 
     assertThatCode(() -> validator.run(null)).doesNotThrowAnyException();
   }

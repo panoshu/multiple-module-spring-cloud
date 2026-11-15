@@ -6,18 +6,16 @@ import com.example.file.infrastructure.converter.ParseTaskConverter;
 import com.example.file.infrastructure.entity.ParseTaskDO;
 import com.example.file.infrastructure.mapper.ParseTaskMapper;
 import com.example.file.types.FileTaskId;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.domain.event.EventBus;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import static com.example.file.infrastructure.entity.table.ParseTaskDOTableDef.PARSE_TASK_DO;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +23,7 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
 
   private final ParseTaskMapper mapper;
   private final ParseTaskConverter converter;
-  private final ApplicationEventPublisher eventPublisher;
+  private final EventBus eventBus;
 
   @Override
   public Optional<ParseTask> findById(FileTaskId id) {
@@ -78,18 +76,16 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
       .toList();
   }
 
-  @Override
-  public void streamByAppId(FileTaskId id, Consumer<AggregateRoot<FileTaskId>> processor) {
-    findById(id).ifPresent(task -> processor.accept(task));
-  }
-
   private void publishDomainEvents(ParseTask task) {
     List<DomainEvent> events = task.domainEvents();
     if (events.isEmpty()) {
       return;
     }
     for (DomainEvent event : events) {
-      eventPublisher.publishEvent(event);
+      // 直接走 EventBus：Outbox 落库 + 本地 Spring 分发 + Redis 远端分发。
+      // 不能再先用 Spring publisher 发布再经 FileDomainEventBridge 二次入总线——
+      // SpringEventDispatcher 会把同一领域事件再次本地发布，形成自激循环/重复 eventId。
+      eventBus.publish(event);
     }
     task.clearDomainEvents();
   }

@@ -31,7 +31,7 @@ public final class ApprovalInstanceApiConverter {
     return new ApprovalInstanceDTO(
       instance.id(),
       instance.flowId(),
-      instance.businessApplicationId().value(),
+      instance.businessApplicationId(),
       null, // businessType
       instance.status().name(),
       instance.createdBy(),
@@ -73,7 +73,7 @@ public final class ApprovalInstanceApiConverter {
       null, // instanceId - 需要从上下文获取
       null, // nodeName - 需要从上下文获取
       record.action().name(),
-      record.approverId().value(),
+      record.approverId(),
       record.opinion().value(),
       record.createdAt()
     );

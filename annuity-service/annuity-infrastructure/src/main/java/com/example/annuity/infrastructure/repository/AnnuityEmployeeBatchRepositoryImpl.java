@@ -10,7 +10,6 @@ import com.example.annuity.infrastructure.entity.AnnuityEmployeeDetailDO;
 import com.example.annuity.infrastructure.mapper.AnnuityEmployeeBatchMapper;
 import com.example.annuity.infrastructure.mapper.AnnuityEmployeeDetailMapper;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
-import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.ApplicationId;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static com.example.annuity.infrastructure.entity.table.AnnuityEmployeeBatchDOTableDef.ANNUITY_EMPLOYEE_BATCH_DO;
 import static com.example.annuity.infrastructure.entity.table.AnnuityEmployeeDetailDOTableDef.ANNUITY_EMPLOYEE_DETAIL_DO;
@@ -141,14 +139,6 @@ public class AnnuityEmployeeBatchRepositoryImpl implements AnnuityEmployeeBatchR
     return batchMapper.selectAll().stream()
       .map(this::loadWithDetails)
       .toList();
-  }
-
-  @Override
-  public void streamByAppId(AnnuityEmployeeBatchId id, Consumer<AggregateRoot<AnnuityEmployeeBatchId>> processor) {
-    if (id == null || processor == null) {
-      return;
-    }
-    load(id).ifPresent(processor);
   }
 
   /**

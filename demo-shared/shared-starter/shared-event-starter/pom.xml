@@ -34,8 +34,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.rocketmq</groupId>
-      <artifactId>rocketmq-spring-boot-starter</artifactId>
-      <optional>true</optional>
+      <artifactId>rocketmq-client-java</artifactId>
     </dependency>
 
     <dependency>

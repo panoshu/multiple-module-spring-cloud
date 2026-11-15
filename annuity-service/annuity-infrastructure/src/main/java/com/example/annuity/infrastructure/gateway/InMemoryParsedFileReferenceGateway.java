@@ -2,7 +2,7 @@ package com.example.annuity.infrastructure.gateway;
 
 import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,10 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class InMemoryParsedFileReferenceGateway implements ParsedFileReferenceGateway {
 
-  private final Map<ApplicationId, FileId> references = new ConcurrentHashMap<>();
+  private final Map<ApplicationId, FileRefId> references = new ConcurrentHashMap<>();
 
   @Override
-  public void save(ApplicationId applicationId, FileId jsonFileId) {
+  public void save(ApplicationId applicationId, FileRefId jsonFileId) {
     if (applicationId == null || jsonFileId == null) {
       return;
     }
@@ -31,7 +31,7 @@ public class InMemoryParsedFileReferenceGateway implements ParsedFileReferenceGa
   }
 
   @Override
-  public Optional<FileId> load(ApplicationId applicationId) {
+  public Optional<FileRefId> load(ApplicationId applicationId) {
     if (applicationId == null) {
       return Optional.empty();
     }
@@ -39,7 +39,7 @@ public class InMemoryParsedFileReferenceGateway implements ParsedFileReferenceGa
   }
 
   @Override
-  public Optional<ApplicationId> findByFileId(FileId jsonFileId) {
+  public Optional<ApplicationId> findByFileId(FileRefId jsonFileId) {
     if (jsonFileId == null) {
       return Optional.empty();
     }

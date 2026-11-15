@@ -2,7 +2,7 @@ package com.example.core.domain.business.aggregate.valueobject;
 
 import com.example.core.domain.business.aggregate.valueobject.enums.material.RequirementType;
 import com.example.core.types.ApplicationId;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import com.example.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,7 +63,7 @@ class ApplicationMaterialStateTest {
 
     assertThatThrownBy(() -> state.uploadIndividualPlanMaterial("M1", file("F-1"), APP_ID))
       .isInstanceOf(DomainException.class);
-    assertThatThrownBy(() -> state.removeIndividualPlanMaterial("M1", new FileId("F-1"), APP_ID))
+    assertThatThrownBy(() -> state.removeIndividualPlanMaterial("M1", new FileRefId("F-1"), APP_ID))
       .isInstanceOf(DomainException.class);
   }
 
@@ -90,7 +90,7 @@ class ApplicationMaterialStateTest {
       .uploadIndividualPlanMaterial("M1", file("F-1"), APP_ID);
 
     ApplicationMaterialState removed =
-      state.removeIndividualPlanMaterial("M1", new FileId("F-1"), APP_ID);
+      state.removeIndividualPlanMaterial("M1", new FileRefId("F-1"), APP_ID);
 
     assertThat(removed.planMaterials().get(0).uploadInfo()).isEmpty();
   }
@@ -111,6 +111,6 @@ class ApplicationMaterialStateTest {
   }
 
   private BusinessFile file(String id) {
-    return new BusinessFile(new FileId(id), id + ".pdf", "pdf", 100L);
+    return new BusinessFile(new FileRefId(id), id + ".pdf", "pdf", 100L);
   }
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,13 @@ public class ScenarioHandlerRegistry {
     this.handlerMap = handlers.stream()
       .flatMap(h -> h.supportedTypes().stream().map(t -> Map.entry(t, h)))
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
+  /**
+   * 当前渠道注册的全部业务类型（B-03：系统元信息查询）。
+   */
+  public Set<String> supportedTypes() {
+    return Set.copyOf(handlerMap.keySet());
   }
 
   /**

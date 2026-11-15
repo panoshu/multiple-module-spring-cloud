@@ -1,6 +1,8 @@
 package com.example.core.adapter.configuration;
 
+import com.example.shared.permission.RequirePermissionAspect;
 import com.example.shared.permission.SessionContextSignatureVerifier;
+import com.example.shared.security.permission.PermissionCheckPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -36,6 +38,8 @@ public class KernelProductionReadinessValidator implements ApplicationRunner {
 
   private final Environment environment;
   private final ObjectProvider<SessionContextSignatureVerifier> verifierProvider;
+  private final ObjectProvider<PermissionCheckPort> permissionCheckPortProvider;
+  private final ObjectProvider<RequirePermissionAspect> requirePermissionAspectProvider;
 
   @Override
   public void run(ApplicationArguments args) {
@@ -51,6 +55,17 @@ public class KernelProductionReadinessValidator implements ApplicationRunner {
     if (verifierProvider.getIfAvailable() == null) {
       throw new IllegalStateException(
         "生产环境缺少 SessionContextSignatureVerifier，kernel 拒绝启动");
+    }
+    // K-11：@RequirePermission 切面与权限客户端缺失时，所有 @RequirePermission 标注会静默失效。
+    // 该 fail-fast 与 shared-permission-starter 的 PermissionReadinessValidator 双保险，
+    // 但 kernel 宿主必须显式具备这两项能力，不能只依赖 shared starter 是否被引入。
+    if (permissionCheckPortProvider.getIfAvailable() == null) {
+      throw new IllegalStateException(
+        "生产环境缺少 PermissionCheckPort（auth-service 权限客户端未装配），kernel 拒绝启动");
+    }
+    if (requirePermissionAspectProvider.getIfAvailable() == null) {
+      throw new IllegalStateException(
+        "生产环境缺少 RequirePermissionAspect（@RequirePermission 将静默失效），kernel 拒绝启动");
     }
     log.info("kernel 生产就绪校验通过");
   }

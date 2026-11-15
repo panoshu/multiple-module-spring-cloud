@@ -3,10 +3,7 @@ package com.example.file.json;
 import com.example.file.api.request.ApplyDownloadTokenRequest;
 import com.example.file.api.request.ApplyUploadTokenRequest;
 import com.example.shared.event.jackson.DddJacksonModule;
-import com.example.core.types.CustomerNo;
 import com.example.file.types.FileId;
-import com.example.core.types.ProductNo;
-import com.example.core.types.UserNo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,9 +67,9 @@ class StrongTypeIdDeserializationTest {
     assertThat(result.bizType()).isEqualTo("annuity");
     assertThat(result.sourceApp()).isEqualTo("approval-service");
     assertThat(result.businessBatchId()).isEqualTo("BATCH_001");
-    assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
-    assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
-    assertThat(result.uploader()).isEqualTo(UserNo.of("u1"));
+    assertThat(result.customerNo()).isEqualTo("C001");
+    assertThat(result.productNo()).isEqualTo("P001");
+    assertThat(result.uploader()).isEqualTo("u1");
     assertThat(result.allowedContentTypes()).containsExactly("application/xlsx");
     assertThat(result.allowedMaxSize()).isEqualTo(10L * 1024 * 1024);
     assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(15));
@@ -96,9 +93,9 @@ class StrongTypeIdDeserializationTest {
 
     assertThat(result.fileId()).isEqualTo(new FileId("01H8FILE001"));
     assertThat(result.sourceApp()).isEqualTo("approval-service");
-    assertThat(result.customerNo()).isEqualTo(CustomerNo.of("C001"));
-    assertThat(result.productNo()).isEqualTo(ProductNo.of("P001"));
-    assertThat(result.downloader()).isEqualTo(UserNo.of("u1"));
+    assertThat(result.customerNo()).isEqualTo("C001");
+    assertThat(result.productNo()).isEqualTo("P001");
+    assertThat(result.downloader()).isEqualTo("u1");
     assertThat(result.ttl()).isEqualTo(Duration.ofMinutes(10));
   }
 
@@ -109,9 +106,9 @@ class StrongTypeIdDeserializationTest {
     "annuity", null, null,
       "approval-service",
       "BATCH_001",
-      CustomerNo.of("C001"),
-      ProductNo.of("P001"),
-      UserNo.of("u1"),
+      "C001",
+      "P001",
+      "u1",
       LocalDateTime.of(2026, 12, 31, 23, 59, 59),
       List.of("application/xlsx"),
       10L * 1024 * 1024,

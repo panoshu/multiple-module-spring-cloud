@@ -1,6 +1,6 @@
 package com.example.core.domain.business.aggregate.valueobject;
 
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 
 /**
  * 业务文件附件
@@ -9,7 +9,7 @@ import com.example.file.types.FileId;
  * @since 2026/5/16 23:01
  */
 public record BusinessFile(
-  FileId fileId,        // 文件服务返回的唯一标识
+  FileRefId fileId,        // 文件服务返回的唯一标识
   String fileName,      // 用户上传时的真实文件名 (展示用)
   String extension,     // 文件扩展名 (如 pdf, jpg，用于前端图标展示或校验)
   Long fileSizeBytes    // 文件大小 (可选，用于限制检查)

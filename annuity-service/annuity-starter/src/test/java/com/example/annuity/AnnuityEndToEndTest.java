@@ -6,9 +6,13 @@ import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.approval.api.ApprovalFlowApi;
 import com.example.approval.api.ApprovalInstanceApi;
 import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
+import com.example.core.application.engine.listener.ExternalInteractionRequestedListener;
 import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
+import com.example.core.domain.business.aggregate.valueobject.enums.status.ApplicationStatus;
+import com.example.core.domain.engine.aggregate.root.ExternalInteraction;
+import com.example.core.domain.engine.repository.ExternalInteractionRepository;
 import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
@@ -29,7 +33,7 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
-import com.example.file.types.FileId;
+import com.example.core.types.FileRefId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +85,13 @@ class AnnuityEndToEndTest {
   private com.example.core.domain.business.gateway.ParsedFileReferenceGateway parsedFileGateway;
 
   @Autowired
+  private com.example.core.domain.business.gateway.ParsedSubTaskReferenceGateway parsedSubTaskGateway;
+
+  @Autowired
   private ApplicationRepository applicationRepository;
+
+  @Autowired
+  private ExternalInteractionRepository externalInteractionRepository;
 
   @Autowired
   private JdbcClient jdbcClient;
@@ -127,6 +137,13 @@ class AnnuityEndToEndTest {
   @MockitoBean
   private StepAutoAdvanceListener stepAutoAdvanceListener;
 
+  /**
+   * 禁用外部协作的异步派发，避免 E2E 在断言前被异步线程改变协作状态。
+   * 派发器本身由 kernel 的 ApprovalDispatchHandlerTest / ExternalInteractionRecoveryJobTest 覆盖。
+   */
+  @MockitoBean
+  private ExternalInteractionRequestedListener externalInteractionRequestedListener;
+
   // ====================================================
   // 测试用例
   // ====================================================
@@ -167,8 +184,18 @@ class AnnuityEndToEndTest {
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.APPROVAL);
 
-    // 第 4 次推进：APPROVAL → COMPLETED（mainProcessor=null）
+    // 第 4 次推进：APPROVAL 登记审批意图 → SUSPEND_ASYNC_WAIT，申请单进入 WAITING_EXTERNAL
     orchestrationService.advanceStep(appId);
+    app = applicationRepository.loadOrThrow(appId);
+    assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.APPROVAL);
+    assertThat(app.status()).isEqualTo(ApplicationStatus.WAITING_EXTERNAL);
+    List<ExternalInteraction> interactions =
+      externalInteractionRepository.findByApplication(appId);
+    assertThat(interactions).hasSize(1);
+    assertThat(interactions.get(0).type().name()).isEqualTo("APPROVAL");
+
+    // 审批回调完成等待步骤：APPROVAL → COMPLETED
+    orchestrationService.completeWaitingStep(appId);
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
 
@@ -186,7 +213,7 @@ class AnnuityEndToEndTest {
   void fileParsedEvent_advancesApplication() {
     ApplicationId appId = createAndSaveApplication();
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
-    FileId parsedJsonFileId = parsedFileGateway.require(appId);
+    FileRefId parsedJsonFileId = parsedFileGateway.require(appId);
 
     // 初始：FORM_DETAIL_INGESTION
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
@@ -226,17 +253,26 @@ class AnnuityEndToEndTest {
     orchestrationService.advanceStep(appId); // → DATA_VERIFICATION
     orchestrationService.advanceStep(appId); // → MATERIAL_PREPARATION
     orchestrationService.advanceStep(appId); // → APPROVAL
+    orchestrationService.advanceStep(appId); // APPROVAL 登记审批意图 → WAITING_EXTERNAL
 
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.APPROVAL);
+    assertThat(app.status()).isEqualTo(ApplicationStatus.WAITING_EXTERNAL);
 
-    // 模拟 approval-service 审批通过事件（businessNo = ApplicationId.value()）
+    // 异步派发被 mock，手动把协作推进到 DISPATCHING，模拟 approval-service 已受理
+    ExternalInteraction interaction = externalInteractionRepository.findByApplication(appId)
+      .stream().findFirst().orElseThrow();
+    interaction.markDispatching("TEST");
+    externalInteractionRepository.save(interaction);
+
+    // 模拟 approval-service 审批通过事件：requestNo 必须与协作记录一致才能闭环
     ApprovalInstanceApprovedEventDTO event = new ApprovalInstanceApprovedEventDTO(
       UUID.randomUUID().toString(),
       "1",
       appId.value(),
       BusinessType.ACC_PLAN_CREATE.name(),
-      LocalDateTime.now()
+      LocalDateTime.now(),
+      interaction.requestNo()
     );
     eventSimulator.publish(event);
 
@@ -288,7 +324,7 @@ class AnnuityEndToEndTest {
    * <p>
    * 使用 kernel 公开的 {@link BusinessApplication#createFromForm} 工厂方法，
    * 创建初始状态为 PROCESSING / FORM_DETAIL_INGESTION 的申请单，
-   * 携带 BusinessContext、OperatorInfo 领域原语与 FileId（用于文件解析事件反查）。
+   * 携带 BusinessContext、OperatorInfo 领域原语与 FileRefId（用于文件解析事件反查）。
    *
    * @return 新建并已持久化的申请单 ID
    */
@@ -311,7 +347,7 @@ class AnnuityEndToEndTest {
       false
     );
     ApplicationId appId = new ApplicationId("APP-TEST-" + UUID.randomUUID());
-    FileId jsonFileId = new FileId("FILE-TEST-" + UUID.randomUUID());
+    FileRefId jsonFileId = new FileRefId("FILE-TEST-" + UUID.randomUUID());
 
     BusinessApplication app = BusinessApplication.createFromForm(
       appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
@@ -326,6 +362,7 @@ class AnnuityEndToEndTest {
     );
     extensionStore.save(appId, annuityExt);
     parsedFileGateway.save(appId, jsonFileId);
+    parsedSubTaskGateway.save(appId, "MOCK-SUBTASK-" + appId.value());
     // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
     // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
     // markUpdated(null) 会抛 IllegalArgumentException

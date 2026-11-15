@@ -1,5 +1,7 @@
 package com.example.auth.infrastructure.permission;
 
+import com.example.auth.domain.permission.PermissionRegistrationResult;
+import com.example.auth.domain.permission.PermissionRegistrationUseCase;
 import com.example.shared.security.annotation.RequirePermission;
 import com.example.shared.security.permission.PermissionChangedEvent;
 import com.example.shared.security.permission.PermissionItemDescriptor;
@@ -38,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PermissionScannerService {
+public class PermissionScannerService implements PermissionRegistrationUseCase {
 
   private final PermissionItemRepository repository;
   private final ApplicationEventPublisher permissionInvalidationPublisher;
@@ -77,6 +79,7 @@ public class PermissionScannerService {
    * @param items         权限点描述符列表
    * @return 上报结果
    */
+  @Override
   public PermissionRegistrationResult registerFromExternal(
     String sourceService, List<PermissionItemDescriptor> items) {
     UserNo scanner = UserNo.of("scanner:" + sourceService);

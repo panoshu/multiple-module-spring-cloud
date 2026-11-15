@@ -18,13 +18,10 @@
       <groupId>com.example</groupId>
       <artifactId>file-application</artifactId>
     </dependency>
-    <!--
-      file-adapter 直接依赖 file-infrastructure 以注入 FileTokenProperties
-      (FileTokenProperties 在 file-infrastructure，adapter 层允许依赖 infrastructure)。
-    -->
+    <!-- F-02：领域事件→集成事件转换器迁入 adapter -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>file-infrastructure</artifactId>
+      <artifactId>shared-event-core</artifactId>
     </dependency>
 
     <!-- Web 层注解支持：@RestController, @RequestMapping 等 -->
@@ -53,6 +50,11 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
