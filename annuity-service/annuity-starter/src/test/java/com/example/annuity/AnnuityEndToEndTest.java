@@ -9,8 +9,6 @@ import com.example.approval.api.event.ApprovalInstanceApprovedEventDTO;
 import com.example.core.application.engine.listener.StepAutoAdvanceListener;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
-import com.example.core.domain.business.aggregate.valueobject.ApplicationSource;
 import com.example.core.domain.business.aggregate.valueobject.BusinessContext;
 import com.example.core.domain.business.aggregate.valueobject.OperatorInfo;
 import com.example.core.domain.business.aggregate.valueobject.business.AccountManager;
@@ -24,8 +22,6 @@ import com.example.file.api.FileAccessApi;
 import com.example.file.api.FileTaskApi;
 import com.example.file.api.event.FileParsedEventDTO;
 import com.example.core.types.ApplicationId;
-import com.example.core.types.BatchId;
-import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
 import com.example.core.types.CustomerNo;
@@ -34,7 +30,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -75,16 +70,7 @@ class AnnuityEndToEndTest {
   private FlowOrchestrationService orchestrationService;
 
   @Autowired
-  private com.example.annuity.domain.repository.AnnuityApplicationExtensionStore extensionStore;
-
-  @Autowired
-  private com.example.core.domain.business.gateway.ParsedFileReferenceGateway parsedFileGateway;
-
-  @Autowired
   private ApplicationRepository applicationRepository;
-
-  @Autowired
-  private JdbcClient jdbcClient;
 
   @Autowired
   private IntegrationEventSimulator eventSimulator;
@@ -137,10 +123,6 @@ class AnnuityEndToEndTest {
     assertThat(orchestrationService).isNotNull();
     assertThat(applicationRepository).isNotNull();
     assertThat(eventSimulator).isNotNull();
-    // 外部协作表 DDL 就绪；E2E 主流程不经过 SUSPEND_ASYNC_WAIT，写入由编排器单元测试验证
-    Long interactionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_external_interaction")
-      .query(Long.class).single();
-    assertThat(interactionCount).isNotNull();
   }
 
   @Test
@@ -171,14 +153,6 @@ class AnnuityEndToEndTest {
     orchestrationService.advanceStep(appId);
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.COMPLETED);
-
-    // 步骤执行记录随流程推进真实落库（§9.1：与申请单状态、Outbox 同事务）
-    Long executionCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_step_execution")
-      .query(Long.class).single();
-    assertThat(executionCount).isGreaterThanOrEqualTo(4L);
-    Long segmentCount = jdbcClient.sql("SELECT COUNT(*) FROM t_id_generator")
-      .query(Long.class).single();
-    assertThat(segmentCount).isGreaterThanOrEqualTo(1L);
   }
 
   @Test
@@ -186,7 +160,7 @@ class AnnuityEndToEndTest {
   void fileParsedEvent_advancesApplication() {
     ApplicationId appId = createAndSaveApplication();
     BusinessApplication app = applicationRepository.loadOrThrow(appId);
-    FileId parsedJsonFileId = parsedFileGateway.require(appId);
+    FileId parsedJsonFileId = app.parsedJsonFileId();
 
     // 初始：FORM_DETAIL_INGESTION
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.FORM_DETAIL_INGESTION);
@@ -207,14 +181,6 @@ class AnnuityEndToEndTest {
     // 验证 FileParsedEventListener 已通过 findByFileTaskId 反查并推进流程
     app = applicationRepository.loadOrThrow(appId);
     assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.DATA_VERIFICATION);
-
-    // 重复投递同一 eventId 应被消费回执短路，不重复推进流程
-    eventSimulator.publish(event);
-    app = applicationRepository.loadOrThrow(appId);
-    assertThat(app.currentStep()).isEqualTo(ApplicationFlowStep.DATA_VERIFICATION);
-    Long receiptCount = jdbcClient.sql("SELECT COUNT(*) FROM t_business_event_receipt WHERE event_id = ?")
-      .param(event.eventId()).query(Long.class).single();
-    assertThat(receiptCount).isEqualTo(1L);
   }
 
   @Test
@@ -313,19 +279,15 @@ class AnnuityEndToEndTest {
     ApplicationId appId = new ApplicationId("APP-TEST-" + UUID.randomUUID());
     FileId jsonFileId = new FileId("FILE-TEST-" + UUID.randomUUID());
 
-    BusinessApplication app = BusinessApplication.createFromForm(
-      appId, new ApplicationSource(new FormId("FORM-TEST-001"), BatchId.of("BATCH-TEST-001")),
-      context, operator, DefinitionVersion.initial()
-    );
-    // 设置年金业务扩展字段（业务服务自有存储，按 applicationId 关联，§6.2）
+    BusinessApplication app = BusinessApplication.createFromForm(appId, context, operator, jsonFileId);
+    // 设置年金业务扩展字段（通过 kernel 公开的 attachExtension 方法）
     AnnuityApplicationExtension annuityExt = new AnnuityApplicationExtension(
       BusinessType.ACC_PLAN_CREATE,
       AnnuityApplicationExtension.PLAN_TYPE_NEW,
       20000L,  // 200 元（单位:分），大于 MIN_INITIAL_CONTRIBUTION_FOR_NEW=10000
       false    // 无外资成分，与 MockAnnuityCustomerGateway 返回的画像一致
     );
-    extensionStore.save(appId, annuityExt);
-    parsedFileGateway.save(appId, jsonFileId);
+    app.attachExtension(annuityExt);
     // 设置 updatedBy（通过反射），因 Entity.markUpdated() 是 protected 无法从测试直接调用，
     // 而 AnnuityDataVerificationHandler 使用 app.updatedBy() 调用 markDetailProcessed，
     // markUpdated(null) 会抛 IllegalArgumentException

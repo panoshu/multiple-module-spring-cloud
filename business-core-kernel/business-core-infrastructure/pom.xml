@@ -37,12 +37,6 @@
       <groupId>com.example</groupId>
       <artifactId>shared-event-starter</artifactId>
     </dependency>
-    <!-- 流程推进短临界区互斥（批次 71）：kernel 自带锁实现，宿主自动装配 Redis 分布式锁。
-         无 Redis 的测试上下文通过 spring.autoconfigure.exclude 排除其自动配置 -->
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>shared-lock-starter</artifactId>
-    </dependency>
     <!--<dependency>-->
     <!--  <groupId>com.example</groupId>-->
     <!--  <artifactId>shared-web-starter</artifactId>-->

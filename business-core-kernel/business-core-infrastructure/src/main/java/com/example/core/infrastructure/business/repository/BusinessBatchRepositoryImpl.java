@@ -2,7 +2,6 @@ package com.example.core.infrastructure.business.repository;
 
 import com.example.core.domain.business.aggregate.root.BusinessBatch;
 import com.example.core.domain.business.aggregate.valueobject.business.BusinessType;
-import com.example.core.domain.business.aggregate.valueobject.enums.status.BatchStatus;
 import com.example.core.domain.business.repository.BatchRepository;
 import com.example.core.infrastructure.business.converter.BusinessBatchConverter;
 import com.example.core.infrastructure.business.entity.BusinessBatchDO;
@@ -13,10 +12,8 @@ import com.example.core.types.FormId;
 import com.example.core.types.PlanNo;
 import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
-import com.example.shared.domain.event.EventBus;
+import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import static com.example.core.infrastructure.business.entity.table.BusinessApplicationDOTableDef.BUSINESS_APPLICATION_DO;
@@ -39,10 +36,10 @@ public class BusinessBatchRepositoryImpl
   protected final BusinessBatchMapper mapper;
   protected final BusinessBatchConverter converter;
 
-  public BusinessBatchRepositoryImpl(EventBus eventBus,
+  public BusinessBatchRepositoryImpl(ApplicationEventPublisher eventPublisher,
                                      BusinessBatchMapper mapper,
                                      BusinessBatchConverter converter) {
-    super(eventBus);
+    super(eventPublisher);
     this.mapper = mapper;
     this.converter = converter;
   }
@@ -65,16 +62,6 @@ public class BusinessBatchRepositoryImpl
   @Override
   protected Object doId(BusinessBatchDO aDo) {
     return aDo.getId();
-  }
-
-  @Override
-  protected Integer doVersion(BusinessBatchDO aDo) {
-    return aDo.getVersion();
-  }
-
-  @Override
-  protected void doVersion(BusinessBatchDO aDo, Integer version) {
-    aDo.setVersion(version);
   }
 
   /**
@@ -123,18 +110,6 @@ public class BusinessBatchRepositoryImpl
    * 默认实现通过 {@code plan_no} + {@code business_type} + 状态过滤查询。
    * 业务服务可覆写本方法以提供更精确的查询逻辑。
    */
-  /** 按状态列查询（DDL 已有 idx_business_batch_status），逻辑删除由 MyBatis-Flex 自动过滤。 */
-  @Override
-  public List<BusinessBatch> findByStatuses(Collection<BatchStatus> statuses) {
-    if (statuses == null || statuses.isEmpty()) {
-      return List.of();
-    }
-    List<String> names = statuses.stream().map(Enum::name).toList();
-    return mapper.selectListByQuery(
-      QueryWrapper.create().where(BUSINESS_BATCH_DO.STATUS.in(names))
-    ).stream().map(converter::toDomain).toList();
-  }
-
   @Override
   public Optional<BusinessBatch> findActive(PlanNo planNo, BusinessType businessType) {
     if (planNo == null || businessType == null) {

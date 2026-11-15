@@ -15,18 +15,8 @@ public record FileParsedEventDTO(
   int totalSubTasks,
   List<SubTaskSummaryDTO> subTasks,
   String failureReason,
-  LocalDateTime occurredOn,
-  /** 外部协作幂等键；过渡期可空，阶段 3 回调按此关联协作记录。 */
-  String requestNo
+  LocalDateTime occurredOn
 ) {
-
-  public FileParsedEventDTO(String eventId, String fileTaskId, String bizType, String status,
-                            int totalSubTasks, List<SubTaskSummaryDTO> subTasks,
-                            String failureReason, LocalDateTime occurredOn) {
-    this(eventId, fileTaskId, bizType, status, totalSubTasks, subTasks,
-      failureReason, occurredOn, null);
-  }
-
   public record SubTaskSummaryDTO(
     String subTaskId,
     String splitKey,

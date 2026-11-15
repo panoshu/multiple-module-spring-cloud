@@ -48,9 +48,6 @@ public class ApprovalInstanceDO {
    */
   private String businessNo;
 
-  /** 外部协作幂等键（spec §12.3）：按该键唯一，可空（存量数据）。 */
-  private String requestNo;
-
   /**
    * 当前节点顺序
    */

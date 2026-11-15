@@ -59,10 +59,6 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    */
   private final String businessType;
   /**
-   * 外部协作幂等键（spec §12.3）：按该键幂等启动并可查询；旧构造路径为 null。
-   */
-  private String requestNo;
-  /**
    * 发起人方案
    */
   private final String initiatorPlan;
@@ -137,14 +133,6 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
   public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
                                         ApplicationId businessApplicationId, String businessType,
                                         String initiatorPlan, String operator) {
-    return create(id, flowId, flowVersion, businessApplicationId, businessType,
-      initiatorPlan, operator, null);
-  }
-
-  /** 带外部协作幂等键的创建（spec §12.3）。 */
-  public static ApprovalInstance create(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                                        ApplicationId businessApplicationId, String businessType,
-                                        String initiatorPlan, String operator, String requestNo) {
     if (flowId == null) {
       throw new IllegalArgumentException("审批流ID不能为空");
     }
@@ -159,9 +147,8 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     }
     ApprovalInstance instance = new ApprovalInstance(id, flowId, flowVersion, businessApplicationId,
       businessType, initiatorPlan, operator);
-    instance.requestNo = requestNo;
     instance.registerDomainEvent(
-      ApprovalInstanceCreated.of(id, businessApplicationId.value(), businessType, requestNo));
+      ApprovalInstanceCreated.of(id, businessApplicationId.value(), businessType));
     return instance;
   }
 
@@ -172,25 +159,8 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
                                               ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
                                               String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
                                               String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version) {
-    return reconstitute(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
-      initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version, null);
-  }
-
-  /** 带外部协作幂等键的重建（spec §12.3）。 */
-  public static ApprovalInstance reconstitute(ApprovalInstanceId id, ApprovalFlowId flowId, FlowVersion flowVersion,
-                                              ApplicationId businessApplicationId, String businessType, NodeOrder currentNodeOrder, InstanceStatus status,
-                                              String initiatorPlan, String currentPlan, List<NodeExecution> nodeExecutions,
-                                              String createdBy, String updatedBy, LocalDateTime createdAt, LocalDateTime updatedAt, Version version,
-                                              String requestNo) {
-    ApprovalInstance instance = new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType,
-      currentNodeOrder, status, initiatorPlan, currentPlan, nodeExecutions,
-      createdBy, updatedBy, createdAt, updatedAt, version);
-    instance.requestNo = requestNo;
-    return instance;
-  }
-
-  public String requestNo() {
-    return requestNo;
+    return new ApprovalInstance(id, flowId, flowVersion, businessApplicationId, businessType, currentNodeOrder, status,
+      initiatorPlan, currentPlan, nodeExecutions, createdBy, updatedBy, createdAt, updatedAt, version);
   }
 
   /**
@@ -216,8 +186,8 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator   操作人
    */
   public void approve(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion, String operator,
-                     ApprovalIdGenerator idGenerator, List<UserNo> effectiveApprovers) {
-    validateCanApprove(approverId, effectiveApprovers);
+                     ApprovalIdGenerator idGenerator) {
+    validateCanApprove(approverId);
 
     // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
     RecordId recordId = idGenerator.nextRecordId();
@@ -228,7 +198,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     execution.addApprovalRecord(record, operator);
 
     // 根据签批模式决定是否标记节点完成
-    if (node.isOrSign() || allApproversApproved(effectiveApprovers, execution)) {
+    if (node.isOrSign() || allApproversApproved(node, execution)) {
       execution.markApproved(operator);
       moveToNextNode(node, operator);
     }
@@ -236,7 +206,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     // 当状态变为 APPROVED 时派发领域事件
     if (this.status == InstanceStatus.APPROVED) {
       registerDomainEvent(
-        ApprovalInstanceApproved.of(id(), businessApplicationId.value(), businessType, requestNo));
+        ApprovalInstanceApproved.of(id(), businessApplicationId.value(), businessType));
     }
   }
 
@@ -250,9 +220,8 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator     操作人
    */
   public void reject(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                     RejectTarget rejectTarget, String operator, ApprovalIdGenerator idGenerator,
-                     List<UserNo> effectiveApprovers) {
-    validateCanApprove(approverId, effectiveApprovers);
+                     RejectTarget rejectTarget, String operator, ApprovalIdGenerator idGenerator) {
+    validateCanApprove(approverId);
 
     // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
     RecordId recordId = idGenerator.nextRecordId();
@@ -269,7 +238,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     // 当状态变为 REJECTED 时派发领域事件
     if (this.status == InstanceStatus.REJECTED) {
       registerDomainEvent(
-        ApprovalInstanceRejected.of(id(), businessApplicationId.value(), businessType, requestNo));
+        ApprovalInstanceRejected.of(id(), businessApplicationId.value(), businessType));
     }
   }
 
@@ -283,9 +252,8 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    * @param operator   操作人
    */
   public void transfer(ApprovalNode node, UserNo approverId, ApprovalOpinion opinion,
-                       UserNo transferTo, String operator, ApprovalIdGenerator idGenerator,
-                       List<UserNo> effectiveApprovers) {
-    validateCanApprove(approverId, effectiveApprovers);
+                       UserNo transferTo, String operator, ApprovalIdGenerator idGenerator) {
+    validateCanApprove(approverId);
 
     // 创建审批记录（ID 经端口生成，修复同毫秒碰撞）
     RecordId recordId = idGenerator.nextRecordId();
@@ -319,7 +287,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
 
     // 派发领域事件
     registerDomainEvent(
-      ApprovalInstanceWithdrawn.of(id(), businessApplicationId.value(), businessType, requestNo));
+      ApprovalInstanceWithdrawn.of(id(), businessApplicationId.value(), businessType));
   }
 
   /**
@@ -367,7 +335,7 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
    *
    * @param approverId 审批人ID
    */
-  private void validateCanApprove(UserNo approverId, List<UserNo> effectiveApprovers) {
+  private void validateCanApprove(UserNo approverId) {
     if (this.status != InstanceStatus.APPROVING) {
       throw new DomainException(ApprovalDomainErrorCode.APPROVAL_INSTANCE_NOT_APPROVING)
         .withLogDetail("只有审批中的实例才能操作, ApprovalInstanceId: %s, status: %s".formatted(this.id(), this.status));
@@ -375,14 +343,6 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
     if (approverId == null) {
       throw new DomainException(ApprovalDomainErrorCode.NOT_CURRENT_APPROVER)
         .withLogDetail("审批人ID不能为空");
-    }
-    // 实际审批人列表非空时才校验身份；为空表示本框架尚未展开（如角色查询不可用），
-    // 交由上层 fail-closed 处理，避免领域层直接依赖跨服务网关。
-    if (effectiveApprovers != null && !effectiveApprovers.isEmpty()
-      && !effectiveApprovers.contains(approverId)) {
-      throw new DomainException(ApprovalDomainErrorCode.NOT_CURRENT_APPROVER)
-        .withLogDetail("审批人不在当前节点实际审批人列表, ApprovalInstanceId: %s, approver: %s"
-          .formatted(this.id(), approverId.value()));
     }
   }
 
@@ -407,22 +367,24 @@ public class ApprovalInstance extends AggregateRoot<ApprovalInstanceId> {
   }
 
   /**
-   * 判断所有实际审批人是否都已审批（批次 62）。
+   * 判断所有审批人是否都已审批
    * <p>
-   * 实际审批人列表由应用层通过 {@code ApprovalNodeResolver} 解析后传入：指定用户节点为
-   * 配置的 approverIds，角色节点为按 PLAN 展开的用户列表。领域层不直接依赖跨服务网关；
-   * 列表为空表示无法展开，保守返回 false（fail-closed），避免 AND_SIGN 角色节点在
-   * 第一次审批时即被错误标记完成。
+   * 对于指定用户审批节点（SPECIFIED_USER），approverIds 非空，按列表逐一校验。
+   * 对于指定角色审批节点（SPECIFIED_ROLE），approverIds 为空、roleIds 非空：
+   * 运行时无法在领域层确定角色对应的全部用户，因此保守返回 false，
+   * 避免 AND_SIGN 角色审批节点在第一次审批时即被错误标记完成。
+   * 仅当既无 approverIds 也无 roleIds（配置异常）时才返回 true。
    *
-   * @param effectiveApprovers 实际审批人列表
-   * @param execution          节点执行记录
-   * @return true 如果所有实际审批人都已审批
+   * @param node      审批节点
+   * @param execution 节点执行记录
+   * @return true 如果所有审批人都已审批
    */
-  private boolean allApproversApproved(List<UserNo> effectiveApprovers, NodeExecution execution) {
-    if (effectiveApprovers == null || effectiveApprovers.isEmpty()) {
-      return false;
+  private boolean allApproversApproved(ApprovalNode node, NodeExecution execution) {
+    List<UserNo> approverIds = node.approverIds();
+    if (approverIds.isEmpty()) {
+      return node.roleIds().isEmpty();
     }
-    return effectiveApprovers.stream()
+    return approverIds.stream()
       .allMatch(execution::hasApprovedBy);
   }
 

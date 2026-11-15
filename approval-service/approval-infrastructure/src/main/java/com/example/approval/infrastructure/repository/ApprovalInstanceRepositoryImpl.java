@@ -16,13 +16,14 @@ import com.example.approval.types.enums.InstanceStatus;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
 import com.example.core.types.ApplicationId;
+import com.example.core.types.UserNo;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -250,32 +251,16 @@ public class ApprovalInstanceRepositoryImpl implements ApprovalInstanceRepositor
   }
 
   @Override
-  public Optional<ApprovalInstance> findByRequestNo(String requestNo) {
-    if (requestNo == null || requestNo.isBlank()) {
-      return Optional.empty();
+  public List<ApprovalInstance> findByApproverId(UserNo approverId, InstanceStatus status) {
+    if (approverId == null) {
+      return Collections.emptyList();
     }
-    ApprovalInstanceDO instanceDO = instanceMapper.selectOneByQuery(
-      QueryWrapper.create()
-        .where(APPROVAL_INSTANCE_DO.REQUEST_NO.eq(requestNo))
-    );
-    if (instanceDO == null) {
-      return Optional.empty();
-    }
-    return load(converter.toDomain(instanceDO).id());
-  }
 
-  @Override
-  public List<ApprovalInstance> findByStatuses(Collection<InstanceStatus> statuses) {
-    if (statuses == null || statuses.isEmpty()) {
-      return List.of();
-    }
-    List<String> names = statuses.stream().map(Enum::name).toList();
-    List<ApprovalInstanceDO> rows = instanceMapper.selectListByQuery(
-      QueryWrapper.create()
-        .where(APPROVAL_INSTANCE_DO.STATUS.in(names))
-        .orderBy(APPROVAL_INSTANCE_DO.CREATE_TIME.desc())
-    );
-    return rows.stream().map(this::convertToInstanceWithDetails).toList();
+    // TODO: 实现根据审批人ID和状态查询审批实例
+    // 当前实现需要通过复杂的关联查询才能找到待审批人审批的实例
+    // 实际应用中可能需要设计专门的待审批视图表或缓存机制
+    log.warn("findByApproverId 方法尚未完整实现");
+    return Collections.emptyList();
   }
 
   /**
