@@ -11,8 +11,8 @@
   </parent>
 
   <artifactId>integration-service-starter</artifactId>
-
   <properties>
+    <!-- 覆盖父 pom 的 spring-boot.run.skip=true：本启动模块需产出可执行 fat jar（java -jar） -->
     <spring-boot.run.skip>false</spring-boot.run.skip>
   </properties>
 

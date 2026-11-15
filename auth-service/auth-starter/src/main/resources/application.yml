@@ -40,6 +40,25 @@ shared:
         ttl: 300s
         mode: L2_ONLY
 
+# sa-token 配置（多渠道会话管理）——环境无关，自 application-local.yml 迁入
+sa-token:
+  token-name: Authorization
+  timeout: 28800
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+# 多级缓存（jetcache 2.8 公共与本地段；remote 的 Redis 连接属环境相关，在 application-local.yml）
+jetcache:
+  statIntervalMinutes: 5
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      limit: 200
+
 trace:
   context:
     mapping:

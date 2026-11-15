@@ -10,6 +10,10 @@
   </parent>
   <artifactId>annuity-starter</artifactId>
   <description>年金服务 - 启动模块（启动类、打包入口）</description>
+  <properties>
+    <!-- 覆盖父 pom 的 spring-boot.run.skip=true：本启动模块需产出可执行 fat jar（java -jar） -->
+    <spring-boot.run.skip>false</spring-boot.run.skip>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.example</groupId>
@@ -41,10 +45,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <!-- E2E 上下文：ClientHttpRequestFactoryBuilder 探测到 httpcore5（部分类路径）需完整 httpclient5 -->
+      <!-- 主配置 spring.http.client.factory=http-components 运行时需要 httpclient5；
+           原 test scope 仅满足 E2E，真实启动会 NoClassDefFoundError（批次 72 修复） -->
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <scope>test</scope>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <!-- 数据源驱动（测试用 H2 无需驱动；真实启动必需，版本由 Spring Boot BOM 管理） -->

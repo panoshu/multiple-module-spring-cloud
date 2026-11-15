@@ -79,14 +79,8 @@ file:
   token:
     secret-key: "MDEyMzQ1Njc4OWFiY2RlZg=="  # 16 字节 "0123456789abcdef" 的 Base64
 
-# 多级缓存基础设施（jetcache 2.8；模板缓存等业务缓存声明在 shared.cache.rules）
+# 多级缓存 remote 段（Redis 连接属环境相关；公共与 local 段在 application.yml）
 jetcache:
-  statIntervalMinutes: 5
-  areaInCacheName: false
-  local:
-    default:
-      type: caffeine
-      limit: 200
   remote:
     default:
       type: redis.lettuce

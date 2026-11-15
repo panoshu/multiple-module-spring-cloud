@@ -10,7 +10,7 @@ spring:
     virtual:
       enabled: true
   profiles:
-    active: local
+    include: local
 
 # BFF 渠道范围
 bff:
@@ -23,7 +23,3 @@ trace:
       UserId: X-User-Id
       BizId: X-Biz-Id
       BatchId: X-Batch-Id
-
-logging:
-  level:
-    com.example.bff: DEBUG

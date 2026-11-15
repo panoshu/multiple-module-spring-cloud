@@ -11,6 +11,10 @@
   </parent>
 
   <artifactId>channel-gateway</artifactId>
+  <properties>
+    <!-- 覆盖父 pom 的 spring-boot.run.skip=true：本网关模块需产出可执行 fat jar（java -jar） -->
+    <spring-boot.run.skip>false</spring-boot.run.skip>
+  </properties>
   <description>渠道网关（单一代码库多 profile 部署）：internet=互联网渠道入口，intranet=内网总部+专线网点入口，dev=三渠道开发联调入口</description>
 
   <dependencies>

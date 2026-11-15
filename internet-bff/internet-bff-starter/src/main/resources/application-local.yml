@@ -1,3 +1,4 @@
+# 本机环境配置：注册中心连接与服务间客户端地址、调试日志级别
 spring:
   cloud:
     nacos:
@@ -11,3 +12,7 @@ httpexchange:
   clients:
     com.example.annuity.api.kernel:
       url: lb://annuity-service
+
+logging:
+  level:
+    com.example.bff: DEBUG

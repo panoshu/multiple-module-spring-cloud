@@ -3,17 +3,15 @@ spring:
     virtual:
       enabled: true # JDK 21 虚拟线程开启
   profiles:
-    # 本机覆盖（注册中心地址/开发签名密钥/日志级别）始终加载，生产环境用环境变量覆盖
-    include: local
+    # 本机覆盖（注册中心/Redis/签名密钥/日志级别）始终经 local 加载，生产环境用环境变量覆盖；
+    # 同一套代码部署多实例：默认激活 dev 实例（三渠道联调入口，18080），
+    # 生产按 --spring.profiles.active=internet（互联网渠道）/ intranet（内网渠道）指定实例，
+    # 服务名与实例专属配置（路由/渠道/白名单）在各实例的 application-{profile}.yml 中
+    include: local,dev
 
-  # Redis 连接配置(sa-token 分布式会话使用)
+  # Redis 连接池（环境无关）；host/port/database 等连接配置在 application-local.yml
   data:
     redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      # 密码经环境变量注入：SPRING_DATA_REDIS_PASSWORD（relaxed binding）。
-      # 不用 ${REDIS_PASSWORD:} 空串默认——空串会被 Redisson 当密码发 AUTH，无密码 Redis 直接报错。
-      database: ${REDIS_DB:0}
       lettuce:
         pool:
           max-active: 16
@@ -36,7 +34,7 @@ logging:
       total-size-cap: 1GB
       max-history: 30
 
-# 报文加密配置（各 profile 可按渠道安全要求开启）
+# 报文加密配置（各实例 profile 可按渠道安全要求开启）
 gateway:
   crypto:
     enabled: false

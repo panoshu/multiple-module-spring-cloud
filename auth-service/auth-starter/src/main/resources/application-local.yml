@@ -1,3 +1,5 @@
+# 本机环境配置：注册中心 / Redis / 数据库连接、脱敏策略与调试日志级别
+# （sa-token、jetcache 公共与 local 段为环境无关配置，已迁至 application.yml）
 spring:
   cloud:
     nacos.discovery.server-addr: 127.0.0.1:8848
@@ -19,17 +21,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-# sa-token 配置（多渠道会话管理）
-sa-token:
-  token-name: Authorization
-  timeout: 28800
-  active-timeout: -1
-  is-concurrent: true
-  is-share: false
-  token-style: uuid
-  is-log: false
-
-# shared-logging-starter 脱敏配置
+# shared-logging-starter 脱敏策略（环境相关的安全配置）
 shared:
   logging:
     obfuscate:
@@ -44,21 +36,8 @@ shared:
             - $.passwordHash
           strategy: FULL
 
-logging:
-  level:
-    com.example.auth: DEBUG
-    org.springframework.web: DEBUG
-    com.alibaba.nacos: ERROR
-    com.alibaba.cloud.nacos: ERROR
-
-# 多级缓存（jetcache 2.8 基础设施配置；业务缓存声明仍在 shared.cache.rules）
+# 多级缓存 remote 段（Redis 连接属环境相关；公共与 local 段在 application.yml）
 jetcache:
-  statIntervalMinutes: 5
-  areaInCacheName: false
-  local:
-    default:
-      type: caffeine
-      limit: 200
   remote:
     default:
       type: redis.lettuce
@@ -66,3 +45,10 @@ jetcache:
       broadcastChannel: auth-service
       valueEncoder: java
       valueDecoder: java
+
+logging:
+  level:
+    com.example.auth: DEBUG
+    org.springframework.web: DEBUG
+    com.alibaba.nacos: ERROR
+    com.alibaba.cloud.nacos: ERROR
