@@ -14,7 +14,11 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @author bff
  */
 @EnableDiscoveryClient
-@EnableExchangeClients(basePackages = "com.example.annuity.api")
+@EnableExchangeClients(basePackages = {
+  "com.example.approval.api",
+  "com.example.auth.api",
+  "com.example.annuity.api.kernel"
+})
 @SpringBootApplication(scanBasePackages = {
   "com.example.bff.intranet",
   "com.example.bff.shared"

@@ -6,12 +6,12 @@ spring:
       discovery:
         namespace: ${NACOS_NAMESPACE:public}
 
-# httpexchange 客户端代理配置：将下游服务 API 包映射到服务名
-# httpexchange-spring-boot-autoconfigure 自动为 @HttpExchange 接口创建代理 Bean
-httpexchange:
-  clients:
-    com.example.annuity.api.kernel:
-      url: lb://annuity-service
+# httpexchange 客户端配置（库 io.github.danielliu1123:httpexchange 3.5.5）。
+# 配置前缀为 http-exchange（连字符），结构为 base-url（全局）+ channels[]（name/base-url/clients）。
+# 旧写法 httpexchange.clients.<package>.url 在 3.5.5 中不存在，配了也不生效（批次 73 端到端发现）。
+# internet-bff 仅调用 annuity-service，使用全局 base-url 即可。
+http-exchange:
+  base-url: lb://annuity-service
 
 logging:
   level:

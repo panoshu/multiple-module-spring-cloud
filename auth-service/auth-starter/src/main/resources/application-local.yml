@@ -46,6 +46,21 @@ jetcache:
       valueEncoder: java
       valueDecoder: java
 
+# 内存组织目录（批次 67）：本地联调启用，为计划选择/审批人解析提供计划层级数据。
+# 生产接入真实组织目录后关闭，切回 StubProductGateway/HttpProductGateway。
+auth:
+  org-directory:
+    enabled: true
+    plans:
+      - plan-no: P-1
+        product-no: PROD-1
+        customer-no: C-1
+        name: 联调测试计划
+      - plan-no: P-0
+        product-no: PROD-1
+        customer-no: C-1
+        name: 联调父计划
+
 logging:
   level:
     com.example.auth: DEBUG

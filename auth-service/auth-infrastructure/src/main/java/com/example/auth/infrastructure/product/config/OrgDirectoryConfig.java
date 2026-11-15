@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Optional;
  *
  * @author auth-infrastructure
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties(PlanDirectoryProperties.class)
 public class OrgDirectoryConfig {
@@ -35,6 +37,7 @@ public class OrgDirectoryConfig {
     List<PlanSnapshot> snapshots = properties.getPlans().stream()
       .map(OrgDirectoryConfig::toSnapshot)
       .toList();
+    log.info("InMemoryProductGateway 已注册（批次 67），计划数={}", snapshots.size());
     return new InMemoryProductGateway(snapshots);
   }
 

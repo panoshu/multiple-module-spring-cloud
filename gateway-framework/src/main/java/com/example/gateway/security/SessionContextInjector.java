@@ -105,6 +105,7 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
     ChannelType channel = ChannelType.fromPath(path);
     ChannelType loginChannel = channel != null ? channel : resolveLoginChannel();
     if (loginChannel == null) {
+      log.warn("[SessionContextInjector] 未识别到已登录渠道，跳过会话注入: path={}", path);
       return chain.filter(exchange);
     }
 
@@ -117,6 +118,8 @@ public class SessionContextInjector implements GlobalFilter, Ordered {
     try {
       loginId = stpLogic.getLoginIdAsString();
     } catch (Exception e) {
+      log.warn("[SessionContextInjector] 渠道会话读取异常，跳过会话注入: path={}, channel={}", path,
+        loginChannel, e);
       return chain.filter(exchange);
     }
     if (loginId == null || loginId.isBlank()) {

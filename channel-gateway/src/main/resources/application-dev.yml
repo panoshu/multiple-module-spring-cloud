@@ -60,31 +60,56 @@ spring:
           filters:
             - StripPrefix=1
         # auth-service 通用路由(管理接口)
+        # 不 StripPrefix：auth 侧映射本身带 /auth 前缀（SessionApi @HttpExchange("/auth")），
+        # 转发 /auth/login → auth /auth/login（批次 73 修正此前误剥导致 404）
         - id: auth-service-admin-route
           uri: lb://auth-service
           predicates:
             - Path=/auth/**
+        # ============ 业务服务(渠道前缀直通，便于联调) ============
+        # SaRouter 按 /internet|/hq|/branch 前缀路由 StpLogic，业务请求必须带渠道前缀；
+        # 具体路径的路由必须排在 /internet/**(BFF) 之前
+        - id: internet-annuity-route
+          uri: lb://annuity-service
+          predicates:
+            - Path=/internet/annuity/**
+          filters:
+            - StripPrefix=1
+        - id: internet-file-route
+          uri: lb://file-service
+          predicates:
+            - Path=/internet/file/**
+          filters:
+            - StripPrefix=1
+        - id: internet-approval-route
+          uri: lb://approval-service
+          predicates:
+            - Path=/internet/approval/**
           filters:
             - StripPrefix=1
         # ============ BFF(渠道聚合层) ============
+        # StripPrefix 后 PrefixPath 补上 BFF 的 context-path，否则 BFF 端 404
         - id: internet-bff-route
           uri: lb://internet-bff
           predicates:
             - Path=/internet/**
           filters:
             - StripPrefix=1
+            - PrefixPath=/internet-bff
         - id: intranet-bff-hq-route
           uri: lb://intranet-bff
           predicates:
             - Path=/hq/**
           filters:
             - StripPrefix=1
+            - PrefixPath=/intranet-bff
         - id: intranet-bff-branch-route
           uri: lb://intranet-bff
           predicates:
             - Path=/branch/**
           filters:
             - StripPrefix=1
+            - PrefixPath=/intranet-bff
         # ============ 业务服务(开发环境直连，便于联调) ============
         - id: integration-service-route
           uri: lb://cjannuity-channel-integration
@@ -134,6 +159,7 @@ auth:
       - /actuator/**
       - /actuator
       - /favicon.ico
+      - /auth/login
       - /internet/auth/login
       - /hq/auth/login
       - /branch/auth/login

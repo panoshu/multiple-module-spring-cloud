@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS t_business_application
 ),
   create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted INT DEFAULT 0,
+  deleted BOOLEAN DEFAULT FALSE,
   version INT DEFAULT 0,
   PRIMARY KEY
 (
@@ -213,7 +213,7 @@ CREATE TABLE IF NOT EXISTS t_business_batch
 ),
   create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted INT DEFAULT 0,
+  deleted BOOLEAN DEFAULT FALSE,
   version INT DEFAULT 0,
   PRIMARY KEY
 (
@@ -322,7 +322,7 @@ CREATE TABLE IF NOT EXISTS t_business_form
 ),
   create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted INT DEFAULT 0,
+  deleted BOOLEAN DEFAULT FALSE,
   version INT DEFAULT 0,
   PRIMARY KEY
 (
@@ -354,7 +354,7 @@ CREATE TABLE IF NOT EXISTS t_business_step_execution
   updated_by          VARCHAR(64),
   create_time         TIMESTAMP    NOT NULL,
   update_time         TIMESTAMP    NOT NULL,
-  deleted             INT          NOT NULL DEFAULT 0,
+  deleted             BOOLEAN      NOT NULL DEFAULT FALSE,
   version             INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
@@ -381,7 +381,7 @@ CREATE TABLE IF NOT EXISTS t_business_external_interaction
   updated_by           VARCHAR(64),
   create_time          TIMESTAMP    NOT NULL,
   update_time          TIMESTAMP    NOT NULL,
-  deleted              INT          NOT NULL DEFAULT 0,
+  deleted              BOOLEAN      NOT NULL DEFAULT FALSE,
   version              INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS t_business_event_receipt
   updated_by     VARCHAR(64),
   create_time    TIMESTAMP    NOT NULL,
   update_time    TIMESTAMP    NOT NULL,
-  deleted        INT          NOT NULL DEFAULT 0,
+  deleted        BOOLEAN      NOT NULL DEFAULT FALSE,
   version        INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );

@@ -40,6 +40,20 @@ shared:
       segment_buffer:
         mode: L1_ONLY
         ttl: 24h
+  # shared-logging-starter 的 SanitizationProperties 强制校验（@NotNull/@NotEmpty），
+  # 需要最小合法配置；真实启动首次触发（E2E 由 application-test.yml 提供）。
+  # 默认关闭脱敏，环境相关安全策略由各环境/Nacos 覆盖开启
+  logging:
+    obfuscate:
+      global:
+        enable: false
+        replacement: "***"
+        enable-wildcard-paths: false
+      fields:
+        password:
+          aliases:
+            - $.password
+          strategy: FULL
 
 trace:
   context:
