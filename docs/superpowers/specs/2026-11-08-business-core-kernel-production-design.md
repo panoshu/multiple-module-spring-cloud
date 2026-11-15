@@ -2062,3 +2062,12 @@ Application 层按用例拆分：
 - **TDD**：`DistributedLockAssemblyTest` 2 项（starter 注册唯一 `DistributedLock` Bean、实现为 Redis 通道非本地降级），先编译红灯（starter 类不在 classpath）→ 引入依赖后转绿。
 - **验证**：kernel infrastructure 92（+2）/ application 226 / arch-tests 17 / annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 业务代码与 DDL 改动、零 DDL。
 - **结论**：§21 验收核对表仍无 ⚠️/❌；首次复核发现的 3 个装配/配置缺口中，lock 与 MDC 已修、`httpexchange` 按决策保留。**仍未处理**：生产 Redis 可达性、端到端 HTTP 验证、#4 真 Redis + 多 JVM 集成（待环境）、会话签名密钥环境变量注入，以及仓库外另行立项项。
+
+### 23.79 批次 72 范围边界（本地基础设施配置对齐）
+
+- **来源**：用户指出本地 Redis / PG / Nacos 已在其它服务配好且可正常连接，要求把 Redis 配置「拿过来」用于新引入的分布式锁链路。详见 `2026-11-15-decisions-implementation.md` §8。
+- **核实与落地**：`auth`/`file`/`channel-gateway` 已有 `spring.data.redis` = `127.0.0.1:6379` / db0 / `password: redis`，PG `127.0.0.1:5432/pgdb?currentSchema=schema_demo` 与 Nacos `127.0.0.1:8848` 全仓一致；但承载 kernel 的 annuity 与 approval、integration 缺 Redis 段，file 缺 `password`。故补齐 4 处 `application-local.yml`，PG / Nacos 零改动。annuity 主配置仍不无条件 `include: local`（批次 47），本地开发显式激活 local profile。
+- **连通性实证**：三端口全通；真实 Lettuce 验证「无密码」与「`password: redis`」两种写法均 PING 成功（本地 Redis 未设密码，但照搬现有写法安全），故按用户要求原样复用。
+- **新增条件测试**：`LocalRedisConnectionTest`（`@EnabledIfEnvironmentVariable(KERNEL_REDIS_INTEGRATION=true)`，日常跳过），显式启用 2 项全绿；#4 的单 JVM 真 Redis 连通性部分完成。
+- **验证**：全仓 `mvn test-compile`、arch 17、annuity E2E 8、kernel infra 94（2 条件跳过）全绿；`git diff --check` 通过；零生产 Java 代码改动、零 DDL。
+- **结论**：kernel 分布式锁链路的本地 Redis 连接配置齐备，四个业务服务 Redis 配置统一。**仍未处理**：#4 多 JVM 真 Redis 并发集成（待编排环境）、生产 Redis 可达性、端到端 HTTP 验证、会话密钥环境变量注入。

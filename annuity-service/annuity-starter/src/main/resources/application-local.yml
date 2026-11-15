@@ -3,6 +3,13 @@ spring:
     nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
     loadbalancer:
       enabled: true
+  # 本地 Redis：kernel 引入 shared-lock-starter 后，启动期 PING 校验与流程推进锁依赖此连接
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      password: redis
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
     username: user_demo

@@ -87,3 +87,14 @@
 3. #4 真 Redis + 多 JVM 并发集成测试（环境前置条件与用例设计见 `2026-11-15-non-code-items-closure.md` §5）。
 4. 会话签名密钥用环境变量注入（local 仍是 `dev-` 占位）。
 5. 其余服务若也要输出流程 MDC，复制 annuity 的 `logback-spring.xml` 片段即可（它们只写 `traceId`，不写 kernel 的 4 个流程键）。
+
+---
+
+## 8. 批次 72：本地 Redis / PG / Nacos 配置对齐
+
+- **来源**：用户指出本地 Redis / PG / Nacos 已在其它服务配好且可正常连接，要求把 Redis 配置「拿过来」，用于新引入的分布式锁链路（`127.0.0.1:6379`、`127.0.0.1:5432` 等）。
+- **核实**：`auth-service` / `file-service` / `channel-gateway` 的 `application-local.yml` 已有 `spring.data.redis` = `127.0.0.1:6379` / db0 / `password: redis`；PG `127.0.0.1:5432/pgdb?currentSchema=schema_demo`、Nacos `127.0.0.1:8848` 全仓一致。但**承载 kernel 的 annuity 与 approval、integration 缺 Redis 段**，file 的 `spring.data.redis` 缺 `password`。
+- **落地**：给 annuity / approval / integration 的 `application-local.yml` 补齐与 auth 相同的 `spring.data.redis` 段，给 file 补 `password: redis`；PG / Nacos 现有配置与用户给出的地址一致，**零改动**。annuity 主配置仍按批次 47 不无条件 `include: local`，本地开发显式 `--spring.profiles.active=local` 即加载。
+- **连通性实证**：Redis 6379 / PG 5432 / Nacos 8848 端口全通；裸协议带 `AUTH redis` 探测返回 `ERR ... without any password configured` 但 `PING` 为 `+PONG`；进一步用真实 Lettuce（`RedisAutoConfiguration` + `getConnection().ping()`）验证「无密码」与「`password: redis`」两种写法**均返回 PONG** —— 说明本地 Redis 未设密码，但照搬现有 `password: redis` 不会破坏连接，故按用户要求原样复用，未改写法。
+- **新增 `LocalRedisConnectionTest`**（`@EnabledIfEnvironmentVariable(KERNEL_REDIS_INTEGRATION=true)`，日常构建跳过）：显式启用跑 2 项全绿。这是 #4 的部分推进 —— **单 JVM 真 Redis 连通性已验证**，多 JVM 并发集成仍待编排环境。
+- **验证**：全仓 `mvn test-compile`、arch 17、annuity E2E 8、kernel infra 94（2 条件跳过）全绿；`git diff --check` 通过；零生产 Java 代码改动、零 DDL。

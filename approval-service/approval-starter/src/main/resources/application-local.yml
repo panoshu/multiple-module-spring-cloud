@@ -1,6 +1,13 @@
 spring:
   cloud:
     nacos.discovery.server-addr: 127.0.0.1:8848 # nacos / tkEAaj3OIk
+  # 本地 Redis：与 auth/file/annuity 保持同一连接配置
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      password: redis
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/pgdb?currentSchema=schema_demo&timezone=Asia/Shanghai
     username: user_demo
