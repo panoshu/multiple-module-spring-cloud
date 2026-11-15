@@ -2,10 +2,11 @@ package com.example.annuity.domain.service;
 
 import com.example.annuity.domain.errorcode.AnnuityDomainErrorCode;
 import com.example.annuity.domain.extension.AnnuityApplicationExtension;
+import com.example.annuity.domain.repository.AnnuityApplicationExtensionStore;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.business.aggregate.valueobject.BusinessExtension;
 import com.example.shared.domain.annotation.DomainService;
 import com.example.shared.exception.DomainException;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 年金扩展字段类型安全解析器
@@ -17,22 +18,24 @@ import com.example.shared.exception.DomainException;
  * @since 2026/7/22
  */
 @DomainService
+@RequiredArgsConstructor
 public class AnnuityExtensionResolver {
 
+  private final AnnuityApplicationExtensionStore extensionStore;
+
   /**
-   * 类型安全地解析年金扩展字段
+   * 类型安全地解析年金扩展字段（spec §6.2，批次 37b）。
+   * <p>
+   * 扩展数据已迁出 kernel 核心聚合，由业务服务自有存储按 {@code applicationId} 关联；
+   * 本方法保持「传入申请单」的签名，使既有 Handler/Extractor/Action 调用点零改动。
    *
    * @param app 业务申请单
    * @return 年金扩展字段
-   * @throws DomainException 如果扩展字段类型不匹配
+   * @throws DomainException 如果未挂载年金扩展字段
    */
   public AnnuityApplicationExtension resolve(BusinessApplication app) {
-    BusinessExtension ext = app.businessExtension();
-    if (ext instanceof AnnuityApplicationExtension annuityExt) {
-      return annuityExt;
-    }
-    throw new DomainException(AnnuityDomainErrorCode.INVALID_EXTENSION_TYPE)
-      .withLogDetail("期望 AnnuityApplicationExtension,实际: "
-        + (ext == null ? "null" : ext.getClass().getName()));
+    return extensionStore.load(app.id())
+      .orElseThrow(() -> new DomainException(AnnuityDomainErrorCode.INVALID_EXTENSION_TYPE)
+        .withLogDetail("申请单未挂载年金扩展字段: " + app.id().value()));
   }
 }

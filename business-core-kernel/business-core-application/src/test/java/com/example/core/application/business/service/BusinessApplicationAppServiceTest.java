@@ -1,5 +1,6 @@
 package com.example.core.application.business.service;
 
+import com.example.core.api.application.command.AdvanceStepCommand;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -62,6 +64,16 @@ class BusinessApplicationAppServiceTest {
     appService.advanceStep(appId);
 
     verify(flowOrchestrationService).advanceStep(appId);
+  }
+
+  @Test
+  void should_advance_application_via_cqe() {
+    AdvanceStepCommand command = new AdvanceStepCommand(
+      "APP001", "FORM_DETAIL_INGESTION", "REQ-1", "U-1", Map.of());
+
+    appService.advanceApplication(command);
+
+    verify(flowOrchestrationService).advanceApplication(command);
   }
 
   @Test

@@ -22,4 +22,15 @@ public interface ConditionEvaluationGateway {
    * @return 是否满足条件
    */
   boolean evaluate(String expression, Map<String, Object> context);
+
+  /**
+   * 预校验条件表达式语法（spec §7.1 发布约束，批次 34）。
+   * <p>
+   * 只做解析/编译，不注入运行时事实、不求值；空表达式（null/空白）视为无条件、直接通过。
+   * 语法非法时由实现抛出 {@code SystemException} 等配置错误，禁止静默放行，
+   * 以免发布后才在关键校验处被当作 false 跳过。
+   *
+   * @param expression 条件表达式
+   */
+  void validate(String expression);
 }

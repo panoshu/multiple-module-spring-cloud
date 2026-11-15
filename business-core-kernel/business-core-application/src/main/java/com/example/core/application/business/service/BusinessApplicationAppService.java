@@ -1,5 +1,6 @@
 package com.example.core.application.business.service;
 
+import com.example.core.api.application.command.AdvanceStepCommand;
 import com.example.core.application.engine.service.FlowOrchestrationService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
 import com.example.core.domain.business.repository.ApplicationRepository;
@@ -70,6 +71,20 @@ public class BusinessApplicationAppService {
   public void advanceStep(ApplicationId applicationId) {
     flowOrchestrationService.advanceStep(applicationId);
     log.info("推进申请单: applicationId={}", applicationId.value());
+  }
+
+  /**
+   * 按 CQE 推进申请单（spec §15.1，批次 35）。
+   * <p>
+   * 与 {@link #advanceStep(ApplicationId)} 的区别：本入口的命令携带 expectedStep 与
+   * requestNo，由编排器完成期望步骤校验与按 requestNo 幂等短路；旧入口供系统自动推进
+   * 与存量调用方使用，requestNo 仍由编排器内部派生。
+   */
+  @Transactional
+  public void advanceApplication(AdvanceStepCommand command) {
+    flowOrchestrationService.advanceApplication(command);
+    log.info("按命令推进申请单: applicationId={}, requestNo={}",
+      command.applicationId(), command.requestNo());
   }
 
   /**

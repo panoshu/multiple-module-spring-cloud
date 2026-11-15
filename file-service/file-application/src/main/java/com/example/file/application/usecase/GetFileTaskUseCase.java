@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GetFileTaskUseCase {
@@ -21,6 +22,15 @@ public class GetFileTaskUseCase {
                             SubTaskDataRepository subTaskDataRepository) {
     this.parseTaskRepository = parseTaskRepository;
     this.subTaskDataRepository = subTaskDataRepository;
+  }
+
+  /** 按外部协作幂等键查询任务 ID（响应丢失对账，spec §11.4）。 */
+  @Transactional(readOnly = true)
+  public Optional<String> findIdByRequestNo(String requestNo) {
+    if (requestNo == null || requestNo.isBlank()) {
+      return Optional.empty();
+    }
+    return parseTaskRepository.findByRequestNo(requestNo).map(t -> t.id().value());
   }
 
   @Transactional(readOnly = true)

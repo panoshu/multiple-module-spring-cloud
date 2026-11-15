@@ -1,12 +1,14 @@
 package com.example.core.infrastructure.business.repository;
 
+import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
+import com.example.shared.domain.event.EventBus;
 import com.example.shared.domain.repository.Repository;
+import com.example.shared.exception.SystemException;
 import com.example.shared.identifier.contract.Identifier;
 import com.mybatisflex.core.BaseMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.Serializable;
 import java.util.List;
@@ -34,10 +36,10 @@ public abstract class AbstractBusinessRepository<
   ID extends Identifier<?>,
   D> implements Repository<T, ID> {
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final EventBus eventBus;
 
-  protected AbstractBusinessRepository(ApplicationEventPublisher eventPublisher) {
-    this.eventPublisher = eventPublisher;
+  protected AbstractBusinessRepository(EventBus eventBus) {
+    this.eventBus = eventBus;
   }
 
   /**
@@ -60,6 +62,16 @@ public abstract class AbstractBusinessRepository<
    */
   protected abstract Object doId(D aDo);
 
+  /**
+   * 读取 DO 的乐观锁版本。
+   */
+  protected abstract Integer doVersion(D aDo);
+
+  /**
+   * 设置 DO 的乐观锁版本，更新时必须使用数据库当前版本。
+   */
+  protected abstract void doVersion(D aDo, Integer version);
+
   @Override
   public Optional<T> load(ID id) {
     if (id == null) {
@@ -75,14 +87,42 @@ public abstract class AbstractBusinessRepository<
       throw new IllegalArgumentException("聚合根不能为空");
     }
     D aDo = toDO(aggregate);
-    if (mapper().selectOneById((Serializable) doId(aDo)) == null) {
+    D existing = mapper().selectOneById((Serializable) doId(aDo));
+    if (existing == null) {
       mapper().insert(aDo);
       log.debug("新增聚合根: id={}", aggregate.id());
     } else {
-      mapper().update(aDo);
+      updateExisting(aggregate, aDo, existing);
       log.debug("更新聚合根: id={}, version={}", aggregate.id(), aggregate.version());
     }
     publishDomainEvents(aggregate);
+  }
+
+  private void updateExisting(T aggregate, D aDo, D existing) {
+    Integer persistedVersion = doVersion(existing);
+    if (persistedVersion == null) {
+      throw optimisticLockFailure(aggregate);
+    }
+
+    long domainVersion = aggregate.version().value();
+    if (domainVersion != persistedVersion && domainVersion != persistedVersion + 1L) {
+      throw optimisticLockFailure(aggregate);
+    }
+
+    // MyBatis-Flex 使用 DO 版本作为 WHERE 条件并执行 version + 1。
+    // markUpdated 已提前递增领域版本时，DO 必须回退为数据库当前版本。
+    doVersion(aDo, persistedVersion);
+    if (mapper().update(aDo) != 1) {
+      throw optimisticLockFailure(aggregate);
+    }
+    if (domainVersion == persistedVersion) {
+      aggregate.syncVersionAfterUpdate();
+    }
+  }
+
+  private SystemException optimisticLockFailure(T aggregate) {
+    return new SystemException(CoreInfraErrorCode.OPTIMISTIC_LOCK_FAILURE)
+      .withLogDetail("聚合保存发生版本冲突: id=" + aggregate.id());
   }
 
   @Override
@@ -119,9 +159,12 @@ public abstract class AbstractBusinessRepository<
   }
 
   /**
-   * 发布聚合根内部注册的领域事件并清空事件队列。
+   * 发布聚合根内部注册的领域事件并清空事件队列（spec §13.2 / §9.1）。
    * <p>
-   * 单条事件发布失败不影响其他事件，仅记录错误日志。
+   * 统一通过 {@link EventBus} 发布，由 shared-event 负责 Outbox 落库、本地分发、
+   * 远程投递与恢复；应用服务不再重复 publish，也不提前清空队列。
+   * 发布失败直接抛出，使应用服务的 {@code @Transactional} 连同业务写入一并回滚，
+   * 保证业务状态与 Outbox 严格同事务；失败时事件队列保留，便于重试后重新发布。
    */
   protected void publishDomainEvents(T aggregate) {
     List<DomainEvent> events = aggregate.domainEvents();
@@ -129,14 +172,9 @@ public abstract class AbstractBusinessRepository<
       return;
     }
     for (DomainEvent event : events) {
-      try {
-        eventPublisher.publishEvent(event);
-        log.debug("发布领域事件: eventId={}, type={}",
-          event.eventId(), event.getClass().getSimpleName());
-      } catch (Exception e) {
-        log.error("发布领域事件失败: eventId={}, type={}",
-          event.eventId(), event.getClass().getSimpleName(), e);
-      }
+      eventBus.publish(event);
+      log.debug("发布领域事件: eventId={}, type={}",
+        event.eventId(), event.getClass().getSimpleName());
     }
     aggregate.clearDomainEvents();
   }

@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/core/form")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "core.kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessFormController implements BusinessFormApi {
 
   private final BusinessFormAppService formAppService;

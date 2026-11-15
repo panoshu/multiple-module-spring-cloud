@@ -21,7 +21,7 @@ public class RocketMQEventDispatcher implements EventDispatcher {
     String destination = "event_%s:%s".formatted(integrationType, integrationType);
     // 补偿流(domainEvent=null)用 integrationType 作为 fallback key
     String key = domainEvent != null
-      ? domainEvent.eventId().toString()
+      ? domainEvent.eventId().value()
       : "recovery-" + integrationType;
 
     rocketMQTemplate.asyncSend(destination,

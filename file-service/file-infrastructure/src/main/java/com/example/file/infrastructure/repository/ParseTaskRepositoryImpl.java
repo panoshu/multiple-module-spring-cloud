@@ -8,9 +8,12 @@ import com.example.file.infrastructure.mapper.ParseTaskMapper;
 import com.example.file.types.FileTaskId;
 import com.example.shared.domain.aggregate.root.AggregateRoot;
 import com.example.shared.domain.event.DomainEvent;
+import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+
+import static com.example.file.infrastructure.entity.table.ParseTaskDOTableDef.PARSE_TASK_DO;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,16 @@ public class ParseTaskRepositoryImpl implements ParseTaskRepository {
   @Override
   public Optional<ParseTask> findById(FileTaskId id) {
     ParseTaskDO aDo = mapper.selectOneById(id.value());
+    return Optional.ofNullable(aDo).map(converter::toDomain);
+  }
+
+  @Override
+  public Optional<ParseTask> findByRequestNo(String requestNo) {
+    if (requestNo == null || requestNo.isBlank()) {
+      return Optional.empty();
+    }
+    ParseTaskDO aDo = mapper.selectOneByQuery(
+      QueryWrapper.create().where(PARSE_TASK_DO.REQUEST_NO.eq(requestNo)));
     return Optional.ofNullable(aDo).map(converter::toDomain);
   }
 

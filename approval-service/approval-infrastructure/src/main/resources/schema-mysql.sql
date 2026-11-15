@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS `t_approval_instance`
 (
   128
 ) NOT NULL COMMENT '业务单号',
+  `request_no` VARCHAR(128) DEFAULT NULL COMMENT '外部协作幂等键',
   `current_node_order` INT NOT NULL COMMENT '当前节点顺序',
   `status` VARCHAR
 (
@@ -173,6 +174,10 @@ CREATE TABLE IF NOT EXISTS `t_approval_instance`
   KEY `idx_business_no`
 (
   `business_no`
+),
+  UNIQUE KEY `uk_request_no`
+(
+  `request_no`
 ),
   KEY `idx_status`
 (

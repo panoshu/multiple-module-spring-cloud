@@ -20,6 +20,11 @@
       <groupId>com.example</groupId>
       <artifactId>approval-api</artifactId>
     </dependency>
+    <!-- 角色用户查询：跨服务只依赖 auth-api（批次 60） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>auth-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>shared-event-core</artifactId>

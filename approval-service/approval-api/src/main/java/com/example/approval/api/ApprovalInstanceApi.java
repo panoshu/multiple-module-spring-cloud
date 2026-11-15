@@ -76,6 +76,10 @@ public interface ApprovalInstanceApi {
   @PostExchange("/get")
   ApiResult<ApprovalInstanceDTO> get(@RequestBody @Valid GetApprovalInstanceRequest request);
 
+  /** 按外部协作幂等键查询，供响应丢失后对账（spec §12.3）。 */
+  @PostExchange("/get-by-request-no")
+  ApiResult<ApprovalInstanceIdResponse> getByRequestNo(@RequestBody @Valid GetByRequestNoRequest request);
+
   /**
    * 待审批列表
    *

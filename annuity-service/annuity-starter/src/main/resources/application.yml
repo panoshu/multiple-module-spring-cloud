@@ -22,8 +22,9 @@ spring:
         connect-timeout: 3s
         read-timeout: 30s
         connection-time-to-live: 30s
-  profiles:
-    include: local
+  # 不无条件激活 local：否则 prod 也带 local profile，KernelProductionReadinessValidator
+  # 会误判为非生产并跳过 fail-fast（P0-2）。本地开发请显式激活：
+  #   --spring.profiles.active=local
 
 mybatis-flex:
   mapper-locations: classpath*:/mapper/**/*.xml

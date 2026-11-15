@@ -304,6 +304,10 @@ CREATE TABLE IF NOT EXISTS t_file_parse_task
   errors JSONB,
   started_at TIMESTAMP,
   finished_at TIMESTAMP,
+  request_no VARCHAR
+(
+  128
+),
 
   created_by VARCHAR
 (
@@ -326,6 +330,7 @@ CREATE TABLE IF NOT EXISTS t_file_parse_task
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_biz_status ON t_file_parse_task(biz_type, status);
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_source_file ON t_file_parse_task(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_file_parse_task_create_time ON t_file_parse_task(create_time);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_file_parse_task_request_no ON t_file_parse_task(request_no);
 
 COMMENT
 ON TABLE  t_file_parse_task IS '文件解析任务表';

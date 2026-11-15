@@ -185,10 +185,9 @@ Every use case follows: load aggregate → invoke behavior method → `repositor
 
 ## Known Gaps
 
-- `business-core-api` is empty (placeholder for cross-service DTOs).
-- `business-core-adapter` has no code (controllers provided by business service adapters).
-- `BusinessConfigGateway` and `FileIntegrationGateway` have no default implementations in kernel — each business service must implement them.
-- Several approval-service methods are stubs: `listMyPendingApprovals` throws `UnsupportedOperationException`, `getApprovalHistory` returns empty list, `RoleUserGatewayImpl.getUsersInSamePlan` is a mock.
+- `business-core-api` now contains `@HttpExchange` APIs, CQE objects and DTOs (e.g. `BusinessProgressApi`, `AdvanceStepCommand`); `business-core-adapter` provides controllers, MapStruct converters and auto-configuration.
+- `BusinessConfigGateway` still has no kernel default implementation — each business service must implement it. `FileIntegrationGateway` is provided by kernel's `FileServiceIntegrationGateway` (`@ConditionalOnProperty`, overridable by business services).
+- approval-service query methods (`listApprovalFlows`/`listMyPendingApprovals`/`getApprovalHistory`) are implemented (batches 53–55); `RoleUserGatewayImpl` queries auth-api `PlanDirectoryApi` for SAME_PLAN / LEVEL_UP node resolution (batches 68–69). Organization-directory backing is an optional in-memory `ProductGateway` (disabled by default, `StubProductGateway` fallback); external master-data integration is out of repo scope. See `docs/superpowers/specs/2026-11-14-remaining-work-inventory.md` for the current gap list.
 
 ## Agent skills
 

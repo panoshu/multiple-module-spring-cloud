@@ -48,6 +48,23 @@
       <artifactId>shared-permission-starter</artifactId>
     </dependency>
 
+    <!-- spec §14：kernel 显式接入 shared 能力，不依赖宿主偶然提供 -->
+    <!-- 通用 API / 统一异常 / 链路追踪（MDC） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-web-starter</artifactId>
+    </dependency>
+    <!-- 不可变流程定义与只读规则缓存（生产可切 L2/MULTI，示例服务降级 L1_ONLY） -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-cache-starter</artifactId>
+    </dependency>
+    <!-- 步骤耗时 / HTTP 日志 / 脱敏 / MDC 管道 -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>shared-logging-starter</artifactId>
+    </dependency>
+
     <!-- 测试依赖:JUnit5 + AssertJ + Spring Test(MockHttpServletRequest) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

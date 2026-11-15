@@ -85,10 +85,10 @@
       <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- compile：EventAutoConfiguration 为 EventStore 自持的 ObjectMapper 显式注册 JavaTimeModule -->
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

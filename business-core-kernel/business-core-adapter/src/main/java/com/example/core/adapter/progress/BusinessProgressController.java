@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/core/progress")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "core.kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessProgressController implements BusinessProgressApi {
 
   private final BusinessProgressAppService progressAppService;

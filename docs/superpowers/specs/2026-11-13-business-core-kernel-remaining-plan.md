@@ -1,0 +1,414 @@
+# 生产级业务流程内核：剩余实现重构与推进计划
+
+> 日期：2026-11-13
+> 工作分支：`refactor/business-core-kernel-production`
+> 关联规格：`2026-11-08-business-core-kernel-production-design.md`（§23 台账记录至批次 25）
+> 状态：待评审确认后按批次编码；每批遵循「先写失败测试 → 实现 → 跑测试 → 全仓验证 → 提交推送」
+> 基线提交：`3a5a7386`（批次 25 完成等待步骤门面）
+
+---
+
+## 0. 文档目的
+
+本计划回答三个问题：
+
+1. **派发载荷持久化方式怎么选**（阶段 B 事务外派发的核心决策）；
+2. `FILE_*` 网关返回 `void`、拿不到 `externalTaskId` 怎么补；
+3. 当前实现与规格的差异有哪些、剩余工作如何拆小批次推进。
+
+约束（已确认，不再变更）：
+
+- **冻结 `annuity-service`**：不为 kernel 改造修改其业务代码、DDL 复制脚本、Repository 子类、注册类；仅作只读消费者用于编译与 E2E 验证。
+- **小步提交（§22）**：每批 ≤ 6–8 个文件，可独立验证、独立提交推送；不产出一个 15+ 文件的「超级批次」。
+- **领域层纯净**：domain 不依赖 Spring/DB/JSON 注解；application 不依赖 file/approval DTO。
+- **不追求跨系统强一致**：持久化状态机 + 本地短事务 + Outbox + 消费幂等 + 乐观锁/短锁。
+
+---
+
+## 1. 核心决策摘要（先看这里）
+
+| 决策点 | 结论 | 理由 |
+|---|---|---|
+| 派发载荷持久化 | **复用 `StepExecution.checkpoint_ref` 存紧凑 JSON**，按交互类型差异化：可重建参数不持久化 | 该列已存在于 kernel 双库与 annuity 三份 DDL，**零 DDL、零 annuity 改动**；语义即「检查点/恢复点」，与挂起点恢复载荷吻合 |
+| 静态配置引用 | 用 `StepDefinition.externalConfigRef` 承载 | 字段已存在（spec §7.1 要求），无需新增 |
+| `FILE_*` 网关 `externalTaskId` | SPI 新增**带返回值的 default 方法**，kernel 实现返回真实 taskId，annuity Mock 不重写返回 null | `invokeUpload`/`outboundApi.generate` 已拿到 taskId 却丢弃，改动面小；default 兼容 annuity，零 annuity 改动 |
+| 推进方式 | 阶段 B 拆成 **6 个小批次**（26–31），阶段 4 拆 4 个（32–35），阶段 5 拆 4 个（36–39） | 每批可独立验证、独立提交，回归面可控 |
+
+---
+
+## 2. 派发载荷持久化方案（详细）
+
+### 2.1 问题本质
+
+4 个挂起 Handler 目前在 `advanceStep` 的 `transactionTemplate` **事务内直调外部网关**（`triggerAsyncParsing` / `triggerOutboundGeneration` / `startApproval`），随后返回 `SUSPEND_ASYNC_WAIT`。阶段 B 要求把外部调用移到**事务外**（AFTER_COMMIT 监听器 / 恢复任务）。
+
+移出事务后，派发器必须能**重建调用参数**。参数分两类：
+
+| 参数 | 来源 | 可否从事务外重建 |
+|---|---|---|
+| `formId`、`sourceFileId` | `app.formId()` / `app.requireFileForParsing()` | 可（load app） |
+| `parseTemplateId`、`splitRules` | `configGateway.getFormParsingConfig(context)` | 可（context 由 app 重建） |
+| `startApproval(app, requestNo)` | `app` + 协作 `requestNo` | 可 |
+| `outboundFileTaskId`、`outboundTargetTemplateId` | `BusinessMetaContext.extensionFacts`（业务 SPI 注入） | **不可可靠重建** |
+| `supplementalData` | 当前恒为 `Map.of()` | 无需持久化 |
+
+关键事实：当前唯一的 `BusinessFactExtractor` 实现（`AnnuityFactExtractor`）注入的是 `businessType/customerNo/productNo/planNo/planType/initialContribution/hasForeignInvestment`，**并不注入 `outboundFileTaskId` / `outboundTargetTemplateId`**。即出站链路的凭证来源本身缺失（`OutboundGenerationHandler.resolveRequiredFact` 在真实业务里会抛「业务上下文缺少出站声明」）。
+
+### 2.2 候选方案对比
+
+| 方案 | 改动面 | 是否违反冻结 | 可恢复性 | 评价 |
+|---|---|---|---|---|
+| A. `ExternalInteraction` 新增 `dispatch_payload` 列 | DO/Converter/聚合 + 5 份 DDL（含 annuity 3 份） | **违反** | 完整 | 最贴合 spec，但与冻结冲突，且为示例服务做无效适配 |
+| B. **复用 `StepExecution.checkpoint_ref`（推荐）** | 仅 domain 加 1 个行为方法 + application 读写 | **不违反** | 完整（紧凑 JSON） | 列已存在、语义吻合、零 DDL、零 annuity |
+| C. 纯内存领域事件传递参数 | 不加列、不改 DDL | 不违反 | **崩溃不可恢复** | 违反 spec §9.2「不能只依赖内存监听」 |
+| D. 参数全部由 app+配置重建，不持久化 | 最小 | 不违反 | 部分（出站凭证丢失） | 出站参数不可重建，不满足 §9.2 可恢复要求 |
+
+**推荐方案 B**：用 `StepExecution.checkpoint_ref`（`VARCHAR(255)`）存**挂起点恢复载荷**的紧凑 JSON。它是 spec §7.2 明确允许的「可选的检查点或结果引用」，§16.4 也允许检查点用 JSON。
+
+### 2.3 按交互类型的差异化载荷
+
+| 类型 | 是否需持久化 | 载荷内容 | 理由 |
+|---|---|---|---|
+| `FILE_PARSE` | **不持久化** | 无 | formId/sourceFileId/parseTemplateId/splitRules 均可从 app + `configGateway` 重建 |
+| `APPROVAL` | **不持久化** | 无 | `startApproval(app, requestNo)` 参数全可重建 |
+| `FILE_OUTBOUND` | **持久化到 `checkpoint_ref`** | `{"fileTaskId":"...","targetTemplateId":"..."}`（紧凑 JSON） | 两个凭证不可重建，且都是短 ID，远小于 255 长度 |
+
+> `supplementalData` 当前恒为空 `Map.of()`，不纳入载荷；若未来业务需要，再评估 255 长度是否升级为独立列（届时单独评审 annuity 处置）。
+
+### 2.4 需要新增的（最小）结构
+
+- `StepExecution` 增加**一个领域行为**：`recordCheckpoint(String checkpointRef)`（或语义更准的 `recordDispatchPayload(String)`），内部校验长度 ≤ 255、调 `markUpdated`。domain 无框架依赖，仅字符串操作。
+- 派发器读载荷路径：`ExternalInteraction.stepExecutionId()` → `stepExecutionRepository.load(...)` → `checkpointRef()` → 解析 JSON。
+- 序列化用**手工拼接/解析紧凑 JSON**（避免在 application/domain 引入 Jackson 依赖；可放在 infrastructure 提供一个小工具，或由 application 注入已有 `ObjectMapper`）。**不要在 domain 用 JSON 注解**。
+
+### 2.5 为什么不推荐直接复用 `ExternalInteraction.result_ref`
+
+`result_ref` 语义是「外部结果引用」（回调成功后写入），把派发载荷塞进去会污染状态语义、且回调时会被覆盖。`checkpoint_ref` 才是「恢复点」的正确载体。
+
+---
+
+## 3. `FILE_*` 网关 `externalTaskId` 补全方案
+
+### 3.1 现状
+
+- `FileServiceIntegrationGateway.invokeUpload(...)` 已拿到 `result.data().fileTaskId()` 但 `void` 丢弃；
+- `triggerOutboundGeneration(...)` 已拿到 `outboundApi.generate(...)` 的 `OutboundFileIdResponse.fileTaskId()` 但 `void` 丢弃；
+- `ApprovalIntegrationGateway.startApproval(...)` 已返回 `String instanceId`（无需改）。
+
+### 3.2 约束
+
+`ExternalInteraction.markWaitingCallback(externalTaskId, operator)` **要求 externalTaskId 非空**。而 SPI 现有 `void` 方法被 annuity 的 `MockFileIntegrationGateway` 实现，**直接改签名会让 annuity 编译失败**（违反冻结）。
+
+### 3.3 方案：SPI 加 default 带返回值重载
+
+- 在 `FileIntegrationGateway` 新增：
+  - `default String triggerAsyncParsingAndGetTaskId(...)` → 默认调用旧 `triggerAsyncParsing(...)` 并返回 `null`；
+  - `default String triggerOutboundGenerationAndGetTaskId(...)` → 默认调用旧 `triggerOutboundGeneration(...)` 并返回 `null`。
+- kernel 的 `FileServiceIntegrationGateway` **覆盖**这两个 default 方法，返回真实 taskId。
+- annuity 的 `MockFileIntegrationGateway` **不重写** → 返回 `null`。
+
+### 3.4 拿不到 taskId 时的降级（重要）
+
+派发器在 `externalTaskId == null` 时**不能** `markWaitingCallback`（会抛不变量异常）。处理：
+
+- 协作保持 `DISPATCHING`，不强行置 `WAITING_CALLBACK`；
+- 由既有 `ExternalInteractionRecoveryService.reclaimStaleDispatching` 把滞留 `DISPATCHING` 回收为 `UNKNOWN`，再走对账；
+- 这正好覆盖 annuity 示例「只 mock、不返回 taskId」的能力边界，**不破坏 E2E**（E2E 主流程不经 SUSPEND）。
+
+---
+
+## 4. 当前实现与规格的差异分析
+
+### 4.1 已实现且与规格一致（无需再动）
+
+- 三类核心概念：`ProcessDefinition` / `StepExecution` / `ExternalInteraction` 领域模型 + 持久化 + 运行时接线。
+- 宏观状态机：`ApplicationStatus` 九态 + 合法迁移表 + 终态约束（§8.1）；`StepExecutionState`（§8.2）、`ExternalInteractionStatus` 八态（§8.3）、`BusinessForm`/`BusinessBatch` 生命周期（§8.4/§8.5）。
+- 可靠事件：Repository→`EventBus` 统一发布（§13.2）、Outbox 序列化修复（批次 8）、发布失败事务回滚（§9.1）。
+- 幂等：`EventReceipt`（§7.4）+ 3 个入站监听器短路（§9.2 阶段 C 第 2 步）。
+- 并发三层：`DistributedLock` 短锁（§9.3 第一层）+ 乐观锁 + 唯一约束。
+- `IdService` 号段接入 + `t_id_generator` DDL（§16.3）。
+- 版本化定义存储与发布（§7.1/§19.1，组合式）。
+- 恢复机制四类动作 + `@Scheduled` 兜底 + AFTER_COMMIT 尽快认领（§19.2 部分）。
+- 阶段 C 回调关联（`CallbackCorrelationService`）+ 完成等待步骤门面（`completeWaitingStep`）。
+- file/approval 两侧 requestNo 幂等闭环 + 按 requestNo 查询 API（§11.4/§12.3）。
+
+### 4.2 已实现但有偏差 / 过渡形态（需后续收敛）
+
+| # | 偏差 | 现状 | 规格要求 | 收敛批次 |
+|---|---|---|---|---|
+| D1 | 表名 | `t_step_execution` | `t_business_step_execution`（§16.1） | 36 |
+| D2 | `request_no` 列宽 | kernel 侧两表仍 `VARCHAR(64)`（`t_step_execution` 已在批次 14 扩 128，`t_business_external_interaction` 仍 64） | 统一 128（评审 #7） | 36 |
+| D3 | 命名 | `StepExecutionStatus`（Handler 返回值）vs `StepExecutionState`（持久化） | §8.2 本身区分「Handler 返回值」与持久化状态；批次 32 评估后决策**保留两者、不重命名公开 SPI**，以显式边界 + `StepExecutionSemanticsContractTest` 契约测试收敛（见设计文档 §23.33） | 32（已收敛） |
+| D4 | `requestNo` 来源 | 编排器内部派生（`app:step:attempt` / `SE-<stepExecutionId>`） | §15.1 由推进 Command 携带 | 35（CQE 化） |
+| D5 | `InteractionType` 推断 | 按 `mainProcessor` 名关键字推断 | `StepDefinition.actionType()` 显式声明（§7.1） | 31 |
+| D6 | 出站凭证来源 | `extensionFacts`（无 extractor 注入） | 应由入站 FILE_PARSE 协作的 `externalTaskId` 或定义配置提供 | 30 |
+| D7 | 申请单等待态 | 挂起时未置 `WAITING_EXTERNAL` | 外部受理后进入 `WAITING_EXTERNAL`（§9.2 阶段 B 第 4 步） | 31 |
+| D8 | 遗留字段 | 已全部迁出（37a 材料能力 / 37b 业务扩展 / 37c 解析文件引用），核心聚合无 §6.2 点名字段 | §6.2 | 37（已完成） |
+| D9 | 领域事件数量 | 仅 6 个（`ApplicationSpawnedEvent` 等） | §13.1 列 14 个（缺 StepStarted/StepCompleted/ApplicationCompleted/ExternalInteractionCompleted 等） | 按需，阶段 4/5 |
+| D10 | 应用服务拆分 | 未按 §17 建 `StepExecutionAppService`/`ExternalInteractionAppService`/`EventCallbackAppService`/`ProcessDefinitionAppService` | 单类单变化原因 | 阶段 4 拆分 |
+| D11 | 锁释放时机 | 锁早于外层 `@Transactional` 提交释放 | §9.1 提交后释放 | 阶段 5 精修 |
+| D12 | `FileIntegrationGateway` 暴露 `file-types.FileId` | SPI 仍引用 file 类型 | §11.1 用 kernel `FileRef`/字符串 | 阶段 4 |
+| D13 | `PROCESSING` 存量状态 | 仍兼容归一 | 阶段 5 清理移除 | 38 |
+
+### 4.3 尚未实现（本计划主体）
+
+- **阶段 B 事务外派发器**（§9.2 阶段 B）：认领 → DISPATCHING → 事务外调网关 → 存 externalTaskId → WAITING_CALLBACK/UNKNOWN。
+- 部分成功 → `RETRY_WAIT`（评审 #8 默认策略未接线）。
+- 重试退避策略（§18.2）。
+- 多实例恢复任务行认领（§19.2「优先数据库行认领或唯一状态更新」）。
+- 批次统计对账重算（§6.4/§19.2）。
+- 监控指标（§19.3）。
+- MDC 统一携带 `applicationId/stepExecutionId/requestNo/businessType/traceId`（§14）。
+- `shared-cache-starter` 多级缓存接入（§14/§19.1）。
+- 条件表达式语法预校验（§7.1/§23.4）。
+- 扩展动作 beanName 存在校验（§19.1）。
+- CQE 化 / Adapter Converter 化（§15/§17）。
+- starter 显式接入与生产配置缺失 fail-fast（§14）。
+- §21.3 外部协作验收测试、§21.5 最终验收。
+
+---
+
+## 5. 推进计划（拆小批次）
+
+> 每批给出：目标、改动文件、红灯测试点、实现要点、验证命令、规模估计。
+> 通用验证基线：目标模块测试 + `mvn test -pl business-core-kernel/business-core-infrastructure -am` + `mvn test -pl business-core-kernel/business-core-application -am` + `mvn test -pl arch-tests -am -Dtest=ArchitectureInvariantTest` + `mvn test-compile -DskipTests` + annuity E2E（`AnnuityEndToEndTest`）+ `git diff --check`。
+
+### 阶段 B：事务外派发（批次 26–31）
+
+#### 批次 26 — StepExecution 增加检查点写入行为（纯领域）
+- 目标：让 `StepExecution.checkpointRef` 可被业务写入，作为挂起点恢复载荷。
+- 改动：`StepExecution.java`（新增 `recordDispatchPayload(String)`，长度 ≤255 校验 + `markUpdated`）+ `StepExecutionTest.java`。
+- 红灯测试：写入后 `checkpointRef()` 返回载荷；超长抛 `DomainException`；调用后版本/操作人更新。
+- 实现要点：domain 无框架依赖，仅字符串处理；不改 DDL。
+- 规模：2 文件。
+
+#### 批次 27 — FILE_* 网关补 externalTaskId（SPI default + kernel 实现）
+- 目标：`FileIntegrationGateway` 能返回真实 fileTaskId，annuity Mock 零改动。
+- 改动：`FileIntegrationGateway.java`（2 个 default 带返回值方法）+ `FileServiceIntegrationGateway.java`（覆盖返回 taskId）+ `FileServiceIntegrationGatewayTest`（新增/调整）。
+- 红灯测试：default 方法默认返回 null；kernel 实现返回真实 taskId。
+- 实现要点：`invokeUpload` 改返回 `result.data().fileTaskId()`；`triggerOutboundGeneration` 返回 `OutboundFileIdResponse.fileTaskId()`；旧 `void` 方法保留。
+- 规模：3–4 文件。
+
+#### 批次 28 — 派发器骨架（ExternalInteractionDispatcher）
+- 目标：新增应用层 `ExternalInteractionDispatcher`，认领 PENDING_DISPATCH → DISPATCHING →（本批先只到 DISPATCHING，不调网关）。
+- 改动：`ExternalInteractionDispatcher.java`（新）+ `ExternalInteractionDispatcherTest.java`（新）+ `ExternalInteractionRecoveryService`（复用认领，不重复实现）。
+- 红灯测试：认领后状态 DISPATCHING；单条失败隔离；空表 no-op。
+- 实现要点：与批次 17 的 `claimPendingDispatch` 区分职责——本类是「真正派发」入口，下一批接网关；不重复造扫描逻辑。
+- 规模：3–4 文件。
+
+#### 批次 29 — FILE_PARSE 改为登记意图 + 派发器接线（可重建参数）
+- 目标：`DefaultFormParsingHandler` 不再事务内直调网关，改为只返回挂起；派发器在事务外重建参数并调用。
+- 改动：`DefaultFormParsingHandler.java`、`ExternalInteractionDispatcher.java`（接 FILE_PARSE）、`FlowOrchestrationService`（SUSPEND 分支参数准备）+ 测试。
+- 红灯测试：Handler 不再调用 `fileIntegrationGateway`；派发器调用了网关并推进到 WAITING_CALLBACK（taskId 非空时）。
+- 实现要点：FILE_PARSE 参数从 app + `configGateway` 重建，不持久化载荷。
+- 规模：5–6 文件。
+
+#### 批次 30 — FILE_OUTBOUND 载荷持久化 + 出站参数重建
+- 目标：出站参数不再依赖 `extensionFacts`，改从**入站 FILE_PARSE 协作的 `externalTaskId`**（或定义配置 `externalConfigRef`）重建；不可重建的写入 `checkpoint_ref`。
+- 改动：`OutboundGenerationHandler.java`、`ArchiveSubmissionHandler.java`、`ExternalInteractionDispatcher.java`（接 FILE_OUTBOUND）+ `StepExecution`（读载荷）+ 测试。
+- 红灯测试：FILE_OUTBOUND 载荷写入 `checkpoint_ref`；派发器读载荷调网关；拿不到 taskId 时停留 DISPATCHING（不抛不变量异常）。
+- 实现要点：解决 D6「凭证来源缺失」——优先从入站协作的 externalTaskId 取，而非 extensionFacts。
+- 规模：6–7 文件。
+
+#### 批次 31 — 申请单 WAITING_EXTERNAL 接线 + 派发后推进
+- 目标：外部受理后把申请单置 `WAITING_EXTERNAL`（§9.2 阶段 B 第 4 步），并让 `completeWaitingStep` 的归位逻辑有真实数据来源。
+- 改动：`FlowOrchestrationService`（SUSPEND/派发后 `app.waitForExternal()`）、`ExternalInteractionDispatcher`（受理后推进协作 + 置等待态）+ 测试。
+- 红灯测试：派发成功后 `app.status()==WAITING_EXTERNAL`、协作 `WAITING_CALLBACK`；回调 `APPLIED` 时门面归位推进。
+- 实现要点：解决 D7； InteractionType 仍暂按 mainProcessor 推断，D5 的 actionType 显式声明在阶段 4 收敛。
+- 规模：4–5 文件。
+
+### 阶段 4：收敛可选能力与公共 API（批次 32–35）
+
+#### 批次 32 — `StepExecutionStatus`（Handler 返回值）与 `StepExecutionState` 统一决策
+- 目标：明确两者职责边界，必要时将 Handler 返回值改为独立结果对象或收敛命名，消除 §8.2 语义分叉。
+- 改动：评估后小步重命名/引入 `StepHandlerResult` + 受影响 Handler/编排器 + 测试。
+- 红灯测试：命名统一后行为不变。
+- 规模：4–6 文件（取决于决策）。
+
+#### 批次 33 — 批次统计对账重算（§6.4/§19.2）
+- 目标：提供按批次下全部申请重算计数与终态的对账能力，消费端按 eventId 幂等。
+- 改动：`BusinessBatchAppService`/`BusinessBatch`（重算）+ 恢复任务接入 + 测试。
+- 红灯测试：手工造成计数偏差后，重算恢复一致；重复事件不重复计数。
+- 规模：4–6 文件。
+- 状态：已完成（设计文档 §23.34）。「消费端按 eventId 幂等」以全量重算的绝对赋值幂等性覆盖；增量事件消费端与 `EventReceiptGateway` 短路留阶段 5。
+
+#### 批次 34 — 条件表达式语法预校验（§7.1/§23.4）
+- 目标：`ConditionEvaluationGateway` 增加 `validate`，SpEL/Aviator/QLExpress 三实现支持，定义发布时校验全部步骤条件。
+- 改动：`ConditionEvaluationGateway` + 3 实现 + `ProcessDefinitionPublishService` + 测试。
+- 红灯测试：非法表达式发布被拒绝；合法表达式通过。
+- 规模：5–6 文件。
+- 状态：已完成（设计文档 §23.35）。`validate` 只做语法检查，不求值；跨引擎表达式语法不归一化。
+
+#### 批次 35 — CQE 化与推进 Command 携带 requestNo（§15.1/§17）
+- 目标：推进类 Command 统一携带 `applicationId/expectedStep/requestNo/operator`，`requestNo` 不再仅由编排器内部派生。
+- 改动：`business-core-api` Command + `FlowOrchestrationService` 入口 + Adapter Converter + 测试。
+- 红灯测试：同一 requestNo 重复推进只执行一次；缺 expectedStep 拒绝。
+- 规模：6–8 文件（可能再拆两批）。
+- 状态：已完成（设计文档 §23.36）。采用新增 `advanceApplication(CQE)` 入口而非改 `advanceStep(ApplicationId)` 签名，避免改 annuity 与重载歧义；其余推进类 Command 的 CQE 化留阶段 5。
+
+### 阶段 5：清理与生产验收（批次 36–39）
+
+#### 批次 36 — 表名与列宽统一 + eventId().value()
+- 目标：`t_step_execution` → `t_business_step_execution`（DO/TableDef/5 份 DDL），`request_no` 统一 128；`JdbcEventStore` 等 `eventId().toString()` 改 `value()`（含存量双读兼容）。
+- 改动：DO/DDL/表名 + `shared-event-core` 若干 + 测试。
+- 红灯测试：重命名后读写正常；event_id 写入为 ULID 字符串。
+- 规模：6–8 文件（注意 annuity 复制脚本处置需单独确认，或只改 kernel 双库）。
+- 状态：**已完成**（设计文档 §23.37 / §23.38）。列宽 128 + `eventId().value()` 统一（零 annuity 改动）+ 表名统一为 `t_business_step_execution`（经开放点 3 确认，临时解冻 annuity 4 个 DDL/E2E 文件，不碰业务实现）。
+
+#### 批次 37 — 遗留字段迁移（§6.2）
+- 目标：`planMaterials`/`packageFile` 迁移到可选材料能力，`BusinessExtension`/`parsedJsonFileId` 迁出核心聚合。
+- 改动：`BusinessApplication` + 业务服务自有聚合 + Converter + 测试。
+- 红灯测试：核心聚合不再持有这些字段，行为不变。
+- 规模：6–8 文件（可能拆两批）。
+- **拆分（实测影响面 20+ 文件，设计文档 §23.39）**：
+  - 37a：`planMaterials`/`packageFile` → 可选材料能力 `ApplicationMaterialState`（内存态，零 DDL、零 annuity 改动）。**已完成**（反射契约锁 + 7 项值对象测试）。
+  - 37b：`BusinessExtension` → annuity 业务服务自有聚合（需新增 annuity 存储、改 3 处业务读取点、移除 kernel DO 列与 5 份 DDL）。
+  - 37c-1：解析文件引用写入侧（kernel SPI + annuity 自有实现 + 表单裂变保存），**已完成**（§23.41）。时序上摄入步骤早于 `ExternalInteraction` 创建，故不落到规格原建议的协作记录，改用 37b 同构的业务服务自有存储。
+  - 37c-2：读取侧改从 SPI 读，移除 `parsedJsonFileId` 字段/`requireFileForParsing`/`createFromForm` 参数、DO 列与 5 份 DDL 列/索引/COMMENT，改 7 处调用点与 E2E。
+- 状态：**全部完成**（§23.39 / §23.40 / §23.41 / §23.42）。核心聚合已无 `planMaterials`/`packageFile`/`businessExtension`/`parsedJsonFileId`，D8 收敛。
+
+#### 批次 38 — starter 显式接入与生产 fail-fast（§14）
+- 目标：显式接入 web/cache/logging/permission，生产配置缺失 fail-fast；MDC 统一携带。
+- 改动：各 starter 依赖与自动配置 + MDC + 测试。
+- 规模：4–6 文件。
+- **拆分（设计文档 §23.43）**：38-1 = adapter 显式依赖 web/cache/logging starter + `KernelProductionReadinessValidator` 生产 fail-fast（**已完成**）；38-2 = MDC 统一携带 applicationId/stepExecutionId/requestNo/businessType/traceId（待推进）。
+- 状态：**全部完成**（§23.43 / §23.44）。38-1 显式依赖 + 生产 fail-fast，38-2 MDC 统一携带流程标识。
+
+#### 批次 39 — §21.3 外部协作验收测试 + §21.5 最终验收
+- 目标：补相同 requestNo 重复推进、并发推进、乐观锁冲突、重复/乱序事件、超时 UNKNOWN、响应丢失对账、服务重启恢复、文件部分成功等契约测试。
+- 改动：新增契约/集成测试（不改生产代码）。
+- 规模：4–8 测试文件。
+- 拆分（按「不要超级计划」）：**39-1**（§21.3 外部协作组合验收，`ExternalCollaborationAcceptanceTest` 7 项）+ **39-2**（§21.5 最终验收契约 `FinalAcceptanceContractTest` + §21.1–§21.5 逐条验收核对表 + 阶段 5 收口）。
+- 状态：**全部完成**（设计文档 §23.45 / §23.46）。39-1 新增 `ExternalCollaborationAcceptanceTest` 7 项组合验收；39-2 新增共享夹具与 `FinalAcceptanceContractTest` 4 项，并在 §23.46 落地 §21.1–§21.5 共 30 条逐条验收核对表，如实标注 E2E 禁用自动推进、§21.4 架构不变量未全机器化、多节点真并发未集成测试等偏差。阶段 0–5 全部收口，剩余遗留项见 §23.46。
+
+#### 批次 40 — annuity 复制 DDL 解耦（规格收口后的追加批次）
+- 背景：批次 36b/37b/37c 每次改 kernel 表都要临时解冻 annuity 同步 3 份复制 DDL，用户确认按「完全解耦」方案消除根因。
+- 方案：kernel 表定义只保留在 kernel 模块（PG/MySQL/H2 三份同模块），annuity 不再持有任何副本；annuity E2E 通过 `schema-locations` 组合加载 kernel H2 + 自有 H2。
+- 拆分：**40-1**（H2 测试链路：kernel 新增唯一命名 `schema-kernel-h2.sql`、annuity H2 缩减重命名、配置组合加载）+ **40-2**（PG/MySQL 部署脚本删除 kernel 表段落改为指引注释、清理过时注释、台账收口）。
+- 状态：**全部完成**（设计文档 §23.47）。40-1 完成 H2 测试链路解耦（kernel H2 唯一定义 + annuity 组合加载 + 修正 request_no 列宽漂移）；40-2 完成 PG/MySQL 部署脚本解耦并清理 kernel 双库过时注释。annuity 不再持有任何 kernel 表副本，反复解冻的根因消除；部署流程改为「先执行 kernel 的 schema-*.sql，再执行 annuity 自有表脚本」，需 DBA 知悉。
+
+#### 批次 41 — §21.4 分层架构不变量机器化（成立子集）
+- 背景：§23.46 偏差 2 指出 §21.4 六条架构不变量未全部机器化；评估后 3 条与现状有字面张力，强行落地会变成超级计划，故只机器化现状成立的分层边界。
+- 改动：新增 `arch-tests/KernelLayerArchitectureTest` 4 条 ArchUnit 规则（domain 框架纯净、domain 不依赖上层、application 不依赖 adapter/infra、跨服务只经 api/types），含防假绿导入断言与反向违规注入验证。纯新增测试，不改生产代码、不改 annuity。
+- 状态：**完成**（设计文档 §23.48）。CQE 全覆盖、types 仅 ID、零事件 DTO 依赖 3 条如实标注为未机器化。
+
+#### 批次 42 — 修复审批驳回/撤回回调状态误判
+- 背景：按 §23.46 偏差 4「枚举值未被消费」推进时，发现原描述有误——`ApprovalResultEventListener` 确实传 `REJECTED`/`WITHDRAWN`，但 `CallbackCorrelationService.correlate` 用「非 FAILED 即 SUCCEEDED」把它们静默写成成功，导致驳回/撤回时协作与步骤为 SUCCEEDED 而申请单已终止。
+- 方案（用户确认「修缺陷」）：`correlate` 改为 `resolveTargetStatus` 显式 switch 穷尽映射（SUCCEEDED→SUCCEEDED，FAILED/REJECTED/WITHDRAWN→FAILED，null 保守按 FAILED），同步修正 `CallbackOutcome` Javadoc；补 2 项契约测试先红后绿。
+- 状态：**完成**（设计文档 §23.49）。§23.46 偏差 4 更正为已修复，§21.3 核对表补测试，§23.48 末行移除偏差 4。
+
+#### 批次 43 — 确定性并发验收（§23.46 偏差 3）
+- 背景：偏差 3「多节点真并发、乐观锁写冲突覆盖未做集成测试」。kernel 仓储测试全是 Mockito 单测、无 H2 集成设施，从零搭真 DB 上下文会变成大工程且线程调度不稳定，故采用状态化 fake + CountDownLatch 的确定性并发。
+- 拆分：**43-1**（并发推进只产生一次有效跃迁，application 模块 `ConcurrentAdvanceAcceptanceTest`）+ **43-2**（乐观锁并发写冲突不覆盖新状态，infrastructure 模块）。
+- 状态：**全部完成**（设计文档 §23.50）。43-1 完成并发推进幂等验收（内存锁 + 状态化仓储），43-2 完成乐观锁写冲突不覆盖新状态（状态化 fake mapper + CAS），两者均含反向红灯验证与连续 5 次稳定性运行。§23.46 偏差 3 收敛、核对表 3 行更新为 ✅；如实保留「多进程 + 真实 Redis 锁 + 真实数据库集成测试」为阶段 5 遗留。
+
+#### 批次 44 — 不禁用自动推进的独立 E2E（§23.46 偏差 1）
+- 背景：§21.5 第 8 条要求「端到端测试不预置流程实例、不禁用自动推进机制」，现状 `AnnuityEndToEndTest` 用 `@MockitoBean` 替换 `StepAutoAdvanceListener` 为 noop。
+- 方案：保留现有 6 项手动确定性 E2E 不动，新增 `AutoAdvanceEnabledEndToEndTest`——不声明该 mock（独立 Spring context）、独立 H2 库隔离、`createFromForm` 正常入口建单、一次手动点火后轮询等待 AFTER_COMMIT + @Async 级联至 USER_TASK(APPROVAL) 挂起。连续 5 次运行全绿。
+- 状态：**完成**（设计文档 §23.51）。§21.5 第 8 条核对表由 ❌ 更新为 ✅，§23.46 四项偏差全部有处置。
+
+#### 批次 45 — 修复重复出站事件监听器（优先级清单第一批）
+- 来源：`2026-11-14-remaining-work-priority.md` 的 P0-1 + P0-3 + P1-3。P0-1 为清单制定时新发现的台账未记录缺陷。
+- 改动：`arch-tests/EventListenerUniquenessTest` 2 条契约先红后绿；退役旧 `OutboundFileEventListener` 与死代码 `advanceByOutboundFile`，唯一入口为 `OutboundFileGeneratedEventListener`；核查所有集成事件入口回执覆盖；更新 CODEBUDDY.md Known Gaps 与 §23.46 过时条目。
+- 状态：**完成**（设计文档 §23.52）。
+
+#### 批次 46 — 恢复链路扫描与事务边界（优先级清单第二批）
+- 范围：P1-1（`reconcileAllActive` 改按状态索引查询替代 `loadAll` 全表扫描）+ P1-2（`ExternalInteractionRecoveryService` 按单条加事务包装，外部查询留事务外）。
+- 状态：**完成**（设计文档 §23.53）。TDD 先红后绿；kernel 全模块、架构、annuity E2E 全绿；零 annuity 改动。优先级清单 P1 项全部清空，仅剩 P0-2 待单独确认。
+
+#### 批次 47 — P0-2 annuity 生产 profile 治理（用户解冻 annuity）
+- 范围：移除 annuity `application.yml` 的 `spring.profiles.include: local`（消除 dev 配置泄漏到 prod、使 prod fail-fast 不再被 local 绕过）；`application-test.yml` 补测试专用验签密钥使 test profile 自包含；新增 `ProductionProfileIsolationTest` 契约（主配置不无条件 include 非生产 profile + prod 触发 fail-fast）。
+- 状态：**完成**（设计文档 §23.54）。TDD 先红后绿；annuity-starter 9 项、kernel 全模块、架构、全仓 test-compile 全绿。**P0/P1 全部清空**。
+
+#### 批次 48 — 修正 fail-fast 开关语义（P0-2 配套）
+- 范围：`KernelProductionReadinessValidator` 的 `@ConditionalOnProperty` 由 `havingValue="false"` 改为 `"true"`，缺省或 `=true` 启用、`=false` 关闭；补 `ApplicationContextRunner` 装配契约测试与真实 E2E 上下文缺省装配断言。
+- 状态：**完成**（设计文档 §23.55）。`=true`/`=false` 装配契约先红后绿；缺省行为不变、E2E 零回归（annuity-starter 10 项）。
+
+#### 批次 49 — P2-2a §21.4 规格修订（P2 专项方案，纯文档）
+- 范围：修订 §21.4 第 2/3/5 条（事件 DTO 属允许 API 契约 / 新增写操作入口必须 CQE 存量不回溯 / types 只放跨层共享领域原语），同步 §23.46 核对表三行；落实 P2-1 降级关闭、P2-3 wontfix、P2-4 暂缓的台账记录。
+- 状态：**完成**（设计文档 §23.56）。纯文档零代码；用户 2026-11-14 采纳 P2 专项方案建议。
+
+#### 批次 50 — P2-2b 向前 ArchUnit 约束
+- 范围：新增 2 条 ArchUnit（新增方法参数须 CQE 或零参、types 层不得放聚合根/实体/领域服务），存量白名单快照豁免；含防假绿与反向违规验证。
+- 状态：**完成**（设计文档 §23.57）。两轮反向验证先红后绿（漏基线条目 → 捕获 1 次违规；规则 2 指向聚合根包 → 捕获 3 次违规）；arch-tests 15、kernel 全模块、annuity E2E 10 全绿；纯新增测试、零生产代码。
+
+#### 批次 51 — 回补 §21.4 第 4 条 Adapter 构造边界
+- 范围：扩 `KernelForwardConstraintTest` 新增规则 3（adapter 不得构造 Entity 子类，值对象构造属 Converter 必要行为允许）；含两轮反向验证与防假绿断言。
+- 状态：**完成**（设计文档 §23.58）。先按 domain 任意类判定红灯（捕获 5 次值对象）→ 收窄到 Entity 转绿；再指向 domain 包红灯（捕获 10+ 次聚合根）→ 改回转绿。arch-tests 16、kernel 全模块、annuity E2E 10 全绿；纯新增测试、零生产代码。§21.4 第 4 条为**部分机器化**，字面张力如实标注。
+
+#### 批次 52 — P3-2 kernel 条件属性命名空间统一
+- 范围：梳理 P3 三项后推进唯一有真实问题的 P3-2——5 个 Controller 的 `core-kernel.controllers.enabled` 统一为 `core.kernel.controllers.enabled`，新增 ArchUnit 契约禁止遗留前缀，同步 4 处文档引用。
+- 状态：**完成**（设计文档 §23.59）。先红（5 次违规）后绿；反向验证捕获 7 次；arch-tests 17、kernel 全模块、annuity E2E 10 全绿。P3-1 / P3-3 维持记录。
+
+#### 批次 53 — P3-1 能力 A 实现 getApprovalHistory
+- 范围：按 `2026-11-14-p3-approval-stub-cross-service-design.md` §5，从聚合根提取审批记录组装 DTO，nodeName 沿用 nodeType 占位、定义缺失降级；新增 `ApprovalHistoryServiceTest` 4 项。
+- 状态：**完成**（设计文档 §23.60）。TDD 先红后绿；approval 87/8/21、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。
+
+#### 批次 54 — P3-1 能力 B 实现 listApprovalFlows
+- 范围：`ApprovalFlowRepository` 新增按条件分页查询，`ApprovalFlowService.listApprovalFlows` 复用 `convertToDTO` 组装 `PageData`；补仓储/应用测试。
+- 状态：**完成**（设计文档 §23.61）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/12/23、annuity E2E 10、全仓 test-compile 全绿；零 kernel 改动、零 DDL。
+
+#### 批次 55 — P3-1 能力 C 实现 listMyPendingApprovals（最小可用版本）
+- 范围：评估后按立项方案 §4 推荐落地——删除死接口 `findByApproverId`，新增 `findByStatuses`（DB STATUS IN 走索引），应用层按节点 `approverIds` 过滤 + 内存分页 + 组装 DTO；只支持 `SPECIFIED_USER` 节点。
+- 状态：**完成**（设计文档 §23.62）。先编译红灯后绿；应用 4 项 + 仓储 2 项；approval 87/16/25、annuity E2E 10、全仓 test-compile 全绿；零 DDL、零契约变更。开放点 ④ 已由批次 56 处置，角色审批仍为遗留。
+
+#### 批次 56 — approver 越权治理（BREAKING CHANGE，同步改 intranet-bff）
+- 范围：`ApprovalInstanceAdapter` 注入 `AccountIdResolver`，用带签名会话账号覆盖请求体 approver、会话缺失 fail-closed；intranet-bff `trace.context.mapping` 增加 AccountId/AccountSig 透传；DTO 保留 approver 为兼容字段。
+- 状态：**完成**（设计文档 §23.63）。先编译红灯后绿 + 反向验证；approval 87/16/25/3、intranet-bff 37+7、annuity E2E 10、全仓 test-compile 全绿；零 annuity 改动、零 DDL。
+
+#### 批次 57 — 审批操作类身份越权治理
+- 范围：抽 `requireSessionAccount()`，把会话覆盖扩展到 approve/reject/transfer/withdraw；`targetApprover` 作为业务参数保留；4 个 DTO 身份字段补「服务端忽略」Javadoc。
+- 状态：**完成**（设计文档 §23.64）。测试由 3 项扩到 8 项，先红（5 项）后绿；approval 87/16/25/8、intranet-bff 37+7、annuity E2E 10、全仓 test-compile 全绿；零 annuity / DDL / kernel / BFF 配置改动。
+
+#### 追加立项 — 用户服务「角色→用户」API（批次 58–61 建议）
+- 交付物：`2026-11-14-role-user-api-design.md`（立项方案，非实施）。目标解锁 approval 的 `SPECIFIED_ROLE` 节点、替掉 `RoleUserGatewayImpl` stub。
+- 状态：**推进中**（用户已确认按建议开工）。核实发现现 SPI `getUsersByRole(String)` 缺 scope、`ApprovalNodeResolver` 未接线、`getUsersInSamePlan` 无消费方、`ProductGateway` 仅 Stub；auth 侧有 `t_auth_assignment` 数据但缺按角色查询与对外 API。
+  - **批次 58 已完成**（§23.65）：auth-api `RoleUserQueryApi` / `ListRoleUsersRequest`（批量 roleCodes + planNo，PLAN 精确 scope）/ `RoleUserBatchResponse`，契约测试 3 项先红后绿；方案 §4 已同步为落地形态。
+  - **批次 59 已完成**（§23.66）：`findActiveByRoleCodesAndPlan` 仓储 + `RoleUserQueryService` + `RoleUserQueryController`，5 项测试先红后绿，auth 全模块与 auth-starter 启动全绿。
+  - **批次 60 已完成**（§23.67）：SPI 改为带 `planNo` 的批量方法、`RoleUserGatewayImpl` 接入 auth-api 且 fail-closed、`ApprovalNodeResolver` 适配，5 项测试先红后绿。
+  - **批次 61 已完成**（§23.68）：能力 C 解锁 `SPECIFIED_ROLE`，按 planNo 批量展开规避 N+1，测试 4→8 项；领域流转接线 / 角色会签修正因涉及聚合根签名改造，拆为批次 62 待评估。
+  - **批次 62 已完成**（§23.69）：聚合根接收实际审批人列表并校验身份 / 判断会签，Resolver 接入主链路，领域测试 +6 项；用户按框架视角授权推进。
+  - **58–62 全部完成，立项收口**；剩余为组织目录接入、SAME_PLAN/LEVEL_UP 节点等框架外遗留。
+
+#### 追加立项 — 组织目录接入与 SAME_PLAN / LEVEL_UP 节点（批次 66–69）
+- 交付物：`2026-11-14-organization-directory-design.md`（立项方案 + 开工决策记录）。用户选择「立项组织目录」后，核实发现 `ProductGateway`/`PlanSnapshot.parentPlanNo`/`PlanReachabilityService` 已齐备、仓库外无真实主数据系统。
+- 状态：**§6 开放点已按推荐默认值决策落盘并开工**（用户既有「采纳建议 / 连续推进 / 每批自动提交推送」偏好，不再逐项确认）。契约定稿为新建 `PlanDirectoryApi` 的 `/members`+`/parent`；分批 66（auth-api 契约）→ 67（auth 供给侧 + 可替换内存实现）→ 68（approval SAME_PLAN）→ 69（LEVEL_UP）。**批次 66 已完成（§23.73）**，Stub 保留兜底、零 DDL。
+- **批次 67 已完成（§23.74）**：auth-application `PlanDirectoryQueryService`、auth-adapter `PlanDirectoryController`、auth-infrastructure 条件注册 `InMemoryProductGateway`（默认不启用、Stub 保持唯一实现）；12 项测试先红后绿，零配置改动、零 DDL。
+- **批次 68 已完成（§23.75）**：复用 `RoleUserGateway.getUsersInSamePlan` 接 `/members`，`ApprovalNodeResolver.SAME_PLAN` 接线并排除发起人、fail-closed；`PlanHierarchyGateway` 顺延至 69。
+- **批次 69 已完成、立项收口（§23.76）**：`RoleUserGateway` 新增 `getUsersInParentPlan`（`/parent` + `/members`），`ApprovalNodeResolver.LEVEL_UP` 按 `currentPlan` 接线、到顶 fail-closed；`TerminalLevel` 多级追溯列为后续。66–69 全部完成，Stub 保留兜底、零 DDL。
+
+---
+
+## 6. 全局约束与验收基线
+
+- **annuity 冻结**：批次 26–31 均零 annuity 改动；批次 36 若涉及 annuity 复制脚本需先单独确认（或只改 kernel 双库并记录漂移）。
+- **TDD**：每批先写失败测试，再实现，再跑测试；不把红灯状态提交入库。
+- **验证命令（每批必跑）**：
+  - `mvn test -pl business-core-kernel/business-core-application -am`
+  - `mvn test -pl business-core-kernel/business-core-infrastructure -am`
+  - `mvn test -pl arch-tests -am -Dtest=ArchitectureInvariantTest -Dsurefire.failIfNoSpecifiedTests=false`
+  - `mvn test-compile -DskipTests`
+  - `mvn test -pl annuity-service/annuity-starter -am -Dtest=AnnuityEndToEndTest -Dsurefire.failIfNoSpecifiedTests=false`
+  - `git diff --check`
+- **提交规范**：Conventional Commits（`feat(core-*)` / `fix(...)`），scope 按 09-提交信息规范；多文件写 Body。
+- **E2E 零回归信号**：`Failed to save event` = 0、异步 NPE = 0、回执短路日志正常。
+
+---
+
+## 7. 风险与回滚
+
+| 风险 | 缓解 |
+|---|---|
+| 出站参数来源缺失导致 FILE_OUTBOUND 派发失败 | 批次 30 先从入站协作重建，失败则停留 DISPATCHING 并分类，不盲目推进 |
+| 拿不到 taskId 导致无法 WAITING_CALLBACK | 保持 DISPATCHING → 恢复任务回收 UNKNOWN → 对账，不绕过不变量 |
+| 改 SPI 破坏 annuity Mock | 一律用 default 方法/重载，annuity 不重写即零改动 |
+| 批次过大回归 | 每批 ≤6–8 文件、独立提交推送，发现问题可单批 `git revert` |
+
+---
+
+## 8. 待你确认的开放点
+
+1. 是否采纳「复用 `StepExecution.checkpoint_ref`」作为派发载荷载体（方案 B）？
+2. 阶段 B 是否按 26–31 的细分推进，还是进一步合并/调整顺序？
+3. ~~批次 36 的 annuity 复制脚本是否允许临时解冻同步表名/列宽，还是只改 kernel 双库并记录漂移？~~ **已确认（2026-11-14）**：允许仅改 annuity 的 DDL 复制脚本与 E2E 断言（共 4 文件），不碰业务实现；表名统一已由批次 36b 完成（§23.38），改完恢复冻结。收尾后另做「annuity 直接引用 kernel schema 资源」的解耦批次以消除复制 DDL 根因。
+

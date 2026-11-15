@@ -12,6 +12,7 @@ import com.example.shared.event.jackson.DddJacksonModule;
 import com.example.shared.event.job.EventRecoveryJob;
 import com.example.shared.event.store.JdbcEventStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -46,8 +47,14 @@ public class EventAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   @ConditionalOnClass({DataSource.class, JdbcClient.class})
-  public EventStore eventStore(JdbcClient jdbcClient, ObjectMapper objectMapper) {
-    return new JdbcEventStore(jdbcClient, objectMapper);
+  public EventStore eventStore(JdbcClient jdbcClient) {
+    // EventStore 自持专用 ObjectMapper：业务服务可能提供 @Primary 的裸 ObjectMapper
+    // （如 annuity 的 AnnuityJacksonConfiguration），未注册 JavaTimeModule 时含
+    // LocalDateTime 的领域事件序列化失败，落库失败被上层 catch 静默吞掉，事件永久丢失。
+    ObjectMapper eventObjectMapper = new ObjectMapper()
+      .registerModule(new JavaTimeModule())
+      .registerModule(new DddJacksonModule());
+    return new JdbcEventStore(jdbcClient, eventObjectMapper);
   }
 
   @Bean

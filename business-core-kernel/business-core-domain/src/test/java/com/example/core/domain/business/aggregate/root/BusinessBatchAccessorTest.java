@@ -47,13 +47,13 @@ class BusinessBatchAccessorTest {
       BatchId.of("B-R"), "U-C", "U-U",
       now.minusDays(1), now, Version.of(2L),
       buildContext(), buildOperator(),
-      BatchStatus.PROCESSING,
+      BatchStatus.PARTIAL_FAILED,
       10, 7, 3,
       List.of()
     );
 
     assertThat(batch.id().value()).isEqualTo("B-R");
-    assertThat(batch.status()).isEqualTo(BatchStatus.PROCESSING);
+    assertThat(batch.status()).isEqualTo(BatchStatus.PARTIAL_FAILED);
     assertThat(batch.totalApplicationCount()).isEqualTo(10);
     assertThat(batch.successCount()).isEqualTo(7);
     assertThat(batch.failedCount()).isEqualTo(3);

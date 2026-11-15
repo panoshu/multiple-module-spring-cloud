@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- annuity 承载 business-core-kernel，kernel 在流程推进期间写入的 MDC 标识需要
+       在宿主日志中真正输出。这里覆盖 Spring Boot 默认 pattern，追加本项目实际 ID。
+       键与 integration-service-starter/logback-spring.xml 保持一致：
+         traceId                      — shared-web-starter BizContextPropagationFilter 注入
+         applicationId / stepExecutionId / requestNo / businessType
+                                      — kernel FlowOrchestrationService 写入
+       原先各模块使用的 BizId/BatchId/OrderId/UserId 是示例别名，本项目未写入，不再输出。 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <property name="MDC_CONTEXT_FIELDS"
+            value="[traceId:%X{traceId:-}][applicationId:%X{applicationId:-}][stepExecutionId:%X{stepExecutionId:-}][requestNo:%X{requestNo:-}][businessType:%X{businessType:-}]"/>
+
+  <property name="CONSOLE_LOG_PATTERN"
+            value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:-}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %clr(${MDC_CONTEXT_FIELDS}){yellow} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+  <property name="FILE_LOG_PATTERN"
+            value="%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:-} --- [%t] %-40.40logger{39} : ${MDC_CONTEXT_FIELDS} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+  <!-- 复用 Spring Boot 官方 console/file appender 与 root，保留 rollingpolicy 配置 -->
+  <include resource="org/springframework/boot/logging/logback/base.xml"/>
+</configuration>

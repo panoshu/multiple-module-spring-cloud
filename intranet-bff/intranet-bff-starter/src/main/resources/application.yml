@@ -23,6 +23,10 @@ trace:
       UserId: X-User-Id
       BizId: X-Biz-Id
       BatchId: X-Batch-Id
+      # 会话账号与签名透传：approval-service 的 AccountIdResolver 依赖这两个 header
+      # 解析当前审批人（批次 56 越权治理），缺失时服务端 fail-closed 拒绝查询
+      AccountId: X-Account-Id
+      AccountSig: X-Account-Sig
 
 logging:
   level:

@@ -49,7 +49,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/core/material")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "core.kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class MaterialController implements MaterialAppApi {
 
   private final MaterialAppService materialAppService;

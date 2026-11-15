@@ -70,7 +70,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/core/batch")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "core-kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "core.kernel.controllers.enabled", havingValue = "true", matchIfMissing = false)
 public class BusinessBatchController implements BusinessBatchApi {
 
   private final BusinessBatchAppService batchAppService;

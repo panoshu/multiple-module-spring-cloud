@@ -31,6 +31,9 @@ public class ParseTaskDO {
   private LocalDateTime startedAt;
   private LocalDateTime finishedAt;
 
+  /** 外部协作幂等键（spec §11.4）。 */
+  private String requestNo;
+
   private String createdBy;
   private String updatedBy;
 

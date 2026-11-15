@@ -7,6 +7,7 @@ import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.types.CustomerNo;
 import com.example.core.types.PlanNo;
 import com.example.core.types.ProductNo;
+import com.example.shared.exception.SystemException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link AviatorConditionEvaluationGateway} 单元测试
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>空表达式短路返回 true</li>
  *   <li>基于 BusinessMetaContext 的变量求值(含 facts 字典访问)</li>
  *   <li>基于纯 facts Map 的降维求值(明细层场景)</li>
- *   <li>非法表达式容错(返回 false 而非抛异常)</li>
+ *   <li>非法表达式显式失败(抛 SystemException,不静默跳过)</li>
  *   <li>表达式缓存(相同表达式重复求值不报错)</li>
  * </ul>
  *
@@ -91,11 +93,20 @@ class AviatorConditionEvaluationGatewayTest {
   }
 
   @Test
-  @DisplayName("非法表达式容错:返回 false 而非抛异常")
-  void evaluate_invalidExpression_returnsFalse() {
+  @DisplayName("非法表达式显式失败,不静默返回 false")
+  void evaluate_invalidExpression_throwsSystemException() {
     BusinessMetaContext context = buildContext(Map.of());
-    assertThat(gateway.evaluate(">>> invalid syntax <<<", context)).isFalse();
-    assertThat(gateway.evaluate("undefinedVar.undefinedField", context)).isFalse();
+    assertThatThrownBy(() -> gateway.evaluate(">>> invalid syntax <<<", context))
+      .isInstanceOf(SystemException.class);
+    assertThatThrownBy(() -> gateway.evaluate("undefinedVar.undefinedField", context))
+      .isInstanceOf(SystemException.class);
+  }
+
+  @Test
+  @DisplayName("纯 facts 重载的非法表达式同样显式失败")
+  void evaluate_invalidExpressionInPureFacts_throwsSystemException() {
+    assertThatThrownBy(() -> gateway.evaluate(">>> invalid syntax <<<", Map.of()))
+      .isInstanceOf(SystemException.class);
   }
 
   @Test

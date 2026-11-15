@@ -17,6 +17,7 @@ spring:
       host: 127.0.0.1
       port: 6379
       database: 0
+      password: redis
 
 # 功能权限校验: 通过 HttpExchange 调用 auth-service 实时校验
 httpexchange:

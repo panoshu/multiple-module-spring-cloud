@@ -30,6 +30,9 @@ public enum CoreAppErrorCode implements ErrorDefinition {
 
   INVALIDATE("CORE.APP.0006", "校验失败"),
 
+  PROCESS_DEFINITION_NOT_FOUND("CORE.APP.0007", "流程定义不存在"),
+  STEP_NOT_IN_DEFINITION("CORE.APP.0008", "步骤不在流程定义中"),
+
   ;
 
   final String code;

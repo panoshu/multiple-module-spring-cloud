@@ -44,6 +44,11 @@ public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGat
 
   @Override
   public String startApproval(BusinessApplication application) {
+    return startApproval(application, null);
+  }
+
+  @Override
+  public String startApproval(BusinessApplication application, String requestNo) {
     BusinessMetaContext context = application.buildConfigQueryContext();
 
     // 1. 匹配审批流
@@ -52,12 +57,13 @@ public class ApprovalServiceIntegrationGateway implements ApprovalIntegrationGat
       throw new IllegalStateException("匹配审批流失败, applicationId=" + application.id());
     }
 
-    // 2. 启动审批实例
+    // 2. 启动审批实例（携带外部协作幂等键，§12.3）
     StartApprovalRequest startReq = new StartApprovalRequest(
       matchedFlow.flowId(),
       application.id().value(),
       resolveBusinessType(context),
-      application.createdBy()
+      application.createdBy(),
+      requestNo
     );
 
     ApiResult<ApprovalInstanceIdResponse> result = approvalInstanceApi.start(startReq);

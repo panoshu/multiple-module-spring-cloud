@@ -6,12 +6,14 @@ import com.example.approval.domain.aggregate.entity.ApprovalNode;
 import com.example.approval.domain.aggregate.root.ApprovalFlow;
 import com.example.approval.domain.repository.ApprovalFlowRepository;
 import com.example.approval.domain.service.ApprovalFlowMatcher;
+import com.example.approval.domain.valueobject.ApprovalFlowPage;
 import com.example.approval.domain.valueobject.FlowName;
 import com.example.approval.domain.valueobject.MatchRules;
 import com.example.approval.types.ApprovalFlowId;
 import com.example.shared.domain.event.EventBus;
 import com.example.shared.exception.DomainException;
 import com.example.core.types.UserNo;
+import com.example.shared.page.Pagination;
 import com.example.shared.web.core.dto.PageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -152,9 +154,15 @@ public class ApprovalFlowService {
    */
   @Transactional(readOnly = true)
   public PageData<ApprovalFlowDTO> listApprovalFlows(ListApprovalFlowsRequest request) {
-    // TODO: 实现分页查询逻辑
-    // 这里需要根据状态等条件查询审批流列表
-    throw new UnsupportedOperationException("待实现分页查询逻辑");
+    Pagination pagination = request.pagination();
+    ApprovalFlowPage page = flowRepository.findByCondition(
+      request.businessType(), request.status(), pagination.startPos(), pagination.pageSize());
+
+    List<ApprovalFlowDTO> items = page.items().stream().map(this::convertToDTO).toList();
+    int total = page.totalCount();
+    int start = pagination.startPos();
+    boolean hasMore = (long) start + items.size() < total;
+    return new PageData<>(total, start, items.size(), hasMore, items);
   }
 
   /**

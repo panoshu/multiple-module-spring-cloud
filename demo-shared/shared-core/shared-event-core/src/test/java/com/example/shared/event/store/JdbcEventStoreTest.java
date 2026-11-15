@@ -67,16 +67,45 @@ class JdbcEventStoreTest {
     eventStore.save(event, integrationEvent, "TestDomainEvent");
 
     Long count = jdbcClient.sql("SELECT COUNT(*) FROM sys_event_store WHERE event_id = ?")
-      .param(event.eventId().toString())
+      .param(event.eventId().value())
       .query(Long.class).single();
     assertThat(count).isEqualTo(1L);
+  }
+
+  @Test
+  void should_save_event_id_as_ulid_value() {
+    TestDomainEvent event = new TestDomainEvent(EventId.generate(), LocalDateTime.now(), "hello");
+
+    eventStore.save(event, Map.of("data", "hello"), "TestDomainEvent");
+
+    String stored = jdbcClient.sql("SELECT event_id FROM sys_event_store")
+      .query(String.class).single();
+    assertThat(stored).isEqualTo(event.eventId().value());
+    assertThat(stored).isNotEqualTo(event.eventId().toString());
+  }
+
+  @Test
+  void claimPendingLogs_should_match_legacy_format_event_id() {
+    String legacyId = "EventId[value=01JLEGACY000000000000000000]";
+    jdbcClient.sql("INSERT INTO sys_event_store "
+        + "(event_id, event_type, occurred_on, domain_payload, integration_payload) "
+        + "VALUES (?, 'LegacyEvent', ?, '{}', '{\"data\":\"legacy\"}')")
+      .param(legacyId).param(LocalDateTime.now()).update();
+    jdbcClient.sql("INSERT INTO sys_event_dispatch_log (event_id, channel, status, created_at) "
+        + "VALUES (?, 'rocketmq', 'PENDING', ?)")
+      .param(legacyId).param(LocalDateTime.now()).update();
+
+    List<EventStore.PendingEntry> entries = eventStore.claimPendingLogs(10);
+
+    assertThat(entries).hasSize(1);
+    assertThat(entries.get(0).integrationEvent()).isInstanceOf(Map.class);
   }
 
   @Test
   void claimPendingLogs_should_return_integration_payload_not_domain_payload() {
     TestDomainEvent event = new TestDomainEvent(EventId.generate(), LocalDateTime.now(), "hello");
     eventStore.save(event, Map.of("data", "hello"), "TestDomainEvent");
-    long logId = eventStore.initDispatchLog(event.eventId().toString(), "rocketmq");
+    long logId = eventStore.initDispatchLog(event.eventId().value(), "rocketmq");
 
     // 认领（含置 PROCESSING）
     List<EventStore.PendingEntry> entries = eventStore.claimPendingLogs(10);

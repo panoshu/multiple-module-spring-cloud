@@ -7,6 +7,7 @@ import com.example.annuity.domain.repository.AnnuityEmployeeBatchRepository;
 import com.example.annuity.domain.service.AnnuityEmployeeMapper;
 import com.example.annuity.types.AnnuityEmployeeBatchId;
 import com.example.core.application.engine.step.extension.AbstractJsonStreamIngestionAction;
+import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.domain.engine.gateway.FileIntegrationGateway;
 import com.example.core.types.ApplicationId;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,9 +36,10 @@ public class AnnuityDetailIngestionAction extends AbstractJsonStreamIngestionAct
     FileIntegrationGateway fileGateway,
     ObjectMapper objectMapper,
     PlatformTransactionManager txManager,
+    ParsedFileReferenceGateway parsedFileGateway,
     AnnuityEmployeeMapper employeeMapper,
     AnnuityEmployeeBatchRepository batchRepository) {
-    super(fileGateway, objectMapper, txManager, AnnuityEmployeeDTO.class);
+    super(fileGateway, objectMapper, txManager, AnnuityEmployeeDTO.class, parsedFileGateway);
     this.employeeMapper = employeeMapper;
     this.batchRepository = batchRepository;
   }

@@ -118,7 +118,8 @@ class ApprovalInstanceEventTest {
     ApprovalNode node = singleOrSignUserNode();
 
     // when
-    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER.value(), TEST_ID_GENERATOR);
+    instance.approve(node, APPROVER, ApprovalOpinion.of("同意"), APPROVER.value(),
+      TEST_ID_GENERATOR, List.of(APPROVER));
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.APPROVED);
@@ -145,7 +146,7 @@ class ApprovalInstanceEventTest {
 
     // when
     instance.reject(node, APPROVER, ApprovalOpinion.of("不同意"),
-      RejectTarget.terminate(), APPROVER.value(), TEST_ID_GENERATOR);
+      RejectTarget.terminate(), APPROVER.value(), TEST_ID_GENERATOR, List.of(APPROVER));
 
     // then
     assertThat(instance.status()).isEqualTo(InstanceStatus.REJECTED);

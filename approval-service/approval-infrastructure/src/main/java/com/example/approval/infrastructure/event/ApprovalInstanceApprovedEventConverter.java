@@ -29,7 +29,8 @@ public class ApprovalInstanceApprovedEventConverter
       String.valueOf(event.instanceId().value()),
       event.businessNo(),
       event.businessType(),
-      event.occurredOn()
+      event.occurredOn(),
+      event.requestNo()
     );
   }
 

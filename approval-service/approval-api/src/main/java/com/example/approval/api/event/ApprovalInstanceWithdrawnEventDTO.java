@@ -15,6 +15,13 @@ public record ApprovalInstanceWithdrawnEventDTO(
   String instanceId,
   String businessNo,
   String businessType,
-  LocalDateTime occurredOn
+  LocalDateTime occurredOn,
+  /** 外部协作幂等键；过渡期可空，阶段 3 回调按此关联协作记录。 */
+  String requestNo
 ) {
+
+  public ApprovalInstanceWithdrawnEventDTO(String eventId, String instanceId, String businessNo,
+                                           String businessType, LocalDateTime occurredOn) {
+    this(eventId, instanceId, businessNo, businessType, occurredOn, null);
+  }
 }

@@ -9,7 +9,7 @@ import com.example.core.types.ApplicationId;
 import com.example.core.types.FormId;
 import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
-import org.springframework.context.ApplicationEventPublisher;
+import com.example.shared.domain.event.EventBus;
 
 import java.util.Optional;
 
@@ -32,10 +32,10 @@ public class BusinessFormRepositoryImpl
   protected final BusinessFormMapper mapper;
   protected final BusinessFormConverter converter;
 
-  public BusinessFormRepositoryImpl(ApplicationEventPublisher eventPublisher,
+  public BusinessFormRepositoryImpl(EventBus eventBus,
                                     BusinessFormMapper mapper,
                                     BusinessFormConverter converter) {
-    super(eventPublisher);
+    super(eventBus);
     this.mapper = mapper;
     this.converter = converter;
   }
@@ -58,6 +58,16 @@ public class BusinessFormRepositoryImpl
   @Override
   protected Object doId(BusinessFormDO aDo) {
     return aDo.getId();
+  }
+
+  @Override
+  protected Integer doVersion(BusinessFormDO aDo) {
+    return aDo.getVersion();
+  }
+
+  @Override
+  protected void doVersion(BusinessFormDO aDo, Integer version) {
+    aDo.setVersion(version);
   }
 
   /**

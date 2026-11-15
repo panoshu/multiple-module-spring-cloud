@@ -39,7 +39,8 @@ public class FileParsedEventConverter implements IntegrationEventConverter<FileP
           s.status().name()))
         .toList(),
       event.failureReason(),
-      event.occurredOn()
+      event.occurredOn(),
+      event.requestNo()
     );
   }
 }

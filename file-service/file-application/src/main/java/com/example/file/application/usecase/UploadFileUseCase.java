@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 上传创建解析任务（2026-11-08 批次1 接线：自动触发异步解析）.
@@ -51,6 +52,15 @@ public class UploadFileUseCase {
 
   @Transactional
   public UploadFileResult execute(UploadFileCommand cmd) {
+    // 外部协作幂等（spec §11.4）：同一 clientRequestNo 重复上传直接返回原任务，不重复创建
+    if (cmd.clientRequestNo() != null && !cmd.clientRequestNo().isBlank()) {
+      Optional<ParseTask> existing = parseTaskRepository.findByRequestNo(cmd.clientRequestNo());
+      if (existing.isPresent()) {
+        ParseTask task = existing.get();
+        return new UploadFileResult(task.id().value(), task.status().name(), task.createdAt());
+      }
+    }
+
     FileTaskId taskId = idService.nextId(FileTaskId.class);
     ParseTask task = ParseTask.create(
       taskId,
@@ -59,7 +69,8 @@ public class UploadFileUseCase {
       cmd.sourceFileId(),
       ErrorPolicy.COLLECT_ALL,
       List.of(),
-      cmd.uploader()
+      cmd.uploader(),
+      cmd.clientRequestNo()
     );
     if (cmd.templateCode() != null && !cmd.templateCode().isBlank()) {
       task.bindTemplate(TemplateCode.of(cmd.templateCode()));

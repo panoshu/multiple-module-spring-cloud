@@ -51,7 +51,7 @@ class DefaultEventBusTest {
 
     verify(converter).toIntegrationEvent(event);
     verify(eventStore).save(eq(event), any(), eq("TestEvent"));
-    verify(eventStore).initDispatchLog(event.eventId().toString(), "rocketmq");
+    verify(eventStore).initDispatchLog(event.eventId().value(), "rocketmq");
     verify(localDispatcher).dispatch(eq(event), any());
   }
 

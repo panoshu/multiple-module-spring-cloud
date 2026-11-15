@@ -1,14 +1,22 @@
 -- =============================================================================
 -- business-core-kernel - PostgreSQL Schema
 -- =============================================================================
--- 三张表对应 kernel 的三个聚合根：
---   t_business_application  ←  BusinessApplication
---   t_business_batch        ←  BusinessBatch
---   t_business_form         ←  BusinessForm
+-- kernel 通用表的唯一权威定义（PostgreSQL）。MySQL 变体见 schema-mysql.sql，
+-- H2 测试变体见 schema-kernel-h2.sql（供依赖 kernel 的业务服务 E2E 组合加载）。
+-- 新增或修改表时三处须同步，业务服务不再持有副本。
+--
+-- 表清单：
+--   t_business_application           ←  BusinessApplication
+--   t_business_batch                 ←  BusinessBatch
+--   t_business_form                  ←  BusinessForm
+--   t_business_step_execution        ←  StepExecution
+--   t_business_external_interaction  ←  ExternalInteraction
+--   t_business_event_receipt         ←  事件消费回执
+--   t_id_generator                   ←  shared-id-starter 号段表
 --
 -- 设计要点：
 --   1. BusinessContext / OperatorInfo 拍平为独立列，便于 SQL 查询和索引
---   2. businessExtension 使用 JSONB 存储多态值对象
+--   2. 业务扩展数据由业务服务自有存储承载，不在核心表持久化
 --   3. 主键 id 由应用层通过 shared-id-starter 生成（ULID），禁用自增
 --   4. 通用字段 created_by/create_time/updated_by/update_time/deleted/version 齐备
 --   5. createTime/updateTime 由应用层管理，不使用 ORM 自动填充
@@ -29,6 +37,10 @@ CREATE TABLE IF NOT EXISTS t_business_application
   64
 ),
   form_id VARCHAR
+(
+  64
+),
+  definition_version VARCHAR
 (
   64
 ),
@@ -86,15 +98,8 @@ CREATE TABLE IF NOT EXISTS t_business_application
 ),
   is_proxy BOOLEAN DEFAULT FALSE,
 
-  -- 文件与统计字段
-  parsed_json_file_id VARCHAR
-(
-  64
-),
+  -- 统计字段
   expected_detail_count INT DEFAULT 0,
-
-  -- 业务扩展字段（多态 JSON）
-  business_extension JSONB,
 
   -- 状态机字段
   status VARCHAR
@@ -130,7 +135,6 @@ CREATE TABLE IF NOT EXISTS t_business_application
 
 CREATE INDEX IF NOT EXISTS idx_business_application_batch_id ON t_business_application(batch_id);
 CREATE INDEX IF NOT EXISTS idx_business_application_form_id ON t_business_application(form_id);
-CREATE INDEX IF NOT EXISTS idx_business_application_parsed_file_id ON t_business_application(parsed_json_file_id);
 CREATE INDEX IF NOT EXISTS idx_business_application_status ON t_business_application(status);
 CREATE INDEX IF NOT EXISTS idx_business_application_current_step ON t_business_application(current_step);
 CREATE INDEX IF NOT EXISTS idx_business_application_customer_no ON t_business_application(customer_no);
@@ -171,11 +175,7 @@ ON COLUMN t_business_application.operator_name         IS '操作人姓名';
 COMMENT
 ON COLUMN t_business_application.is_proxy              IS '是否代办';
 COMMENT
-ON COLUMN t_business_application.parsed_json_file_id   IS '解析后 JSON 文件 ID（FileId）';
-COMMENT
 ON COLUMN t_business_application.expected_detail_count IS '预期明细数量';
-COMMENT
-ON COLUMN t_business_application.business_extension    IS '业务扩展字段（JSONB 多态）';
 COMMENT
 ON COLUMN t_business_application.status                IS '申请单状态';
 COMMENT
@@ -506,3 +506,97 @@ COMMENT
 ON COLUMN t_business_form.deleted         IS '逻辑删除标志';
 COMMENT
 ON COLUMN t_business_form.version         IS '乐观锁版本号';
+
+-- ===== 步骤执行记录（spec §7.2 / §16.3） =====
+CREATE TABLE IF NOT EXISTS t_business_step_execution
+(
+  id                  BIGINT       NOT NULL,
+  application_id     VARCHAR(64) NOT NULL,
+  definition_version  VARCHAR(64) NOT NULL,
+  step_code           VARCHAR(64) NOT NULL,
+  attempt             INT         NOT NULL,
+  request_no          VARCHAR(128) NOT NULL,
+  status              VARCHAR(32) NOT NULL,
+  started_at          TIMESTAMP,
+  ended_at            TIMESTAMP,
+  error_code          VARCHAR(64),
+  error_summary       TEXT,
+  checkpoint_ref      VARCHAR(255),
+  created_by          VARCHAR(64) NOT NULL,
+  updated_by          VARCHAR(64),
+  create_time         TIMESTAMP   NOT NULL,
+  update_time         TIMESTAMP   NOT NULL,
+  deleted             BOOLEAN     NOT NULL DEFAULT FALSE,
+  version             INT         NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_business_step_execution_app_step_attempt
+  ON t_business_step_execution (application_id, step_code, attempt);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_business_step_execution_request_no
+  ON t_business_step_execution (request_no);
+CREATE INDEX IF NOT EXISTS idx_business_step_execution_app_status
+  ON t_business_step_execution (application_id, status);
+
+-- ===== 外部协作记录（spec §7.3 / §16.1） =====
+CREATE TABLE IF NOT EXISTS t_business_external_interaction
+(
+  id                   BIGINT       NOT NULL,
+  application_id       VARCHAR(64)  NOT NULL,
+  step_execution_id    BIGINT       NOT NULL,
+  interaction_type     VARCHAR(32)  NOT NULL,
+  request_no           VARCHAR(128) NOT NULL,
+  external_task_id     VARCHAR(64),
+  status               VARCHAR(32)  NOT NULL,
+  result_ref           VARCHAR(255),
+  retry_count          INT          NOT NULL DEFAULT 0,
+  next_retry_time      TIMESTAMP,
+  last_error           TEXT,
+  completed_at         TIMESTAMP,
+  created_by           VARCHAR(64)  NOT NULL,
+  updated_by           VARCHAR(64),
+  create_time          TIMESTAMP    NOT NULL,
+  update_time          TIMESTAMP    NOT NULL,
+  deleted              BOOLEAN      NOT NULL DEFAULT FALSE,
+  version              INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_external_interaction_request_no
+  ON t_business_external_interaction (request_no);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_external_interaction_type_task
+  ON t_business_external_interaction (interaction_type, external_task_id);
+CREATE INDEX IF NOT EXISTS idx_external_interaction_status_retry
+  ON t_business_external_interaction (status, next_retry_time);
+CREATE INDEX IF NOT EXISTS idx_external_interaction_application_id
+  ON t_business_external_interaction (application_id);
+
+-- ===== 号段 ID 生成表（shared-id-core / §16.3） =====
+CREATE TABLE IF NOT EXISTS t_id_generator
+(
+  seq_key     VARCHAR(64) NOT NULL PRIMARY KEY,
+  max_id      BIGINT      NOT NULL DEFAULT 0,
+  step        INT         NOT NULL DEFAULT 100,
+  create_time TIMESTAMP,
+  update_time TIMESTAMP
+);
+
+-- ===== 事件消费回执（spec §7.4 / §16.1） =====
+CREATE TABLE IF NOT EXISTS t_business_event_receipt
+(
+  id             BIGINT       NOT NULL,
+  event_id       VARCHAR(128) NOT NULL,
+  consumer       VARCHAR(64)  NOT NULL,
+  status         VARCHAR(32)  NOT NULL,
+  error_summary  TEXT,
+  created_by     VARCHAR(64)  NOT NULL,
+  updated_by     VARCHAR(64),
+  create_time    TIMESTAMP    NOT NULL,
+  update_time    TIMESTAMP    NOT NULL,
+  deleted        BOOLEAN      NOT NULL DEFAULT FALSE,
+  version        INT          NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_event_receipt_event_consumer
+  ON t_business_event_receipt (event_id, consumer);

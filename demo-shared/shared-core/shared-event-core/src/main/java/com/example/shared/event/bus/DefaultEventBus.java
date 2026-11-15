@@ -50,7 +50,7 @@ public class DefaultEventBus implements EventBus {
     // 3. 遍历分发
     for (EventDispatcher dispatcher : dispatchers) {
       if (dispatcher.isRemote()) {
-        long logId = eventStore.initDispatchLog(event.eventId().toString(), dispatcher.getChannelName());
+        long logId = eventStore.initDispatchLog(event.eventId().value(), dispatcher.getChannelName());
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
           TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
