@@ -62,9 +62,12 @@ public class PermissionItemRepositoryImpl implements PermissionItemRepository {
     if (existing == null) {
       mapper.insert(doObj);
     } else {
+      // 以数据库现有 version 作为乐观锁基线更新（本仓储每次 save 都重读 DB，不依赖内存 version）。
+      // 不调用 item.syncVersionAfterUpdate()：upsert 场景的实体来自 reconstitute/新建（version 为
+      // null，聚合类 Javadoc 已记录此约束），且为一次性对象，不存在聚合内连续 save 的回写需求，
+      // 对 null version 调 next() 会触发 NPE（批次 73 修复启动期权限自注册报错）。
       doObj.setVersion(existing.getVersion());
       mapper.update(doObj);
-      item.syncVersionAfterUpdate();
     }
   }
 
