@@ -97,35 +97,15 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
                                   Map<String, Object> splitRules) {
-    triggerAsyncParsing(formId, sourceFileId, parseTemplateId, splitRules, null);
-  }
-
-  @Override
-  public void triggerAsyncParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
-                                  Map<String, Object> splitRules, String requestNo) {
-    dispatchParsing(formId, sourceFileId, parseTemplateId, splitRules, requestNo);
-  }
-
-  @Override
-  public String triggerAsyncParsingAndGetTaskId(FormId formId, FileId sourceFileId,
-                                                String parseTemplateId,
-                                                Map<String, Object> splitRules,
-                                                String requestNo) {
-    return dispatchParsing(formId, sourceFileId, parseTemplateId, splitRules, requestNo);
-  }
-
-  private String dispatchParsing(FormId formId, FileId sourceFileId, String parseTemplateId,
-                                 Map<String, Object> splitRules, String requestNo) {
-    String clientRequestNo = requestNo != null ? requestNo : formId.value();
     UploadFileRequest request = new UploadFileRequest(
       BIZ_TYPE_FORM_DETAIL, "FORM", null,
       parseTemplateId,
       resolveFileName(sourceFileId),
       0L,
       "system",
-      clientRequestNo
+      formId.value()
     );
-    return invokeUpload(request, formId.value());
+    invokeUpload(request, formId.value());
   }
 
   @Override
@@ -225,50 +205,28 @@ public class FileServiceIntegrationGateway implements FileIntegrationGateway {
   @Override
   public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
                                           Map<String, Object> supplementalData, String operator) {
-    triggerOutboundGeneration(fileTaskId, targetTemplateId, supplementalData, operator, null);
-  }
-
-  @Override
-  public void triggerOutboundGeneration(String fileTaskId, String targetTemplateId,
-                                          Map<String, Object> supplementalData, String operator,
-                                          String requestNo) {
-    dispatchOutbound(fileTaskId, targetTemplateId, supplementalData, operator, requestNo);
-  }
-
-  @Override
-  public String triggerOutboundGenerationAndGetTaskId(String fileTaskId, String targetTemplateId,
-                                                       Map<String, Object> supplementalData,
-                                                       String operator, String requestNo) {
-    return dispatchOutbound(fileTaskId, targetTemplateId, supplementalData, operator, requestNo);
-  }
-
-  private String dispatchOutbound(String fileTaskId, String targetTemplateId,
-                                  Map<String, Object> supplementalData, String operator,
-                                  String requestNo) {
     GenerateOutboundFileRequest request = new GenerateOutboundFileRequest(
-      fileTaskId, targetTemplateId, supplementalData, operator, requestNo
+      fileTaskId, targetTemplateId, supplementalData, operator
     );
     ApiResult<OutboundFileIdResponse> result = outboundApi.generate(request);
-    if (result == null || !result.isSuccess() || result.data() == null) {
+    if (result == null || !result.isSuccess()) {
       log.error("file-service 出站文件生成任务派发失败, fileTaskId={}, targetTemplateId={}, result={}",
         fileTaskId, targetTemplateId, result);
-      return null;
+      return;
     }
     log.info("已派发出站文件生成任务, fileTaskId={}, targetTemplateId={}", fileTaskId, targetTemplateId);
-    return result.data().fileTaskId();
   }
 
   /**
-   * 调用 file-service 派发上传/解析任务，返回外部任务 ID（失败返回 null）。
+   * 调用 file-service 派发上传/解析任务，记录日志
    */
-  private String invokeUpload(UploadFileRequest request, String businessRef) {
+  private void invokeUpload(UploadFileRequest request, String businessRef) {
     ApiResult<FileTaskIdResponse> result = fileTaskApi.upload(request);
     if (result == null || !result.isSuccess() || result.data() == null) {
       log.error("file-service 派发解析任务失败, businessRef={}, result={}", businessRef, result);
-      return null;
+      return;
     }
     log.info("已派发文件解析任务, businessRef={}, fileTaskId={}", businessRef, result.data().fileTaskId());
-    return result.data().fileTaskId();
   }
 
   private String resolveTemplateCode(BusinessMetaContext context) {

@@ -3,7 +3,7 @@ package com.example.annuity.infrastructure.repository;
 import com.example.core.infrastructure.business.converter.BusinessBatchConverter;
 import com.example.core.infrastructure.business.mapper.BusinessBatchMapper;
 import com.example.core.infrastructure.business.repository.BusinessBatchRepositoryImpl;
-import com.example.shared.domain.event.EventBus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class BatchRepositoryImpl extends BusinessBatchRepositoryImpl {
 
-  public BatchRepositoryImpl(EventBus eventBus,
+  public BatchRepositoryImpl(ApplicationEventPublisher eventPublisher,
                              BusinessBatchMapper mapper,
                              BusinessBatchConverter converter) {
-    super(eventBus, mapper, converter);
+    super(eventPublisher, mapper, converter);
   }
 }

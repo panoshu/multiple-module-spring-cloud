@@ -19,8 +19,7 @@ public record FileParsedEvent(
   TaskStatus status,
   int totalSubTasks,
   List<SubTaskSummary> subTasks,
-  String failureReason,
-  String requestNo
+  String failureReason
 ) implements DomainEvent {
 
   public static FileParsedEvent of(ParseTask task) {
@@ -32,8 +31,7 @@ public record FileParsedEvent(
       task.status(),
       task.subTaskSummaries().size(),
       task.subTaskSummaries(),
-      task.errors().isEmpty() ? null : task.errors().toString(),
-      task.requestNo()
+      task.errors().isEmpty() ? null : task.errors().toString()
     );
   }
 }

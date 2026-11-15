@@ -48,7 +48,6 @@ public interface ParseTaskConverter {
   @Mapping(target = "updateTime", expression = "java(task.updatedAt())")
   @Mapping(target = "version", expression = "java((int) task.version().value())")
   @Mapping(target = "deleted", constant = "0")
-  @Mapping(target = "requestNo", expression = "java(task.requestNo())")
   ParseTaskDO toDO(ParseTask task);
 
   @Mapping(target = "id", source = "id", qualifiedByName = "toFileTaskId")
@@ -65,7 +64,6 @@ public interface ParseTaskConverter {
   @Mapping(target = "createdAt", source = "createTime")
   @Mapping(target = "updatedAt", source = "updateTime")
   @Mapping(target = "version", source = "version", qualifiedByName = "toVersion")
-  @Mapping(target = "requestNo", source = "requestNo")
   ParseTask toDomain(ParseTaskDO aDo);
 
   @Named("toFileTaskId")

@@ -15,7 +15,6 @@ import com.example.core.api.application.response.SubmitResponse;
 import com.example.shared.security.SessionClaims;
 import com.example.core.application.business.service.BusinessApplicationAppService;
 import com.example.core.domain.business.aggregate.root.BusinessApplication;
-import com.example.core.domain.business.gateway.ParsedFileReferenceGateway;
 import com.example.core.types.ApplicationId;
 import com.example.core.types.BatchId;
 import com.example.shared.web.core.api.ApiResult;
@@ -45,7 +44,6 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
   private final BusinessApplicationAppService applicationAppService;
   private final ApplicationConverter converter;
   private final SessionContextResolver sessionResolver;
-  private final ParsedFileReferenceGateway parsedFileGateway;
 
   @Override
   @PostMapping("/list")
@@ -69,11 +67,8 @@ public class AnnuityKernelApplicationController implements BusinessApplicationAp
     SessionClaims session = sessionResolver.require();
     log.info("查询申请单详情: applicationId={}, userNo={}", query.applicationId(), session.userNo());
 
-    ApplicationId appId = new ApplicationId(query.applicationId());
-    BusinessApplication app = applicationAppService.loadOrThrow(appId);
-    String jsonFileId = parsedFileGateway.load(appId)
-      .map(com.example.file.types.FileId::value).orElse(null);
-    return ApiResult.success(converter.toDetailResponse(app, jsonFileId));
+    BusinessApplication app = applicationAppService.loadOrThrow(new ApplicationId(query.applicationId()));
+    return ApiResult.success(converter.toDetailResponse(app));
   }
 
   @Override

@@ -5,7 +5,6 @@ import com.example.core.domain.business.aggregate.valueobject.enums.status.Appli
 import com.example.core.domain.business.errorcode.CoreDomainErrorCode;
 import com.example.core.domain.business.event.ApplicationSpawnedEvent;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
-import com.example.core.domain.engine.aggregate.valueobject.DefinitionVersion;
 import com.example.core.domain.engine.aggregate.valueobject.PipelineExecutionResult;
 import com.example.core.domain.engine.aggregate.valueobject.enums.workflow.ApplicationFlowStep;
 import com.example.core.domain.engine.event.PipelineExecutedEvent;
@@ -20,6 +19,9 @@ import com.example.file.types.FileId;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 业务申请，对应每个表单中的一笔企业计划维度的申请
@@ -32,11 +34,13 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
 
   private BatchId batchId;
   private FormId formId;
-  private DefinitionVersion definitionVersion;
 
   private BusinessContext businessContext;
   private OperatorInfo operatorInfo;
 
+  private BusinessExtension businessExtension;
+
+  private FileId parsedJsonFileId;
   private int expectedDetailCount;
 
   // TODO 状态与流程状态处理
@@ -46,8 +50,8 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   private LocalDateTime applyTime;
   private LocalDateTime completeTime;
 
-  /** 可选材料能力状态（§6.2，批次 37a）：核心聚合不再直接持有材料清单与打包文件。 */
-  private ApplicationMaterialState materialState = ApplicationMaterialState.empty();
+  private List<MaterialItem> planMaterials;
+  private BusinessFile packageFile;
 
   private BusinessFile acceptanceFile;
 
@@ -61,29 +65,17 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     this.validateInvariants();
   }
 
-  protected BusinessApplication(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo) {
+  protected BusinessApplication(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {
     super(applicationId, operatorInfo.operatorId());
     this.businessContext = businessContext;
     this.operatorInfo = operatorInfo;
+    this.parsedJsonFileId = jsonFileId;
     this.validateInvariants();
   }
 
-  public static BusinessApplication createFromForm(ApplicationId applicationId, ApplicationSource source,
-                                                    BusinessContext businessContext, OperatorInfo operatorInfo,
-                                                    DefinitionVersion definitionVersion) {
-    if (source == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("申请来源不能为空");
-    }
-    if (definitionVersion == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("流程定义版本不能为空");
-    }
-    BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo);
-    app.formId = source.formId();
-    app.batchId = source.batchId();
-    app.definitionVersion = definitionVersion;
-    app.status = ApplicationStatus.RUNNING;
+  public static BusinessApplication createFromForm(ApplicationId applicationId, BusinessContext businessContext, OperatorInfo operatorInfo, FileId jsonFileId) {
+    BusinessApplication app = new BusinessApplication(applicationId, businessContext, operatorInfo, jsonFileId);
+    app.status = ApplicationStatus.PROCESSING;
     app.currentStep = ApplicationFlowStep.FORM_DETAIL_INGESTION;
     app.registerDomainEvent(ApplicationSpawnedEvent.of(app.id()));
     return app;
@@ -108,8 +100,9 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     FormId formId,
     BusinessContext businessContext,
     OperatorInfo operatorInfo,
+    BusinessExtension businessExtension,
+    FileId parsedJsonFileId,
     int expectedDetailCount,
-    DefinitionVersion definitionVersion,
     ApplicationStatus status,
     ApplicationFlowStep currentStep,
     LocalDateTime applyTime,
@@ -121,18 +114,36 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     app.formId = formId;
     app.businessContext = businessContext;
     app.operatorInfo = operatorInfo;
+    app.businessExtension = businessExtension;
+    app.parsedJsonFileId = parsedJsonFileId;
     app.expectedDetailCount = expectedDetailCount;
-    app.definitionVersion = definitionVersion;
     app.status = status;
     app.currentStep = currentStep;
     app.applyTime = applyTime;
     app.completeTime = completeTime;
-    app.materialState = ApplicationMaterialState.of(planMaterials, packageFile);
+    app.planMaterials = planMaterials;
+    app.packageFile = packageFile;
     return app;
+  }
+
+  /**
+   * 业务行为：挂载业务扩展字段。
+   * <p>
+   * 由业务服务在创建申请单后，注入业务专属的 {@link BusinessExtension} 实现（如年金扩展字段）。
+   * 重复挂载将覆盖既有值。
+   *
+   * @param extension 业务扩展字段实例
+   */
+  public void attachExtension(BusinessExtension extension) {
+    this.businessExtension = extension;
   }
 
   public FormId formId() {
     return this.formId;
+  }
+
+  public FileId parsedJsonFileId() {
+    return this.parsedJsonFileId;
   }
 
   /**
@@ -145,15 +156,54 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   }
 
   /**
-   * 分配材料并智能合并历史附件（委托给可选材料能力，§6.2）。
+   * 分配材料并智能合并历史附件 (适配 Immutable Record)
    */
   public void assignMaterials(List<MaterialItem> requiredBlueprints) {
-    this.materialState = this.materialState.assignMaterials(requiredBlueprints);
+    if (this.planMaterials == null || this.planMaterials.isEmpty()) {
+      this.planMaterials = requiredBlueprints;
+      return;
+    }
+
+    // 1. 提取历史上传记录，建立索引：materialCode -> UploadInfo
+    Map<String, Optional<MaterialItem.UploadInfo>> historyUploads = this.planMaterials.stream()
+      .collect(Collectors.toMap(
+        MaterialItem::materialCode,
+        MaterialItem::uploadInfo,
+        // 如果有重复的code，保留现有的
+        (existing, replacement) -> existing
+      ));
+
+    // 2. 遍历新的蓝图需求，如果是历史已经传过附件的，利用 withUpload / 构造器 还原状态
+    this.planMaterials = requiredBlueprints.stream().map(blueprint -> {
+      Optional<MaterialItem.UploadInfo> oldUpload = historyUploads.getOrDefault(blueprint.materialCode(), Optional.empty());
+
+      if (oldUpload.isPresent()) {
+        // 因为是 record，我们直接通过全参构造器，把老文件的 uploadInfo 塞给新蓝图
+        return new MaterialItem(
+          blueprint.materialCode(),
+          blueprint.materialName(),
+          blueprint.level(),
+          blueprint.requirement(),
+          blueprint.conditionRule(),
+          oldUpload
+        );
+      }
+      return blueprint;
+    }).toList();
   }
 
-  /** 逐个上传计划层材料。 */
+  /**
+   * 逐个上传计划层材料
+   */
   public void uploadIndividualPlanMaterial(String materialCode, BusinessFile file) {
-    this.materialState = this.materialState.uploadIndividualPlanMaterial(materialCode, file, this.id());
+    // 如果已经打包上传了，不允许再逐个传
+    if (this.packageFile != null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("Application: %s 已使用打包上传模式(%s)，不可逐个上传计划层材料".formatted(this.id(), this.packageFile.fileName()));
+    }
+    this.planMaterials = this.planMaterials.stream()
+      .map(m -> m.materialCode().equals(materialCode) ? m.withUpload(file) : m)
+      .toList();
   }
 
   /**
@@ -163,107 +213,69 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @param fileId       文件 ID
    */
   public void removeIndividualPlanMaterial(String materialCode, FileId fileId) {
-    this.materialState = this.materialState.removeIndividualPlanMaterial(materialCode, fileId, this.id());
+    if (this.packageFile != null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_OPERATION)
+        .withLogDetail("Application: %s 已使用打包上传模式(%s)，不可逐个移除材料".formatted(this.id(), this.packageFile.fileName()));
+    }
+    this.planMaterials = this.planMaterials.stream()
+      .map(m -> m.materialCode().equals(materialCode) ? m.removeUpload(fileId) : m)
+      .toList();
   }
 
-  /** 打包上传。 */
+  /**
+   * 打包上传
+   */
   public void uploadPackage(BusinessFile zipFile) {
-    this.materialState = this.materialState.uploadPackage(zipFile);
+    // 事实发生：记录压缩包ID
+    this.packageFile = zipFile;
+
+    // 一旦打包上传，清空之前逐个上传的文件记录
+    this.planMaterials = this.planMaterials.stream()
+      .map(m -> new MaterialItem(
+        m.materialCode(), m.materialName(), m.level(),
+        m.requirement(), m.conditionRule(),
+        Optional.empty() // 清空已有的上传记录
+      ))
+      .toList();
   }
 
-  /** 校验计划层材料是否满足要求。 */
+  /**
+   * 校验计划层材料是否满足要求
+   */
   public boolean isPlanMaterialSatisfied(MaterialConditionContext context) {
-    return this.materialState.isPlanMaterialSatisfied(context);
+    // 1. 只要存在打包文件，计划层直接放行
+    if (this.packageFile != null) {
+      return true;
+    }
+
+    // 2. 逐个上传模式：流式校验每一个 MaterialItem 内聚的规则
+    return this.planMaterials.stream()
+      .allMatch(m -> m.isSatisfied(context));
   }
 
-  /** 供外部（应用层/明细层）判断是否处于打包模式。 */
+  /**
+   * 提供查询方法，供外部（应用层/明细层）判断是否处于打包模式
+   */
   public boolean isPackageUploadMode() {
-    return this.materialState.isPackageUploadMode();
+    return this.packageFile != null;
   }
 
   public ApplicationFlowStep currentStep() {
     return this.currentStep;
   }
 
-  /**
-   * 完成当前步骤并跃迁到后继步骤。终态申请单不可继续推进；
-   * 重复推进同一节点保持幂等。所有更新统一递增版本并记录操作人。
-   */
-  public void completeCurrentStep(ApplicationFlowStep nextStep) {
-    if (nextStep == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("后继步骤不能为空");
-    }
-    // 幂等先于终态检查：终点步骤的自环推进不产生状态变化
+  public void transit(ApplicationFlowStep nextStep) {
+    // TODO 增加状态控制?
     if (this.currentStep == nextStep) {
       return;
-    }
-    if (currentStatus() == null || currentStatus().isTerminal()) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
-        .withLogDetail("终态申请单不可继续推进步骤");
     }
 
     ApplicationFlowStep previousStep = this.currentStep;
     this.currentStep = nextStep;
     if (nextStep == ApplicationFlowStep.COMPLETED) {
-      transitStatus(ApplicationStatus.COMPLETED);
-    } else {
-      this.markUpdated(requireOperator());
+      this.status = ApplicationStatus.COMPLETED;
     }
     this.registerDomainEvent(StepEnteredEvent.of(this.id(), previousStep, nextStep));
-  }
-
-  public void start() {
-    transitStatus(ApplicationStatus.RUNNING);
-  }
-
-  public void waitForUser() {
-    transitStatus(ApplicationStatus.WAITING_USER);
-  }
-
-  public void waitForExternal() {
-    transitStatus(ApplicationStatus.WAITING_EXTERNAL);
-  }
-
-  public void fail() {
-    transitStatus(ApplicationStatus.FAILED);
-  }
-
-  public void retry() {
-    transitStatus(ApplicationStatus.RUNNING);
-  }
-
-  public void cancel() {
-    transitStatus(ApplicationStatus.CANCELLED);
-  }
-
-  public void complete() {
-    transitStatus(ApplicationStatus.COMPLETED);
-  }
-
-  private void transitStatus(ApplicationStatus target) {
-    ApplicationStatus current = currentStatus();
-    if (current == null || !current.canTransitTo(target)) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
-        .withLogDetail("申请单状态不允许从 %s 迁移到 %s".formatted(current, target));
-    }
-    this.status = target;
-    if (target == ApplicationStatus.COMPLETED) {
-      this.completeTime = LocalDateTime.now();
-    }
-    this.markUpdated(requireOperator());
-  }
-
-  private ApplicationStatus currentStatus() {
-    return this.status == null ? null : this.status.normalized();
-  }
-
-  private String requireOperator() {
-    if (this.operatorInfo == null || this.operatorInfo.operatorId() == null) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
-        .withLogDetail("申请单缺少操作人信息，无法执行状态更新");
-    }
-    return this.operatorInfo.operatorId();
   }
 
   /**
@@ -273,7 +285,10 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * 状态一旦进入 REJECTED 即为终态，不可再流转。
    */
   public void reject() {
-    terminateAs(ApplicationStatus.REJECTED);
+    if (this.status == ApplicationStatus.REJECTED) {
+      return;
+    }
+    this.status = ApplicationStatus.REJECTED;
   }
 
   /**
@@ -283,24 +298,10 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * 状态一旦进入 WITHDRAWN 即为终态，不可再流转。
    */
   public void withdraw() {
-    terminateAs(ApplicationStatus.WITHDRAWN);
-  }
-
-  /**
-   * 审批拒绝与业务撤回属于 §8.1 注明的「明确终止行为」，不受一般迁移表约束。
-   * 过渡期外部协作尚未接线、等待态未建立；阶段 3 接入后统一为仅 WAITING_EXTERNAL 可进入。
-   */
-  private void terminateAs(ApplicationStatus terminal) {
-    ApplicationStatus current = currentStatus();
-    if (current == terminal) {
+    if (this.status == ApplicationStatus.WITHDRAWN) {
       return;
     }
-    if (current == null || current.isTerminal()) {
-      throw new DomainException(CoreDomainErrorCode.INVALID_STATUS)
-        .withLogDetail("终态申请单不可再变更状态");
-    }
-    this.status = terminal;
-    this.markUpdated(requireOperator());
+    this.status = ApplicationStatus.WITHDRAWN;
   }
 
   /**
@@ -318,6 +319,18 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
     this.registerDomainEvent(PipelineExecutedEvent.of(this.id(), this.currentStep(), phase, result));
   }
 
+  /**
+   * 领域行为：获取用于底层解析的目标文件凭证。
+   * (内部封装了状态校验规则，对外不暴露简单的 getter)
+   */
+  public FileId requireFileForParsing() {
+    if (this.parsedJsonFileId == null) {
+      throw new DomainException(CoreDomainErrorCode.INVALID_DATA)
+        .withLogDetail("Application: %s 申请单尚未挂载文件，无法发起解析".formatted(this.id()));
+    }
+    return this.parsedJsonFileId;
+  }
+
   public BusinessMetaContext buildConfigQueryContext() {
     return BusinessMetaContext.of(this.businessContext);
   }
@@ -325,6 +338,18 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   @Override
   protected void validateInvariants() {
 
+  }
+
+  /**
+   * 公开业务扩展字段（只读）。
+   * <p>
+   * 供业务服务的 {@code AnnuityExtensionResolver} 等组件类型安全地读取扩展字段，
+   * 避免在业务服务中使用反射访问私有字段。
+   *
+   * @return 扩展字段实例，若未设置则返回 null
+   */
+  public BusinessExtension businessExtension() {
+    return this.businessExtension;
   }
 
   /**
@@ -354,14 +379,6 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
   }
 
   /**
-   * 流程实例启动时固定的流程定义版本（只读）。
-   * 定义升级不影响在途实例：加载定义时始终使用本版本。
-   */
-  public DefinitionVersion definitionVersion() {
-    return definitionVersion;
-  }
-
-  /**
    * 获取申请单宏观状态(只读)。
    * <p>
    * 供 ApplicationConverter 转换 DTO 使用。
@@ -369,7 +386,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 申请单状态
    */
   public ApplicationStatus status() {
-    return currentStatus();
+    return this.status;
   }
 
   /**
@@ -380,7 +397,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 打包文件,未打包上传时为 null
    */
   public BusinessFile packageFile() {
-    return this.materialState.packageFile();
+    return this.packageFile;
   }
 
   /**
@@ -391,12 +408,7 @@ public class BusinessApplication extends AggregateRoot<ApplicationId> {
    * @return 计划层材料列表
    */
   public List<MaterialItem> planMaterials() {
-    return this.materialState.planMaterials();
-  }
-
-  /** 可选材料能力状态（§6.2，批次 37a）。 */
-  public ApplicationMaterialState materialState() {
-    return this.materialState;
+    return this.planMaterials;
   }
 
   /**

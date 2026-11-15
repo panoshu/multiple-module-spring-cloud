@@ -7,8 +7,6 @@ import com.alibaba.qlexpress4.QLResult;
 import com.alibaba.qlexpress4.api.parsecache.LoadedParseCache;
 import com.example.core.domain.engine.aggregate.valueobject.BusinessMetaContext;
 import com.example.core.domain.engine.gateway.ConditionEvaluationGateway;
-import com.example.core.infrastructure.engine.errorcode.CoreInfraErrorCode;
-import com.example.shared.exception.SystemException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -21,9 +19,6 @@ import java.util.Map;
  * 基于 QLExpress4 的条件求值网关实现
  * <p>
  * 解析后的 {@link LoadedParseCache} 实例会被缓存，避免相同表达式重复编译带来的性能开销。
- * <p>
- * 表达式语法、安全策略拦截或求值错误属于配置缺陷，必须显式失败，
- * 不能静默当作条件不满足而跳过动作。
  * <p>
  * 通过配置 {@code core.engine.condition-evaluator.type=qlexpress} 显式启用。
  * 若需切换为其他引擎，设置对应 type 值即可。
@@ -74,20 +69,6 @@ public class QLExpressConditionEvaluationGateway implements ConditionEvaluationG
     return doEvaluate(conditionExpression, params);
   }
 
-  @Override
-  public void validate(String expression) {
-    if (!StringUtils.hasText(expression)) {
-      return;
-    }
-    try {
-      runner.check(expression);
-    } catch (Exception e) {
-      log.error("QLExpress 条件表达式语法非法: expression={}", expression, e);
-      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
-        .withLogDetail("条件表达式: " + expression);
-    }
-  }
-
   private boolean doEvaluate(String expressionStr, Map<String, Object> context) {
     try {
       // 【核心改动】：直接传入 String 表达式和 Map，并开启 cache(true)
@@ -104,8 +85,7 @@ public class QLExpressConditionEvaluationGateway implements ConditionEvaluationG
 
     } catch (Exception e) {
       log.error("QLExpress 表达式执行失败: expression={}", expressionStr, e);
-      throw new SystemException(CoreInfraErrorCode.CONDITION_EVALUATION_FAILED, e)
-        .withLogDetail("条件表达式: " + expressionStr);
+      return false; // 容错策略：校验异常视为不通过
     }
   }
 }

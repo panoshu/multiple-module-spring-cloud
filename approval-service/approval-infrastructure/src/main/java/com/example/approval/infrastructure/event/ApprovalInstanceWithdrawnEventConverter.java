@@ -29,8 +29,7 @@ public class ApprovalInstanceWithdrawnEventConverter
       String.valueOf(event.instanceId().value()),
       event.businessNo(),
       event.businessType(),
-      event.occurredOn(),
-      event.requestNo()
+      event.occurredOn()
     );
   }
 

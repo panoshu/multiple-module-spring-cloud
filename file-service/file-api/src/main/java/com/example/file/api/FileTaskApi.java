@@ -1,7 +1,6 @@
 package com.example.file.api;
 
 import com.example.file.api.request.CancelFileTaskRequest;
-import com.example.file.api.request.GetByRequestNoRequest;
 import com.example.file.api.request.GetFileTaskRequest;
 import com.example.file.api.request.ListSubTasksRequest;
 import com.example.file.api.request.UploadFileRequest;
@@ -23,10 +22,6 @@ public interface FileTaskApi {
 
   @PostExchange("/get")
   ApiResult<FileTaskDTO> get(@RequestBody @Valid GetFileTaskRequest request);
-
-  /** 按外部协作幂等键查询任务 ID（响应丢失对账，spec §11.4）。 */
-  @PostExchange("/get-by-request-no")
-  ApiResult<FileTaskIdResponse> getByRequestNo(@RequestBody @Valid GetByRequestNoRequest request);
 
   @PostExchange("/sub-tasks")
   ApiResult<PageData<SubTaskDTO>> listSubTasks(@RequestBody @Valid ListSubTasksRequest request);
