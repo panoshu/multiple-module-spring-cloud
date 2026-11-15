@@ -5,6 +5,8 @@
 > 性质：静态核实 + 文档纠偏（**零生产代码改动**）
 > 分支：`refactor/business-core-kernel-production`
 > 配套：`2026-11-15-architecture-review.md`（架构复核总报告）
+>
+> **批次 71 更新（2026-11-15）**：用户三项决策已落地——分布式锁已引入、MDC 已改为实际 ID、`httpexchange` 配置按决策保留。本文 §1/§3.3/§4/§6 中「缺口 / 待修」结论已被 `2026-11-15-decisions-implementation.md` 覆盖，本文保留为首次复核快照。
 
 ---
 

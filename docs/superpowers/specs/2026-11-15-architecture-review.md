@@ -4,6 +4,8 @@
 > 依据：`2026-11-08-business-core-kernel-production-design.md`（§1/§2/§3/§4/§21.5/§23.46）、`.codebuddy/rules/01-架构与依赖规则.md`、`.codebuddy/rules/04-代码编写约束.md`、CODEBUDDY.md、当前代码与 pom 逐项核实
 > 性质：架构复核（**零生产代码改动**）；配套 `2026-11-15-non-code-items-closure.md`
 > 分支：`refactor/business-core-kernel-production`
+>
+> **批次 71 更新（2026-11-15）**：用户三项决策已落地，本文 §1/§2.4/§4.3 的「lock 装配缺口」「MDC 日志不输出」结论已被 `2026-11-15-decisions-implementation.md` 覆盖；`httpexchange` 配置按决策保留。本文保留为首次复核快照。
 
 ---
 

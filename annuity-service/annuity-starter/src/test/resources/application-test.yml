@@ -8,6 +8,9 @@ spring:
       - com.alibaba.cloud.nacos.discovery.NacosServiceRegistryAutoConfiguration
       - com.alibaba.cloud.nacos.NacosAutoConfiguration
       - com.alibaba.cloud.nacos.discovery.NacosDiscoveryClientConfiguration
+      # kernel 已引入 shared-lock-starter（生产 Redis 锁）；测试上下文无 Redis，排除其
+      # 自动配置与启动期 PING 校验，回退乐观锁路径，保持 E2E 自包含
+      - com.example.shared.lock.autoconfigure.DistributedLockAutoConfiguration
       # 禁用 Retrofit 日志自动配置（测试环境无 logbook-okhttp 依赖，会触发 NoClassDefFoundError）
       - com.example.shared.client.autoconfigure.ClientAutoConfiguration
       # 禁用 SOFA 服务发现端点（测试上下文无 SofaRegistryService，健康指示器装配会失败）

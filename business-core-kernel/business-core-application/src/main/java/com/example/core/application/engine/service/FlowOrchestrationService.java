@@ -128,8 +128,10 @@ public class FlowOrchestrationService {
   /**
    * 流程推进短临界区互斥（spec §9.3 第一层）。
    * <p>
-   * 弱依赖：宿主未引入 shared-lock-starter 时无锁直通，由乐观锁与唯一约束兜底；
-   * 锁等待 3s、租期 10s 且无看门狗，绝不覆盖远程 IO 或长批量处理。
+   * kernel infrastructure 已引入 shared-lock-starter，生产上下文装配 Redis 分布式锁，
+   * 用 {@code DistributedLock.lockAndRun} 模板方法保证释放；锁等待 3s、租期 10s 且
+   * 无看门狗，绝不覆盖远程 IO 或长批量处理。无 Redis 的测试上下文可排除锁自动配置，
+   * 此时无锁直通，由乐观锁与唯一约束兜底（弱依赖是端口契约允许的用法）。
    */
   private <T> T withApplicationLock(ApplicationId appId, Supplier<T> task) {
     Map<String, String> previousMdc = MDC.getCopyOfContextMap();

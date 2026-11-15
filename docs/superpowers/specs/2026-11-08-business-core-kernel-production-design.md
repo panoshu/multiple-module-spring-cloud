@@ -2052,3 +2052,13 @@ Application 层按用例拆分：
 - **未擅自改动（需方案确认 / 目标环境）**：宿主 pom 引入 `shared-lock-starter` + Redis、迁移 `httpexchange` 配置并移除 `include: local`、统一 MDC 日志 pattern——均属多服务 BREAKING 配置 / 依赖变更，已转成部署前检查清单（收口文档 §6），不在本批执行。
 - **验证**：本批零生产代码改动；沿用批次 69 全量回归（架构 17、approval-application 20、全仓 `mvn test-compile`、annuity E2E 8 全绿）；`git diff --check` 通过。
 - **结论**：**当前 kernel 代码项、组织目录立项、仓库内非代码项均已清空**；§21 验收核对表仍无 ⚠️/❌。**仍未处理**：部署期配置与装配动作 4 项（宿主 lock starter + Redis / profile 隔离 / 日志 pattern / 真 Redis 集成与端到端 HTTP），以及仓库外另行立项项（外部组织目录主数据系统对接、`TerminalLevel` 多级追溯 / `ancestorsOf` 整链）。
+
+### 23.78 批次 71 范围边界（三项用户决策落地）
+
+- **来源**：用户对本轮架构复核的三条决策——① kernel 需要分布式锁则引入 `shared-lock-starter` 并按推荐用法使用；② `httpexchange` 配置保留（服务间调用依赖）；③ MDC 配置改为本项目实际 ID。详见 `2026-11-15-decisions-implementation.md`。
+- **决策 1（需要）**：`advanceStep` 是「加载 → 执行 Handler（可能触发文件解析/审批启动等外部副作用）→ 保存」的临界区，乐观锁只防状态覆盖、不能防重复外部副作用；§1 决策 7 明确乐观锁 + 短分布式锁双层。故在 `business-core-infrastructure/pom.xml` 引入 `shared-lock-starter`，保留 application 层 `shared-lock` 接口依赖（依赖倒置）；生产上下文装配 `Lock4jDistributedLock`（Redis/Lettuce），`withApplicationLock` 已用 `lockAndRun` 模板方法保证释放。保留 `ObjectProvider` 弱依赖（端口契约允许的「单飞保护/防重」用法），无 Redis 的测试上下文通过 `spring.autoconfigure.exclude` 排除自动配置、回退乐观锁。
+- **决策 2（保留）**：各服务 `application-local.yml` 的 `httpexchange.clients` 与主配置 `spring.profiles.include: local` **零改动**；首次复核列为「配置缺陷」的条目改判为「按用户决策保留」，若将来做生产 profile 隔离须同步把该段提升到主配置/Nacos，不得删除。
+- **决策 3（实际 ID）**：`logback-spring.xml` 的示例键 `BizId/BatchId/OrderId/UserId` 改为项目实际写入的 `traceId/applicationId/stepExecutionId/requestNo/businessType`；改 integration-service 现有文件，为承载 kernel 的 annuity-starter 新增 `logback-spring.xml`（复用官方 `base.xml`）。E2E 日志 `applicationId:APP-` 命中 418 行，证明 MDC 已实际输出。
+- **TDD**：`DistributedLockAssemblyTest` 2 项（starter 注册唯一 `DistributedLock` Bean、实现为 Redis 通道非本地降级），先编译红灯（starter 类不在 classpath）→ 引入依赖后转绿。
+- **验证**：kernel infrastructure 92（+2）/ application 226 / arch-tests 17 / annuity E2E 8 全绿；全仓 `mvn test-compile`、`git diff --check` 通过；零 annuity 业务代码与 DDL 改动、零 DDL。
+- **结论**：§21 验收核对表仍无 ⚠️/❌；首次复核发现的 3 个装配/配置缺口中，lock 与 MDC 已修、`httpexchange` 按决策保留。**仍未处理**：生产 Redis 可达性、端到端 HTTP 验证、#4 真 Redis + 多 JVM 集成（待环境）、会话签名密钥环境变量注入，以及仓库外另行立项项。
